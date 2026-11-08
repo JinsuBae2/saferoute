@@ -10,22 +10,29 @@ from urllib.parse import unquote, urlsplit
 
 TYPES = "feat|fix|docs|refactor|test|chore"
 BRANCH = re.compile(rf"({TYPES})/([1-9][0-9]*)-[a-z0-9]+(?:-[a-z0-9]+)*")
-SUBJECT = re.compile(rf"({TYPES}): \S.* \(#([1-9][0-9]*)\)")
+SUBJECT = re.compile(rf"({TYPES})\(([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\): \S.* \(#([1-9][0-9]*)\)")
 FENCES = re.compile(r"^```([^\n]*)\n(.*?)^```\s*$", re.M | re.S)
 SECTIONS = ("연결 이슈", "변경 내용", "확인 방법 및 결과", "남은 작업·주의 사항", "머지 전 확인")
 
 
 def check_pr(pr, commits):
     errors = []
-    branch = BRANCH.fullmatch(pr["head"]["ref"])
-    if not branch:
-        return ["브랜치: <type>/<이슈번호>-<kebab-case> 형식을 사용하세요."]
-    kind, issue = branch.groups()
-    if pr["base"]["ref"] != "main":
-        errors.append("PR 대상은 main이어야 합니다.")
     title = SUBJECT.fullmatch(pr["title"])
-    if not title or title.group(1) != kind or title.group(2) != issue:
-        errors.append("PR 제목의 type·이슈 번호를 브랜치와 맞추세요.")
+    if not title:
+        return ["PR 제목: <type>(<scope>): <변경 내용> (#이슈번호) 형식을 사용하세요."]
+    kind, scope, issue = title.groups()
+    release = pr["head"]["ref"] == "develop" and pr["base"]["ref"] == "main"
+    if release:
+        if (kind, scope) != ("chore", "release"):
+            errors.append("develop → main 배포 PR은 chore(release) 형식을 사용하세요.")
+    else:
+        branch = BRANCH.fullmatch(pr["head"]["ref"])
+        if not branch:
+            return ["브랜치: <type>/<이슈번호>-<kebab-case> 형식을 사용하세요."]
+        if pr["base"]["ref"] != "develop":
+            errors.append("작업 PR은 develop을 대상으로 해야 합니다.")
+        if (kind, issue) != branch.groups():
+            errors.append("PR 제목의 type·이슈 번호를 브랜치와 맞추세요.")
     body = pr.get("body") or ""
     if not re.search(rf"^Closes #{issue}\s*$", body, re.M):
         errors.append(f"PR 본문에 Closes #{issue}를 작성하세요.")
@@ -38,7 +45,7 @@ def check_pr(pr, commits):
             errors.append("CI 생략 문구를 사용할 수 없습니다.")
     for message in commits:
         subject = SUBJECT.fullmatch(message)
-        if not subject or subject.group(2) != issue:
+        if not subject or (not release and subject.group(3) != issue):
             errors.append(f"커밋 양식·이슈 번호를 확인하세요: {message}")
     return errors
 

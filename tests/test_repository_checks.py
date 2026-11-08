@@ -5,10 +5,10 @@ from pathlib import Path
 from tools.check_repository import check_documents, check_pr
 
 
-def pull_request(branch="feat/12-fire-events", title="feat: 감지 이벤트 추가 (#12)"):
+def pull_request(branch="feat/12-fire-events", title="feat(ai): 감지 이벤트 추가 (#12)"):
     return {
         "head": {"ref": branch},
-        "base": {"ref": "main"},
+        "base": {"ref": "develop"},
         "title": title,
         "body": (
             "## 연결 이슈\nCloses #12\n\n"
@@ -22,13 +22,39 @@ def pull_request(branch="feat/12-fire-events", title="feat: 감지 이벤트 추
 
 class ConventionTests(unittest.TestCase):
     def test_valid_workflow_without_review_requirement(self):
-        self.assertEqual(check_pr(pull_request(), ["feat: 감지 이벤트 추가 (#12)"]), [])
+        self.assertEqual(check_pr(pull_request(), ["feat(ai): 감지 이벤트 추가 (#12)"]), [])
+
+    def test_rejects_missing_scope(self):
+        self.assertTrue(check_pr(pull_request(title="feat: 감지 이벤트 추가 (#12)"), []))
+        self.assertTrue(check_pr(pull_request(), ["feat: 감지 이벤트 추가 (#12)"]))
+
+    def test_allows_feature_scope(self):
+        pr = pull_request(title="feat(routing): 위험 구간 제외 (#12)")
+        self.assertEqual(check_pr(pr, ["feat(routing): 위험 구간 제외 (#12)"]), [])
+
+    def test_feature_cannot_target_main(self):
+        pr = pull_request()
+        pr["base"]["ref"] = "main"
+        self.assertTrue(check_pr(pr, []))
+
+    def test_release_allows_commits_from_different_issues(self):
+        pr = pull_request(branch="develop", title="chore(release): 시연 버전 반영 (#12)")
+        pr["base"]["ref"] = "main"
+        self.assertEqual(check_pr(pr, ["feat(ai): 감지 이벤트 추가 (#3)", "fix(frontend): 만료 표시 수정 (#7)"]), [])
+
+    def test_release_requires_release_scope(self):
+        pr = pull_request(branch="develop", title="chore(infra): 시연 버전 반영 (#12)")
+        pr["base"]["ref"] = "main"
+        self.assertTrue(check_pr(pr, []))
+
+    def test_rejects_invalid_scope(self):
+        self.assertTrue(check_pr(pull_request(title="feat(AI Tools): 감지 추가 (#12)"), []))
 
     def test_rejects_branch_without_issue(self):
         self.assertTrue(check_pr(pull_request(branch="feat/fire-events"), []))
 
     def test_rejects_title_for_another_issue(self):
-        self.assertTrue(check_pr(pull_request(title="feat: 감지 이벤트 추가 (#13)"), []))
+        self.assertTrue(check_pr(pull_request(title="feat(ai): 감지 이벤트 추가 (#13)"), []))
 
     def test_rejects_unlinked_issue(self):
         pr = pull_request()
@@ -41,7 +67,7 @@ class ConventionTests(unittest.TestCase):
         self.assertTrue(check_pr(pr, []))
 
     def test_rejects_commit_with_wrong_issue_or_skip_marker(self):
-        for message in ["fix: 입력 보완 (#13)", "feat: [skip ci] 입력 추가 (#12)", "작업 중"]:
+        for message in ["fix(ai): 입력 보완 (#13)", "feat(ai): [skip ci] 입력 추가 (#12)", "작업 중"]:
             with self.subTest(message=message):
                 self.assertTrue(check_pr(pull_request(), [message]))
 
