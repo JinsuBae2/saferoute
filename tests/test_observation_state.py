@@ -77,7 +77,7 @@ def test_initializing_requires_observations_and_explicit_arm(controller, clock):
     with pytest.raises(ContractError) as error: controller.arm(control(controller))
     assert error.value.code=="CONTROLLER_NOT_READY"
     assert prepare(controller,clock).controller_mode=="NORMAL"
-    assert all(f.display is None for sign in controller.snapshot().signs for f in sign.faces)
+    assert all(f.mode == "DEFAULT" for sign in controller.snapshot().signs for f in sign.faces)
 
 
 def test_sensor_causes_are_independent_and_normal_or_eof_never_clear(controller, clock):

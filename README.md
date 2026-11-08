@@ -4,7 +4,7 @@
 
 [2026 동북권 개발자 대상 오픈소스 아이디어 경진대회](https://hackathon.tbitcloud.com/northeast-oss)의 지정 주제 **AI 기반 재난 대응 행동요령 안내 서비스**를 건물 화재의 대피 방향 안내로 구체화합니다. 감지는 오픈소스 불꽃·연기 모델, 경로·유도등 판단은 제어 알고리즘, 상황 설명은 Amazon Bedrock이 담당합니다. 설명이 실패해도 제어는 계속 동작하도록 설계합니다. 공식 기준과 주제 대응은 [기획서 0절](docs/01-project-proposal.md#0-공식-대회-기준과-주제-대응)을 참고하세요.
 
-현재는 C02 공통 데이터 계약, B01 관측 수신·경보 상태 API, B02 위험 배제·다중 출구 경로 계산을 구현한 단계입니다. 유도등 명령·실제 오픈소스 감지 연결·Bedrock 설명(F11/A05)·서버 배포는 후속 작업입니다. 감지 모델의 구체적인 가중치는 실제 실행·사용 조건 확인 후 선정합니다.
+현재는 C02 공통 계약, B01 관측·경보 API, B02 위험 배제 경로, B03 표시면별 명령·ACK·감사 로그를 구현한 단계입니다. 실제 단말 화면 연동·오픈소스 감지 연결·Bedrock 설명(F11/A05)·서버 배포는 후속 작업입니다. 감지 모델의 구체적인 가중치는 실제 실행·사용 조건 확인 후 선정합니다.
 
 ## 개발 문서
 
@@ -55,14 +55,17 @@ python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 8000 
 - `GET /api/session`으로 현재 run_id를 읽고, `GET /api/building`의 관측원 설정에 맞춰 새 이벤트를 `POST /api/events`로 보냅니다.
 - 필수 관측원을 확인한 뒤 `POST /api/control/arm`으로 시작합니다. 경보는 정상 관측·영상 종료·시간 만료로 지워지지 않습니다. 운영자가 `clear`로 특정 원인을 해제하거나 `reset`으로 새 실행을 시작합니다.
 - 요청이 없어도 100ms 주기의 만료 작업이 실행됩니다. 실제 실행 지연은 OS·로그 기록·잠금 대기에 영향을 받으며 실시간 보장값은 아닙니다.
-- 상태·차단 대상·노드별 경로를 `GET /api/state`로 확인합니다. NORMAL에서는 검증된 기본 방향, EMERGENCY에서는 위험 구간을 제외한 경로를 반환합니다. INITIALIZING·DEGRADED에서는 경로를 제공하지 않습니다. 유도등 표시면은 B03 연결 전까지 UNKNOWN/NOT_ISSUED이며 명령을 발행하지 않습니다.
-- 실행 증거는 `runs/<run_id>/manifest.json`, `events.jsonl`, `decisions.jsonl`에 남고 Git에서 제외됩니다. reset은 이전 기록을 보존합니다.
+- 상태·차단·경로·현재 표시면·단말 적용 현황을 `GET /api/state`로 확인합니다. NORMAL은 DEFAULT, EMERGENCY는 경로에 따라 DYNAMIC 또는 NO_ROUTE, INITIALIZING·DEGRADED는 UNKNOWN 표시입니다. 상태 조회만으로 명령을 발행하거나 적용 성공으로 표시하지 않습니다.
+- 단말은 `GET /api/signs/{sign_id}/command`로 3초 유효 명령을 받고, 화면에 적용한 뒤 `POST /api/signs/{sign_id}/ack`로 응답합니다. 각 조회는 새 ID·순번을 발행하며 ACK 성공 응답은 해당 `SignState`입니다. [명령·응답 규칙](docs/05-data-interface-spec.md#53-적용-응답)을 따릅니다.
+- 실행 증거는 `runs/<run_id>/manifest.json`, `events.jsonl`, `decisions.jsonl`, `commands.jsonl`, `acks.jsonl`에 남고 Git에서 제외됩니다. reset은 이전 기록을 보존합니다.
 
 선택 설정은 `SAFEROUTE_BUILDING_FILE`(검증할 공간 JSON), `SAFEROUTE_RUNS_DIR`(기록 폴더), `SAFEROUTE_OPERATOR_ID`(운영자 기록명)입니다. 운영자 기록명은 사용자 인증이 아닙니다. 현재는 로컬·SSH 터널 내부 접속용이며 단일 worker를 사용합니다. 변경된 공간 설정은 서버를 다시 시작해 적용합니다.
 
 B01 집중 검사: `python -m pytest tests/test_observation_state.py -q`. API 전체와 로그·상태 전이를 함께 확인합니다.
 
 B02 집중 검사: `python -m pytest tests/test_routing.py -q`. G01~G10의 전체 노드 수계산 정답, 독립 경로 열거, 위험 배제·동률·순환·기본 방향 검증을 확인합니다. 경로 비용은 모델 값이며 실제 피난 시간을 의미하지 않습니다.
+
+B03 집중 검사: `python -m pytest tests/test_sign_guidance.py -q`. 정면·반대 면 매핑, 두 sign_id의 상태 분리, 명령 갱신·만료, 변조·역순·중복 ACK, reset·동시 요청·로그 실패를 확인합니다. 시험 클라이언트의 ACK는 실제 브라우저 화면이나 등기구를 관찰한 증거가 아닙니다. P01·I01의 두 화면 연결과 V06 검수는 별도로 수행합니다.
 
 ## 협업 규칙 검사
 
