@@ -254,6 +254,7 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 | GET /api/session | 없음 | run_id, 건물 버전, controller_mode, schema_version |
 | GET /api/building | 없음 | 현재 실행이 사용하는 검증된 공간 자료 |
 | GET /api/state | 없음 | 하나의 안내 버전으로 묶인 상태·경로·단말 적용 현황 |
+| GET /api/explanations/current | 없음 | A05 설명 작업자(8002)의 현재 설명·기준 버전·기한·상태. 구현 예정 |
 | POST /api/events | 3절 이벤트 | 수락·중복 여부와 해당 판단 버전 |
 | GET /api/signs/{sign_id}/command | 없음 | 단말별 새 명령 |
 | POST /api/signs/{sign_id}/ack | 5절 응답 | 응답 접수. 검증 실패 시 오류 |
@@ -380,3 +381,26 @@ Position은 x·y·z, polygon 점은 x·z다. 좌표는 유한한 수다. 모든 
 application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERMINAL이다. 마지막 발행 명령·과거 ACK는 감사용으로 현재 안내보다 이전 버전일 수 있다. **현재 안내는 faces이고, 과거 명령을 현재 적용 성공으로 표시하지 않는다.** APPLIED는 현재 안내 버전·명령·표시면과 일치하는 검증된 단말 하나의 ACK가 있을 때만 허용한다. 단말이 여러 개면 중복 인스턴스를 숨기지 않는다.
 
 출구 자체의 Route는 path_node_ids=[현재 노드], next_node_id=null, cost=0, exit_id=해당 출구, reason_codes=[]다. 안내 불가 Route는 6절의 null·빈 경로·사유 규칙을 따른다.
+
+## 11. F11 상황 설명 계약 — A05 구현 예정
+
+설명은 기존 `StateSnapshot`·관측·명령·ACK에 필수 필드를 추가하지 않는 별도 DTO/API다. A05에서 Python 모델·생성 TypeScript·수락/거부 샘플·계약 시험을 함께 추가한다. 현재 서버에 이 엔드포인트가 구현된 것으로 소개하지 않는다.
+
+| 필드 | 형식·규칙 |
+| --- | --- |
+| schema_version | 1 |
+| run_id·building_id·building_version·guidance_version | 현재 설명의 근거 세션과 안내 버전. 모든 ID는 기존 계약 형식 |
+| status | PENDING / READY / UNAVAILABLE |
+| basis_generated_at | 근거 스냅샷의 generated_at(UTC) |
+| generated_at·expires_at | READY에서는 UTC 시각, 나머지 상태에서는 null. expires_at은 근거 시각 + 설정 유효기간을 넘지 않음 |
+| summary | READY에서 비어 있지 않은 한국어 설명, 그 외 null |
+| fact_refs | 작업자가 제공한 사실 ID의 중복 없는 배열. READY에서 한 개 이상, 그 외 빈 배열 |
+| model_id·prompt_version | READY에서 실제 호출 모델 ID·고정 프롬프트 버전, 그 외 null 허용 |
+| error_code | UNAVAILABLE이면 BEDROCK_UNAVAILABLE / INVALID_RESPONSE / STALE_BASIS / EXPLANATION_LOG_ERROR / DISABLED 중 하나, 그 외 null |
+
+- 사실 ID는 해당 실행·버전 안에서만 유효하다. 예: 활성 원인의 `cause:<source_id>:<hazard_type>`, 차단 대상의 `blocked-node:<node_id>`·`blocked-edge:<edge_id>`, 계산 결과의 `route:<node_id>`. 실제 존재하는 항목만 입력 목록에 제공한다.
+- 모델은 summary·fact_refs만 생성한다. 실행·건물·안내 버전과 기한·모델 ID는 작업자가 붙이며 모델 출력으로 덮어쓰지 않는다. 알 수 없는 사실 ID·깨진 JSON·빈 설명은 INVALID_RESPONSE다.
+- API는 알려진 상태를 HTTP 200과 `Cache-Control: no-store`로 반환한다. 아직 현재 제어 세션을 읽지 못하면 503을 반환하고 이전 실행 결과를 대신 내보내지 않는다. 프론트는 설명 조회 실패를 설명 영역에만 반영한다.
+- UI는 `/api/state`의 현재 실행·건물·안내 버전과 모두 일치하는 READY만 표시한다. 안내 변경·reset·네트워크 단절·설명 만료 시 문장을 숨긴다. 남은 유효시간은 근거 시각부터 계산하고 수신 시 TTL을 새로 시작하지 않는다.
+- 서로 다른 시계로 만료를 추정하지 않도록 서버 시각·응답 나이를 이용하고 불확실하면 표시하지 않는다. 형식·기한 검사와 자연어의 사실 정확성 시험은 별개다.
+- 이 API는 제어 동작을 수행하지 않는다. Bedrock 결과를 `/api/events`·clear·arm·유도등 명령에 전달하는 연결은 두지 않는다.
