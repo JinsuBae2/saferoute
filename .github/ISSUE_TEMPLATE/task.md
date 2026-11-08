@@ -6,7 +6,7 @@ labels: ""
 assignees: ""
 ---
 
-<!-- 제목: <type>: <작업 내용>. type = feat / fix / docs / refactor / test / chore -->
+<!-- 제목: <type>(<scope>): <작업 내용>. 예: feat(ai): [A02] 실제 추론 이벤트 연결 -->
 
 ## 목적
 무엇을 해결하는가?

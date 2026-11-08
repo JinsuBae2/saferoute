@@ -84,14 +84,14 @@ Python 3.12·Node 24.x를 기준으로 하며 패키지는 잠금 파일로 공�
 
 ```text
 이슈 선택·담당 지정
-→ 최신 main에서 규칙에 맞는 브랜치 생성
+→ 최신 develop에서 규칙에 맞는 브랜치 생성
 → 코드·문서 작성과 로컬 확인
 → 규칙에 맞는 커밋
 → 작업 브랜치 push
-→ 템플릿을 작성해 main 대상 PR
+→ 템플릿을 작성해 develop 대상 PR
 → CI 통과·충돌 없음 확인
 → 작성자가 Squash merge
-→ 작업 브랜치 삭제·main 갱신
+→ 작업 브랜치 삭제·develop 갱신
 ```
 
 **리뷰 승인은 필수가 아니다.** 코드 오너 승인·최근 push의 타인 승인도 요구하지 않는다. 작성자가 확인 항목을 책임지고 CI 통과 후 직접 머지한다. 공통 계약 변경 시 상대 담당과 내용은 공유하되 별도 승인 절차로 머지를 묶지 않는다.
@@ -103,7 +103,7 @@ Python 3.12·Node 24.x를 기준으로 하며 패키지는 잠금 파일로 공�
 - 개발계획서의 A01·B02 같은 작업 ID와 요구사항 F번호를 연결한다.
 - 너무 큰 작업은 여러 이슈로 나누고 선행 이슈 번호를 적는다.
 - 기본은 **이슈 1개 → 브랜치 1개 → PR 1개**다.
-- 이슈 제목은 `<type>: <작업 내용>`으로 쓴다. 이슈 번호는 GitHub가 자동 부여한다.
+- 이슈 제목은 `<type>(<scope>): <작업 내용>`으로 쓴다. 예: `feat(ai): [A02] 실제 추론 이벤트 연결`. 이슈 번호는 GitHub가 자동 부여한다.
 - 완료 조건은 “구현” 대신 확인할 동작으로 적는다. 예: “A 구역 차단 시 S→B→Y 반환”.
 
 실제 템플릿: [작업 이슈 템플릿](../.github/ISSUE_TEMPLATE/task.md)
@@ -136,20 +136,21 @@ Python 3.12·Node 24.x를 기준으로 하며 패키지는 잠금 파일로 공�
 
 | 종류 | 이름 |
 | --- | --- |
-| 기준 브랜치 | `main` |
+| 기본·팀 통합 브랜치 | `develop` |
+| 검증·시연·배포 브랜치 | `main` |
 | 작업 브랜치 | `<type>/<issue-number>-<kebab-case-description>` |
 | 예시 | `feat/12-fire-events`, `fix/18-expired-command`, `docs/23-api-spec` |
 
 - type은 `feat / fix / docs / refactor / test / chore` 중 하나다.
 - 번호는 실제 선택한 이슈 번호다.
 - 설명은 영어 소문자·숫자·하이픈을 사용한다. 공백·한글·언더스코어는 쓰지 않는다.
-- `develop`이나 개인 이름의 장기 브랜치는 만들지 않는다. 짧은 이슈별 브랜치로 자주 통합한다.
-- `main` 직접 push·강제 push·삭제는 금지한다.
+- 장기 브랜치는 develop·main만 사용한다. 이슈별 브랜치는 짧게 유지한다.
+- develop·main 직접 push·강제 push·삭제는 금지한다.
 - 저장소의 첫 기준 커밋만 초기화 예외로 두고, 이후 변경은 PR을 거친다.
 
 ```sh
-git switch main
-git pull --ff-only origin main
+git switch develop
+git pull --ff-only origin develop
 git switch -c feat/12-fire-events
 ```
 
@@ -157,7 +158,7 @@ git switch -c feat/12-fire-events
 
 ### 4.4 커밋 컨벤션
 
-**양식:** `<type>: <변경 내용> (#<issue-number>)`
+**양식:** `<type>(<scope>): <변경 내용> (#<issue-number>)`
 
 | type | 사용 |
 | --- | --- |
@@ -169,22 +170,23 @@ git switch -c feat/12-fire-events
 | chore | CI·설정·의존성·저장소 관리 |
 
 ```text
-feat: 영상 감지 이벤트 수신 API 추가 (#12)
-fix: 만료된 명령의 화살표 제거 (#18)
-docs: 관측 이벤트 계약 정리 (#23)
-chore: 백엔드 CI 검사 추가 (#27)
+feat(ai): 영상 감지 이벤트 생성 (#12)
+fix(frontend): 만료된 명령의 화살표 제거 (#18)
+docs(api): 관측 이벤트 계약 정리 (#23)
+chore(infra): 백엔드 CI 검사 추가 (#27)
 ```
 
-- 설명은 한글 또는 영어로 쓰되 실제 변경을 설명한다. `수정`·`작업 중`·`최종`만 쓰지 않는다.
+- scope는 변경 영역이다. `ai / backend / frontend / model / data / test / infra / docs`를 기본으로 하며 `routing / guidance / api` 같은 기능 이름도 허용한다. 영어 소문자·숫자·하이픈을 사용하고 사람 이름은 넣지 않는다.
+- scope는 생략하지 않는다. 설명은 한글 또는 영어로 쓰되 실제 변경을 설명한다. `수정`·`작업 중`·`최종`만 쓰지 않는다.
 - 커밋 번호는 해당 작업 브랜치의 이슈와 일치시킨다.
 - 서로 관련 없는 작업을 한 커밋·PR에 묶지 않는다.
 - 임시 실패 상태를 공유해야 하면 Draft PR로 올린다. 실패 CI를 무시하고 머지하지 않는다.
 - `[skip ci]`·`[ci skip]` 등 CI 생략 문구는 사용하지 않는다.
-- 공통 브랜치 이력을 다시 쓰지 않는다. 충돌 해결은 최신 main을 작업 브랜치에 merge하고 다시 확인한다.
+- 공통 브랜치 이력을 다시 쓰지 않는다. 충돌 해결은 최신 develop을 작업 브랜치에 merge하고 다시 확인한다.
 
 ```sh
 git add 변경한_파일
-git commit -m "feat: 영상 감지 이벤트 수신 API 추가 (#12)"
+git commit -m "feat(ai): 영상 감지 이벤트 생성 (#12)"
 git push -u origin feat/12-fire-events
 ```
 
@@ -192,7 +194,7 @@ git push -u origin feat/12-fire-events
 
 ### 4.5 PR 컨벤션과 템플릿
 
-- 대상은 `main`이며 제목은 커밋과 같은 `<type>: <변경 내용> (#번호)` 양식이다.
+- 작업 PR 대상은 `develop`이며 제목은 커밋과 같은 `<type>(<scope>): <변경 내용> (#번호)` 양식이다.
 - PR 제목 type은 브랜치 type과 일치시킨다.
 - 본문에 `Closes #번호`로 해당 이슈를 연결한다.
 - 완료한 변경·검증 결과·남은 제한을 작성한다. 실행하지 않은 검사를 “통과”로 적지 않는다.
@@ -217,6 +219,7 @@ Closes #이슈번호
 
 ## 머지 전 확인
 - [ ] 이슈·브랜치·커밋·PR 번호가 일치한다.
+- [ ] 대상 브랜치와 병합 방식이 맞다: 작업은 develop/Squash, 배포는 main/Merge commit.
 - [ ] 필요한 검사를 실행하고 결과를 적었다.
 - [ ] 비밀정보·가중치·원본 영상이 포함되지 않았다.
 - [ ] 공통 계약 변경은 관련 문서·샘플에 함께 반영했다.
@@ -237,18 +240,29 @@ Closes #이슈번호
 
 머지 조건과 절차:
 
-1. Draft가 아니고, 최신 main과 충돌이 없어야 한다.
-2. 최신 커밋에서 `ci`가 통과해야 한다. main이 바뀌었으면 갱신 후 다시 검사한다.
+1. Draft가 아니고, 대상 브랜치와 충돌이 없어야 한다.
+2. 최신 커밋에서 `ci`가 통과해야 한다. 작업 PR은 최신 develop을 반영한 뒤 다시 검사한다.
 3. 작성자가 변경 파일·검증 결과·완료 조건을 확인한다.
-4. **Squash and merge**로 합친다. 최종 커밋 제목은 PR 제목을 유지한다.
+4. 작업 PR은 **Squash and merge**로 develop에 합친다. 최종 커밋 제목은 이슈 번호가 포함된 PR 제목을 유지한다.
 5. 연결 이슈가 닫혔는지 확인하고 작업 브랜치를 삭제한다.
-6. 담당자는 최신 main을 받아 다음 이슈를 시작한다.
+6. 담당자는 최신 develop을 받아 다음 이슈를 시작한다.
 
-승인 리뷰 수는 **0명**이다. CI 실패·충돌은 수정해야 하지만 리뷰를 기다릴 필요는 없다. GitHub의 필수 상태 검사와 PR 규칙으로 main을 보호한다. [GitHub 보호 브랜치 안내](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+두 브랜치의 승인 리뷰 수는 **0명**이다. CI 실패·충돌은 수정해야 하지만 리뷰를 기다릴 필요는 없다. GitHub의 필수 상태 검사와 PR 규칙으로 develop·main을 보호한다. [GitHub 보호 브랜치 안내](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
 
-충돌은 해당 파일을 함께 수정한 담당자와 의도를 확인해 해결한다. main 내용을 무조건 버리거나 강제 push로 덮어쓰지 않는다. 충돌 해결용 merge commit은 일반 작업 커밋 양식 검사에서 제외하며 최종 main에는 Squash 결과만 남긴다.
+충돌은 해당 파일을 함께 수정한 담당자와 의도를 확인해 해결한다. 통합 내용을 무조건 버리거나 강제 push로 덮어쓰지 않는다. 충돌 해결용 merge commit은 일반 작업 커밋 양식 검사에서 제외한다. develop에는 Squash된 작업 커밋이 쌓이고 main에는 배포 Merge commit이 남는다.
 
-### 4.7 인계와 AI 활용
+### 4.7 배포 PR
+
+- 배포 이슈를 만들고 `develop → main` PR을 연다. 제목은 `chore(release): <배포 내용> (#배포이슈번호)`다.
+- 배포 PR에는 포함한 작업·시연 버전·확인 결과·남은 제한을 기록한다.
+- 배포 PR의 여러 커밋은 각자의 원래 작업 이슈 번호를 유지한다. 배포 이슈 번호로 모두 바꾸지 않는다.
+- CI 통과 후 **Create a merge commit**으로 반영한다. develop → main에는 Squash를 사용하지 않아 이후 배포에서도 공통 이력을 유지한다.
+- main은 develop의 배포만 받으며 별도 기능 수정은 하지 않는다. 배포 PR은 한 번에 하나만 진행한다.
+- develop은 최신 base 반영을 필수로 한다. main 배포 PR은 별도의 main 동기화 커밋을 요구하지 않고 해당 PR의 CI와 충돌 여부를 확인한다.
+- 기본 브랜치가 develop이므로 작업 이슈는 기능 PR 머지 시 자동 종료를 확인한다. main 대상 배포 이슈는 머지·검증 후 수동 종료한다.
+- develop·main은 삭제하지 않는다. 검증·배포할 commit을 기록하고 서버에 반영한다.
+
+### 4.8 인계와 AI 활용
 
 - 인계할 때 이슈·PR, 변경 계약, 실행·검증 방법, 남은 오류를 함께 전달한다.
 - ID·필드·상태·버전을 바꾸면 공급자·수신자·시험 자료를 함께 수정한다.
