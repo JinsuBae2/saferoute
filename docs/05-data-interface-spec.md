@@ -38,7 +38,7 @@
 | nodes | array | node_id, floor_id, zone_id, position, kind |
 | edges | array | edge_id, from_node_id, to_node_id, kind, cost, traversable, door_open |
 | exits | array | exit_id, node_id, enabled, assumption |
-| sources | array | source_id, source_type, zone_id, required, freshness_ms |
+| sources | array | source_id, source_type, zone_id, required, freshness_ms, allowed_hazard_types |
 | signs | array | sign_id, node_id, faces |
 | assumptions | array | 항목·근거·가정 내용·검토자 |
 | provenance | object | 안내도 URL·확인일·자료 작성자 |
@@ -52,6 +52,8 @@
 ### 2.2 관측원과 유도등
 
 관측원 유형은 `VIDEO_AI`, `SIM_SMOKE_DETECTOR`, `SIM_SPRINKLER`, `MANUAL_TEST`다. 유형은 설정에서 고정하고 이벤트가 다른 유형으로 가장하면 거부한다. 영상 전체를 한 구역에 매핑하는 기본안에서 픽셀 좌표를 실제 건물 발화 좌표라고 표현하지 않는다.
+
+`allowed_hazard_types`는 비어 있지 않은 중복 없는 배열이다. VIDEO_AI는 FIRE·SMOKE의 부분집합, SIM_SMOKE_DETECTOR는 SMOKE, SIM_SPRINKLER는 SPRINKLER만 지정한다. MANUAL_TEST도 허용할 원인을 명시한다. 이벤트는 유형과 이 목록을 모두 만족해야 한다.
 
 `required`인 관측원이 유효하지 않으면 해당 관측 구역의 설정된 차단 대상을 화재 경로 후보에서 제외한다. 범위가 넓다는 이유로 임의의 모든 층을 차단하지 않는다. 겹치는 관측원 중 하나가 정상이어도 다른 필수 관측원의 불확실성이 자동 해소되지 않는다.
 
@@ -73,6 +75,8 @@
 ```
 
 `next_node_to_display`는 표시면을 바라보는 사람 기준이다. 반대편 표시면은 별도의 `face_id`와 매핑을 가진다. 허용 표시값은 `LEFT`, `RIGHT`, `FORWARD`, `BACK`, `STAIRS_UP`, `STAIRS_DOWN`, `EXIT`다. 계단의 오르내림은 평면상의 좌우와 혼동하지 않는다. 매핑되지 않은 다음 지점은 임의 회전으로 표시하지 않고 `UNSUPPORTED_DISPLAY`로 안내 불가 처리한다.
+
+EXIT 표시는 유도등이 활성 출구 노드에 있을 때만 사용한다. 이때 매핑은 자기 노드 ID → EXIT, default_next_node_id도 자기 노드 ID다. 자기 자신으로 향하는 edge는 만들지 않는다. 발행 명령의 next_node_id는 null이다. 그 외 매핑은 통행 가능한 출발 edge의 다음 노드여야 한다.
 
 ## 3. 관측 이벤트
 
@@ -114,6 +118,8 @@ UUID·시각·신뢰도는 자료형 예시이며 실제 시험 결과가 아니
 | confidence | 0~1 number / null | VIDEO_AI ALARM에서 필수. 센서 이벤트에서는 null |
 | reason_code | string / null | 관측 불가이면 EOF, DECODE_FAILED, OCCLUDED, SOURCE_DOWN 등 |
 | source_sequence | 1 이상 integer | 같은 실행·관측원 안에서 증가 |
+
+VIDEO_AI의 ALARM·OBSERVATION에는 실제 프레임 위치인 media_time_ms가 필요하다. HEARTBEAT·UNAVAILABLE에서는 프레임 위치가 없으면 null이다. 비영상 관측원은 media_time_ms·confidence가 null이다. UNAVAILABLE에서 reason_code는 필수이며 나머지 이벤트에서는 null이다.
 
 - `OBSERVATION`: 프레임 분석이 정상 완료되었으나 지속 경보 조건은 충족하지 않음. 관측 신선도 갱신, 기존 경보 유지.
 - `ALARM`: 해당 원인의 경보 활성화. 영상 작업자가 합의한 신뢰도·지속 조건을 통과했거나 가상 설비가 동작.
@@ -277,6 +283,7 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 | 409 | STALE_OBSERVATION / CLOCK_INVALID / SOURCE_CAUSE_INACTIVE | 오래된 관측·허용하지 않는 미래 시각·비활성 원인 해제 |
 | 422 | SCHEMA_VALIDATION_FAILED | 필수 필드·자료형 오류 |
 | 503 | CONTROLLER_NOT_READY | 새 명령 제공 불가. 클라이언트는 만료 정책 유지 |
+| 409 | COMMAND_MISMATCH / COMMAND_EXPIRED | 명령·표시면·응답 불일치 또는 기한 만료. 적용 성공으로 집계하지 않음 |
 
 네트워크 재시도는 같은 event_id·sequence로 제한한다. 오래된 경보를 몇 분 뒤 정상 신규 관측처럼 제출하지 않는다. 공급자가 재시작해 순번을 잊었으면 시연을 명시적으로 새 실행으로 시작한다.
 
@@ -317,3 +324,55 @@ JSONL은 한 줄에 JSON 객체 하나다. 중간에 로그가 깨졌으면 검�
 - [ ] 계약 샘플과 실제 API 응답의 차이가 없음.
 - [ ] 공간 변경 시 버전·시나리오·명령이 함께 갱신됨.
 - [ ] 조회 성공·명령 발행·적용 응답·실제 화면 관찰이 구분됨.
+
+## 10. C02 구현·팀 인계 기준
+
+### 10.1 기준 파일과 실행
+
+- 검증 모델과 상태를 변경하지 않는 문맥 검사: `backend/contracts/`.
+- 프론트 공통 형식: `contracts/types.generated.ts`. `python -m tools.export_contracts`로 생성하며 직접 수정하지 않는다.
+- 수락 샘플: `data/contracts/valid.json`. 거부 샘플: `data/contracts/rejected.json`의 원본 샘플·변경 필드·기대 오류.
+- 계약용 공간: `data/fixtures/two-route-v1.json`. 07번의 가상 두 경로 구조이며 WFI 건물 자료가 아니다. 독립 경로 정답·공간 검수는 Q02/M03에서 별도 확인한다.
+- 검사: `python -m pytest tests -q`, `python -m tools.export_contracts --check`, `npm run test:contracts`.
+
+샘플은 고정된 가상 시각의 독립 사례다. 서로 같은 event_id·순번을 사용하는 예도 있으므로 목록을 순서대로 실제 API에 전송하지 않는다. 새 시험 이벤트를 만들 때 현재 session·새 event_id·관측원별 순번·실제 관측 시각을 사용한다. 이미 발생한 오래된 관측의 시각이나 run_id를 바꿔 신규 입력으로 가장하지 않는다.
+
+Python 모델이 필수 필드·자료형·의미 조합을 검증한다. TypeScript는 같은 Python 모델에서 생성한 **정적 형식**이고 동일 JSON 샘플을 컴파일 검사한다. 정수 범위·UTC 날짜·동적 ID·만료를 TypeScript 형식만으로 검증했다고 보지 않는다. 실제 브라우저의 수신 검증·만료·재연결은 P01/P04에서 구현·시험한다. JSON Schema의 구조 형식은 Pydantic 모델에서 생성하며 [공식 문서](https://docs.pydantic.dev/latest/concepts/json_schema/)를 따른다.
+
+### 10.2 원시값·문맥 검사
+
+- 정수는 JavaScript에서 정확하게 공유할 수 있는 `2^53-1` 이하이며 bool·문자열·소수로 대체하지 않는다. schema_version은 1, building_version·순번·유효기간은 1 이상, guidance_version은 0부터 시작한다.
+- UUID는 소문자 하이픈 표기다. UTC 시각은 `YYYY-MM-DDTHH:mm:ss[.소수초]Z`를 쓰며 소수초는 최대 6자리다. 존재하지 않는 날짜·시간을 거부한다.
+- nullable 필드도 키를 생략하지 않는다. 모든 정의된 객체에서 추가 필드를 거부한다.
+- `parse_contract(모델명, JSON객체)`는 필드·형식 오류를 422/SCHEMA_VALIDATION_FAILED, 허용하지 않는 관측 조합을 400/INVALID_EVENT_COMBINATION으로 구분한다.
+- `check_event`는 등록된 관측원·실행·건물·중복·순번·관측 나이를 검사한다. 같은 이벤트 재전송은 상태를 갱신하지 않으며 만료 후 재전송도 유효기간을 연장하지 않는다.
+- `EventContext.now`는 같은 서버의 UTC다. 기본 미래 허용 오차는 0ms이며 변경 시 시험 조건에 기록한다. 유효기간은 관측 나이를 차감하고 경계 시각부터 만료다. 시험 자료의 3000ms는 실제 센서 기준이 아니다.
+- `check_command`는 실행·건물·대상·순번·표시면 전체·방향 매핑·활성 출구를 검사한다. 경로의 위험 회피와 도달 여부 판정은 B02의 책임이다.
+- `check_ack`는 발행 명령과 응답을 비교하고 서버 내부 monotonic 기한을 검사한다. APPLIED일 때만 true, 유효한 REJECTED는 false다. 이 반환값은 물리 등기구 동작 증거가 아니다.
+- 위 함수는 기록을 갱신하지 않는다. 수신 직렬화·중복 이력·시계 관리·상태 갱신은 B01/B03/B04에서 연결한다. 9절의 실제 API·브라우저 시험은 이 단계에서 완료 처리하지 않는다.
+
+### 10.3 공간의 세부 객체
+
+| 객체 | 필드 |
+| --- | --- |
+| coordinate_system | unit=m, measured(boolean), up_axis=+y, plan_right_axis=+x, plan_up_axis=-z, origin(Position), floor_transforms |
+| floor_transforms 항목 | floor_id, scale(양수), translation(Position). 등록된 층마다 하나 |
+| assumptions 항목 | item, basis, description, reviewer(문자열 또는 null) |
+| provenance | source_url(문자열 또는 null), checked_on(YYYY-MM-DD), author, description |
+
+Position은 x·y·z, polygon 점은 x·z다. 좌표는 유한한 수다. 모든 ID 참조·ID 중복·층간 edge 종류를 검증한다. 폴리곤 자기 교차·벽 관통·안내도 일치와 기본 경로의 실제 도달 여부는 공간·경로 검증에서 추가로 확인한다.
+
+### 10.4 상태 응답의 세부 객체
+
+| 배열·객체 | 필드·의미 |
+| --- | --- |
+| sources 항목 | source_id, validity(INITIALIZING/VALID/UNAVAILABLE/STALE), last_event_id·last_observed_at·last_source_sequence(초기에는 null) |
+| active_causes 항목 | source_id, hazard_type, first_event_id, last_event_id, activated_at. 활성 원인만 포함하며 해제 기록은 감사 로그에 남김 |
+| blocked_nodes 항목 | node_id, source_ids, reason_codes(ACTIVE_ALARM/REQUIRED_OBSERVATION_UNKNOWN) |
+| blocked_edges 항목 | edge_id, source_ids, reason_codes(위 두 코드 또는 NOT_TRAVERSABLE) |
+| signs 항목 | sign_id, faces(현재 안내 표시면 결과), latest_command(마지막 발행 명령 또는 null), application_status, terminals |
+| terminals 항목 | terminal_instance_id, last_ack, received_at(서버 UTC), verified(서버 응답 검증 결과) |
+
+application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERMINAL이다. 마지막 발행 명령·과거 ACK는 감사용으로 현재 안내보다 이전 버전일 수 있다. **현재 안내는 faces이고, 과거 명령을 현재 적용 성공으로 표시하지 않는다.** APPLIED는 현재 안내 버전·명령·표시면과 일치하는 검증된 단말 하나의 ACK가 있을 때만 허용한다. 단말이 여러 개면 중복 인스턴스를 숨기지 않는다.
+
+출구 자체의 Route는 path_node_ids=[현재 노드], next_node_id=null, cost=0, exit_id=해당 출구, reason_codes=[]다. 안내 불가 Route는 6절의 null·빈 경로·사유 규칙을 따른다.
