@@ -271,7 +271,7 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 
 조회 응답은 `Cache-Control: no-store`로 제공한다. 클라이언트도 캐시를 사용하지 않는다. POST 제어 기능은 기본 배포에서 SSH 접속 권한이 있는 팀원만 접근하는 내부 경로다. 공개 배포가 결정되면 인증·권한을 먼저 구현하고 무인증 reset·clear·event 전송을 열지 않는다.
 
-B01에서 health·session·building·state·events·arm·clear·reset을 구현했다. `/api/signs/*`와 `/sim/*`는 아직 구현하지 않았다. B01의 controller_mode는 관측·경보 상태이며 NORMAL도 경로 기능의 완성을 의미하지 않는다. 경로 모듈 연결 전 routes는 안내 불가, signs는 UNKNOWN/NOT_ISSUED다. arm 전에는 INITIALIZING, arm 이후에는 CONTROLLER_UNAVAILABLE 사유를 사용한다.
+B01에서 health·session·building·state·events·arm·clear·reset을 구현했다. B02에서 `/api/state.routes`에 NORMAL의 검증된 기본 경로와 EMERGENCY의 위험 배제 경로를 연결했다. INITIALIZING·DEGRADED에서는 각각 INITIALIZING·REQUIRED_OBSERVATION_UNKNOWN 사유와 빈 경로를 반환한다. `/api/signs/*`와 `/sim/*`는 아직 구현하지 않았다. signs는 UNKNOWN/NOT_ISSUED이며 표시면의 사유는 arm 전 INITIALIZING, arm 이후 CONTROLLER_UNAVAILABLE이다. 경로 제공은 유도등 명령 발행·적용 완료를 의미하지 않는다.
 
 ### 6.1 오류
 
