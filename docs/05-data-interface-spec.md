@@ -271,6 +271,8 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 
 조회 응답은 `Cache-Control: no-store`로 제공한다. 클라이언트도 캐시를 사용하지 않는다. POST 제어 기능은 기본 배포에서 SSH 접속 권한이 있는 팀원만 접근하는 내부 경로다. 공개 배포가 결정되면 인증·권한을 먼저 구현하고 무인증 reset·clear·event 전송을 열지 않는다.
 
+B01에서 health·session·building·state·events·arm·clear·reset을 구현했다. `/api/signs/*`와 `/sim/*`는 아직 구현하지 않았다. B01의 controller_mode는 관측·경보 상태이며 NORMAL도 경로 기능의 완성을 의미하지 않는다. 경로 모듈 연결 전 routes는 안내 불가, signs는 UNKNOWN/NOT_ISSUED다. arm 전에는 INITIALIZING, arm 이후에는 CONTROLLER_UNAVAILABLE 사유를 사용한다.
+
 ### 6.1 오류
 
 공통 오류 형식은 `{ "error": { "code": "RUN_MISMATCH", "message": "실행이 변경되었습니다", "field": "run_id" } }`다. FastAPI 기본 검증 오류도 이 형식으로 정규화한다.
@@ -350,6 +352,8 @@ Python 모델이 필수 필드·자료형·의미 조합을 검증한다. TypeSc
 - `check_command`는 실행·건물·대상·순번·표시면 전체·방향 매핑·활성 출구를 검사한다. 경로의 위험 회피와 도달 여부 판정은 B02의 책임이다.
 - `check_ack`는 발행 명령과 응답을 비교하고 서버 내부 monotonic 기한을 검사한다. APPLIED일 때만 true, 유효한 REJECTED는 false다. 이 반환값은 물리 등기구 동작 증거가 아니다.
 - 위 함수는 기록을 갱신하지 않는다. 수신 직렬화·중복 이력·시계 관리·상태 갱신은 B01/B03/B04에서 연결한다. 9절의 실제 API·브라우저 시험은 이 단계에서 완료 처리하지 않는다.
+
+B01은 이 중 관측 수신·이력·시계·원인별 상태·arm/clear/reset을 API에 연결했다. 명령·ACK와 브라우저 동작 시험은 계속 후속 범위다. SourceState의 last_event_id·last_source_sequence는 마지막 수락 입력이고, 영상 HEARTBEAT는 last_observed_at·유효기한을 갱신하지 않는다. 오류·관측 만료·확인 해제의 운영자 기록명·시각·이유는 실행별 감사 로그에 남긴다.
 
 ### 10.3 공간의 세부 객체
 
