@@ -8,9 +8,10 @@ from uuid import uuid4
 from .audit import AuditLog
 from .contracts import ContractError, EventContext, check_event, parse_contract
 from .contracts.messages import (
-    ActiveCause, ArmReceipt, ClearReceipt, EventReceipt, ResetReceipt, Session,
+    ActiveCause, ArmReceipt, BlockedEdge, BlockedNode, ClearReceipt, EventReceipt, ResetReceipt, Session,
     SourceState, StateSnapshot,
 )
+from .routing import calculate_routes, unavailable_routes, validate_default_routes
 
 
 class Clock:
@@ -25,6 +26,7 @@ def utc_text(value):
 class Controller:
     def __init__(self, building, runs_dir, *, clock=None, operator_id="local-operator"):
         self.building = building.model_copy(deep=True)
+        self.normal_routes = validate_default_routes(self.building)
         self.clock = clock or Clock()
         self.operator_id = operator_id
         self.lock = RLock()
@@ -46,6 +48,8 @@ class Controller:
         self.active_causes = {}
         self.seen_events = {}
         self.last_sequences = {}
+        self._route_key = None
+        self._routes = []
         self._write("decisions", operation="start", actor=self.operator_id, reason="new run")
         self._snapshot = self._build_snapshot()
 
@@ -87,7 +91,8 @@ class Controller:
                     active_causes=[c.model_dump(mode="json") for c in snapshot.active_causes],
                     sources=[s.model_dump(mode="json") for s in snapshot.sources],
                     blocked_nodes=[n.model_dump(mode="json") for n in snapshot.blocked_nodes],
-                    blocked_edges=[e.model_dump(mode="json") for e in snapshot.blocked_edges], **evidence)
+                    blocked_edges=[e.model_dump(mode="json") for e in snapshot.blocked_edges],
+                    routes=[r.model_dump(mode="json") for r in snapshot.routes], **evidence)
         self._snapshot = snapshot
 
     def _build_snapshot(self):
@@ -114,14 +119,25 @@ class Controller:
             return [{key: item_id, "source_ids": sorted(value["source_ids"]), "reason_codes": sorted(value["reason_codes"])}
                     for item_id, value in sorted(items.items())]
 
-        # B02/B03 will supply routes and commands. B01 must not invent usable arrows.
+        node_blocks = [BlockedNode(**item) for item in blocked_list(blocked_nodes,"node_id")]
+        edge_blocks = [BlockedEdge(**item) for item in blocked_list(blocked_edges,"edge_id")]
+        key = self._decision_key()
+        if key != self._route_key:
+            mode = self._mode()
+            if mode == "NORMAL": self._routes = self.normal_routes
+            elif mode == "EMERGENCY": self._routes = calculate_routes(self.building,node_blocks,edge_blocks)
+            else:
+                self._routes = unavailable_routes(self.building,
+                    "INITIALIZING" if mode == "INITIALIZING" else "REQUIRED_OBSERVATION_UNKNOWN")
+            self._route_key = key
+        # Routes are available in B02; actual sign displays and commands belong to B03.
         reason = "INITIALIZING" if not self.armed else "CONTROLLER_UNAVAILABLE"
         return StateSnapshot(**self._session().model_dump(), guidance_version=self.guidance_version,
             generated_at=utc_text(self.clock.utcnow()),
             sources=[s.model_copy(deep=True) for s in self.sources.values()],
             active_causes=[self.active_causes[key].model_copy(deep=True) for key in sorted(self.active_causes)],
-            blocked_nodes=blocked_list(blocked_nodes,"node_id"), blocked_edges=blocked_list(blocked_edges,"edge_id"),
-            routes=[dict(node_id=n.node_id,next_node_id=None,exit_id=None,path_node_ids=[],cost=None,reason_codes=[reason]) for n in self.building.nodes],
+            blocked_nodes=node_blocks, blocked_edges=edge_blocks,
+            routes=self._routes,
             signs=[dict(sign_id=s.sign_id,faces=[dict(face_id=f.face_id,mode="UNKNOWN",display=None,next_node_id=None,exit_id=None,reason_codes=[reason]) for f in s.faces],latest_command=None,application_status="NOT_ISSUED",terminals=[]) for s in self.building.signs])
 
     def _expire_locked(self):

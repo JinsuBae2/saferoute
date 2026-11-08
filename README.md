@@ -2,7 +2,7 @@
 
 화재 관측에 따라 대피 경로와 유도등 방향을 바꾸는 제어 시스템입니다. 실제 영상 추론·제어 소프트웨어를 개발하고, 3D 건물·연기·가상 설비·브라우저 단말로 검증합니다.
 
-현재는 C02 공통 데이터 계약과 B01 관측 수신·경보 상태 API를 구현한 단계입니다. 경로 계산·유도등 명령·실제 AI 연결·서버 배포는 후속 작업입니다.
+현재는 C02 공통 데이터 계약, B01 관측 수신·경보 상태 API, B02 위험 배제·다중 출구 경로 계산을 구현한 단계입니다. 유도등 명령·실제 AI 연결·서버 배포는 후속 작업입니다.
 
 ## 개발 문서
 
@@ -40,7 +40,7 @@ Windows에서는 설치된 Python 3.12로 가상환경을 만들고 `.venv\Scrip
 
 공통 모델은 [backend/contracts](backend/contracts/), 수락·거부 샘플은 [data/contracts](data/contracts/), 프론트 형식은 [contracts/types.generated.ts](contracts/types.generated.ts)에 있습니다. 모델이나 샘플을 변경하면 `python -m tools.export_contracts`를 실행해 생성 파일도 함께 커밋합니다. TypeScript는 정적 형식 검사이며 브라우저 실행 시 검증은 단말 구현에서 추가합니다. 함수별 사용 기준은 [명세서 10절](docs/05-data-interface-spec.md#10-c02-구현팀-인계-기준)을 참고하세요.
 
-## B01 백엔드 실행
+## 백엔드 실행
 
 위 가상환경에서 의존성을 설치한 뒤 저장소 루트에서 실행합니다.
 
@@ -53,12 +53,14 @@ python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 8000 
 - `GET /api/session`으로 현재 run_id를 읽고, `GET /api/building`의 관측원 설정에 맞춰 새 이벤트를 `POST /api/events`로 보냅니다.
 - 필수 관측원을 확인한 뒤 `POST /api/control/arm`으로 시작합니다. 경보는 정상 관측·영상 종료·시간 만료로 지워지지 않습니다. 운영자가 `clear`로 특정 원인을 해제하거나 `reset`으로 새 실행을 시작합니다.
 - 요청이 없어도 100ms 주기의 만료 작업이 실행됩니다. 실제 실행 지연은 OS·로그 기록·잠금 대기에 영향을 받으며 실시간 보장값은 아닙니다.
-- 상태와 차단 대상을 `GET /api/state`로 확인합니다. B02/B03 연결 전에는 경로·표시면이 안내 불가/UNKNOWN이며 화살표·유도등 명령을 발행하지 않습니다.
+- 상태·차단 대상·노드별 경로를 `GET /api/state`로 확인합니다. NORMAL에서는 검증된 기본 방향, EMERGENCY에서는 위험 구간을 제외한 경로를 반환합니다. INITIALIZING·DEGRADED에서는 경로를 제공하지 않습니다. 유도등 표시면은 B03 연결 전까지 UNKNOWN/NOT_ISSUED이며 명령을 발행하지 않습니다.
 - 실행 증거는 `runs/<run_id>/manifest.json`, `events.jsonl`, `decisions.jsonl`에 남고 Git에서 제외됩니다. reset은 이전 기록을 보존합니다.
 
 선택 설정은 `SAFEROUTE_BUILDING_FILE`(검증할 공간 JSON), `SAFEROUTE_RUNS_DIR`(기록 폴더), `SAFEROUTE_OPERATOR_ID`(운영자 기록명)입니다. 운영자 기록명은 사용자 인증이 아닙니다. 현재는 로컬·SSH 터널 내부 접속용이며 단일 worker를 사용합니다. 변경된 공간 설정은 서버를 다시 시작해 적용합니다.
 
 B01 집중 검사: `python -m pytest tests/test_observation_state.py -q`. API 전체와 로그·상태 전이를 함께 확인합니다.
+
+B02 집중 검사: `python -m pytest tests/test_routing.py -q`. G01~G10의 전체 노드 수계산 정답, 독립 경로 열거, 위험 배제·동률·순환·기본 방향 검증을 확인합니다. 경로 비용은 모델 값이며 실제 피난 시간을 의미하지 않습니다.
 
 ## 협업 규칙 검사
 
