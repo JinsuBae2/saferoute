@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "scenario_id": "two-route-smoke-v1",
+  "building_id": "TWO_ROUTE",
+  "basis": "docs/07-integration-test-demo-scenarios.md section 4",
+  "note": "연기 표현값은 시나리오 값이며 실제 농도 기준이 아니다",
+  "timeline": [
+    {"time_s": null, "phase": "준비", "truth": "모든 필수 모의 관측 준비", "delivered_to_controller": "초기 정상 상태·주기 상태 확인", "expected": "INITIALIZING, arm 대기"},
+    {"time_s": 0, "phase": "arm", "truth": "시연 시작", "delivered_to_controller": "arm", "expected": "기본 LEFT, B는 FORWARD"},
+    {"time_s": 10, "phase": "A 연기 표현", "truth": "A 연기 표현값 0.4", "delivered_to_controller": "아직 임계값 미충족", "expected": "연기는 보이지만 경보 없음"},
+    {"time_s": 15, "phase": "A 연기 상승", "truth": "A 연기 표현값 0.7", "delivered_to_controller": "모의 감지 생성, 2초 지연", "expected": "정답과 관측 차이 표시"},
+    {"time_s": 17, "phase": "A 경보", "truth": "A 위험 지속", "delivered_to_controller": "DETECTOR-A의 SMOKE 경보 수신", "expected": "S가 B 쪽 RIGHT로 변경"},
+    {"time_s": 25, "phase": "B 연기 표현", "truth": "B 표현 0.7", "delivered_to_controller": "모의 감지 생성, 2초 지연", "expected": "아직 관측 전 상태와 구분"},
+    {"time_s": 27, "phase": "B 경보", "truth": "A·B 위험", "delivered_to_controller": "DETECTOR-B 경보 수신", "expected": "S 안내 불가"},
+    {"time_s": 35, "phase": "A 연기 감소", "truth": "A 표현값 0으로 감소", "delivered_to_controller": "정상 관측, 확인 해제 없음", "expected": "A 경보 유지, S 안내 불가"},
+    {"time_s": 40, "phase": "운영자 해제", "truth": "운영자가 A 원인을 확인 해제", "delivered_to_controller": "DETECTOR-A·SMOKE만 clear", "expected": "B 경보 유지, S→A→X"},
+    {"time_s": null, "phase": "종료", "truth": "시연 완료", "delivered_to_controller": "시나리오 completed, 이후 입력 중단", "expected": "새 관측 없으면 계약대로 만료"}
+  ],
+  "timing_disclaimer": "시각은 시나리오 예정값이다. 실제 전달·계산·표시 시각은 별도로 측정한다. 화면이 정확히 17.000초에 바뀐다고 미리 성능을 주장하지 않는다.",
+  "variants": [
+    {
+      "variant_id": "A-observation-missing",
+      "description": "A에 실제 위험이 있지만 DETECTOR-A가 신호를 보내지 않는 경우",
+      "rule": "제어기가 정답을 직접 읽어 미리 우회하면 실패다",
+      "measurement": "관측 누락 동안의 정답 기준 위험 노출은 숨기지 않고 기록한다",
+      "purpose": "감지되지 않은 위험까지 알고리즘이 해결한다는 주장을 막기 위한 시험"
+    }
+  ]
+}
