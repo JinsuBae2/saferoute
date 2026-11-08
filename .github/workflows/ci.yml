@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: CI-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Test repository checks
+        run: python -m unittest discover -s tests -p 'test_repository_checks.py'
+      - name: Check documentation and PR conventions
+        run: python tools/check_repository.py
+      - name: Check backend and AI adapter code
+        if: hashFiles('backend/**/*.py', 'ai_worker/**/*.py') != ''
+        shell: bash
+        run: |
+          test -f requirements-core.lock.txt
+          python -m pip install -r requirements-core.lock.txt
+          python - <<'PY'
+          from pathlib import Path
+          tests = [p for p in Path("tests").rglob("test_*.py") if p.name != "test_repository_checks.py"]
+          if not tests:
+              raise SystemExit("제품 코드와 함께 해당 기능의 시험을 추가하세요.")
+          PY
+          python -m pytest tests -q
+      - name: Set up Node for frontend
+        if: hashFiles('web/package.json') != ''
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Check frontend
+        if: hashFiles('web/package.json') != ''
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run build

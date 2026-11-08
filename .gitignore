@@ -1,0 +1,17 @@
+.venv/
+.venv-ai/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+web/node_modules/
+web/dist/
+configs/*.local.json
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+/models/
+data/videos/
+runs/
+.DS_Store
