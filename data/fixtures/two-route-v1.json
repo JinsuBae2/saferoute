@@ -1,0 +1,486 @@
+{
+  "schema_version": 1,
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "coordinate_system": {
+    "unit": "m",
+    "measured": false,
+    "up_axis": "+y",
+    "plan_right_axis": "+x",
+    "plan_up_axis": "-z",
+    "origin": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "floor_transforms": [
+      {
+        "floor_id": "F1",
+        "scale": 1,
+        "translation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    ]
+  },
+  "floors": [
+    {
+      "floor_id": "F1",
+      "label": "시험층",
+      "elevation": 0
+    }
+  ],
+  "zones": [
+    {
+      "zone_id": "Z-S",
+      "floor_id": "F1",
+      "label": "시험 구역 S",
+      "polygon": [
+        {
+          "x": -0.2,
+          "z": -0.2
+        },
+        {
+          "x": 0.2,
+          "z": -0.2
+        },
+        {
+          "x": 0.2,
+          "z": 0.2
+        },
+        {
+          "x": -0.2,
+          "z": 0.2
+        }
+      ],
+      "blocked_node_ids": [
+        "S"
+      ],
+      "blocked_edge_ids": [
+        "S-A",
+        "A-S",
+        "S-B",
+        "B-S"
+      ]
+    },
+    {
+      "zone_id": "Z-A",
+      "floor_id": "F1",
+      "label": "시험 구역 A",
+      "polygon": [
+        {
+          "x": -1.2,
+          "z": -1.2
+        },
+        {
+          "x": -0.8,
+          "z": -1.2
+        },
+        {
+          "x": -0.8,
+          "z": -0.8
+        },
+        {
+          "x": -1.2,
+          "z": -0.8
+        }
+      ],
+      "blocked_node_ids": [
+        "A"
+      ],
+      "blocked_edge_ids": [
+        "S-A",
+        "A-S",
+        "A-X",
+        "X-A"
+      ]
+    },
+    {
+      "zone_id": "Z-B",
+      "floor_id": "F1",
+      "label": "시험 구역 B",
+      "polygon": [
+        {
+          "x": 0.8,
+          "z": -1.2
+        },
+        {
+          "x": 1.2,
+          "z": -1.2
+        },
+        {
+          "x": 1.2,
+          "z": -0.8
+        },
+        {
+          "x": 0.8,
+          "z": -0.8
+        }
+      ],
+      "blocked_node_ids": [
+        "B"
+      ],
+      "blocked_edge_ids": [
+        "S-B",
+        "B-S",
+        "B-Y",
+        "Y-B"
+      ]
+    },
+    {
+      "zone_id": "Z-X",
+      "floor_id": "F1",
+      "label": "시험 구역 X",
+      "polygon": [
+        {
+          "x": -1.2,
+          "z": -2.2
+        },
+        {
+          "x": -0.8,
+          "z": -2.2
+        },
+        {
+          "x": -0.8,
+          "z": -1.8
+        },
+        {
+          "x": -1.2,
+          "z": -1.8
+        }
+      ],
+      "blocked_node_ids": [
+        "X"
+      ],
+      "blocked_edge_ids": [
+        "A-X",
+        "X-A"
+      ]
+    },
+    {
+      "zone_id": "Z-Y",
+      "floor_id": "F1",
+      "label": "시험 구역 Y",
+      "polygon": [
+        {
+          "x": 0.8,
+          "z": -2.2
+        },
+        {
+          "x": 1.2,
+          "z": -2.2
+        },
+        {
+          "x": 1.2,
+          "z": -1.8
+        },
+        {
+          "x": 0.8,
+          "z": -1.8
+        }
+      ],
+      "blocked_node_ids": [
+        "Y"
+      ],
+      "blocked_edge_ids": [
+        "B-Y",
+        "Y-B"
+      ]
+    },
+    {
+      "zone_id": "Z-I",
+      "floor_id": "F1",
+      "label": "시험 구역 I",
+      "polygon": [
+        {
+          "x": 2.8,
+          "z": -0.2
+        },
+        {
+          "x": 3.2,
+          "z": -0.2
+        },
+        {
+          "x": 3.2,
+          "z": 0.2
+        },
+        {
+          "x": 2.8,
+          "z": 0.2
+        }
+      ],
+      "blocked_node_ids": [
+        "I"
+      ],
+      "blocked_edge_ids": []
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "S",
+      "floor_id": "F1",
+      "zone_id": "Z-S",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "A",
+      "floor_id": "F1",
+      "zone_id": "Z-A",
+      "position": {
+        "x": -1,
+        "y": 0,
+        "z": -1
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "B",
+      "floor_id": "F1",
+      "zone_id": "Z-B",
+      "position": {
+        "x": 1,
+        "y": 0,
+        "z": -1
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "X",
+      "floor_id": "F1",
+      "zone_id": "Z-X",
+      "position": {
+        "x": -1,
+        "y": 0,
+        "z": -2
+      },
+      "kind": "EXIT"
+    },
+    {
+      "node_id": "Y",
+      "floor_id": "F1",
+      "zone_id": "Z-Y",
+      "position": {
+        "x": 1,
+        "y": 0,
+        "z": -2
+      },
+      "kind": "EXIT"
+    },
+    {
+      "node_id": "I",
+      "floor_id": "F1",
+      "zone_id": "Z-I",
+      "position": {
+        "x": 3,
+        "y": 0,
+        "z": 0
+      },
+      "kind": "JUNCTION"
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "S-A",
+      "from_node_id": "S",
+      "to_node_id": "A",
+      "kind": "CORRIDOR",
+      "cost": 1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "A-S",
+      "from_node_id": "A",
+      "to_node_id": "S",
+      "kind": "CORRIDOR",
+      "cost": 1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "A-X",
+      "from_node_id": "A",
+      "to_node_id": "X",
+      "kind": "CORRIDOR",
+      "cost": 1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "X-A",
+      "from_node_id": "X",
+      "to_node_id": "A",
+      "kind": "CORRIDOR",
+      "cost": 1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "S-B",
+      "from_node_id": "S",
+      "to_node_id": "B",
+      "kind": "CORRIDOR",
+      "cost": 2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "B-S",
+      "from_node_id": "B",
+      "to_node_id": "S",
+      "kind": "CORRIDOR",
+      "cost": 2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "B-Y",
+      "from_node_id": "B",
+      "to_node_id": "Y",
+      "kind": "CORRIDOR",
+      "cost": 2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "Y-B",
+      "from_node_id": "Y",
+      "to_node_id": "B",
+      "kind": "CORRIDOR",
+      "cost": 2,
+      "traversable": true,
+      "door_open": null
+    }
+  ],
+  "exits": [
+    {
+      "exit_id": "EXIT-X",
+      "node_id": "X",
+      "enabled": true,
+      "assumption": "독립 계약 시험용 출구"
+    },
+    {
+      "exit_id": "EXIT-Y",
+      "node_id": "Y",
+      "enabled": true,
+      "assumption": "독립 계약 시험용 출구"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "CAM-A",
+      "source_type": "VIDEO_AI",
+      "zone_id": "Z-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE",
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "DETECTOR-A",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "Z-A",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SPRINKLER-A",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "Z-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "DETECTOR-B",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "Z-B",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "sign_id": "SIGN-S",
+      "node_id": "S",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0,
+            "y": 0,
+            "z": -1
+          },
+          "default_next_node_id": "A",
+          "next_node_to_display": {
+            "A": "LEFT",
+            "B": "RIGHT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0,
+            "y": 0,
+            "z": 1
+          },
+          "default_next_node_id": "A",
+          "next_node_to_display": {
+            "A": "RIGHT",
+            "B": "LEFT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-B",
+      "node_id": "B",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0,
+            "y": 0,
+            "z": -1
+          },
+          "default_next_node_id": "Y",
+          "next_node_to_display": {
+            "Y": "FORWARD",
+            "S": "BACK"
+          }
+        }
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "item": "건물·설비·신선도",
+      "basis": "07번 문서 3절",
+      "description": "실제 건물이 아닌 두 경로 계약 시험 구조. 좌표·3000ms는 시험값.",
+      "reviewer": null
+    }
+  ],
+  "provenance": {
+    "source_url": null,
+    "checked_on": "2026-11-08",
+    "author": "saferoute",
+    "description": "07번 시험 명세의 독립 그래프. 실제 건물 안내도와 무관."
+  }
+}

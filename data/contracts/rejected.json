@@ -1,0 +1,200 @@
+[
+  {
+    "name": "extra-field",
+    "sample": "fire",
+    "changes": {
+      "zone_id": "Z-B"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "string-sequence",
+    "sample": "fire",
+    "changes": {
+      "source_sequence": "17"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "bool-version",
+    "sample": "fire",
+    "changes": {
+      "schema_version": true
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "unsupported-version",
+    "sample": "fire",
+    "changes": {
+      "schema_version": 2
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "bad-uuid",
+    "sample": "fire",
+    "changes": {
+      "event_id": "bad"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "not-utc",
+    "sample": "fire",
+    "changes": {
+      "observed_at": "2026-11-10T10:00:00+09:00"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "invalid-date",
+    "sample": "fire",
+    "changes": {
+      "observed_at": "2026-02-30T01:00:00Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "unsafe-integer",
+    "sample": "fire",
+    "changes": {
+      "source_sequence": 9007199254740992
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "alarm-without-cause",
+    "sample": "fire",
+    "changes": {
+      "hazard_type": null
+    },
+    "expected_code": "INVALID_EVENT_COMBINATION",
+    "context": null
+  },
+  {
+    "name": "alarm-without-confidence",
+    "sample": "fire",
+    "changes": {
+      "confidence": null
+    },
+    "expected_code": "INVALID_EVENT_COMBINATION",
+    "context": null
+  },
+  {
+    "name": "wrong-video-cause",
+    "sample": "fire",
+    "changes": {
+      "hazard_type": "SPRINKLER"
+    },
+    "expected_code": "INVALID_EVENT_COMBINATION",
+    "context": null
+  },
+  {
+    "name": "invalid-validity",
+    "sample": "fire",
+    "changes": {
+      "validity": "UNAVAILABLE"
+    },
+    "expected_code": "INVALID_EVENT_COMBINATION",
+    "context": null
+  },
+  {
+    "name": "missing-frame-time",
+    "sample": "fire",
+    "changes": {
+      "media_time_ms": null
+    },
+    "expected_code": "INVALID_EVENT_COMBINATION",
+    "context": null
+  },
+  {
+    "name": "unknown-source",
+    "sample": "fire",
+    "changes": {
+      "source_id": "UNKNOWN"
+    },
+    "expected_code": "UNKNOWN_SOURCE",
+    "context": "event"
+  },
+  {
+    "name": "previous-run",
+    "sample": "fire",
+    "changes": {
+      "run_id": "77777777-7777-4777-8777-777777777777"
+    },
+    "expected_code": "RUN_MISMATCH",
+    "context": "event"
+  },
+  {
+    "name": "wrong-building",
+    "sample": "fire",
+    "changes": {
+      "building_version": 2
+    },
+    "expected_code": "BUILDING_MISMATCH",
+    "context": "event"
+  },
+  {
+    "name": "source-type-spoof",
+    "sample": "detector",
+    "changes": {
+      "source_id": "CAM-A"
+    },
+    "expected_code": "INVALID_EVENT_COMBINATION",
+    "context": "event"
+  },
+  {
+    "name": "out-of-order",
+    "sample": "fire",
+    "changes": {
+      "source_sequence": 16
+    },
+    "expected_code": "STALE_SEQUENCE",
+    "context": "event"
+  },
+  {
+    "name": "same-sequence-new-id",
+    "sample": "fire",
+    "changes": {},
+    "expected_code": "STALE_SEQUENCE",
+    "context": "event"
+  },
+  {
+    "name": "future-observation",
+    "sample": "fire",
+    "changes": {
+      "source_sequence": 18,
+      "observed_at": "2026-11-10T01:00:01Z"
+    },
+    "expected_code": "CLOCK_INVALID",
+    "context": "event"
+  },
+  {
+    "name": "stale-observation",
+    "sample": "fire",
+    "changes": {
+      "source_sequence": 18,
+      "observed_at": "2026-11-10T00:59:57Z"
+    },
+    "expected_code": "STALE_OBSERVATION",
+    "context": "event"
+  },
+  {
+    "name": "conflicting-event-id",
+    "sample": "fire",
+    "changes": {
+      "confidence": 0.7
+    },
+    "expected_code": "EVENT_ID_CONFLICT",
+    "context": "seen_event"
+  }
+]

@@ -1,0 +1,799 @@
+{
+  "session": {
+    "model": "Session",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "controller_mode": "INITIALIZING"
+    }
+  },
+  "fire": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "source_id": "CAM-A",
+      "source_type": "VIDEO_AI",
+      "source_sequence": 17,
+      "event_kind": "ALARM",
+      "hazard_type": "FIRE",
+      "validity": "VALID",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": 4200,
+      "confidence": 0.82,
+      "reason_code": null
+    }
+  },
+  "smoke": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "event_id": "55555555-5555-4555-8555-555555555555",
+      "source_id": "CAM-A",
+      "source_type": "VIDEO_AI",
+      "source_sequence": 17,
+      "event_kind": "ALARM",
+      "hazard_type": "SMOKE",
+      "validity": "VALID",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": 4200,
+      "confidence": 0.82,
+      "reason_code": null
+    }
+  },
+  "normal": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "source_id": "CAM-A",
+      "source_type": "VIDEO_AI",
+      "source_sequence": 17,
+      "event_kind": "OBSERVATION",
+      "hazard_type": null,
+      "validity": "VALID",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": 4200,
+      "confidence": null,
+      "reason_code": null
+    }
+  },
+  "unavailable": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "source_id": "CAM-A",
+      "source_type": "VIDEO_AI",
+      "source_sequence": 17,
+      "event_kind": "UNAVAILABLE",
+      "hazard_type": null,
+      "validity": "UNAVAILABLE",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": null,
+      "confidence": null,
+      "reason_code": "EOF"
+    }
+  },
+  "heartbeat": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "source_id": "CAM-A",
+      "source_type": "VIDEO_AI",
+      "source_sequence": 17,
+      "event_kind": "HEARTBEAT",
+      "hazard_type": null,
+      "validity": "VALID",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": null,
+      "confidence": null,
+      "reason_code": null
+    }
+  },
+  "detector": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "source_id": "DETECTOR-A",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "source_sequence": 17,
+      "event_kind": "ALARM",
+      "hazard_type": "SMOKE",
+      "validity": "VALID",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": null,
+      "confidence": null,
+      "reason_code": null
+    }
+  },
+  "sprinkler": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "source_id": "SPRINKLER-A",
+      "source_type": "SIM_SPRINKLER",
+      "source_sequence": 17,
+      "event_kind": "ALARM",
+      "hazard_type": "SPRINKLER",
+      "validity": "VALID",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": null,
+      "confidence": null,
+      "reason_code": null
+    }
+  },
+  "command": {
+    "model": "SignCommand",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "guidance_version": 3,
+      "sign_id": "SIGN-S",
+      "command_id": "33333333-3333-4333-8333-333333333333",
+      "command_sequence": 19,
+      "issued_at": "2026-11-10T01:00:00.200Z",
+      "valid_for_ms": 3000,
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "mode": "DYNAMIC",
+          "display": "RIGHT",
+          "next_node_id": "B",
+          "exit_id": "EXIT-Y",
+          "reason_codes": []
+        },
+        {
+          "face_id": "REAR",
+          "mode": "DYNAMIC",
+          "display": "LEFT",
+          "next_node_id": "B",
+          "exit_id": "EXIT-Y",
+          "reason_codes": []
+        }
+      ]
+    }
+  },
+  "no_route_command": {
+    "model": "SignCommand",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "guidance_version": 3,
+      "sign_id": "SIGN-S",
+      "command_id": "33333333-3333-4333-8333-333333333333",
+      "command_sequence": 19,
+      "issued_at": "2026-11-10T01:00:00.200Z",
+      "valid_for_ms": 3000,
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "mode": "NO_ROUTE",
+          "display": null,
+          "next_node_id": null,
+          "exit_id": null,
+          "reason_codes": [
+            "NO_REACHABLE_EXIT"
+          ]
+        },
+        {
+          "face_id": "REAR",
+          "mode": "NO_ROUTE",
+          "display": null,
+          "next_node_id": null,
+          "exit_id": null,
+          "reason_codes": [
+            "NO_REACHABLE_EXIT"
+          ]
+        }
+      ]
+    }
+  },
+  "ack": {
+    "model": "SignAck",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "sign_id": "SIGN-S",
+      "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+      "command_id": "33333333-3333-4333-8333-333333333333",
+      "command_sequence": 19,
+      "guidance_version": 3,
+      "status": "APPLIED",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "mode": "DYNAMIC",
+          "display": "RIGHT"
+        },
+        {
+          "face_id": "REAR",
+          "mode": "DYNAMIC",
+          "display": "LEFT"
+        }
+      ],
+      "client_apply_duration_ms": 8,
+      "error_code": null
+    }
+  },
+  "rejected_ack": {
+    "model": "SignAck",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "sign_id": "SIGN-S",
+      "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+      "command_id": "33333333-3333-4333-8333-333333333333",
+      "command_sequence": 19,
+      "guidance_version": 3,
+      "status": "REJECTED",
+      "faces": [],
+      "client_apply_duration_ms": null,
+      "error_code": "COMMAND_EXPIRED"
+    }
+  },
+  "arm": {
+    "model": "ControlRequest",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "reason": "초기 관측 확인 후 시연 시작"
+    }
+  },
+  "clear": {
+    "model": "ClearRequest",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "reason": "시험 원인 확인 해제",
+      "source_id": "CAM-A",
+      "hazard_type": "FIRE"
+    }
+  },
+  "reset": {
+    "model": "ControlRequest",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "reason": "다음 독립 시험 실행"
+    }
+  },
+  "event_receipt": {
+    "model": "EventReceipt",
+    "payload": {
+      "accepted": true,
+      "duplicate": false,
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "guidance_version": 3
+    }
+  },
+  "arm_receipt": {
+    "model": "ArmReceipt",
+    "payload": {
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "controller_mode": "NORMAL",
+      "armed": true
+    }
+  },
+  "clear_receipt": {
+    "model": "ClearReceipt",
+    "payload": {
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "source_id": "CAM-A",
+      "hazard_type": "FIRE",
+      "cleared": true,
+      "guidance_version": 4
+    }
+  },
+  "reset_receipt": {
+    "model": "ResetReceipt",
+    "payload": {
+      "previous_run_id": "11111111-1111-4111-8111-111111111111",
+      "run_id": "66666666-6666-4666-8666-666666666666",
+      "controller_mode": "INITIALIZING"
+    }
+  },
+  "error": {
+    "model": "ErrorResponse",
+    "payload": {
+      "error": {
+        "code": "RUN_MISMATCH",
+        "message": "실행이 변경되었습니다",
+        "field": "run_id"
+      }
+    }
+  },
+  "route": {
+    "model": "Route",
+    "payload": {
+      "node_id": "S",
+      "next_node_id": "B",
+      "exit_id": "EXIT-Y",
+      "path_node_ids": [
+        "S",
+        "B",
+        "Y"
+      ],
+      "cost": 4,
+      "reason_codes": []
+    }
+  },
+  "exit_route": {
+    "model": "Route",
+    "payload": {
+      "node_id": "Y",
+      "next_node_id": null,
+      "exit_id": "EXIT-Y",
+      "path_node_ids": [
+        "Y"
+      ],
+      "cost": 0,
+      "reason_codes": []
+    }
+  },
+  "no_route": {
+    "model": "Route",
+    "payload": {
+      "node_id": "I",
+      "next_node_id": null,
+      "exit_id": null,
+      "path_node_ids": [],
+      "cost": null,
+      "reason_codes": [
+        "NO_REACHABLE_EXIT"
+      ]
+    }
+  },
+  "state": {
+    "model": "StateSnapshot",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "guidance_version": 0,
+      "generated_at": "2026-11-10T01:00:00.000Z",
+      "controller_mode": "INITIALIZING",
+      "sources": [
+        {
+          "source_id": "CAM-A",
+          "validity": "INITIALIZING",
+          "last_event_id": null,
+          "last_observed_at": null,
+          "last_source_sequence": null
+        },
+        {
+          "source_id": "DETECTOR-A",
+          "validity": "INITIALIZING",
+          "last_event_id": null,
+          "last_observed_at": null,
+          "last_source_sequence": null
+        },
+        {
+          "source_id": "SPRINKLER-A",
+          "validity": "INITIALIZING",
+          "last_event_id": null,
+          "last_observed_at": null,
+          "last_source_sequence": null
+        },
+        {
+          "source_id": "DETECTOR-B",
+          "validity": "INITIALIZING",
+          "last_event_id": null,
+          "last_observed_at": null,
+          "last_source_sequence": null
+        }
+      ],
+      "active_causes": [],
+      "blocked_nodes": [],
+      "blocked_edges": [],
+      "routes": [
+        {
+          "node_id": "S",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "INITIALIZING"
+          ]
+        },
+        {
+          "node_id": "A",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "INITIALIZING"
+          ]
+        },
+        {
+          "node_id": "B",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "INITIALIZING"
+          ]
+        },
+        {
+          "node_id": "X",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "INITIALIZING"
+          ]
+        },
+        {
+          "node_id": "Y",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "INITIALIZING"
+          ]
+        },
+        {
+          "node_id": "I",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "INITIALIZING"
+          ]
+        }
+      ],
+      "signs": [
+        {
+          "sign_id": "SIGN-S",
+          "faces": [
+            {
+              "face_id": "FRONT",
+              "mode": "UNKNOWN",
+              "display": null,
+              "next_node_id": null,
+              "exit_id": null,
+              "reason_codes": [
+                "INITIALIZING"
+              ]
+            },
+            {
+              "face_id": "REAR",
+              "mode": "UNKNOWN",
+              "display": null,
+              "next_node_id": null,
+              "exit_id": null,
+              "reason_codes": [
+                "INITIALIZING"
+              ]
+            }
+          ],
+          "latest_command": null,
+          "application_status": "NOT_ISSUED",
+          "terminals": []
+        },
+        {
+          "sign_id": "SIGN-B",
+          "faces": [
+            {
+              "face_id": "FRONT",
+              "mode": "UNKNOWN",
+              "display": null,
+              "next_node_id": null,
+              "exit_id": null,
+              "reason_codes": [
+                "INITIALIZING"
+              ]
+            }
+          ],
+          "latest_command": null,
+          "application_status": "NOT_ISSUED",
+          "terminals": []
+        }
+      ]
+    }
+  },
+  "emergency_state": {
+    "model": "StateSnapshot",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "guidance_version": 3,
+      "generated_at": "2026-11-10T01:00:00.300Z",
+      "controller_mode": "EMERGENCY",
+      "sources": [
+        {
+          "source_id": "CAM-A",
+          "validity": "VALID",
+          "last_event_id": "22222222-2222-4222-8222-222222222222",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        },
+        {
+          "source_id": "DETECTOR-A",
+          "validity": "VALID",
+          "last_event_id": "88888888-8888-4888-8888-888888888888",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        },
+        {
+          "source_id": "SPRINKLER-A",
+          "validity": "VALID",
+          "last_event_id": "99999999-9999-4999-8999-999999999999",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        },
+        {
+          "source_id": "DETECTOR-B",
+          "validity": "VALID",
+          "last_event_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        }
+      ],
+      "active_causes": [
+        {
+          "source_id": "CAM-A",
+          "hazard_type": "FIRE",
+          "first_event_id": "22222222-2222-4222-8222-222222222222",
+          "last_event_id": "22222222-2222-4222-8222-222222222222",
+          "activated_at": "2026-11-10T01:00:00.000Z"
+        }
+      ],
+      "blocked_nodes": [
+        {
+          "node_id": "A",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        }
+      ],
+      "blocked_edges": [
+        {
+          "edge_id": "S-A",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        },
+        {
+          "edge_id": "A-S",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        },
+        {
+          "edge_id": "A-X",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        },
+        {
+          "edge_id": "X-A",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "node_id": "S",
+          "next_node_id": "B",
+          "exit_id": "EXIT-Y",
+          "path_node_ids": [
+            "S",
+            "B",
+            "Y"
+          ],
+          "cost": 4,
+          "reason_codes": []
+        },
+        {
+          "node_id": "A",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "ORIGIN_BLOCKED"
+          ]
+        },
+        {
+          "node_id": "B",
+          "next_node_id": "Y",
+          "exit_id": "EXIT-Y",
+          "path_node_ids": [
+            "B",
+            "Y"
+          ],
+          "cost": 2,
+          "reason_codes": []
+        },
+        {
+          "node_id": "X",
+          "next_node_id": null,
+          "exit_id": "EXIT-X",
+          "path_node_ids": [
+            "X"
+          ],
+          "cost": 0,
+          "reason_codes": []
+        },
+        {
+          "node_id": "Y",
+          "next_node_id": null,
+          "exit_id": "EXIT-Y",
+          "path_node_ids": [
+            "Y"
+          ],
+          "cost": 0,
+          "reason_codes": []
+        },
+        {
+          "node_id": "I",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "NO_REACHABLE_EXIT"
+          ]
+        }
+      ],
+      "signs": [
+        {
+          "sign_id": "SIGN-S",
+          "faces": [
+            {
+              "face_id": "FRONT",
+              "mode": "DYNAMIC",
+              "display": "RIGHT",
+              "next_node_id": "B",
+              "exit_id": "EXIT-Y",
+              "reason_codes": []
+            },
+            {
+              "face_id": "REAR",
+              "mode": "DYNAMIC",
+              "display": "LEFT",
+              "next_node_id": "B",
+              "exit_id": "EXIT-Y",
+              "reason_codes": []
+            }
+          ],
+          "latest_command": {
+            "schema_version": 1,
+            "run_id": "11111111-1111-4111-8111-111111111111",
+            "building_id": "TWO_ROUTE",
+            "building_version": 1,
+            "guidance_version": 3,
+            "sign_id": "SIGN-S",
+            "command_id": "33333333-3333-4333-8333-333333333333",
+            "command_sequence": 19,
+            "issued_at": "2026-11-10T01:00:00.200Z",
+            "valid_for_ms": 3000,
+            "faces": [
+              {
+                "face_id": "FRONT",
+                "mode": "DYNAMIC",
+                "display": "RIGHT",
+                "next_node_id": "B",
+                "exit_id": "EXIT-Y",
+                "reason_codes": []
+              },
+              {
+                "face_id": "REAR",
+                "mode": "DYNAMIC",
+                "display": "LEFT",
+                "next_node_id": "B",
+                "exit_id": "EXIT-Y",
+                "reason_codes": []
+              }
+            ]
+          },
+          "application_status": "APPLIED",
+          "terminals": [
+            {
+              "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+              "last_ack": {
+                "schema_version": 1,
+                "run_id": "11111111-1111-4111-8111-111111111111",
+                "sign_id": "SIGN-S",
+                "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+                "command_id": "33333333-3333-4333-8333-333333333333",
+                "command_sequence": 19,
+                "guidance_version": 3,
+                "status": "APPLIED",
+                "faces": [
+                  {
+                    "face_id": "FRONT",
+                    "mode": "DYNAMIC",
+                    "display": "RIGHT"
+                  },
+                  {
+                    "face_id": "REAR",
+                    "mode": "DYNAMIC",
+                    "display": "LEFT"
+                  }
+                ],
+                "client_apply_duration_ms": 8,
+                "error_code": null
+              },
+              "received_at": "2026-11-10T01:00:00.300Z",
+              "verified": true
+            }
+          ]
+        },
+        {
+          "sign_id": "SIGN-B",
+          "faces": [
+            {
+              "face_id": "FRONT",
+              "mode": "DYNAMIC",
+              "display": "FORWARD",
+              "next_node_id": "Y",
+              "exit_id": "EXIT-Y",
+              "reason_codes": []
+            }
+          ],
+          "latest_command": null,
+          "application_status": "NOT_ISSUED",
+          "terminals": []
+        }
+      ]
+    }
+  }
+}
