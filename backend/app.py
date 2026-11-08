@@ -1,4 +1,4 @@
-"""Local/internal B01 API. Run a single worker; deployment access is separate."""
+"""Local/internal control API. Run a single worker; deployment access is separate."""
 
 import asyncio
 from contextlib import asynccontextmanager, suppress
@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from .contracts import ContractError, parse_contract
 from .contracts.messages import (
     ArmReceipt, ClearReceipt, ClearRequest, ControlRequest, EventReceipt,
-    ObservationEvent, ResetReceipt, Session, StateSnapshot,
+    ObservationEvent, ResetReceipt, Session, SignAck, SignCommand, SignState, StateSnapshot,
 )
 from .contracts.building import Building
 from .controller import Controller
@@ -88,6 +88,13 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None):
 
     @app.post("/api/events", response_model=EventReceipt)
     def events(payload: ObservationEvent): return app.state.controller.receive(payload.model_dump(mode="json"))
+
+    @app.get("/api/signs/{sign_id}/command", response_model=SignCommand)
+    def command(sign_id: str): return app.state.controller.issue_command(sign_id)
+
+    @app.post("/api/signs/{sign_id}/ack", response_model=SignState)
+    def acknowledge(sign_id: str, payload: SignAck):
+        return app.state.controller.acknowledge(sign_id, payload.model_dump(mode="json"))
 
     @app.post("/api/control/arm", response_model=ArmReceipt)
     def arm(payload: ControlRequest): return app.state.controller.arm(payload.model_dump(mode="json"))

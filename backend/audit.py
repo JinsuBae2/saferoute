@@ -26,7 +26,7 @@ class AuditLog:
         manifest = dict(run_id=run_id, building_id=building.building_id,
                         building_version=building.building_version,
                         building_sha256=hashlib.sha256(encoded).hexdigest(),
-                        started_at=started_at, component="B01-observation-state")
+                        started_at=started_at, component="B03-guidance-controller")
         with (directory / "manifest.json").open("x", encoding="utf-8") as stream:
             json.dump(manifest, stream, ensure_ascii=False, allow_nan=False)
             stream.write("\n")
@@ -34,7 +34,7 @@ class AuditLog:
             os.fsync(stream.fileno())
 
     def write(self, run_id, category, record):
-        if category not in {"events", "decisions"}:
+        if category not in {"events", "decisions", "commands", "acks"}:
             raise ValueError("unknown audit category")
         with (self.root / run_id / f"{category}.jsonl").open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(json_evidence(record), ensure_ascii=True, allow_nan=False) + "\n")

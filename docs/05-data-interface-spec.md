@@ -220,6 +220,8 @@ face의 mode는 `DEFAULT`, `DYNAMIC`, `NO_ROUTE`, `UNKNOWN`이다. DEFAULT도 �
 
 서버는 guidance_version이 같아도 매 조회에 새로운 command_sequence·command_id를 발행한다. 동일한 방향을 유지하면서 유효기간을 갱신할 수 있다. 늦은 동일 버전 응답도 순번으로 배제한다.
 
+명령 기록 중 관측이 만료되어 안내 버전이 바뀌면 COMMAND_MISMATCH, 명령 자체가 만료되면 COMMAND_EXPIRED(409)로 응답하고 해당 명령을 반환하지 않는다. 단말은 실패 응답으로 기존 명령의 기한을 연장하지 않고 새 명령을 다시 조회한다. ACK 처리도 로그 저장 후 만료를 반영한 현재 SignState를 반환한다.
+
 브라우저 백그라운드·절전에서는 타이머가 지연될 수 있다. visibilitychange·복귀 시 먼저 만료를 확인하고 신선한 명령 전까지 방향을 표시하지 않는다. 브라우저 기반 시험으로 실제 등기구의 정확한 시간 보장이나 전기적 고장 동작을 입증하지 않는다.
 
 ### 5.3 적용 응답
@@ -246,6 +248,13 @@ status는 APPLIED 또는 REJECTED다. 서버는 발행한 명령과 sign_id·run
 
 HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 반영은 소프트웨어 적용 증거이며 실제 화면은 별도 관찰로 확인한다. 최신 명령이 미적용이면 예전 ACK가 늦게 도착해도 최신 적용 상태를 성공으로 바꾸지 않는다. 동일 sign_id의 여러 브라우저 인스턴스는 중복 단말로 표시하고 두 개의 유도등으로 세지 않는다.
 
+B03의 성공 응답은 HTTP 200과 해당 유도등의 `SignState` 객체(`sign_id`, `faces`, `latest_command`, `application_status`, `terminals`)다. 200은 응답 접수이며 유효한 과거 명령의 ACK는 현재 상태를 PENDING으로 남길 수 있다. 다음 규칙을 따른다.
+
+- 같은 단말·명령의 동일 ACK는 중복으로 기록하고 기존 수신 시각을 갱신하지 않는다. 내용이 달라지면 COMMAND_MISMATCH로 거부한다. 명령이 이미 만료됐다면 중복 ACK도 COMMAND_EXPIRED다.
+- 단말별 마지막 ACK는 명령 순번이 더 높은 경우에만 갱신한다. 서로 다른 terminal_instance_id가 같은 sign_id에 유효 ACK를 보내면 실행 동안 DUPLICATE_TERMINAL로 표시한다. 이는 확인된 인스턴스 이력이며 현재 온라인 여부를 뜻하지 않는다. 자동으로 하나를 선택하거나 이력을 지우지 않고 새 실행에서 초기화한다.
+- 적용 상태 판정 순서는 NOT_ISSUED → 중복 인스턴스 확인 → 명령 만료 확인 → 현재 안내·명령과 ACK 일치 확인이다. 현재 명령의 유효 APPLIED는 APPLIED, 유효 REJECTED는 REJECTED, 아직 확인되지 않은 현재 안내는 PENDING이다.
+- 명령·ACK 로그 쓰기에 실패하면 503으로 드러내며 적용 성공을 반환하지 않는다. 서버의 APPLIED는 검증된 응답을 받았다는 뜻이고, 실제 화면 관찰은 별도다.
+
 ## 6. API 목록
 
 | 메서드·경로 | 요청 | 성공 응답·용도 |
@@ -257,7 +266,7 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 | GET /api/explanations/current | 없음 | A05 설명 작업자(8002)의 현재 설명·기준 버전·기한·상태. 구현 예정 |
 | POST /api/events | 3절 이벤트 | 수락·중복 여부와 해당 판단 버전 |
 | GET /api/signs/{sign_id}/command | 없음 | 단말별 새 명령 |
-| POST /api/signs/{sign_id}/ack | 5절 응답 | 응답 접수. 검증 실패 시 오류 |
+| POST /api/signs/{sign_id}/ack | 5절 응답 | 해당 SignState. 응답 접수와 현재 적용 상태를 구분, 검증 실패 시 오류 |
 | POST /api/control/arm | run_id, reason | 초기 관측 확인 후 시연 시작 허용 |
 | POST /api/control/clear | run_id, source_id, hazard_type, reason | 특정 원인 확인 해제. 원인 없으면 명시 오류 |
 | POST /api/control/reset | run_id, reason | 기존 실행 종료·새 run_id 생성·INITIALIZING |
@@ -272,7 +281,7 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 
 조회 응답은 `Cache-Control: no-store`로 제공한다. 클라이언트도 캐시를 사용하지 않는다. POST 제어 기능은 기본 배포에서 SSH 접속 권한이 있는 팀원만 접근하는 내부 경로다. 공개 배포가 결정되면 인증·권한을 먼저 구현하고 무인증 reset·clear·event 전송을 열지 않는다.
 
-B01에서 health·session·building·state·events·arm·clear·reset을 구현했다. B02에서 `/api/state.routes`에 NORMAL의 검증된 기본 경로와 EMERGENCY의 위험 배제 경로를 연결했다. INITIALIZING·DEGRADED에서는 각각 INITIALIZING·REQUIRED_OBSERVATION_UNKNOWN 사유와 빈 경로를 반환한다. `/api/signs/*`와 `/sim/*`는 아직 구현하지 않았다. signs는 UNKNOWN/NOT_ISSUED이며 표시면의 사유는 arm 전 INITIALIZING, arm 이후 CONTROLLER_UNAVAILABLE이다. 경로 제공은 유도등 명령 발행·적용 완료를 의미하지 않는다.
+B01에서 health·session·building·state·events·arm·clear·reset, B02에서 상태별 경로, B03에서 현재 표시면·단말별 명령·ACK·감사 로그를 구현했다. INITIALIZING·DEGRADED는 각각 INITIALIZING·REQUIRED_OBSERVATION_UNKNOWN 사유와 UNKNOWN 표시다. NORMAL은 DEFAULT, EMERGENCY는 DYNAMIC 또는 NO_ROUTE이며, 등록된 출구 지점은 EXIT, 지원하지 않는 면은 NO_ROUTE·UNSUPPORTED_DISPLAY다. `/sim/*`와 실제 브라우저 단말은 후속 구현이다. 경로·표시면 조회는 명령 발행·적용 완료를 의미하지 않는다.
 
 ### 6.1 오류
 
@@ -316,6 +325,8 @@ B01에서 health·session·building·state·events·arm·clear·reset을 구현�
 | verification.json | 시험 ID, 기대·실제 결과, 판정, 증거 경로 |
 
 JSONL은 한 줄에 JSON 객체 하나다. 중간에 로그가 깨졌으면 검증 도구가 해당 줄을 오류로 보고하며 조용히 건너뛰어 성공률을 높이지 않는다. 로그 기록 실패·디스크 부족은 운영 오류로 드러내고 측정 증거 미완료로 처리한다.
+
+B03의 commands 로그는 전체 `command`와 `issued_monotonic_ms`·`expires_at_monotonic_ms`를 기록한다. acks 로그는 원본 payload·accepted/duplicate/rejected·verified·confirms_current·서버 수신 시각·server_ack_elapsed_ms를 기록하며 거부 시 오류 코드를 남긴다. verified는 해당 발행 명령의 APPLIED 내용 검증, confirms_current는 수신 시 현재 안내·최신 명령과의 일치다. 중복 단말 여부까지 반영한 전체 적용 판정은 SignState에서 확인한다. 서버 경과 시간은 클라이언트의 화면 렌더링 시간과 구분한다. decisions의 안내 변경 기록에는 같은 버전의 경로와 표시면을 함께 남긴다.
 
 실행 종료 후 S3의 `outputs/runs/<run_id>/`에 필요한 증거를 복사한다. 제어 요청 처리 안에서 매번 S3 업로드를 기다리지 않는다. PEM, AWS 자격증명, 개인 영상은 로그·Git·S3 공개 자료에 넣지 않는다.
 

@@ -6,11 +6,12 @@ import time
 from uuid import uuid4
 
 from .audit import AuditLog
-from .contracts import ContractError, EventContext, check_event, parse_contract
+from .contracts import ContractError, EventContext, check_ack, check_command, check_event, parse_contract
 from .contracts.messages import (
     ActiveCause, ArmReceipt, BlockedEdge, BlockedNode, ClearReceipt, EventReceipt, ResetReceipt, Session,
-    SourceState, StateSnapshot,
+    SignCommand, SignState, SourceState, StateSnapshot, TerminalState,
 )
+from .guidance import sign_faces
 from .routing import calculate_routes, unavailable_routes, validate_default_routes
 
 
@@ -34,6 +35,7 @@ class Controller:
         self.audit_failed = False
         self.source_config = {s.source_id: s for s in self.building.sources}
         self.zones = {z.zone_id: z for z in self.building.zones}
+        self.sign_config = {s.sign_id: s for s in self.building.signs}
         self._start_run(str(uuid4()))
 
     def _start_run(self, run_id):
@@ -48,6 +50,11 @@ class Controller:
         self.active_causes = {}
         self.seen_events = {}
         self.last_sequences = {}
+        self.commands = {}
+        self.latest_commands = {}
+        self.command_sequences = {}
+        self.terminals = {sign_id: {} for sign_id in self.sign_config}
+        self.seen_acks = {}
         self._route_key = None
         self._routes = []
         self._write("decisions", operation="start", actor=self.operator_id, reason="new run")
@@ -92,7 +99,8 @@ class Controller:
                     sources=[s.model_dump(mode="json") for s in snapshot.sources],
                     blocked_nodes=[n.model_dump(mode="json") for n in snapshot.blocked_nodes],
                     blocked_edges=[e.model_dump(mode="json") for e in snapshot.blocked_edges],
-                    routes=[r.model_dump(mode="json") for r in snapshot.routes], **evidence)
+                    routes=[r.model_dump(mode="json") for r in snapshot.routes],
+                    signs=[s.model_dump(mode="json") for s in snapshot.signs], **evidence)
         self._snapshot = snapshot
 
     def _build_snapshot(self):
@@ -130,25 +138,56 @@ class Controller:
                 self._routes = unavailable_routes(self.building,
                     "INITIALIZING" if mode == "INITIALIZING" else "REQUIRED_OBSERVATION_UNKNOWN")
             self._route_key = key
-        # Routes are available in B02; actual sign displays and commands belong to B03.
-        reason = "INITIALIZING" if not self.armed else "CONTROLLER_UNAVAILABLE"
         return StateSnapshot(**self._session().model_dump(), guidance_version=self.guidance_version,
             generated_at=utc_text(self.clock.utcnow()),
             sources=[s.model_copy(deep=True) for s in self.sources.values()],
             active_causes=[self.active_causes[key].model_copy(deep=True) for key in sorted(self.active_causes)],
             blocked_nodes=node_blocks, blocked_edges=edge_blocks,
             routes=self._routes,
-            signs=[dict(sign_id=s.sign_id,faces=[dict(face_id=f.face_id,mode="UNKNOWN",display=None,next_node_id=None,exit_id=None,reason_codes=[reason]) for f in s.faces],latest_command=None,application_status="NOT_ISSUED",terminals=[]) for s in self.building.signs])
+            signs=self._sign_states())
+
+    def _sign_states(self):
+        routes = {r.node_id: r for r in self._routes}
+        result = []
+        now = self.clock.monotonic_ms()
+        for sign in self.building.signs:
+            faces = sign_faces(sign, routes[sign.node_id], self._mode())
+            command = self.latest_commands.get(sign.sign_id)
+            terminals = list(self.terminals[sign.sign_id].values())
+            status = "NOT_ISSUED"
+            if command:
+                status = "PENDING"
+                if len(terminals) > 1:
+                    status = "DUPLICATE_TERMINAL"
+                elif now >= self.commands[command.command_id][2]:
+                    status = "EXPIRED"
+                elif terminals and command.guidance_version == self.guidance_version and command.faces == faces:
+                    terminal = terminals[0]
+                    if terminal.last_ack.command_id == command.command_id:
+                        status = "APPLIED" if terminal.verified else "REJECTED"
+            result.append(SignState(sign_id=sign.sign_id, faces=faces, latest_command=command,
+                                    application_status=status, terminals=terminals))
+        return result
 
     def _expire_locked(self):
         self._ensure_ready()
-        expired = [source for source, deadline in self.deadlines.items() if self.clock.monotonic_ms() >= deadline]
-        if not expired: return
-        before = self._decision_key()
-        for source in expired:
-            self.sources[source].validity = "STALE"
-            del self.deadlines[source]
-        self._publish(before, "expire", source_ids=sorted(expired))
+        while True:
+            expired = [source for source, deadline in self.deadlines.items() if self.clock.monotonic_ms() >= deadline]
+            if expired:
+                before = self._decision_key()
+                for source in expired:
+                    self.sources[source].validity = "STALE"
+                    del self.deadlines[source]
+                self._publish(before, "expire", source_ids=sorted(expired))
+                continue
+            snapshot = self._build_snapshot()
+            if [s.application_status for s in snapshot.signs] != [s.application_status for s in self._snapshot.signs]:
+                self._write("decisions", operation="command_expire", guidance_version=self.guidance_version,
+                            signs=[s.model_dump(mode="json") for s in snapshot.signs])
+                self._snapshot = snapshot
+                continue
+            self._snapshot = snapshot
+            return
 
     def expire(self):
         with self.lock: self._expire_locked()
@@ -165,8 +204,89 @@ class Controller:
 
     def record_rejection(self, payload, error, operation="event"):
         with self.lock:
-            self._write("events", operation=operation, outcome="rejected", payload=payload,
+            category = "acks" if operation == "ack" or operation.endswith("/ack") else "commands" if operation == "command" else "events"
+            self._write(category, operation=operation, outcome="rejected", payload=payload,
                         error_code=error.code, field=error.field)
+
+    def _sign(self, sign_id):
+        if sign_id not in self.sign_config:
+            raise ContractError("UNKNOWN_SIGN", "등록되지 않은 유도등입니다", "sign_id")
+        return next(s for s in self._snapshot.signs if s.sign_id == sign_id)
+
+    def issue_command(self, sign_id):
+        with self.lock:
+            self._expire_locked()
+            try:
+                sign = self._sign(sign_id)
+            except ContractError as error:
+                self.record_rejection({"sign_id": sign_id}, error, "command")
+                raise
+            sequence = self.command_sequences.get(sign_id, 0)
+            issued = self.clock.monotonic_ms()
+            command = SignCommand(schema_version=1, run_id=self.run_id,
+                building_id=self.building.building_id, building_version=self.building.building_version,
+                guidance_version=self.guidance_version, sign_id=sign_id, command_id=str(uuid4()),
+                command_sequence=sequence + 1, issued_at=utc_text(self.clock.utcnow()),
+                valid_for_ms=3000, faces=sign.faces)
+            check_command(command, self._session(), self.building, sign_id, sequence)
+            expires = issued + command.valid_for_ms
+            self._write("commands", operation="issue", command=command.model_dump(mode="json"),
+                        issued_monotonic_ms=issued, expires_at_monotonic_ms=expires)
+            self.commands[command.command_id] = (command, issued, expires)
+            self.latest_commands[sign_id] = command
+            self.command_sequences[sign_id] = command.command_sequence
+            self._snapshot = self._build_snapshot()
+            # Audit I/O holds the lock; the expiry task cannot update us during it.
+            self._expire_locked()
+            error = None
+            if self.clock.monotonic_ms() >= expires:
+                error = ContractError("COMMAND_EXPIRED", "발행 중 명령 기한이 지났습니다", "command_id")
+            elif command.guidance_version != self.guidance_version:
+                error = ContractError("COMMAND_MISMATCH", "발행 중 안내가 변경됐습니다. 새 명령을 조회하세요", "guidance_version")
+            if error:
+                self._write("commands", operation="discard", outcome="discarded", command_id=command.command_id,
+                            error_code=error.code)
+                raise error
+            return command.model_copy(deep=True)
+
+    def acknowledge(self, sign_id, payload):
+        with self.lock:
+            self._expire_locked()
+            try:
+                ack = parse_contract("SignAck", payload)
+                self._sign(sign_id)
+                if ack.run_id != self.run_id:
+                    raise ContractError("RUN_MISMATCH", "실행이 변경되었습니다", "run_id")
+                if ack.sign_id != sign_id:
+                    raise ContractError("COMMAND_MISMATCH", "요청 경로와 응답 대상이 다릅니다", "sign_id")
+                entry = self.commands.get(ack.command_id)
+                if entry is None:
+                    raise ContractError("COMMAND_MISMATCH", "발행하지 않은 명령의 응답입니다", "command_id")
+                command, issued, expires = entry
+                received = self.clock.monotonic_ms()
+                verified = check_ack(ack, command, now_monotonic_ms=received, expires_at_monotonic_ms=expires)
+                key = (ack.command_id, ack.terminal_instance_id)
+                previous = self.seen_acks.get(key)
+                if previous is not None and previous != ack:
+                    raise ContractError("COMMAND_MISMATCH", "같은 단말·명령에 다른 응답이 있습니다", "command_id")
+            except ContractError as error:
+                self.record_rejection(payload, error, "ack")
+                raise
+            latest = self.latest_commands[sign_id]
+            current = latest.command_id == command.command_id and command.guidance_version == self.guidance_version
+            self._write("acks", operation="ack", outcome="duplicate" if previous else "accepted",
+                        payload=ack.model_dump(mode="json"), verified=verified, confirms_current=current and verified,
+                        server_ack_elapsed_ms=received - issued, received_monotonic_ms=received, error_code=None)
+            if previous is None:
+                self.seen_acks[key] = ack
+                terminal = self.terminals[sign_id].get(ack.terminal_instance_id)
+                if terminal is None or terminal.last_ack.command_sequence < ack.command_sequence:
+                    self.terminals[sign_id][ack.terminal_instance_id] = TerminalState(
+                        terminal_instance_id=ack.terminal_instance_id, last_ack=ack,
+                        received_at=utc_text(self.clock.utcnow()), verified=verified)
+            self._snapshot = self._build_snapshot()
+            self._expire_locked()
+            return self._sign(sign_id).model_copy(deep=True)
 
     def receive(self, payload):
         with self.lock:
