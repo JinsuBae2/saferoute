@@ -1,0 +1,10 @@
+{
+  "name": "saferoute-contracts",
+  "private": true,
+  "scripts": {
+    "test:contracts": "tsc --project contracts/tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
