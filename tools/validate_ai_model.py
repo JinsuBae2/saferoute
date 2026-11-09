@@ -47,6 +47,7 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
     cap = cv2.VideoCapture(str(path))
     frames = []
     decoded = 0
+    duplicate_timestamps = 0
     next_due = 0.0
     previous = -1.0
     process = psutil.Process()
@@ -68,10 +69,13 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
                 if not ok:
                     break
                 timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
-                if not math.isfinite(timestamp) or timestamp <= previous:
-                    raise ValueError(f"Non-increasing media timestamp: {path}: {timestamp}")
-                previous = timestamp
+                if not math.isfinite(timestamp) or timestamp < 0 or timestamp < previous:
+                    raise ValueError(f"Invalid or regressing media timestamp: {path}: {timestamp}")
                 decoded += 1
+                if timestamp == previous:
+                    duplicate_timestamps += 1
+                    continue
+                previous = timestamp
                 if timestamp + 1e-6 < next_due:
                     continue
                 next_due = (math.floor((timestamp + 1e-6) / interval_ms) + 1) * interval_ms
@@ -104,6 +108,7 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
     return {
         "asset_id": asset["asset_id"], "video_metadata": metadata,
         "decoded_frames": decoded, "last_decoded_media_time_ms": previous,
+        "skipped_duplicate_timestamp_frames": duplicate_timestamps,
         "read_termination": "read_returned_false_not_verified_eof",
         "offline_elapsed_s": elapsed_s,
         "offline_sample_throughput_fps": len(frames) / elapsed_s,
@@ -112,8 +117,9 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
 
 
 def main():
+    root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", type=Path, default=Path("data/manifests/assets.json"))
+    parser.add_argument("--manifest", type=Path, default=root / "data/manifests/assets.json")
     parser.add_argument("--output", type=Path, required=True, help="New output directory")
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--interval-ms", type=int, default=500)
@@ -121,12 +127,14 @@ def main():
     args = parser.parse_args()
     if args.imgsz <= 0 or args.interval_ms <= 0 or not 0 < args.confidence < 1:
         parser.error("imgsz/interval must be positive and confidence between 0 and 1")
-    root = Path(__file__).resolve().parents[1]
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     weights = manifest["model"]
     assets = manifest["videos"]
     if not assets or any(a["split"] != "development" for a in assets):
         raise ValueError("This trial accepts development assets only")
+    asset_ids = [a["asset_id"].casefold() for a in assets]
+    if len(asset_ids) != len(set(asset_ids)):
+        raise ValueError("Duplicate asset_id (case-insensitive output filenames)")
     for item in [weights, *assets]:
         verify_file(root / item["path"], item["sha256"])
     args.output.mkdir(parents=True, exist_ok=False)
