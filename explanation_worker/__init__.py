@@ -1,1 +1,1 @@
-"""Read-only explanation preparation; runtime/API are implemented separately."""
+"""Read-only Bedrock explanation process, independent of the controller."""

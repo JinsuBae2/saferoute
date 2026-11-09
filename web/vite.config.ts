@@ -8,6 +8,7 @@ import { defineConfig } from "vitest/config";
 const CONTROL_API = process.env.SAFEROUTE_API ?? "http://127.0.0.1:8000";
 // 시나리오 실행기는 별도 프로세스(8001)다. 꺼져 있어도 관제는 동작해야 한다.
 const SCENARIO_API = process.env.SAFEROUTE_SIM_API ?? "http://127.0.0.1:8001";
+const EXPLANATION_API = process.env.SAFEROUTE_EXPLANATION_API ?? "http://127.0.0.1:8002";
 
 export default defineConfig({
   plugins: [react()],
@@ -24,6 +25,7 @@ export default defineConfig({
     // contracts/는 web/ 바깥이라 명시적으로 허용한다.
     fs: { allow: [".."] },
     proxy: {
+      "/api/explanations/": { target: EXPLANATION_API, changeOrigin: false },
       "/api": { target: CONTROL_API, changeOrigin: false },
       "/sim": { target: SCENARIO_API, changeOrigin: false },
     },
