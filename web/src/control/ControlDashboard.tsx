@@ -2,10 +2,11 @@
  * 관제 화면. 서버가 확정한 한 안내 버전의 상태·위험·경로·단말 현황을 표시한다.
  * 경로나 방향을 여기서 계산하지 않고, 미적용·단절·오래된 버전을 숨기지 않는다.
  */
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 
 import type { StateSnapshot } from "@contracts";
+
 
 import {
   checkExplanation,
@@ -18,6 +19,9 @@ import {
 import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
+
+// three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
+const BuildingPanel = lazy(() => import("../building/BuildingPanel"));
 
 type Mode = StateSnapshot["controller_mode"];
 type Validity = StateSnapshot["sources"][number]["validity"];
@@ -206,6 +210,16 @@ export function ControlDashboard() {
           단말들이 서로 다른 안내 버전을 표시하고 있습니다. 이전 버전 {signs.behindGuidance}대.
         </p>
       )}
+
+      <Suspense
+        fallback={
+          <section className="panel">
+            <p className="panel__empty">건물 3D를 불러오는 중입니다.</p>
+          </section>
+        }
+      >
+        <BuildingPanel state={state} simulation={simulation} />
+      </Suspense>
 
       <Panel
         title="상황 설명"

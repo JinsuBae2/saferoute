@@ -20,7 +20,8 @@
     "baseUrl": ".",
     "paths": {
       "@contracts": ["../contracts/types.generated"],
-      "@samples": ["../contracts/samples.generated"]
+      "@samples": ["../contracts/samples.generated"],
+      "@space/*": ["../data/space/*"]
     }
   },
   "include": ["src", "vite.config.ts", "../contracts/types.generated.ts"]
