@@ -71,3 +71,5 @@ start부터 verified EOF finished까지의 단일 실행만 받는다. 영상 �
 | 로컬 근거 | runs/a04-format-20261109T090045Z/summary.json, fixture-evaluation.json, ai/<run_id>/ai-predictions.jsonl (Git 제외) |
 
 독립 평가 영상·정답은 Q01 #8, 모델·설정·매칭 규칙·목표 고정은 A03 #12, 실제 평가와 실패 분석은 A04 #30에서 이어간다. 이 기록의 fixture 수치를 독립 감지 성능으로 제출하지 않는다.
+
+미리보기 보조 로그 호환과 Q01 개발 정답으로 실제 추론 3건을 대조한 결과는 [A04-2](a04-development-comparison.md)에 있다. 평가용 정답은 아직 검수자 기록·일부 주석 완료가 필요하며 개발·튜닝에 사용하지 않았다.

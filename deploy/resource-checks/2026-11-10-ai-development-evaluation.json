@@ -1,0 +1,626 @@
+{
+  "schema_version": 1,
+  "scope": "DEVELOPMENT_SUBSET_EVENT_METRICS_AND_HANDOFF_READINESS",
+  "performance_verdict": "NOT_ASSESSED",
+  "base_commit": "6f2d71e522962e2fd9fca877504b2f623397a7c2",
+  "prediction_origin": "Existing A06 actual04 logs; no inference rerun or threshold adjustment",
+  "source_probe_report": {
+    "path": "runs/preview-73-actual04/report.json",
+    "sha256": "cf19a1b0dde28db56d4b7e25b1d0ab37441d23609e1336fd7822a8dea1beaf12"
+  },
+  "cases": [
+    {
+      "asset_id": "dev-flameless-candle",
+      "run_id": "a2fa87fa-0c17-46ee-a777-76dab06eaab8",
+      "video_sha256": "a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a",
+      "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+      "inputs": {
+        "predictions_sha256": "7bc331f6fbad6a3cb0642df87d96fbf0dbf8b457247e733b7441852ca34acb7a",
+        "ground_truth_sha256": "0eb5e8fe40cf98815e49f0f1a61cb21d890daa061566607baef86f561a3b233d"
+      },
+      "report_sha256": "ec8c3f7c28727b090835a3339129f21cb8994e6b18d2f01a989e86e014d95b49",
+      "ground_truth_path": "data/expected/ai/development/dev-flameless-candle.json",
+      "predictions_path": "runs/preview-73-actual04/ai/a2fa87fa-0c17-46ee-a777-76dab06eaab8/ai-predictions.jsonl",
+      "report_path": "runs/a04-96-development/dev-flameless-candle.json",
+      "matching": {
+        "merge_gap_ms": 1000,
+        "boundary_tolerance_ms": 0,
+        "truth_interval": "[start_ms,end_ms)",
+        "rule": "prediction_start_one_to_one"
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 0,
+            "duration_ms": 8680,
+            "per_hour": 0.0
+          }
+        },
+        "SMOKE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 0,
+            "duration_ms": 8680,
+            "per_hour": 0.0
+          }
+        }
+      },
+      "processing": {
+        "analyzed_frames": 18,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 8594.000000040978,
+        "video_loop_frames_per_second": 2.0944845240765853,
+        "max_read_to_completion_ms": 500.0
+      },
+      "config": {
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "source_id": "CAM-A",
+        "expected_zone_id": "Z-A",
+        "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+        "imgsz": 640,
+        "interval_ms": 500,
+        "confidence": 0.25,
+        "window_ms": 1500,
+        "min_detections": 2,
+        "request_timeout_ms": 750,
+        "max_attempts": 2,
+        "retry_delay_ms": 100
+      },
+      "runtime": {
+        "device": "cpu",
+        "python": "3.12.16",
+        "os": "Windows-10-10.0.19045-SP0",
+        "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+        "logical_cpu_count": 16,
+        "torch_threads": 4,
+        "packages": {
+          "torch": "2.15.0+cpu",
+          "torchvision": "0.29.2+cpu",
+          "ultralytics": "8.4.208",
+          "opencv-python": "5.0.0.93",
+          "numpy": "2.5.4"
+        }
+      }
+    },
+    {
+      "asset_id": "dev-candle-match",
+      "run_id": "a041d93b-9bb1-4517-8d2a-883e363ecc39",
+      "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+      "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+      "inputs": {
+        "predictions_sha256": "0b01519173d90482676c3dcb3ae1aafbff4eccce877e2aa2fd9775215b169724",
+        "ground_truth_sha256": "29d690191e15bde93a500c116eb47ebf496ac54c725ee325e070e723a761fc7d"
+      },
+      "report_sha256": "6cfd773b8596c9c4a729b24f25c163688ce9f5653d0e242300d8707098536a3b",
+      "ground_truth_path": "data/expected/ai/development/dev-candle-match.json",
+      "predictions_path": "runs/preview-73-actual04/ai/a041d93b-9bb1-4517-8d2a-883e363ecc39/ai-predictions.jsonl",
+      "report_path": "runs/a04-96-development/dev-candle-match.json",
+      "matching": {
+        "merge_gap_ms": 1000,
+        "boundary_tolerance_ms": 0,
+        "truth_interval": "[start_ms,end_ms)",
+        "rule": "prediction_start_one_to_one"
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 1,
+          "fp": 4,
+          "fn": 0,
+          "precision": {
+            "value": 0.2,
+            "numerator": 1,
+            "denominator": 5
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "predicted_events": [
+            {
+              "start_ms": 501,
+              "last_alarm_ms": 2002,
+              "event_ids": [
+                "b6bea001-43f7-4f13-bdf5-6ae9e4cc8849",
+                "1eb379c6-be0b-441f-8fb6-3b2369ce746b",
+                "bf3b165f-2c6d-446a-ad8b-91fd01b2465a",
+                "a24b143d-0e6b-4d39-b5f4-0376230aba7f"
+              ],
+              "truth_event_id": "ev1",
+              "latency_ms": 501
+            },
+            {
+              "start_ms": 5005,
+              "last_alarm_ms": 6006,
+              "event_ids": [
+                "12fc4f6e-87d7-41b3-8b33-c692c4fa0ffa",
+                "c7b3e1b0-c54d-48e0-9846-82fb021dac67",
+                "e941dd0f-1c67-487e-8e10-3edb6dcce27a"
+              ],
+              "truth_event_id": null,
+              "latency_ms": null
+            },
+            {
+              "start_ms": 13514,
+              "last_alarm_ms": 13514,
+              "event_ids": [
+                "aff1a590-e070-4207-a282-65b4566d8583"
+              ],
+              "truth_event_id": null,
+              "latency_ms": null
+            },
+            {
+              "start_ms": 18018,
+              "last_alarm_ms": 18018,
+              "event_ids": [
+                "7b236a66-e4bc-4b40-8354-527840efedb4"
+              ],
+              "truth_event_id": null,
+              "latency_ms": null
+            },
+            {
+              "start_ms": 24525,
+              "last_alarm_ms": 25025,
+              "event_ids": [
+                "16f8223e-f2ea-4ee2-bdd0-37354547a86d",
+                "ec106053-23c9-4a37-aab5-870b1d705af2"
+              ],
+              "truth_event_id": null,
+              "latency_ms": null
+            }
+          ],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 1,
+            "values": [
+              501
+            ],
+            "mean": 501.0,
+            "maximum": 501
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        },
+        "SMOKE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        }
+      },
+      "processing": {
+        "analyzed_frames": 51,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 25077.99999997951,
+        "video_loop_frames_per_second": 2.0336549964128587,
+        "max_read_to_completion_ms": 514.9999998975545
+      },
+      "config": {
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "source_id": "CAM-A",
+        "expected_zone_id": "Z-A",
+        "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+        "imgsz": 640,
+        "interval_ms": 500,
+        "confidence": 0.25,
+        "window_ms": 1500,
+        "min_detections": 2,
+        "request_timeout_ms": 750,
+        "max_attempts": 2,
+        "retry_delay_ms": 100
+      },
+      "runtime": {
+        "device": "cpu",
+        "python": "3.12.16",
+        "os": "Windows-10-10.0.19045-SP0",
+        "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+        "logical_cpu_count": 16,
+        "torch_threads": 4,
+        "packages": {
+          "torch": "2.15.0+cpu",
+          "torchvision": "0.29.2+cpu",
+          "ultralytics": "8.4.208",
+          "opencv-python": "5.0.0.93",
+          "numpy": "2.5.4"
+        }
+      }
+    },
+    {
+      "asset_id": "dev-smoke-0009",
+      "run_id": "5df521e9-3ef7-4e1f-b69a-22bda04506f0",
+      "video_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+      "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+      "inputs": {
+        "predictions_sha256": "e74b52c00b5eacf1e87cf733d3e9252e763f9bd6e75a56fffe117ef5d08a8be3",
+        "ground_truth_sha256": "ddad78fc279bb4746065a0a49d39ba116beed2ca551ab964fea0344b3b37cb69"
+      },
+      "report_sha256": "9ce926647943db413f28f51bd018172b0136949587fe44788686f846e66c191a",
+      "ground_truth_path": "data/expected/ai/development/dev-smoke-0009.json",
+      "predictions_path": "runs/preview-73-actual04/ai/5df521e9-3ef7-4e1f-b69a-22bda04506f0/ai-predictions.jsonl",
+      "report_path": "runs/a04-96-development/dev-smoke-0009.json",
+      "matching": {
+        "merge_gap_ms": 1000,
+        "boundary_tolerance_ms": 0,
+        "truth_interval": "[start_ms,end_ms)",
+        "rule": "prediction_start_one_to_one"
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        },
+        "SMOKE": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "predicted_events": [
+            {
+              "start_ms": 500,
+              "last_alarm_ms": 9500,
+              "event_ids": [
+                "013941f1-0c94-419e-92b8-8de90f59479e",
+                "8a13838d-72a9-4b25-a638-5326c26c235c",
+                "9ff0975f-a4ac-4fe0-bb73-6df06e266827",
+                "09345e8c-031c-4b09-9272-de2cbbf0e5c0",
+                "59fb1de8-efe3-4c39-a8e7-6cf977531bbf",
+                "769e3016-9218-4f9f-bf0a-4dcf74376c04",
+                "e8568b5d-4682-48db-bee8-54ad495b2fb1",
+                "b57bc111-2742-4ce4-be8b-aceee06155d8",
+                "966ac48b-8f41-43f7-a963-849c22590c67",
+                "3dff9f44-6311-4447-80cb-f79cf22c7d2c",
+                "11fb8b08-f490-4910-ac82-9069e6b576a7",
+                "ee4d9b9a-fbd9-4597-908e-957895d65780",
+                "55a734c8-9da5-4be9-ae9e-5a736a621a42",
+                "0df10250-e1cc-4f3d-b0b1-430a720041f8",
+                "27465b21-a71b-4309-9c26-c1ab00ccc018",
+                "6860f940-9587-42e8-a466-311e574a0d88",
+                "0cbb30e5-0883-4e05-8b8b-8748390894cc",
+                "e7079f06-6101-4cba-8df7-44efae4b4fb1",
+                "8c41bcb3-2158-45f5-80e4-5d1b249ebf20"
+              ],
+              "truth_event_id": "ev1",
+              "latency_ms": 500
+            }
+          ],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 1,
+            "values": [
+              500
+            ],
+            "mean": 500.0,
+            "maximum": 500
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        }
+      },
+      "processing": {
+        "analyzed_frames": 20,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 9641.000000061467,
+        "video_loop_frames_per_second": 2.074473602310184,
+        "max_read_to_completion_ms": 186.9999999180436
+      },
+      "config": {
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "source_id": "CAM-A",
+        "expected_zone_id": "Z-A",
+        "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+        "imgsz": 640,
+        "interval_ms": 500,
+        "confidence": 0.25,
+        "window_ms": 1500,
+        "min_detections": 2,
+        "request_timeout_ms": 750,
+        "max_attempts": 2,
+        "retry_delay_ms": 100
+      },
+      "runtime": {
+        "device": "cpu",
+        "python": "3.12.16",
+        "os": "Windows-10-10.0.19045-SP0",
+        "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+        "logical_cpu_count": 16,
+        "torch_threads": 4,
+        "packages": {
+          "torch": "2.15.0+cpu",
+          "torchvision": "0.29.2+cpu",
+          "ultralytics": "8.4.208",
+          "opencv-python": "5.0.0.93",
+          "numpy": "2.5.4"
+        }
+      }
+    }
+  ],
+  "annotation_readiness": [
+    {
+      "path": "data/expected/ai/development/dev-candle-match.json",
+      "sha256": "29d690191e15bde93a500c116eb47ebf496ac54c725ee325e070e723a761fc7d",
+      "asset_id": "dev-candle-match",
+      "split": "development",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": true,
+      "duration_ms": 25470,
+      "schema_ready": true,
+      "errors": []
+    },
+    {
+      "path": "data/expected/ai/development/dev-caviar-browse-whilewaiting2.json",
+      "sha256": "a6ab9925ff60ec4f9d338f6a4e854374a256e140845827c9645d4372e74a5341",
+      "asset_id": "dev-caviar-browse-whilewaiting2",
+      "split": "development",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": true,
+      "duration_ms": 75840,
+      "schema_ready": true,
+      "errors": []
+    },
+    {
+      "path": "data/expected/ai/development/dev-caviar-meet-walktogether1.json",
+      "sha256": "171fb8908e68ac3f7478cffdc80f3fbac7bd4bbb089d194085b915cc2f858aef",
+      "asset_id": "dev-caviar-meet-walktogether1",
+      "split": "development",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": true,
+      "duration_ms": 28320,
+      "schema_ready": true,
+      "errors": []
+    },
+    {
+      "path": "data/expected/ai/development/dev-caviar-walk1.json",
+      "sha256": "17beeb6c2fab87edab449003c8c43e333b355188b417ae659ddf9294e132ad6c",
+      "asset_id": "dev-caviar-walk1",
+      "split": "development",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": true,
+      "duration_ms": 24480,
+      "schema_ready": true,
+      "errors": []
+    },
+    {
+      "path": "data/expected/ai/development/dev-flameless-candle.json",
+      "sha256": "0eb5e8fe40cf98815e49f0f1a61cb21d890daa061566607baef86f561a3b233d",
+      "asset_id": "dev-flameless-candle",
+      "split": "development",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": true,
+      "duration_ms": 8680,
+      "schema_ready": true,
+      "errors": []
+    },
+    {
+      "path": "data/expected/ai/development/dev-joss-smoke.json",
+      "sha256": "82fd288ab1d6081e42aa16ac2b214170e5826c25a5ee5b720c932ad77abc765e",
+      "asset_id": "dev-joss-smoke",
+      "split": "development",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": true,
+      "duration_ms": 5170,
+      "schema_ready": true,
+      "errors": []
+    },
+    {
+      "path": "data/expected/ai/development/dev-smoke-0009.json",
+      "sha256": "ddad78fc279bb4746065a0a49d39ba116beed2ca551ab964fea0344b3b37cb69",
+      "asset_id": "dev-smoke-0009",
+      "split": "development",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": true,
+      "duration_ms": 9730,
+      "schema_ready": true,
+      "errors": []
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-caviar-walkbyshop1cor.json",
+      "sha256": "a3e7c7f246e2885993a50aaec069455c8beb32dd783be727cd32a0e3b1835891",
+      "asset_id": "eval-caviar-walkbyshop1cor",
+      "split": "evaluation",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": false,
+      "duration_ms": 94400,
+      "schema_ready": false,
+      "errors": [
+        "Value error, evaluation requires reviewed annotations, no declared development use or known training overlap"
+      ]
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-fs-reflections.json",
+      "sha256": "e877f1b3f6d29f37755b436e538d4f8373d7475de70250533f9f7f8b34a097fe",
+      "asset_id": "eval-fs-reflections",
+      "split": "evaluation",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": false,
+      "duration_ms": 18030,
+      "schema_ready": false,
+      "errors": [
+        "Value error, evaluation requires reviewed annotations, no declared development use or known training overlap"
+      ]
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-mm-heptane-bright.json",
+      "sha256": "7f23b03eecb352bce0eeb6297ddcdd16a30e42787f910f9f3ea5b39710e5f392",
+      "asset_id": "eval-mm-heptane-bright",
+      "split": "evaluation",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": false,
+      "duration_ms": 360000,
+      "schema_ready": false,
+      "errors": [
+        "Value error, evaluation requires reviewed annotations, no declared development use or known training overlap"
+      ]
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-mm-mist-bright.json",
+      "sha256": "de4f5207b942acbfa3e63266b43c71027c9b7a6c00de76dc017e9586e35637c4",
+      "asset_id": "eval-mm-mist-bright",
+      "split": "evaluation",
+      "annotation_complete": true,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": false,
+      "duration_ms": 300000,
+      "schema_ready": false,
+      "errors": [
+        "Value error, evaluation requires reviewed annotations, no declared development use or known training overlap"
+      ]
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-mm-polyurethane-bright.json",
+      "sha256": "f3bd7f200f2ac97be46b6f481b93488fbfe6af381b3353335389044a632039a9",
+      "asset_id": "eval-mm-polyurethane-bright",
+      "split": "evaluation",
+      "annotation_complete": false,
+      "reviewer": null,
+      "training_overlap": "unknown",
+      "development_used": false,
+      "duration_ms": 360000,
+      "schema_ready": false,
+      "errors": [
+        "Value error, only complete per-video annotations are supported"
+      ]
+    }
+  ],
+  "not_evaluated_development": [
+    "dev-caviar-browse-whilewaiting2",
+    "dev-caviar-meet-walktogether1",
+    "dev-caviar-walk1",
+    "dev-joss-smoke"
+  ],
+  "limitations": [
+    "Only 3 of 7 development videos; no full-dataset aggregate or performance pass/fail.",
+    "Evaluation annotations used only for schema/metadata validation, not prediction comparison or tuning.",
+    "Evaluation set: all 5 reviewer=null, polyurethane annotation_complete=false. No annotation changed.",
+    "All 12 training_overlap declarations unknown. Development labels have no reviewer.",
+    "Normal footage is only 8680 ms; zero observed false alarms is not evidence of field reliability.",
+    "Targets, final adoption and team license decision remain pending; QA5 independent review not claimed.",
+    "Preview fault-injection repeats of candle footage excluded to avoid duplicate scene counting.",
+    "Raw reports retain original config.model_path; public config omits this local absolute path."
+  ]
+}
