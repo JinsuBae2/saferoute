@@ -1,6 +1,6 @@
 # A02 실제 영상 → 공통 이벤트 연결
 
-담당 1번의 [#10](https://github.com/JinsuBae2/saferoute/issues/10) 로컬 개발 구현이다. 백엔드·계약·프론트 기능은 변경하지 않는다. A01 최종 선정은 대기 중이며, [A01 PR #47](https://github.com/JinsuBae2/saferoute/pull/47)에서 실제 실행한 개발 후보를 사용한다. 서버 실행·프로젝트 라이선스 결정·독립 평가 완료를 뜻하지 않는다.
+담당 1번의 [#10](https://github.com/JinsuBae2/saferoute/issues/10) 로컬 개발 구현이다. 백엔드·계약·프론트 기능은 변경하지 않는다. A01 최종 선정은 대기 중이며, [A01 실행 기록](a01-model-validation.md)의 개발 후보를 사용한다. 서버 실행·프로젝트 라이선스 결정·독립 평가 완료를 뜻하지 않는다.
 
 ## 입력과 실행
 
@@ -11,7 +11,7 @@ python -m pip install -r requirements-core.lock.txt -r requirements-ai.lock.txt
 python -m ai_worker --config configs/ai.example.json --video data/videos/candle-and-match.ogv --controller http://127.0.0.1:8000
 ```
 
-위 `python`은 활성화한 `.venv-ai`의 Python이다. 백엔드는 [README의 실행 절차](../../README.md#백엔드-실행)로 먼저 시작한다. 가중치·영상은 Git에 포함하지 않는다. 원본 위치·해시·사용 조건은 [A01 manifest 고정 버전](https://github.com/JinsuBae2/saferoute/blob/8ea2434046a202a3ae5a5bd6e8c32cec7421f6c4/data/manifests/assets.json)에 기록되어 있다. 다운로드 전에 해당 사용 조건을 확인한다.
+위 `python`은 활성화한 `.venv-ai`의 Python이다. 백엔드는 [README의 실행 절차](../../README.md#백엔드-실행)로 먼저 시작한다. 가중치·영상은 Git에 포함하지 않는다. 원본 위치·해시·사용 조건은 [A01 manifest](../../data/manifests/assets.json)에 기록되어 있다. 다운로드 전에 해당 사용 조건을 확인한다.
 
 - 가중치: `models/fire-smoke-yolov8n.pt`, `rabahdev/fire-smoke-yolov8n` revision `13017fe8af477c25f5298d168e2dfede4b000753`.
 - SHA-256: `b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f`. 불일치하면 로딩하지 않는다. 모델 클래스는 `0=smoke`, `1=fire`를 확인한다.
