@@ -4,9 +4,10 @@
 최초 실험 기준 develop: `5a0c169393cb4a7e80be4600a6cd980a864eb251`.
 PR 준비 시 최신 develop `fe5bbabf1692f48771f1a232bd10b31595f6c034`를 반영하고 공통 검사를 다시 실행했다.
 검토 지적 보완 시 develop `77a5298`의 팀 작업을 추가 반영했다.
+정상·혼동 장면 추가 검증 시 develop `08614a3`까지 반영했다.
 
 **실제 CPU 추론과 불꽃·연기 클래스 출력을 확인했다. 최종 모델 선정과 A01 전체 완료 판정은 보류한다.**
-5번의 자료 인계를 기다리지 않고 공개 개발 영상 4개를 확보했다. 얇은 연기 미검출과 축소 입력에서의 오탐·미탐을 발견했다. 이번 도구는 오프라인 실행 검증용이며 A02 이벤트/API 연동, A03 설정 확정, A04 독립 평가를 구현한 것이 아니다.
+5번의 자료 인계를 기다리지 않고 공개 개발 영상 4개를 확보했고, 후속 검증에서 정상 통로·수증기 후보 2개를 추가해 총 6개가 됐다. 얇은 연기 미검출과 축소 입력에서의 오탐·미탐을 발견했다. 이번 도구는 오프라인 실행 검증용이며 A02 이벤트/API 연동, A03 설정 확정, A04 독립 평가를 구현한 것이 아니다.
 
 ## 출처와 환경
 
@@ -30,7 +31,7 @@ PR 준비 시 최신 develop `fe5bbabf1692f48771f1a232bd10b31595f6c034`를 반�
 
 정확한 다운로드 URL·해시·원본 장면 ID는 [assets.json](../../data/manifests/assets.json)에 있다. 모두 development이며 독립 정답 파일·주석자·검토자·건물 구역 매핑은 아직 없다.
 
-영상별 `read_validation`에는 기존 640 실행에서 확인한 FPS·해상도·코덱·실제 디코딩 수·마지막 영상 시각과 근거 summary의 경로·해시·실행 시각을 기록했다. `read_success=true`는 프레임을 읽고 증가하는 시각을 확인했다는 뜻이며 정상 EOF나 전체 영상의 무손상 판정은 아니다. `source_duration_s`는 출처의 길이, `last_decoded_media_time_ms`는 실제 마지막 프레임 시각이므로 구분한다. `reported_fps`와 `reported_frame_count`는 컨테이너 보고값을 그대로 보존하며 특히 LED 영상의 1000 FPS를 실제 재생률로 사용하지 않는다. 로컬 근거 파일은 Git에서 제외하지만 재실행으로 메타데이터를 대조할 수 있다.
+영상별 `read_validation`에는 FPS·해상도·코덱·실제 디코딩 수·마지막 영상 시각과 근거 파일의 경로·해시·실행 시각을 기록했다. 최초 4개는 기존 640 실행 summary, 추가 2개는 `runs/a01-negative-probe/probe.json`의 순차 디코딩 기록에서 가져왔고 후속 추론 결과와 대조했다. `read_success=true`는 프레임을 읽고 증가하는 시각을 확인했다는 뜻이며 정상 EOF나 전체 영상의 무손상 판정은 아니다. `source_duration_s`는 출처의 길이, `last_decoded_media_time_ms`는 실제 마지막 프레임 시각이므로 구분한다. `reported_fps`와 `reported_frame_count`는 컨테이너 보고값을 그대로 보존하며 특히 LED 영상의 1000 FPS를 실제 재생률로 사용하지 않는다. 로컬 근거 파일은 Git에서 제외하지만 재실행으로 메타데이터를 대조할 수 있다.
 
 | ID | 출처·저작자 | 선택한 조건 | 용도 |
 | --- | --- | --- | --- |
@@ -38,8 +39,10 @@ PR 준비 시 최신 develop `fe5bbabf1692f48771f1a232bd10b31595f6c034`를 반�
 | dev-candle-match | [Candle and Match](https://commons.wikimedia.org/wiki/File:Candle_and_Match.ogv), LoKiLeCh | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | 촛불·성냥 근접 슬로모션 |
 | dev-joss-smoke | [Joss paper burning](https://commons.wikimedia.org/wiki/File:Joss_paper_burning_with_cloud_of_smoke_Tai_Po_HK_2026.webm), Waydwaid | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 가림이 있는 야외 연기 |
 | dev-smoke-0009 | [Smoke 0009](https://commons.wikimedia.org/wiki/File:Smoke_0009.webm), Amuzujoe | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | 짙은 야외 연기. 첫 미검출 후 추가한 개발 자료 |
+| dev-metro-ermita-corridor | [Metro Ermita 통로](https://commons.wikimedia.org/wiki/File:Transbordo_de_la_l%C3%ADnea_2_y_12_de_Metro_Ermita.webm), ProtoplasmaKid | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | 보행자·조명·바닥 반사가 있는 정상 실내 후보 |
+| dev-chemical-plant-steam | [Steam from a chemical plant](https://commons.wikimedia.org/wiki/File:Steam_from_a_chemical_plant.webm), 驭龙飞车手 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 출처에서 수증기로 소개한 야외 혼동 후보 |
 
-원본 바이트는 수정하지 않았다. 로컬 미리보기는 프레임 추출·박스 표시를 한 파생물이다. 공유 시 저작자·원본·라이선스·변경 사실을 함께 표시하고 SA 조건을 유지한다. 이 원본 장면 및 파생물은 독립 평가에서 제외한다. 5번에게 인계할 manifest를 준비했으며 별도로 전송하지 않았다. 정상 실내 CCTV와 연기 유사 방해 장면은 아직 부족하다.
+다운로드한 원본 바이트는 수정하지 않았다. 로컬 미리보기는 프레임 추출·축소·시각/박스 표시를 한 파생물이다. 공유 시 저작자·원본·라이선스·변경 사실을 함께 표시하고 SA 조건을 유지한다. 통로 영상에는 저작자 요청 표기 `ProtoplasmaKid / Wikimedia Commons / CC-BY-SA 4.0`을 사용한다. 이 원본 장면 및 파생물은 독립 평가에서 제외한다. 5번에게 인계할 manifest를 준비했으며 별도로 전송하지 않았다. 정상 실내 고정 CCTV, 실내 수증기와 다양한 방해 장면은 아직 부족하다. 기존 4개 영상 전달 ZIP에는 추가 2개가 들어 있지 않다.
 
 ## 실측 결과
 
@@ -79,6 +82,23 @@ predict 시간은 전처리·추론·후처리 호출 경과시간이다. 전체
 
 ## 재실행과 사용자 확인
 
+### 추가 정상·혼동 장면 검증
+
+`runs/a01-expanded-640/`에서 총 6개를 동일한 후보·confidence=0.25·imgsz=640·500ms 간격·영상 추론 4스레드로 실행했다. 새 자료에 맞춰 임계값을 조정하지 않았다. 처음 4개의 검출 프레임 수는 기존 A와 일치했다. 새 영상의 원본 해시·출처 페이지 revision·사용 조건도 manifest에 기록했다.
+
+| 추가 영상 | FIRE / 샘플 | SMOKE / 샘플 | 평균 / p95 predict ms | 전체 처리초 / 샘플 처리량 fps | 샘플 시점 최대 RSS MiB |
+| --- | --- | --- | --- | --- | --- |
+| 실내 통로 | 0 / 25 | 0 / 25 | 24.65 / 30.09 | 9.58 / 2.61 | 635.55 |
+| 수증기 후보 | 0 / 19 | 7 / 19 | 22.23 / 31.73 | 1.31 / 14.48 | 478.83 |
+
+두 영상의 500ms 간격 contact sheet를 확인했다. 통로는 보행자와 조명·바닥 반사가 보이며 확인한 샘플에 불꽃·연기가 보이지 않았다. 이동 카메라 1개 장면이며 WFI나 고정 CCTV의 정상 분포를 대표하지 않는다. 수증기 후보는 출처 설명에 근거한 분류이며 물질 성분·연소 여부를 독립 확인한 정답이 아니다. 따라서 7/19를 확정 오탐률로 부르지 않고 **연기와 혼동할 가능성이 있는 개발 사례**로 남긴다. 독립 정답 주석은 두 영상 모두 없다.
+
+통로는 367프레임·마지막 시각 12,212ms를 읽었다. 수증기 후보는 컨테이너 보고 289프레임과 실제 읽기 267프레임이 다르고 마지막 시각은 9,359ms다. 영상 종료·손상 여부는 확정하지 않으며 읽힌 구간의 결과로만 해석한다. 추론 환경은 기존 AI lock 그대로이며 `opencv_version`은 최초 4개에서 배포 패키지 버전, 추가 probe에서는 OpenCV의 `cv2.__version__` 보고값이다.
+
+추가 자료로 정상·혼동 장면의 부족을 일부 보완했지만, 기존 얇은 연기 미검출과 신규 혼동 결과 때문에 최종 모델 선정은 계속 보류한다. 다음 판단에는 비교 후보 또는 개선 설정 검증, 최종 서버에서의 3초 관측 유효기간 확인이 필요하다.
+
+### 실행 명령
+
 저장소 루트에서 실행한다. 이 PC의 `.venv-ai`와 원본 파일은 준비되어 있다. 결과를 보존하려고 **새 출력 폴더 이름**을 요구한다.
 
 ```powershell
@@ -109,5 +129,5 @@ foreach ($asset in @($manifest.model) + @($manifest.videos)) {
 - PR 준비 검사: 최신 develop의 Windows UTF-8 수정과 팀원 작업 반영 후, CI와 동일한 `-X warn_default_encoding -W error::EncodingWarning` 조건으로 pytest **299개**, 협업 검사 unittest **15개**, 계약 산출물 검사를 통과했다. Node **24.22.2**에서 `npm ci --ignore-scripts` 및 `npm run test:contracts`도 통과했다. 기존 Starlette httpx 사용 중단 예정 경고 1건이 있으며 실패는 아니다.
 - AI lock 오프라인 설치 dry-run: 39개 설치 패키지 일치, 변경 없음.
 - 새 단위 시험은 프레임별 중복 박스 집계·미검출 포함·빈 실행 거부·누락/변조 파일 거부를 검사한다. 실제 추론은 별도 로컬 실행으로 확인했다. CI 모델 다운로드는 추가하지 않았다.
-- A01 남은 항목: 대표 정상/방해 장면, 미검출을 고려한 후보 선정, 제출 조건 정리, 최종 장비 재측정. 독립 평가·이벤트 연동·Bedrock은 다음 작업이다.
+- A01 남은 항목: 고정 CCTV·실내 수증기 등 대표 정상/방해 장면 보강, 미검출·혼동을 고려한 후보 선정, 제출 조건 정리, 최종 장비 재측정. 독립 평가·이벤트 연동·Bedrock은 다음 작업이다.
 - 공유 방식: #9 작업 브랜치에서 Draft PR로 검증 근거를 공유한다. 위 남은 항목을 해결하고 Ready 전환·최신 CI 통과를 확인한 뒤 develop에 Squash merge한다. 현재 결과를 모델 선정 완료나 독립 평가 통과로 해석하지 않는다.
