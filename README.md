@@ -22,7 +22,7 @@
 
 Bedrock 설명의 별도 계약·허용 근거는 [A05-1](docs/ai/a05-explanation-contract.md), 실제 호출·설명 API·장애 격리·관제 프록시 실행은 [A05-2](docs/ai/a05-explanation-api.md)에 있습니다. 독립 V15 평가와 운영 배포·전체 시연 검수는 남아 있습니다.
 
-CCTV 표시용 프레임·검출 좌표·수명 계약과 합성 샘플은 [A06-1](docs/ai/a06-preview-contract.md)에 있습니다. 실제 미리보기 API·영상 송출·화면 연결은 #73/#74 후속 작업입니다.
+CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실제 프레임/JPEG 송출·조회·장애 격리와 개발 검증은 [A06 실행 인계](docs/ai/a06-preview-delivery.md)에 있습니다. 관제·3D 화면 연결은 담당 3의 #74 후속 작업입니다.
 
 ## 협업
 

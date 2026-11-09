@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from uuid import uuid4
 
 from .events import Clock, EventBuilder, EventSender, WorkerError, get_contract, utc_text
 from .inference import file_hash
@@ -8,7 +9,7 @@ from .video import inspect_video
 
 
 def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=None,
-        video_probe=inspect_video):
+        video_probe=inspect_video, preview_url=None, publisher_factory=None):
     clock = clock or Clock()
     if cv2_module is None:
         import cv2 as cv2_module
@@ -44,6 +45,13 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
         frames, samples, skipped, sent = 0, 0, 0, 0
         previous, next_due, last_media = -1.0, 0, None
         failure_reason, can_notify = "DECODE_FAILED", True
+        preview, preview_reason = None, "DECODE_FAILED"
+        if preview_url:
+            try:
+                from .preview import Publisher
+                preview = (publisher_factory or Publisher)(preview_url, session, source)
+            except Exception as error:
+                log("preview_unavailable", error_type=type(error).__name__)
         try:
             inspection = video_probe(video)
             log("video_preflight", **inspection)
@@ -65,6 +73,7 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                     can_notify = False
                     sender.send(builder.unavailable("EOF", clock.utcnow(), last_media))
                     sent += 1
+                    preview_reason = "EOF"
                     break
                 timestamp = cap.get(cv2_module.CAP_PROP_POS_MSEC)
                 if not math.isfinite(timestamp) or timestamp < 0 or timestamp < previous:
@@ -92,7 +101,9 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                 last_media, samples = media_ms, samples + 1
                 failure_reason = "INVALID_DETECTION"
                 events = builder.observation(media_ms, acquired_at, detections)
+                frame_id = str(uuid4()) if preview is not None else None
                 log("prediction", frame_index=frames-1, media_time_ms=media_ms,
+                    preview_frame_id=frame_id,
                     observed_at=utc_text(acquired_at), inference_completed_at=utc_text(completed_at),
                     read_to_completion_ms=(clock.monotonic()-acquired_mono)*1000,
                     detections=detections, events=events)
@@ -102,6 +113,11 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                     sender.send(event)
                     sent += 1
                     can_notify = True
+                if preview is not None:
+                    try:
+                        preview.offer(frame, detections, frame_id, frames-1, media_ms, acquired_at, completed_at)
+                    except Exception as error:
+                        log("preview_unavailable", error_type=type(error).__name__)
             result = dict(run_id=session.run_id, frames=frames, analyzed_frames=samples,
                           skipped_late_frames=skipped, accepted_events=sent,
                           processing_elapsed_ms=(clock.monotonic()-epoch)*1000,
@@ -114,6 +130,12 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                 reason = str(error) if isinstance(error, WorkerError) else "DELIVERY_FAILED"
             if isinstance(error, WorkerError) and str(error).startswith("VIDEO_PREFLIGHT_UNAVAILABLE:"):
                 reason = "VIDEO_PREFLIGHT_UNAVAILABLE"
+            preview_reason = reason if reason in {"VIDEO_OPEN_FAILED", "INFERENCE_FAILED", "OPERATOR_STOPPED"} else (
+                "DECODE_FAILED" if can_notify else "DELIVERY_FAILED")
+            if isinstance(error, WorkerError) and str(error) == "VIDEO_OPEN_FAILED":
+                preview_reason = "VIDEO_OPEN_FAILED"
+            if reason == "INVALID_DETECTION":
+                preview_reason = "INFERENCE_FAILED"
             log("failed", reason_code=reason, error_type=type(error).__name__, detail=str(error))
             if can_notify:
                 try:
@@ -125,3 +147,9 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
         finally:
             if cap is not None:
                 cap.release()
+            if preview is not None:
+                try:
+                    preview.close(preview_reason)
+                    log("preview_finished", dropped_pending_frames=preview.dropped)
+                except Exception as error:
+                    log("preview_unavailable", error_type=type(error).__name__)

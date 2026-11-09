@@ -2,11 +2,11 @@
 
 관련: [#91](https://github.com/JinsuBae2/saferoute/issues/91), 상위 [#73](https://github.com/JinsuBae2/saferoute/issues/73), 화면 담당 [#74](https://github.com/JinsuBae2/saferoute/issues/74).
 
-이 단계는 표시용 `Preview` DTO·수락/거부 샘플·생성 TypeScript만 제공한다. **조회 API·JPEG 송출·AI worker 연결은 아직 구현하지 않았다.** 아래 URL과 전송 규칙은 #73의 구현 기준이며 지금 실행 가능한 엔드포인트가 아니다. 기존 `ObservationEvent`·`StateSnapshot`·설명·명령/ACK 계약은 바꾸지 않는다.
+A06-1은 표시용 `Preview` DTO·수락/거부 샘플·생성 TypeScript를 제공했다. 후속 #73에서 아래 조회 API·JPEG 송출·AI worker 연결을 구현했다. 현재 실행·장애 격리·실측은 [A06 실행 인계](a06-preview-delivery.md)를 따른다. 기존 `ObservationEvent`·`StateSnapshot`·설명·명령/ACK 계약은 바꾸지 않는다.
 
 ## 데이터 형식
 
-Python은 `backend/contracts/previews.py`, 공통 파서는 `parse_contract("Preview", payload)`, TypeScript는 `contracts/types.generated.ts`의 `Preview`다. 검증 샘플은 `data/contracts/valid.json`의 `preview_*` 6개와 `rejected.json`의 `preview-*` 24개다. 가상 시각·합성 상자이며 실제 추론·영상·성능 증거가 아니다.
+Python은 `backend/contracts/previews.py`, 공통 파서는 `parse_contract("Preview", payload)`, TypeScript는 `contracts/types.generated.ts`의 `Preview`다. 검증 샘플은 `data/contracts/valid.json`의 Preview 6개·미리보기 ErrorResponse 2개와 `rejected.json`의 `preview-*` 24개다. 가상 시각·합성 상자이며 실제 추론·영상·성능 증거가 아니다.
 
 | 필드 | 의미 |
 | --- | --- |
@@ -30,9 +30,9 @@ worker의 현재 `Detector.predict`는 원본 픽셀 xyxy를 반환한다. 후�
 
 샘플 FIRE `[0.25,0.25,0.5,0.75]`의 원본 1280×720 좌표는 `[320,180,640,540]`이다. 이미지 내용이 640×360으로 표시되면 `[160,90,320,270]`이다. `object-fit: contain` 여백이 있으면 실제 이미지 내용 영역의 시작 오프셋을 더한다. 크롭·회전·좌우 반전은 하지 않으며 JPEG가 축소되어도 원본과 종횡비·방향이 같아야 한다. 실제 영상·JPEG 대조는 #73 후속이다.
 
-## 예정 조회·이미지 결합 규칙
+## 조회·이미지 결합 규칙
 
-로컬·SSH 터널 범위의 별도 미리보기 서비스로 계획한다. 제어 API의 요청 처리 안에서 이미지 생성·전송을 기다리지 않는다. 영상 접근 권한을 넓히거나 공개 서비스를 추가하지 않는다.
+로컬·SSH 터널 범위의 별도 미리보기 서비스를 사용한다. 제어 API의 요청 처리 안에서 이미지 생성·전송을 기다리지 않는다. 영상 접근 권한을 넓히거나 공개 서비스를 추가하지 않는다.
 
 - 메타데이터: `GET /api/previews/{source_id}?run_id=<현재 실행 UUID>` → 알려진 상태 200/Preview. 모든 응답은 `Cache-Control: no-store`.
 - 이미지: `GET /api/preview-frames/{frame_id}.jpg?run_id=<현재 실행 UUID>&source_id=<선택한 관측원>` → 동일 분석 프레임의 JPEG. 응답 `X-Preview-Frame-Id`가 요청 frame_id와 같아야 한다. ID는 URL 인코딩한다.
@@ -49,6 +49,6 @@ worker의 현재 `Detector.predict`는 원본 픽셀 xyxy를 반환한다. 후�
 
 ## 남은 구현과 검증
 
-후속 #73은 용량이 제한된 최신 프레임 전달, 인코딩/느린 수신/포트 오류가 관측 전송을 막지 않는 격리, 실제 정상·불꽃·연기·EOF·읽기 실패, reset·카메라 전환·지연 시 이전 이미지 차단을 구현하고 측정해야 한다. 이번 형식 검사는 그 동작을 증명하지 않는다. #74는 계약을 이용한 화면 연결을 담당하며 기존 제어 상태·경로 판단은 그대로 사용한다.
+후속 #73의 실제 프레임 전달·격리·개발 영상 대조와 자동 장애 주입 시험은 [실행 인계](a06-preview-delivery.md)에 별도로 기록했다. 이 문서의 합성 형식 샘플 자체가 그 동작을 증명하지 않는다. #74는 계약을 이용한 화면 연결을 담당하며 기존 제어 상태·경로 판단은 그대로 사용한다. 실제 화면·WFI 전체 통합·지원 서버 부하 검증은 별도다.
 
 검사: `python -m pytest tests/test_preview_contract.py tests/test_contract.py tests/test_contract_exports.py -q`, `python -m tools.export_contracts --check`, `npm run test:contracts`. TypeScript는 생성된 정적 형식이며 범위/상태/수명·현재 실행 확인은 실행 시 검사가 필요하다. 새 모델·영상·평가 설정·Bedrock 호출을 추가하지 않았다.

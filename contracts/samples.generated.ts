@@ -946,6 +946,22 @@ export const preview_no_detections = {
   "error_code": null
 } satisfies Contracts.Preview;
 
+export const preview_error_frame_unavailable = {
+  "error": {
+    "code": "PREVIEW_FRAME_UNAVAILABLE",
+    "message": "PREVIEW_FRAME_UNAVAILABLE",
+    "field": null
+  }
+} satisfies Contracts.ErrorResponse;
+
+export const preview_error_update_rejected = {
+  "error": {
+    "code": "PREVIEW_UPDATE_REJECTED",
+    "message": "PREVIEW_UPDATE_REJECTED",
+    "field": null
+  }
+} satisfies Contracts.ErrorResponse;
+
 export const building = {
   "schema_version": 1,
   "building_id": "TWO_ROUTE",

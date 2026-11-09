@@ -449,4 +449,4 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 
 `Preview`는 기존 관측·제어 계약과 분리된 표시용 DTO다. 실행·건물·관측원, READY 프레임의 UUID·원본 크기·취득/추론/만료 시각, 정규화 xyxy·FIRE/SMOKE 검출 점수를 전달한다. INITIALIZING/STALE/EOF/UNAVAILABLE에서는 프레임을 포함하지 않는다. 현재 경보·안전성의 판정 근거로 사용하지 않는다.
 
-[A06-1 인계](ai/a06-preview-contract.md)에 수락/거부 샘플·좌표 변환·이미지 ID 결합·기한·예정 조회와 동적 세션 검사 규칙이 있다. Python DTO·생성 TypeScript만 반영했으며 실제 HTTP·JPEG 송출/격리·화면 연결은 #73/#74에서 구현·검증한다.
+[A06-1 인계](ai/a06-preview-contract.md)에 수락/거부 샘플·좌표 변환·이미지 ID 결합·기한·동적 세션 검사 규칙이 있다. #73의 별도 HTTP·JPEG 송출/격리·실행은 [A06 실행 인계](ai/a06-preview-delivery.md)를 따른다. 미리보기 오류는 기존 ErrorResponse에 PREVIEW_FRAME_UNAVAILABLE(404)·PREVIEW_UPDATE_REJECTED(409)를 추가하며 다른 계약의 의미는 유지한다. 화면 연결은 #74에서 구현·검증한다.
