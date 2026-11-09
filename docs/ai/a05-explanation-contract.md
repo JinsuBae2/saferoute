@@ -31,6 +31,8 @@
 
 ## 검증과 다음 단계
 
+아래는 A05-1 머지 당시의 범위다. 후속 실제 호출/API 구현·검증은 [A05-2](a05-explanation-api.md)에서 확인한다.
+
 `python -m pytest tests/test_explanation_facts.py tests/test_contract.py tests/test_contract_exports.py -q`는 실제 제어기 객체의 정상·화재 우회·양쪽 차단·필수 관측 불가·명시적 해제 후 복구 전이를 사용한다. 사실 선택·수계산 경로·원본 불변성과 기존 명령/ACK가 있는 샘플의 제외 항목을 확인한다. 이는 G01/G02/G04/G07/G09의 **근거 추출 검사**이며 실제 모델 설명 품질이나 V15 완료 증거가 아니다.
 
 이번 단계에는 실행 가능한 worker/API·AWS SDK·Bedrock 호출·서버 배포가 없다. `/api/explanations/current`는 아직 제공하지 않는다. 실제 연결에서 다음을 구현·검증해야 한다.

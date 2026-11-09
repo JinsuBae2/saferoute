@@ -4,7 +4,7 @@
 
 [2026 동북권 개발자 대상 오픈소스 아이디어 경진대회](https://hackathon.tbitcloud.com/northeast-oss)의 지정 주제 **AI 기반 재난 대응 행동요령 안내 서비스**를 건물 화재의 대피 방향 안내로 구체화합니다. 감지는 오픈소스 불꽃·연기 모델, 경로·유도등 판단은 제어 알고리즘, 상황 설명은 Amazon Bedrock이 담당합니다. 설명이 실패해도 제어는 계속 동작하도록 설계합니다. 공식 기준과 주제 대응은 [기획서 0절](docs/01-project-proposal.md#0-공식-대회-기준과-주제-대응)을 참고하세요.
 
-현재 develop에는 공통 계약·제어 API·경로·명령/ACK·시험 도구, 관제·단말·3D 화면, 실제 영상 AI 이벤트·장애 처리·영상별 평가 집계 도구가 반영되어 있습니다. Bedrock 설명(F11/A05), 독립 영상 평가, WFI 전체 통합·지원 서버 배포는 남은 작업입니다. 감지 모델은 개발 후보를 사용하며 최종 채택·프로젝트 라이선스 결정은 A01 #9에서 이어갑니다. 서버 CPU 실측·자체 API 전송 결과와 AV1 실패·샘플 누락·연기 EOF 전 STALE 한계는 [A01-2 기록](docs/ai/a01-server-validation.md)에 있습니다.
+현재 develop에는 공통 계약·제어 API·경로·명령/ACK·시험 도구, 관제·단말·3D 화면, 실제 영상 AI 이벤트·장애 처리·영상별 평가 집계 도구와 별도 Bedrock 설명 API가 반영되어 있습니다. 독립 설명/영상 평가, WFI 전체 통합·지원 서버 배포는 남은 작업입니다. 감지 모델은 개발 후보를 사용하며 최종 채택·프로젝트 라이선스 결정은 A01 #9에서 이어갑니다. 서버 CPU 실측·자체 API 전송 결과와 AV1 실패·샘플 누락·연기 EOF 전 STALE 한계는 [A01-2 기록](docs/ai/a01-server-validation.md)에 있습니다.
 
 ## 개발 문서
 
@@ -20,7 +20,7 @@
 
 서버 개발 영상의 FFV1 디코딩 지연·EOF 전 관측 만료는 [A01-3 UTVideo 준비 경로](docs/ai/a01-input-latency.md)에서 두 번의 실제 전송으로 개선을 확인했습니다. 원본 AV1 직접 입력 지원과 전체 배포 완료는 별도입니다.
 
-Bedrock 설명의 별도 Python/TypeScript 계약·허용 근거 추출은 [A05-1 인계](docs/ai/a05-explanation-contract.md)에 있습니다. 실제 설명 API·Bedrock 호출·장애 격리·독립 V15 평가는 아직 남아 있습니다.
+Bedrock 설명의 별도 계약·허용 근거는 [A05-1](docs/ai/a05-explanation-contract.md), 실제 호출·설명 API·장애 격리·관제 프록시 실행은 [A05-2](docs/ai/a05-explanation-api.md)에 있습니다. 독립 V15 평가와 운영 배포·전체 시연 검수는 남아 있습니다.
 
 ## 협업
 

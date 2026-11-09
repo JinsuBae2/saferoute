@@ -14,6 +14,7 @@ import type {
 } from "@contracts";
 
 import type { Explanation } from "../control/explanation";
+import { explanationDeadline } from "../control/explanationTiming";
 
 const BASE = "/api";
 
@@ -94,11 +95,23 @@ export function fetchState(signal?: AbortSignal): Promise<StateSnapshot> {
 }
 
 /**
- * A05가 구현할 상황 설명. 아직 서버에 없으므로 404·503이 정상 경로다.
+ * 별도 A05 프로세스의 설명. 서버 시각·왕복 시간을 이용해 표시 기한을 계산한다.
  * 실패해도 관제의 제어 결과 표시는 그대로 유지한다.
  */
-export function fetchExplanation(signal?: AbortSignal): Promise<Explanation> {
-  return request<Explanation>("/explanations/current", { method: "GET", signal });
+export async function fetchExplanation(signal?: AbortSignal): Promise<{
+  explanation: Explanation;
+  expiresAtMs: number | null;
+}> {
+  const started = performance.now();
+  const response = await fetch(`${BASE}/explanations/current`, {
+    method: "GET", cache: "no-store",
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(2000)]) : AbortSignal.timeout(2000),
+  });
+  if (!response.ok) throw await toApiError(response);
+  const explanation = (await response.json()) as Explanation;
+  return { explanation, expiresAtMs: explanationDeadline(
+    explanation.expires_at, response.headers.get("X-Explanation-Server-Time"), started, performance.now(),
+  ) };
 }
 
 /**

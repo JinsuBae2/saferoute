@@ -1,4 +1,4 @@
-/** 공통 생성 계약을 사용한다. 실제 설명 API 연결은 A05 후속 단계다. */
+/** 별도 A05 설명 API의 공통 생성 계약과 관제 오류 표시. */
 import type { Explanation } from "@contracts";
 
 export type { Explanation } from "@contracts";
