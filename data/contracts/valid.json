@@ -1011,5 +1011,25 @@
       },
       "error_code": null
     }
+  },
+  "preview_error_frame_unavailable": {
+    "model": "ErrorResponse",
+    "payload": {
+      "error": {
+        "code": "PREVIEW_FRAME_UNAVAILABLE",
+        "message": "PREVIEW_FRAME_UNAVAILABLE",
+        "field": null
+      }
+    }
+  },
+  "preview_error_update_rejected": {
+    "model": "ErrorResponse",
+    "payload": {
+      "error": {
+        "code": "PREVIEW_UPDATE_REJECTED",
+        "message": "PREVIEW_UPDATE_REJECTED",
+        "field": null
+      }
+    }
   }
 }
