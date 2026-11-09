@@ -85,6 +85,36 @@ def api(tmp_path):
         yield client, clock, run_id
 
 
+@pytest.mark.parametrize("source_id", [s.source_id for s in BUILDING.sources if s.required])
+def test_single_required_detector_expiry_keeps_other_routes_and_recovers(api, source_id):
+    client, clock, run_id = api
+    original = parse_contract("StateSnapshot", client.get("/api/state").json())
+    clock.advance(1000)
+    for source in BUILDING.sources:
+        if source.required and source.source_id != source_id:
+            observe(client, clock, run_id, source.source_id, 2)
+    clock.advance(2000)
+    state = parse_contract("StateSnapshot", client.get("/api/state").json())
+    required = {s.source_id for s in BUILDING.sources if s.required}
+    assert state.controller_mode == "DEGRADED" and not state.active_causes
+    assert {s.source_id for s in state.sources if s.source_id in required and s.validity != "VALID"} == {source_id}
+    zone = ZONES[next(s.zone_id for s in BUILDING.sources if s.source_id == source_id)]
+    assert {n.node_id for n in state.blocked_nodes} == set(zone.blocked_node_ids)
+    assert {e.edge_id for e in state.blocked_edges} == set(zone.blocked_edge_ids) | {e.edge_id for e in BUILDING.edges if not e.traversable}
+    assert_safe(BUILDING, state.routes, zone.blocked_node_ids, zone.blocked_edge_ids)
+    assert any(f.mode == "DYNAMIC" for sign in state.signs for f in sign.faces)
+    sign = next(s for s in state.signs if any(f.mode == "DYNAMIC" for f in s.faces))
+    response = client.get(f"/api/signs/{sign.sign_id}/command")
+    assert response.status_code == 200
+    command = parse_contract("SignCommand", response.json())
+    assert command.guidance_version == state.guidance_version and command.faces == sign.faces
+
+    observe(client, clock, run_id, source_id, 2)
+    recovered = parse_contract("StateSnapshot", client.get("/api/state").json())
+    assert recovered.controller_mode == "NORMAL" and recovered.routes == original.routes
+    assert [s.faces for s in recovered.signs] == [s.faces for s in original.signs]
+
+
 @pytest.mark.parametrize("prefix", ["SMK", "SPK"])
 @pytest.mark.parametrize("side,exit_id,stair", [("N", "EXIT-S", "F1-S-A"), ("S", "EXIT-N", "F1-S-B")])
 def test_passage_alarm_uses_primary_stair_and_updates_sign_command(api, prefix, side, exit_id, stair):

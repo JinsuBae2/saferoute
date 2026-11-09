@@ -149,11 +149,13 @@ class Video:
     def release(self): self.released = True
 
 
-def execute(setup, video, predict):
+def execute(setup, video, predict, *, video_probe=None):
     path = setup.directory / "fake-video"
     path.write_bytes(b"fixture, not actual inference evidence")
     return run(setup.config, path, setup.client, setup.directory / "ai",
-               SimpleNamespace(predict=predict), clock=setup.clock, cv2_module=video)
+               SimpleNamespace(predict=predict), clock=setup.clock, cv2_module=video,
+               video_probe=video_probe or (lambda path: {"decoded_frames": len(video.timestamps),
+                                                       "method": "test_fixture_only"}))
 
 
 def test_pipeline_preserves_acquisition_time_and_end_does_not_clear_alarm(setup):
@@ -162,14 +164,18 @@ def test_pipeline_preserves_acquisition_time_and_end_does_not_clear_alarm(setup)
         setup.clock.advance(100)
         return [detection()] if frame < 2 else []
     result = execute(setup, video, predict)
-    assert result["accepted_events"] == 4 and video.released
+    assert result["accepted_events"] == 4 and result["termination"] == "EOF" and video.released
+    assert result["processing_elapsed_ms"] == pytest.approx(1100)  # pacing plus three 100ms predictions
     state = setup.client.get("/api/state").json()
     assert [(c["source_id"], c["hazard_type"]) for c in state["active_causes"]] == [("CAM-A", "FIRE")]
     assert next(s for s in state["sources"] if s["source_id"] == "CAM-A")["validity"] == "UNAVAILABLE"
     records = [json.loads(line) for line in (setup.directory / "ai" / setup.session.run_id /
                                            "ai-predictions.jsonl").read_text(encoding="utf-8").splitlines()]
     frames = [r for r in records if r["operation"] == "prediction"]
+    assert records[0]["runtime"] is None  # fake detector cannot claim actual hardware evidence
+    assert records[-1]["result"]["processing_elapsed_ms"] == result["processing_elapsed_ms"]
     assert [r["media_time_ms"] for r in frames] == [0, 500, 1000]
+    assert [r["read_to_completion_ms"] for r in frames] == pytest.approx([100, 500, 500])
     assert all(datetime.fromisoformat(r["observed_at"]) < datetime.fromisoformat(r["inference_completed_at"])
                for r in frames)
     assert all(e["observed_at"] == r["observed_at"] for r in frames for e in r["events"])

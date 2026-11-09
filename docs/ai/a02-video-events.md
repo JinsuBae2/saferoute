@@ -1,6 +1,6 @@
 # A02 실제 영상 → 공통 이벤트 연결
 
-담당 1번의 [#10](https://github.com/JinsuBae2/saferoute/issues/10) 로컬 개발 구현이다. 백엔드·계약·프론트 기능은 변경하지 않는다. A01 최종 선정은 대기 중이며, [A01 PR #47](https://github.com/JinsuBae2/saferoute/pull/47)에서 실제 실행한 개발 후보를 사용한다. 서버 실행·프로젝트 라이선스 결정·독립 평가 완료를 뜻하지 않는다.
+담당 1번의 [#10](https://github.com/JinsuBae2/saferoute/issues/10) 로컬 개발 구현이다. 백엔드·계약·프론트 기능은 변경하지 않는다. A01 최종 선정은 대기 중이며, [A01 실행 기록](a01-model-validation.md)의 개발 후보를 사용한다. 서버 실행·프로젝트 라이선스 결정·독립 평가 완료를 뜻하지 않는다.
 
 ## 입력과 실행
 
@@ -11,7 +11,7 @@ python -m pip install -r requirements-core.lock.txt -r requirements-ai.lock.txt
 python -m ai_worker --config configs/ai.example.json --video data/videos/candle-and-match.ogv --controller http://127.0.0.1:8000
 ```
 
-위 `python`은 활성화한 `.venv-ai`의 Python이다. 백엔드는 [README의 실행 절차](../../README.md#백엔드-실행)로 먼저 시작한다. 가중치·영상은 Git에 포함하지 않는다. 원본 위치·해시·사용 조건은 [A01 manifest 고정 버전](https://github.com/JinsuBae2/saferoute/blob/8ea2434046a202a3ae5a5bd6e8c32cec7421f6c4/data/manifests/assets.json)에 기록되어 있다. 다운로드 전에 해당 사용 조건을 확인한다.
+위 `python`은 활성화한 `.venv-ai`의 Python이다. 백엔드는 [README의 실행 절차](../../README.md#백엔드-실행)로 먼저 시작한다. 가중치·영상은 Git에 포함하지 않는다. 원본 위치·해시·사용 조건은 [A01 manifest](../../data/manifests/assets.json)에 기록되어 있다. 다운로드 전에 해당 사용 조건을 확인한다.
 
 - 가중치: `models/fire-smoke-yolov8n.pt`, `rabahdev/fire-smoke-yolov8n` revision `13017fe8af477c25f5298d168e2dfede4b000753`.
 - SHA-256: `b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f`. 불일치하면 로딩하지 않는다. 모델 클래스는 `0=smoke`, `1=fire`를 확인한다.
@@ -35,7 +35,7 @@ python -m ai_worker --config configs/ai.example.json --video data/videos/candle-
 
 전송은 예제에서 최대 2회, 요청별 timeout 750ms, 재시도 간격 100ms다. transport 오류·이벤트 POST 5xx에만 재시도하며 같은 직렬화 바이트·event_id·source_sequence·observed_at을 유지한다. 4xx·잘못된 계약 응답·다른 이벤트의 수신증은 실패다. 매 시도에 session을 재확인하고 run/건물 변경 시 멈춘다. 이미 신선도 기한을 넘은 관측은 재전송하지 않으며 최종 수락 여부는 서버가 검증한다. 실패는 로그와 비정상 종료로 드러난다.
 
-읽기가 끝나면 `UNAVAILABLE/READ_ENDED_UNVERIFIED`를 전송한다. 아직 EOF와 손상·잘림을 확정 구별하지 않기 때문에 `EOF`라고 단정하지 않는다. 읽기 시작 실패는 `DECODE_FAILED`, 역행·비정상 영상 시각은 `INVALID_MEDIA_TIME`으로 중단한다. 프로세스 강제 종료·추론 예외 뒤의 관측 가용성은 기존 서버 freshness로 만료된다. 상세 EOF 판별·생존 신호·오류 정책은 A03 범위다.
+A02 최초 구현은 읽기 종료를 `UNAVAILABLE/READ_ENDED_UNVERIFIED`로 표시했다. 현재의 EOF 근거·오류 처리·추가 ffprobe 실행 환경은 [A03-1 기록](a03-input-failures.md)을 따른다. 아래 A02 실행 수치는 최초 구현의 기록이며 새 동작으로 소급 변경하지 않는다.
 
 ## 실제 로컬 확인 — 2026-11-09
 
@@ -62,6 +62,6 @@ backend 기준 `a7813b9` 위의 A02 구현, Python 3.12.16, PyTorch 2.15.0+cpu, 
 ## 남은 조건
 
 - #9의 최종 모델 선정, 사용 조건·프로젝트 라이선스 결정, 지원 서버 검증은 아직 대기 중이다. A02는 개발 후보 연결 증거로 리뷰하며 이 선행 조건을 완료로 표시하지 않는다.
-- A03: 확정 EOF/디코드 실패 구분, 운영 오류 정책, 개발 결과에 근거한 임계값·지속 조건 고정.
+- A03: 영상 종료·오류 처리는 [A03-1](a03-input-failures.md)에서 진행한다. 개발 결과에 근거한 평가 조건·목표·영상 목록 고정은 #12에 남는다.
 - A04/Q01: 독립 평가 영상·정답과 평가 집계. 현재 세 영상은 이미 개발에 사용했으므로 독립 평가 자료로 재사용하지 않는다.
 - I02: 필수 가상 센서·경로·브라우저 단말과의 전체 통합 시험. 이번 작업은 로컬 AI→기존 API 연결이다.

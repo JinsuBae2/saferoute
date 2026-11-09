@@ -11,6 +11,8 @@ import { fetchBuilding } from "../api/client";
 import { BuildingScene } from "./BuildingScene";
 import { matchesBuilding } from "./geometry";
 import { useBuildingGeometry } from "./useBuildingGeometry";
+import type { ViewMode } from "./view";
+import { SPREAD_MAX, SPREAD_MIN } from "./view";
 
 type Props = {
   readonly state: StateSnapshot;
@@ -29,6 +31,10 @@ export function BuildingPanel({ state, simulation }: Props) {
   const [building, setBuilding] = useState<Building | null>(null);
   const [buildingError, setBuildingError] = useState<string | null>(null);
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
+  // 층 간격은 처음부터 조금 벌려 위층 바닥이 아래층 복도를 덮지 않게 한다.
+  const [spread, setSpread] = useState(6);
+  const [view, setView] = useState<{ mode: ViewMode; nonce: number }>({ mode: "ANGLE", nonce: 0 });
+  const requestView = (mode: ViewMode) => setView((previous) => ({ mode, nonce: previous.nonce + 1 }));
 
   // 공간 자료는 실행이나 건물 자료 버전이 바뀔 때만 다시 읽는다.
   useEffect(() => {
@@ -69,6 +75,16 @@ export function BuildingPanel({ state, simulation }: Props) {
     });
   };
 
+  /** 한 층만 보기. 다른 층은 모두 숨긴다. */
+  const onlyFloor = (floorId: string) => {
+    setHiddenFloors(new Set((geometry?.floors ?? []).map((floor) => floor.floor_id).filter((id) => id !== floorId)));
+  };
+
+  const floorLabel = useMemo(
+    () => new Map((building?.floors ?? []).map((floor) => [floor.floor_id, floor.label])),
+    [building],
+  );
+
   const problem =
     geometryError ??
     buildingError ??
@@ -93,17 +109,53 @@ export function BuildingPanel({ state, simulation }: Props) {
       ) : (
         <>
           <div className="scene__bar">
-            <span className="scene__floors">
+            <span className="scene__floors" title="누르면 층을 켜고 끕니다. 두 번 누르면 그 층만 봅니다">
               {geometry.floors.map((floor) => (
                 <button
                   key={floor.floor_id}
                   type="button"
                   className={visibleFloors.has(floor.floor_id) ? "chip chip--on" : "chip"}
                   onClick={() => toggleFloor(floor.floor_id)}
+                  onDoubleClick={() => onlyFloor(floor.floor_id)}
                 >
-                  {floor.floor_id}
+                  {floorLabel.get(floor.floor_id) ?? floor.floor_id}
                 </button>
               ))}
+              <button
+                type="button"
+                className={hiddenFloors.size === 0 ? "chip chip--on" : "chip"}
+                onClick={() => setHiddenFloors(new Set())}
+              >
+                전체
+              </button>
+            </span>
+            <span className="scene__tools">
+              <label className="scene__spread">
+                층 간격
+                <input
+                  type="range"
+                  min={SPREAD_MIN}
+                  max={SPREAD_MAX}
+                  step={1}
+                  value={spread}
+                  onChange={(event) => setSpread(Number(event.target.value))}
+                  aria-label="층 간격"
+                />
+              </label>
+              <button
+                type="button"
+                className={view.mode === "ANGLE" ? "chip chip--on" : "chip"}
+                onClick={() => requestView("ANGLE")}
+              >
+                시점 초기화
+              </button>
+              <button
+                type="button"
+                className={view.mode === "TOP" ? "chip chip--on" : "chip"}
+                onClick={() => requestView("TOP")}
+              >
+                위에서 보기
+              </button>
             </span>
             <span className="scene__legend">
               <span className="key key--guided" /> 안내 경로
@@ -119,11 +171,14 @@ export function BuildingPanel({ state, simulation }: Props) {
             state={state}
             smokeByZone={smokeByZone}
             visibleFloors={visibleFloors}
+            spread={spread}
+            view={view}
           />
 
           <p className="panel__note">
             공간 {building.building_id} v{building.building_version} · 형상 {geometry.building_id} v
-            {geometry.building_version} · 계단 A·B 밀폐, C·D 열림(평상시 안내에 쓰지 않음)
+            {geometry.building_version} · 계단 A·B 밀폐, C·D 열림(평상시 안내에 쓰지 않음) · 층 간격은 보기용이며
+            실제 층 높이와 경로는 바뀌지 않음
             {smokeByZone === null && " · 연기 정답 없음"}
           </p>
         </>

@@ -4,7 +4,7 @@
 
 [2026 동북권 개발자 대상 오픈소스 아이디어 경진대회](https://hackathon.tbitcloud.com/northeast-oss)의 지정 주제 **AI 기반 재난 대응 행동요령 안내 서비스**를 건물 화재의 대피 방향 안내로 구체화합니다. 감지는 오픈소스 불꽃·연기 모델, 경로·유도등 판단은 제어 알고리즘, 상황 설명은 Amazon Bedrock이 담당합니다. 설명이 실패해도 제어는 계속 동작하도록 설계합니다. 공식 기준과 주제 대응은 [기획서 0절](docs/01-project-proposal.md#0-공식-대회-기준과-주제-대응)을 참고하세요.
 
-현재는 C02 공통 계약, B01 관측·경보 API, B02 위험 배제 경로, B03 표시면별 명령·ACK·감사 로그, B04 독립 시나리오·운영·로그 검증 도구를 구현한 단계입니다. 실제 단말 화면 연동·오픈소스 감지 연결·Bedrock 설명(F11/A05)·서버 배포는 후속 작업입니다. 감지 모델의 구체적인 가중치는 실제 실행·사용 조건 확인 후 선정합니다.
+현재 develop에는 공통 계약·제어 API·경로·명령/ACK·시험 도구, 관제·단말·3D 화면, 실제 영상 AI 이벤트·장애 처리·영상별 평가 집계 도구가 반영되어 있습니다. Bedrock 설명(F11/A05), 독립 영상 평가, WFI 전체 통합·지원 서버 배포는 남은 작업입니다. 감지 모델은 개발 후보를 사용하며 최종 채택·프로젝트 라이선스 결정·서버 실측은 A01 #9에서 이어갑니다.
 
 ## 개발 문서
 
@@ -44,6 +44,12 @@ Windows에서는 설치된 Python 3.12로 가상환경을 만들고 `.venv\Scrip
 
 담당 1번의 실제 영상→VIDEO_AI 이벤트 실행·설정·로컬 수신 검증은 [A02 연결 기록](docs/ai/a02-video-events.md)을 참고하세요. 현재 개발 후보 연결 단계이며 최종 모델 선정·서버 검증·독립 평가는 별도입니다.
 
+개발 영상 6개의 출처·파일 해시·사용 조건은 [manifest](data/manifests/assets.json), 실제 CPU 검증·확보/재실행 방법은 [A01 기록](docs/ai/a01-model-validation.md)에 있습니다. 영상·가중치 원본은 Git에 포함하지 않으며 6개 모두 개발용입니다. 5번의 독립 평가 정답과 혼용하지 않습니다.
+
+영상 파일의 EOF·읽기/추론 실패 처리와 추가 실행 환경(ffprobe)은 [A03-1 장애 처리 기록](docs/ai/a03-input-failures.md)에 있습니다.
+
+완료된 AI 실행 한 건의 사건 집계·정답 파일 형식은 [A04-1 평가 도구](docs/ai/a04-event-evaluation.md)에 있습니다. 형식 예제는 독립 평가 정답이 아니며, 실제 평가·목표 판정은 A04에서 별도로 수행합니다.
+
 공통 모델은 [backend/contracts](backend/contracts/), 수락·거부 샘플은 [data/contracts](data/contracts/), 프론트 형식은 [contracts/types.generated.ts](contracts/types.generated.ts)에 있습니다. 모델이나 샘플을 변경하면 `python -m tools.export_contracts`를 실행해 생성 파일도 함께 커밋합니다. TypeScript는 정적 형식 검사이며 브라우저 실행 시 검증은 단말 구현에서 추가합니다. 함수별 사용 기준은 [명세서 10절](docs/05-data-interface-spec.md#10-c02-구현팀-인계-기준)을 참고하세요.
 
 ## 백엔드 실행
@@ -59,7 +65,7 @@ python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 8000 
 - `GET /api/session`으로 현재 run_id를 읽고, `GET /api/building`의 관측원 설정에 맞춰 새 이벤트를 `POST /api/events`로 보냅니다.
 - 필수 관측원을 확인한 뒤 `POST /api/control/arm`으로 시작합니다. 경보는 정상 관측·영상 종료·시간 만료로 지워지지 않습니다. 운영자가 `clear`로 특정 원인을 해제하거나 `reset`으로 새 실행을 시작합니다.
 - 요청이 없어도 100ms 주기의 만료 작업이 실행됩니다. 실제 실행 지연은 OS·로그 기록·잠금 대기에 영향을 받으며 실시간 보장값은 아닙니다.
-- 상태·차단·경로·현재 표시면·단말 적용 현황을 `GET /api/state`로 확인합니다. NORMAL은 DEFAULT, EMERGENCY는 경로에 따라 DYNAMIC 또는 NO_ROUTE, INITIALIZING·DEGRADED는 UNKNOWN 표시입니다. 상태 조회만으로 명령을 발행하거나 적용 성공으로 표시하지 않습니다.
+- 상태·차단·경로·현재 표시면·단말 적용 현황을 `GET /api/state`로 확인합니다. NORMAL은 DEFAULT, EMERGENCY·DEGRADED는 경로에 따라 DYNAMIC 또는 NO_ROUTE, INITIALIZING은 UNKNOWN 표시입니다. DEGRADED는 관측 장애 상태를 유지하면서 필수 관측 불가 구역을 제외한 경로를 안내합니다. 상태 조회만으로 명령을 발행하거나 적용 성공으로 표시하지 않습니다.
 - 단말은 `GET /api/signs/{sign_id}/command`로 3초 유효 명령을 받고, 화면에 적용한 뒤 `POST /api/signs/{sign_id}/ack`로 응답합니다. 각 조회는 새 ID·순번을 발행하며 ACK 성공 응답은 해당 `SignState`입니다. [명령·응답 규칙](docs/05-data-interface-spec.md#53-적용-응답)을 따릅니다.
 - 실행 증거는 `runs/<run_id>/manifest.json`, `events.jsonl`, `decisions.jsonl`, `commands.jsonl`, `acks.jsonl`에 남고 Git에서 제외됩니다. reset은 이전 기록을 보존합니다.
 
