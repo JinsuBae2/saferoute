@@ -15,7 +15,7 @@ import type { Building, StateSnapshot } from "@contracts";
 import type { BuildingGeometry } from "./geometry";
 import { visibleWalls, wallBox } from "./geometry";
 import type { ViewBox, ViewMode } from "./view";
-import { clampTarget, displayY, fitPose, floorLift, visibleBox } from "./view";
+import { clampTarget, displayY, fitPose, floorLift, planYaw, visibleBox } from "./view";
 
 // M05: 바닥과 벽의 명암 차이를 키워 어두운 배경에서도 방·복도 윤곽이 보이게 한다.
 const COLOR = {
@@ -63,6 +63,24 @@ type Handles = {
   /** 현재 보이는 범위. 회전 중심을 이 안으로 묶는다. */
   box: ViewBox | null;
 };
+
+/**
+ * 바닥에 눕힌 평면 화살표. 꼭짓점이 -z(안내도 위쪽)를 향하고 가운데가 원점이다.
+ * 몸통 0.36 m·머리 폭 1.0 m·전체 길이 1.5 m로, 복도 폭(2 m 안팎) 안에 들어간다.
+ */
+function flatArrowGeometry(): THREE.BufferGeometry {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0.75); // 꼭짓점
+  shape.lineTo(0.5, 0.1);
+  shape.lineTo(0.18, 0.1);
+  shape.lineTo(0.18, -0.75);
+  shape.lineTo(-0.18, -0.75);
+  shape.lineTo(-0.18, 0.1);
+  shape.lineTo(-0.5, 0.1);
+  shape.closePath();
+  // Shape의 +y를 모델의 -z로 눕힌다.
+  return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
+}
 
 /** 카메라를 상자에 맞추고, 그 크기에 맞춰 확대·축소 한계를 정한다. */
 function applyPose(handles: Handles, box: ViewBox, mode: ViewMode) {
@@ -155,6 +173,11 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     const fill = new THREE.DirectionalLight(0xbcd0ff, 0.6);
     fill.position.set(-30, 40, -40);
     scene.add(fill);
+    // 보는 쪽에서 비추는 빛. 위에서만 오는 빛으로는 낮은 시점에서 복도 안쪽 벽이 그늘에 묻힌다.
+    // 카메라에 붙인 빛은 카메라가 장면에 들어 있어야 적용된다. 거리 감쇠 없이 고르게 비춘다.
+    const headlight = new THREE.PointLight(0xffffff, 0.9, 0, 0);
+    camera.add(headlight);
+    scene.add(camera);
 
     const staticGroup = new THREE.Group();
     const dynamicGroup = new THREE.Group();
@@ -351,7 +374,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     if (shownNodes.length > 0) {
       const mesh = new THREE.InstancedMesh(
         new THREE.SphereGeometry(0.45, 12, 10),
-        new THREE.MeshLambertMaterial({ vertexColors: true }),
+        new THREE.MeshLambertMaterial(),
         shownNodes.length,
       );
       const matrix = new THREE.Matrix4();
@@ -376,8 +399,11 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     }
 
     // 다음 이동 방향. 서버 Route의 next_node_id만 사용한다.
+    // 같은 층 이동은 바닥에 눕힌 평면 화살표로 그린다. 원뿔은 위에서 보면 덩어리로만 보여
+    // 방향을 읽기 어렵다. 층을 오르내리는 계단 이동만 위아래가 드러나는 원뿔로 남긴다.
     const segments: number[] = [];
-    const arrows: THREE.Matrix4[] = [];
+    const flatArrows: THREE.Matrix4[] = [];
+    const stairArrows: THREE.Matrix4[] = [];
     const up = new THREE.Vector3(0, 1, 0);
     for (const route of state.routes) {
       if (route.next_node_id === null || route.reason_codes.length > 0) continue;
@@ -399,13 +425,23 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       if (length < 0.001) continue;
       direction.normalize();
       const tip = start.clone().add(direction.clone().multiplyScalar(Math.min(length * 0.55, length - 0.3)));
-      arrows.push(
-        new THREE.Matrix4().compose(
-          tip,
-          new THREE.Quaternion().setFromUnitVectors(up, direction),
-          new THREE.Vector3(1, 1, 1),
-        ),
-      );
+      if (from.floor_id === to.floor_id) {
+        flatArrows.push(
+          new THREE.Matrix4().compose(
+            tip,
+            new THREE.Quaternion().setFromAxisAngle(up, planYaw(end.x - start.x, end.z - start.z)),
+            new THREE.Vector3(1, 1, 1),
+          ),
+        );
+      } else {
+        stairArrows.push(
+          new THREE.Matrix4().compose(
+            tip,
+            new THREE.Quaternion().setFromUnitVectors(up, direction),
+            new THREE.Vector3(1, 1, 1),
+          ),
+        );
+      }
     }
 
     if (segments.length > 0) {
@@ -419,13 +455,24 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       );
     }
 
-    if (arrows.length > 0) {
+    if (flatArrows.length > 0) {
+      const plates = new THREE.InstancedMesh(
+        flatArrowGeometry(),
+        new THREE.MeshBasicMaterial({ color: COLOR.guided, side: THREE.DoubleSide }),
+        flatArrows.length,
+      );
+      flatArrows.forEach((matrix, index) => plates.setMatrixAt(index, matrix));
+      plates.instanceMatrix.needsUpdate = true;
+      dynamicGroup.add(plates);
+    }
+
+    if (stairArrows.length > 0) {
       const cones = new THREE.InstancedMesh(
         new THREE.ConeGeometry(0.42, 1.1, 10),
         new THREE.MeshLambertMaterial({ color: COLOR.guided }),
-        arrows.length,
+        stairArrows.length,
       );
-      arrows.forEach((matrix, index) => cones.setMatrixAt(index, matrix));
+      stairArrows.forEach((matrix, index) => cones.setMatrixAt(index, matrix));
       cones.instanceMatrix.needsUpdate = true;
       dynamicGroup.add(cones);
     }
@@ -438,7 +485,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     if (shownSigns.length > 0) {
       const posts = new THREE.InstancedMesh(
         new THREE.CylinderGeometry(0.16, 0.16, 2.4, 8),
-        new THREE.MeshLambertMaterial({ vertexColors: true }),
+        new THREE.MeshLambertMaterial(),
         shownSigns.length,
       );
       const matrix = new THREE.Matrix4();

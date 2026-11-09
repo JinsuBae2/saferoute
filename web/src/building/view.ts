@@ -109,6 +109,14 @@ export function fitPose(box: ViewBox, mode: ViewMode, fovDeg: number, aspect: nu
   };
 }
 
+/**
+ * 바닥에 눕힌 평면 화살표(기본 방향 -z, 안내도 위쪽)를 평면 방향 (dx, dz)로 돌리는 y축 회전각.
+ * y축으로 θ 돌리면 (0, 0, -1)은 (-sin θ, 0, -cos θ)가 된다.
+ */
+export function planYaw(dx: number, dz: number): number {
+  return Math.atan2(-dx, -dz);
+}
+
 /** 회전 중심이 건물 밖으로 멀리 나가지 않게 상자 안(여유 포함)으로 묶는다. */
 export function clampTarget(
   target: { x: number; y: number; z: number },

@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 
 import { parseGeometry } from "./geometry";
-import { clampTarget, displayY, fitPose, floorLift, SPREAD_MAX, visibleBox } from "./view";
+import { clampTarget, displayY, fitPose, floorLift, planYaw, SPREAD_MAX, visibleBox } from "./view";
 
 const GEOMETRY = parseGeometry(rawGeometry);
 const ALL = new Set(["F1", "F2", "F3"]);
@@ -38,6 +38,24 @@ describe("층 펼침", () => {
 
   it("모르는 층은 올리지 않는다", () => {
     expect(floorLift(GEOMETRY, 6)("F9")).toBe(0);
+  });
+});
+
+describe("바닥 화살표 방향", () => {
+  // 기본 화살표 (0, 0, -1)을 y축으로 θ 돌린 방향
+  const turned = (yaw: number) => ({ x: -Math.sin(yaw), z: -Math.cos(yaw) });
+
+  it.each([
+    ["안내도 위쪽", 0, -1],
+    ["안내도 아래쪽", 0, 1],
+    ["오른쪽", 1, 0],
+    ["왼쪽", -1, 0],
+    ["오른쪽 위", 3, -4],
+  ])("%s으로 가는 통로를 그대로 가리킨다", (_name, dx, dz) => {
+    const length = Math.hypot(dx, dz);
+    const result = turned(planYaw(dx, dz));
+    expect(result.x).toBeCloseTo(dx / length);
+    expect(result.z).toBeCloseTo(dz / length);
   });
 });
 
