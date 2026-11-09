@@ -2,7 +2,18 @@
  * 제어 백엔드(B01~B03) 호출만 담당한다. 경로·방향 판단은 서버가 하며 여기서 계산하지 않는다.
  * 개발 서버에서는 vite.config.ts의 프록시가 /api를 127.0.0.1:8000으로 넘긴다.
  */
-import type { Building, ErrorResponse, Session, SignAck, SignCommand, SignState } from "@contracts";
+import type {
+  Building,
+  ErrorResponse,
+  Session,
+  SignAck,
+  SignCommand,
+  SignState,
+  SimulationState,
+  StateSnapshot,
+} from "@contracts";
+
+import type { Explanation } from "../control/explanation";
 
 const BASE = "/api";
 
@@ -44,10 +55,14 @@ async function toApiError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, code, field, message);
 }
 
-async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE}${path}`, { cache: "no-store", ...init });
+async function requestAt<T>(url: string, init: RequestInit): Promise<T> {
+  const response = await fetch(url, { cache: "no-store", ...init });
   if (!response.ok) throw await toApiError(response);
   return (await response.json()) as T;
+}
+
+function request<T>(path: string, init: RequestInit): Promise<T> {
+  return requestAt<T>(`${BASE}${path}`, init);
 }
 
 export function fetchSession(signal?: AbortSignal): Promise<Session> {
@@ -71,4 +86,25 @@ export function postSignAck(signId: string, ack: SignAck, signal?: AbortSignal):
     body: JSON.stringify(ack),
     signal,
   });
+}
+
+/** 한 안내 버전으로 묶인 상태·경로·단말 현황. 조회만으로 명령을 발행하지 않는다. */
+export function fetchState(signal?: AbortSignal): Promise<StateSnapshot> {
+  return request<StateSnapshot>("/state", { method: "GET", signal });
+}
+
+/**
+ * A05가 구현할 상황 설명. 아직 서버에 없으므로 404·503이 정상 경로다.
+ * 실패해도 관제의 제어 결과 표시는 그대로 유지한다.
+ */
+export function fetchExplanation(signal?: AbortSignal): Promise<Explanation> {
+  return request<Explanation>("/explanations/current", { method: "GET", signal });
+}
+
+/**
+ * 별도 시나리오 실행기(8001)의 연기 정답. 제어기 판단과 분리해서 표시한다.
+ * 관제가 이 값을 경로나 방향 계산에 쓰지 않는다.
+ */
+export function fetchSimulationState(signal?: AbortSignal): Promise<SimulationState> {
+  return requestAt<SimulationState>("/sim/state", { method: "GET", signal });
 }
