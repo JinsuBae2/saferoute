@@ -1,0 +1,106 @@
+# A01 로컬 실행 검증 — 2026-11-09
+
+관련 이슈: [A01 #9](https://github.com/JinsuBae2/saferoute/issues/9). 담당: Rinhaze / 1번.
+최초 실험 기준 develop: `5a0c169393cb4a7e80be4600a6cd980a864eb251`.
+PR 준비 시 최신 develop `fe5bbabf1692f48771f1a232bd10b31595f6c034`를 반영하고 공통 검사를 다시 실행했다.
+
+**실제 CPU 추론과 불꽃·연기 클래스 출력을 확인했다. 최종 모델 선정과 A01 전체 완료 판정은 보류한다.**
+5번의 자료 인계를 기다리지 않고 공개 개발 영상 4개를 확보했다. 얇은 연기 미검출과 축소 입력에서의 오탐·미탐을 발견했다. 이번 도구는 오프라인 실행 검증용이며 A02 이벤트/API 연동, A03 설정 확정, A04 독립 평가를 구현한 것이 아니다.
+
+## 출처와 환경
+
+| 항목 | 확인 내용 |
+| --- | --- |
+| 모델 | [rabahdev/fire-smoke-yolov8n](https://huggingface.co/rabahdev/fire-smoke-yolov8n), YOLOv8n D-Fire 추가 학습이라는 배포자 설명 |
+| revision | `13017fe8af477c25f5298d168e2dfede4b000753` |
+| 파일 | 원본 best.pt → models/fire-smoke-yolov8n.pt, 6,229,802 bytes |
+| SHA-256 | `b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f`, 배포 API LFS 해시와 일치 |
+| 실제 클래스 | 0=smoke, 1=fire |
+| 코드·가중치 조건 | Ultralytics 설치 메타데이터와 모델 카드 각각 AGPL-3.0 표기. 제출·배포 범위에 대한 적용 정리는 남은 작업 |
+| 학습 데이터 | [D-Fire LICENSE](https://github.com/gaia-solutions-on-demand/DFireDataset/blob/master/LICENSE)는 수집물 CC0 및 개별 이미지 저작권 미소유를 명시. 개별 권리·학습 장면 중복은 별도 검증하지 않았으며 학습 자료를 다운로드하지 않음 |
+| 환경 | Windows 10 build 19045 x86_64, Python 3.12.16, CPU 전용 추론 |
+| CPU | Intel64 Family 6 Model 183 Stepping 1, GenuineIntel / 논리 CPU 16개, 추론 스레드 4개. 상품명 미확인 |
+| GPU | RTX 3060 Ti 8 GiB 확인. 이번 추론에 사용하지 않음 |
+| 주요 패키지 | torch 2.15.0+cpu, torchvision 0.29.2+cpu, ultralytics 8.4.208, opencv-python 5.0.0.93, numpy 2.5.4, psutil 7.2.2 |
+
+전체 39개 패키지는 [requirements-ai.lock.txt](../../requirements-ai.lock.txt)에 고정했다. Windows 실측이며 Linux 서버 검증을 대신하지 않는다. 모델 카드 성능 수치는 우리 결과로 사용하지 않는다. 코드·가중치·데이터의 조건은 각각 기록한다. 가중치·영상·프레임·실행 로그는 Git에서 제외한다.
+
+## 개발 영상
+
+정확한 다운로드 URL·해시·원본 장면 ID는 [assets.json](../../data/manifests/assets.json)에 있다. 모두 development이며 독립 정답 파일·주석자·검토자·건물 구역 매핑은 아직 없다.
+
+| ID | 출처·저작자 | 선택한 조건 | 용도 |
+| --- | --- | --- | --- |
+| dev-flameless-candle | [Flameless candle 1](https://commons.wikimedia.org/wiki/File:Flameless_candle_1.webm), Bastenbas / Elfix | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | 실제 불꽃 없는 LED 촛불 |
+| dev-candle-match | [Candle and Match](https://commons.wikimedia.org/wiki/File:Candle_and_Match.ogv), LoKiLeCh | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | 촛불·성냥 근접 슬로모션 |
+| dev-joss-smoke | [Joss paper burning](https://commons.wikimedia.org/wiki/File:Joss_paper_burning_with_cloud_of_smoke_Tai_Po_HK_2026.webm), Waydwaid | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 가림이 있는 야외 연기 |
+| dev-smoke-0009 | [Smoke 0009](https://commons.wikimedia.org/wiki/File:Smoke_0009.webm), Amuzujoe | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | 짙은 야외 연기. 첫 미검출 후 추가한 개발 자료 |
+
+원본 바이트는 수정하지 않았다. 로컬 미리보기는 프레임 추출·박스 표시를 한 파생물이다. 공유 시 저작자·원본·라이선스·변경 사실을 함께 표시하고 SA 조건을 유지한다. 이 원본 장면 및 파생물은 독립 평가에서 제외한다. 5번에게 인계할 manifest를 준비했으며 별도로 전송하지 않았다. 정상 실내 CCTV와 연기 유사 방해 장면은 아직 부족하다.
+
+## 실측 결과
+
+confidence=0.25, CPU 스레드=4. A는 imgsz=640 / 영상 시각 500ms 간격, B는 imgsz=320 / 1000ms 간격이다. 두 변수를 함께 바꾼 탐색 비교이므로 단독 효과를 단정하지 않는다. imgsz는 최대 변 길이이며 패딩은 Ultralytics에 따른다. 합성 검정 프레임 예열 1회는 영상 결과에서 제외했다.
+
+아래 수치는 **검출이 있었던 샘플 프레임 수 / 처리한 샘플 프레임 수**이며 정확도·재현율·사건 수가 아니다.
+
+| 영상 | A FIRE | A SMOKE | B FIRE | B SMOKE |
+| --- | --- | --- | --- | --- |
+| LED 촛불 | 0 / 18 | 0 / 18 | 9 / 9 | 0 / 9 |
+| 촛불·성냥 | 16 / 51 | 0 / 51 | 0 / 26 | 0 / 26 |
+| Tai Po 연기 | 0 / 11 | 0 / 11 | 0 / 6 | 0 / 6 |
+| Smoke 0009 | 0 / 20 | 20 / 20 | 0 / 10 | 10 / 10 |
+
+| 영상 | A 평균 / p95 predict ms | B 평균 / p95 predict ms | A 전체 처리초 / 샘플 처리량 fps | A 샘플 시점 최대 RSS MiB |
+| --- | --- | --- | --- | --- |
+| LED 촛불 | 22.39 / 44.22 | 11.87 / 21.18 | 1.15 / 15.62 | 447.82 |
+| 촛불·성냥 | 23.66 / 27.58 | 11.73 / 13.95 | 1.38 / 36.96 | 422.84 |
+| Tai Po 연기 | 23.84 / 32.89 | 13.24 / 18.76 | 0.64 / 17.10 | 450.74 |
+| Smoke 0009 | 23.74 / 28.15 | 11.32 / 14.65 | 7.78 / 2.57 | 635.00 |
+
+predict 시간은 전처리·추론·후처리 호출 경과시간이다. 전체 시간은 순차 디코딩·샘플 추론·로그·첫 프레임 저장을 포함한다. RSS는 추론 직후 프로세스 전체 측정값으로 순간 최고치나 모델 단독 메모리가 아니다. p95는 작은 표본의 nearest-rank다. 로드 약 0.02~0.03초, 예열 약 1.55~1.62초이며 패키지 import는 제외한다. 실시간 재생/API 지연·반복 분산은 미측정이다.
+
+로컬 근거는 `runs/a01-cpu-640-final/`, `runs/a01-cpu-320-final/`의 summary.json과 영상별 JSONL이다. final은 보고서에 사용한 실행 이름이며 모델 확정을 뜻하지 않는다. 초기 3개 영상 실행도 `runs/a01-cpu-640/`에 보존했다.
+
+### 발견한 문제
+
+- Tai Po 연기는 두 설정 모두 미검출. 가림·대상 크기·화질은 가능한 원인이지만 검증된 원인은 아니다.
+- 320 설정은 LED를 불꽃으로 검출하면서 실제 촛불을 놓쳤다. 속도만으로 입력 크기를 선택할 수 없다.
+- AV1 Smoke 0009는 모델 호출에 비해 전체 영상 처리가 느렸다. 디코딩 영향이 의심되지만 별도 프로파일링은 아직 없다.
+- LED WebM은 OpenCV에서 FPS=1000, 프레임 수=8683으로 보고하지만 실제 217프레임, 마지막 시각 8640ms였다. 따라서 도구는 FPS 기반 seek 대신 순차 디코딩한 media timestamp로 샘플링한다.
+- 촛불 OGV도 보고 763 / 실제 읽기 761프레임이다. 현재 OpenCV read=False는 정상 EOF와 손상을 구별하지 못하므로 읽기 종료로 기록한다. A02에서 종료·디코드 실패·관측 불가 처리가 필요하다.
+
+## 재실행과 사용자 확인
+
+저장소 루트에서 실행한다. 이 PC의 `.venv-ai`와 원본 파일은 준비되어 있다. 결과를 보존하려고 **새 출력 폴더 이름**을 요구한다.
+
+```powershell
+.venv-ai\Scripts\python.exe -m tools.validate_ai_model --output runs/a01-user-check
+```
+
+출력 폴더의 dev-candle-match-first.jpg, dev-joss-smoke-first.jpg, dev-smoke-0009-first.jpg와 summary.json을 열어 확인한다. 첫 프레임 미리보기는 전체 검출을 대표하지 않는다. 전체 결과는 해당 영상 JSONL의 시각·박스·점수를 확인한다. B 설정은 `--imgsz 320 --interval-ms 1000`과 다른 출력 폴더를 사용한다.
+
+새 Windows 환경에서는 Python 3.12 / uv를 준비하고 다음을 실행한다. [PyTorch 공식 설치](https://pytorch.org/get-started/locally/) 및 [Ultralytics 공식 설치](https://docs.ultralytics.com/quickstart/)를 참고했다.
+
+```powershell
+uv venv --python 3.12 --managed-python .venv-ai
+uv pip install --python .venv-ai\Scripts\python.exe --index-strategy unsafe-best-match -r requirements-ai.lock.txt
+New-Item -ItemType Directory -Force models,data/videos | Out-Null
+$manifest = Get-Content data/manifests/assets.json -Raw -Encoding UTF8 | ConvertFrom-Json
+foreach ($asset in @($manifest.model) + @($manifest.videos)) {
+    if (Test-Path -LiteralPath $asset.path) { continue }
+    curl.exe -L --fail --retry 2 --output $asset.path $asset.download_url
+    if ($LASTEXITCODE -ne 0) { throw "Download failed: $($asset.path)" }
+}
+```
+
+이번 PC의 uv는 저장소 상위 `tmp/ai-tools/uv.exe`에 있으며 캐시·관리 Python도 같은 도구 폴더에 두었다. 코어 `.venv`와 AI `.venv-ai`는 분리했다. 도구는 파일 누락·해시 불일치·클래스 불일치·영상 열기 실패·시각 역행을 실패로 처리하며 모의 결과로 대체하지 않는다.
+
+## 검사와 남은 작업
+
+- 최초 코어 검사: PYTHONUTF8=1로 pytest **206개 통과**, 계약 산출물 일치. 당시 CP949 읽기 오류는 실행 환경 UTF-8 설정으로 해결했다.
+- PR 준비 검사: 최신 develop의 Windows UTF-8 수정과 팀원 작업 반영 후, CI와 동일한 `-X warn_default_encoding -W error::EncodingWarning` 조건으로 pytest **299개**, 협업 검사 unittest **15개**, 계약 산출물 검사를 통과했다. Node **24.22.2**에서 `npm ci --ignore-scripts` 및 `npm run test:contracts`도 통과했다. 기존 Starlette httpx 사용 중단 예정 경고 1건이 있으며 실패는 아니다.
+- AI lock 오프라인 설치 dry-run: 39개 설치 패키지 일치, 변경 없음.
+- 새 단위 시험은 프레임별 중복 박스 집계·미검출 포함·빈 실행 거부·누락/변조 파일 거부를 검사한다. 실제 추론은 별도 로컬 실행으로 확인했다. CI 모델 다운로드는 추가하지 않았다.
+- A01 남은 항목: 대표 정상/방해 장면, 미검출을 고려한 후보 선정, 제출 조건 정리, 최종 장비 재측정. 독립 평가·이벤트 연동·Bedrock은 다음 작업이다.
+- 공유 방식: #9 작업 브랜치에서 Draft PR로 검증 근거를 공유한다. 위 남은 항목을 해결하고 Ready 전환·최신 CI 통과를 확인한 뒤 develop에 Squash merge한다. 현재 결과를 모델 선정 완료나 독립 평가 통과로 해석하지 않는다.

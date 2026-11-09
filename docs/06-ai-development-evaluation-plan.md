@@ -58,6 +58,8 @@
 
 ### 2.4 공개 모델·도구 후보 — 2026-11-08 조사, 최종 선정 아님
 
+2026-11-09 첫 후보의 실제 CPU 실행·개발 영상 결과는 [A01 로컬 검증 기록](ai/a01-model-validation.md)에 정리했다. 두 클래스 출력은 확인했으나 미검출·오탐이 있어 최종 선정은 보류한다.
+
 | 후보 | 확인한 공개 정보 | 채택 전 확인 |
 | --- | --- | --- |
 | [rabahdev/fire-smoke-yolov8n](https://huggingface.co/rabahdev/fire-smoke-yolov8n) | smoke=0·fire=1, best.pt 공개, D-Fire 추가 학습, AGPL-3.0 표기 | 첫 실행 후보. 실제 클래스·파일 해시·라이브러리 호환·CPU 속도·독립 영상 오탐/미탐 |
