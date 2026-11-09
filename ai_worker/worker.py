@@ -38,6 +38,7 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
         sender = EventSender(client, config, session, source.freshness_ms, log, clock)
         log("start", config=config.model_dump(mode="json"), video_sha256=video_sha256,
             video_name=video.name, mapped_zone_id=source.zone_id,
+            runtime=getattr(detector, "metadata", None),
             model_status="development_candidate_A01_not_final")
         cap = None
         frames, samples, skipped, sent = 0, 0, 0, 0
@@ -103,6 +104,7 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                     can_notify = True
             result = dict(run_id=session.run_id, frames=frames, analyzed_frames=samples,
                           skipped_late_frames=skipped, accepted_events=sent,
+                          processing_elapsed_ms=(clock.monotonic()-epoch)*1000,
                           termination="EOF")
             log("finished", result=result)
             return result

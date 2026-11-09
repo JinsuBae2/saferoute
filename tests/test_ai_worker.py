@@ -165,12 +165,15 @@ def test_pipeline_preserves_acquisition_time_and_end_does_not_clear_alarm(setup)
         return [detection()] if frame < 2 else []
     result = execute(setup, video, predict)
     assert result["accepted_events"] == 4 and result["termination"] == "EOF" and video.released
+    assert result["processing_elapsed_ms"] == pytest.approx(1100)  # pacing plus three 100ms predictions
     state = setup.client.get("/api/state").json()
     assert [(c["source_id"], c["hazard_type"]) for c in state["active_causes"]] == [("CAM-A", "FIRE")]
     assert next(s for s in state["sources"] if s["source_id"] == "CAM-A")["validity"] == "UNAVAILABLE"
     records = [json.loads(line) for line in (setup.directory / "ai" / setup.session.run_id /
                                            "ai-predictions.jsonl").read_text(encoding="utf-8").splitlines()]
     frames = [r for r in records if r["operation"] == "prediction"]
+    assert records[0]["runtime"] is None  # fake detector cannot claim actual hardware evidence
+    assert records[-1]["result"]["processing_elapsed_ms"] == result["processing_elapsed_ms"]
     assert [r["media_time_ms"] for r in frames] == [0, 500, 1000]
     assert all(datetime.fromisoformat(r["observed_at"]) < datetime.fromisoformat(r["inference_completed_at"])
                for r in frames)

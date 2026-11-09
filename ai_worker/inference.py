@@ -1,6 +1,8 @@
 import hashlib
+import importlib.metadata
 import os
 from pathlib import Path
+import platform
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +30,11 @@ class Detector:
             raise ValueError("candidate classes must be smoke=0/fire=1")
         self.predict(np.zeros((config.imgsz, config.imgsz, 3), dtype=np.uint8))
         torch.set_num_threads(4)
+        self.metadata = dict(device="cpu", python=platform.python_version(), os=platform.platform(),
+                             cpu=platform.processor(), logical_cpu_count=os.cpu_count(),
+                             torch_threads=torch.get_num_threads(),
+                             packages={p: importlib.metadata.version(p) for p in
+                                       ("torch", "torchvision", "ultralytics", "opencv-python", "numpy")})
 
     def predict(self, frame):
         result = self.model.predict(frame, device="cpu", imgsz=self.config.imgsz,

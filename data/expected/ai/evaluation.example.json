@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "asset_id": "FORMAT_ONLY",
+  "scene_id": "FORMAT_ONLY",
+  "video_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "source": "fixture://format-example-not-real-video-or-independent-ground-truth",
+  "split": "fixture",
+  "annotator": "FORMAT_ONLY",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": false,
+  "duration_ms": 5000,
+  "normal_video": false,
+  "events": [
+    {"event_id": "fire-1", "hazard_type": "FIRE", "start_ms": 1000, "end_ms": 2000},
+    {"event_id": "smoke-1", "hazard_type": "SMOKE", "start_ms": 1500, "end_ms": 3000}
+  ]
+}
