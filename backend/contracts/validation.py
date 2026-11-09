@@ -10,12 +10,12 @@ from pydantic import ValidationError
 from .building import Building
 from .messages import (
     ArmReceipt, ClearReceipt, ClearRequest, ControlRequest, ErrorDetail, ErrorResponse,
-    EventReceipt, ObservationEvent, ResetReceipt, Route, Session, SignAck, SignCommand, StateSnapshot,
+    EventReceipt, ObservationEvent, ResetReceipt, Route, Session, SignAck, SignCommand, SimulationState, StateSnapshot,
 )
 
 MODEL_TYPES = {model.__name__: model for model in (
     Building, Session, ObservationEvent, SignCommand, SignAck, ControlRequest, ClearRequest,
-    EventReceipt, ArmReceipt, ClearReceipt, ResetReceipt, ErrorResponse, Route, StateSnapshot,
+    EventReceipt, ArmReceipt, ClearReceipt, ResetReceipt, ErrorResponse, Route, StateSnapshot, SimulationState,
 )}
 
 ERROR_STATUS = {

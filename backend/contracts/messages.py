@@ -6,7 +6,7 @@ from pydantic import Field, model_validator
 from pydantic_core import PydanticCustomError
 
 from .common import (
-    ControllerMode, Display, FaceMode, HazardType, Identifier, NonnegativeInt,
+    BuildingIdentity, ControllerMode, Display, FaceMode, HazardType, Identifier, NonnegativeInt,
     NonnegativeNumber, PositiveInt, ReasonCode, RunIdentity, SOURCE_HAZARDS,
     SchemaVersion, SourceType, Text, UTCString, UUIDString, WireModel, unique,
 )
@@ -14,6 +14,21 @@ from .common import (
 
 class Session(RunIdentity):
     controller_mode: ControllerMode
+
+
+class ZoneSmoke(WireModel):
+    zone_id: Identifier
+    smoke: Annotated[float, Field(ge=0, le=1)]
+
+
+class SimulationState(BuildingIdentity):
+    scenario_id: Identifier
+    run_id: UUIDString
+    simulation_time_ms: NonnegativeInt
+    simulation_sequence: NonnegativeInt
+    status: Literal["WAITING_FOR_ARM", "RUNNING", "COMPLETED", "FAILED", "STOPPED"]
+    zones: list[ZoneSmoke]
+    error_code: Identifier | None
 
 
 class ObservationEvent(RunIdentity):
