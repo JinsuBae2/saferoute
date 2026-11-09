@@ -18,6 +18,7 @@ from test_observation_state import building
 from test_preview_contract import preview
 from ai_worker.worker import run
 from ai_worker.preview import Publisher
+from backend.contracts import ContractError
 
 
 @pytest.fixture
@@ -90,6 +91,8 @@ def test_terminal_states_clear_frame_and_reject_delayed_updates_even_after_disco
     api.disconnected = True
     assert query(api).status_code == 503
     api.disconnected = False
+    recovered=query(api).json()
+    assert (recovered['status'],recovered['error_code'],recovered['frame'])==(status,code,None)
     assert api.client.post('/internal/preview',json=update(api,3,16)).status_code == 409
 
 
@@ -233,3 +236,22 @@ def test_two_registered_cameras_keep_images_and_sequences_separate(api):
         assert image(api,fid,'CAM-A').status_code==200
         assert image(api,fid,'CAM-B').status_code==404
         assert query(api,'CAM-B').json()['frame']['frame_id']==second['preview']['frame']['frame_id']
+
+
+@pytest.mark.parametrize('code,status', [('PREVIEW_FRAME_UNAVAILABLE',404), ('PREVIEW_UPDATE_REJECTED',409)])
+def test_preview_errors_have_consistent_shared_contract_status(code,status):
+    error=ContractError(code,'preview unavailable')
+    assert error.status_code==status and error.to_response().error.code==code
+
+
+def test_preview_encoding_error_survives_controller_outage_and_can_recover(api):
+    data=update(api)
+    data['preview'].update(status='UNAVAILABLE',error_code='PREVIEW_FAILED',frame=None)
+    data['jpeg_base64']=None
+    assert api.client.post('/internal/preview',json=data).status_code==204
+    api.disconnected=True
+    assert query(api).status_code==503
+    api.disconnected=False
+    assert query(api).json()['error_code']=='PREVIEW_FAILED'
+    assert api.client.post('/internal/preview',json=update(api,2,16)).status_code==204
+    assert query(api).json()['status']=='READY'

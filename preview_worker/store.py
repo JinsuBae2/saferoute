@@ -57,7 +57,8 @@ class Store:
     def disconnected(self):
         # Keep high-water marks: a delayed old upload cannot restore a cleared image.
         for entry in self.entries.values():
-            entry.preview = entry.preview.model_copy(update={'status': 'STALE', 'frame': None, 'error_code': None})
+            if entry.preview.frame is not None:
+                entry.preview = entry.preview.model_copy(update={'status': 'STALE', 'frame': None, 'error_code': None})
             entry.jpeg = None
 
     def context(self, state, building, run_id, source_id):
