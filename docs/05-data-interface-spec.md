@@ -444,3 +444,9 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 - UI는 `/api/state`의 현재 실행·건물·안내 버전과 모두 일치하는 READY만 표시한다. 안내 변경·reset·네트워크 단절·설명 만료 시 문장을 숨긴다. 남은 유효시간은 근거 시각부터 계산하고 수신 시 TTL을 새로 시작하지 않는다.
 - 서로 다른 시계로 만료를 추정하지 않도록 서버 시각·응답 나이를 이용하고 불확실하면 표시하지 않는다. 형식·기한 검사와 자연어의 사실 정확성 시험은 별개다.
 - 이 API는 제어 동작을 수행하지 않는다. Bedrock 결과를 `/api/events`·clear·arm·유도등 명령에 전달하는 연결은 두지 않는다.
+
+## 12. A06 CCTV 미리보기 계약
+
+`Preview`는 기존 관측·제어 계약과 분리된 표시용 DTO다. 실행·건물·관측원, READY 프레임의 UUID·원본 크기·취득/추론/만료 시각, 정규화 xyxy·FIRE/SMOKE 검출 점수를 전달한다. INITIALIZING/STALE/EOF/UNAVAILABLE에서는 프레임을 포함하지 않는다. 현재 경보·안전성의 판정 근거로 사용하지 않는다.
+
+[A06-1 인계](ai/a06-preview-contract.md)에 수락/거부 샘플·좌표 변환·이미지 ID 결합·기한·예정 조회와 동적 세션 검사 규칙이 있다. Python DTO·생성 TypeScript만 반영했으며 실제 HTTP·JPEG 송출/격리·화면 연결은 #73/#74에서 구현·검증한다.
