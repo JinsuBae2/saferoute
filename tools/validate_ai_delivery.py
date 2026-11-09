@@ -36,6 +36,16 @@ def check(condition, message):
         raise ValueError(message)
 
 
+def check_observation_freshness(ages, gaps, freshness_ms, source_expirations=0):
+    spans = [age + gap for age, gap in zip(ages, gaps)]
+    check(source_expirations == 0 and ages and len(gaps) == len(ages) - 1 and
+          all(0 <= age < freshness_ms for age in ages) and
+          all(gap >= 0 for gap in gaps) and
+          all(span < freshness_ms for span in spans),
+          "source expired or observation age plus following gap exceeded freshness")
+    return max(spans, default=None)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="New evidence directory")
@@ -117,9 +127,11 @@ def main():
                 check(result["payload_match"] and result["termination"] == ["EOF"], "delivery payload/EOF mismatch")
                 check(result["source_validity"] == "UNAVAILABLE", "EOF must not leave source VALID")
                 check(set(result["active_hazards"]) == set(alarms), "EOF changed accumulated alarm causes")
-                check(ages and all(0 <= age < freshness_ms for age in ages) and
-                      all(0 <= gap < freshness_ms for gap in gaps),
-                      "measured observation age/gap exceeded 3s (setup/EOF excluded)")
+                result["source_expirations"] = sum(
+                    r["operation"] == "expire" and "CAM-A" in r.get("source_ids", [])
+                    for r in rows(out / "backend" / run_id / "decisions.jsonl"))
+                result["max_age_plus_following_gap_ms"] = check_observation_freshness(
+                    ages, gaps, freshness_ms, result["source_expirations"])
                 integrity = subprocess.run([sys.executable, "-m", "tools.verify_run", str(out / "backend" / run_id)],
                                            cwd=ROOT, capture_output=True, encoding="utf-8", timeout=30)
                 result["log_integrity"] = integrity.returncode == 0

@@ -402,7 +402,8 @@
     "Acquisition-to-audit uses the same server UTC clock; gap uses server monotonic timestamps. No cross-machine/network benchmark.",
     "TWO_ROUTE fixture only; no WFI/required sensor arm/browser/physical device/full deployment validation.",
     "Single sequential run per development asset; sustained load, CPU credits and concurrent cameras not measured.",
-    "Runtime environment and evidence directory retained for reproduction; probe controller stopped, no app listener remains."
+    "Runtime environment and evidence directory retained for reproduction; probe controller stopped, no app listener remains.",
+    "Original delivery PASS did not check expiry decisions or remaining lifetime. Corrected audit found CAM-A STALE before smoke EOF; freshness continuity FAILED. Payload/EOF/log integrity results remain valid."
   ],
   "preparation_correction_recheck": {
     "status": "PASS",
@@ -444,5 +445,50 @@
       "preparation-recheck/runs/server-video-preparation/assets.server.json": "e107019e1a342e635848ad3f2b01728f6da866780fb433f945686d0244f39dfa",
       "preparation-recheck/runs/server-video-preparation/conversion-evidence.json": "924145c532b8eb55bf98f7c0ba984bc4729b29a058efa340d83990fb27b195c4"
     }
-  }
+  },
+  "freshness_correction_recheck": {
+    "status": "FAILED",
+    "scope": "Corrected validator applied to original real-server audit logs; no inference rerun claimed. Supersedes original summary PASS for continuity through EOF.",
+    "freshness_ms": 3000,
+    "validator_code_sha256_lf": "b82b5dfa7cef1a4b1db9d2a829b770300d01466a9500809647acd0a7014d434e",
+    "videos": [
+      {
+        "asset_id": "dev-flameless-candle",
+        "run_id": "eab378dc-ddd1-4f07-87d3-9f46a66d7804",
+        "max_age_plus_following_gap_ms": 1064.8127329711915,
+        "source_expirations": 0,
+        "expiry_to_eof_ms": [],
+        "last_observation_age_plus_eof_gap_ms": 520.5783030986786,
+        "events_sha256": "00550392955aabe1b8d99bb270dfd50ca433fa6483364d60e60efd51b8608546",
+        "decisions_sha256": "661b4f24c44846c21a2d3181ec31913bd6e1fea61502d3f0c5fde71cf7f6912c",
+        "status": "PASS"
+      },
+      {
+        "asset_id": "dev-candle-match",
+        "run_id": "e472c2dc-4da8-4058-ac1e-bfeb60996067",
+        "max_age_plus_following_gap_ms": 980.825555024147,
+        "source_expirations": 0,
+        "expiry_to_eof_ms": [],
+        "last_observation_age_plus_eof_gap_ms": 533.9967699050903,
+        "events_sha256": "564ad5beaae6e38c2a1f6a91b450e6682458ba7ba2141650fa385319c2731aea",
+        "decisions_sha256": "546971d39bb413ddf819d7517018bdf2a5e6181ab018979fff2e95049fa72d7c",
+        "status": "PASS"
+      },
+      {
+        "asset_id": "dev-smoke-0009",
+        "run_id": "75807b3c-9644-4fd9-9343-6bde7de34bc4",
+        "max_age_plus_following_gap_ms": 1879.434292025566,
+        "source_expirations": 1,
+        "expiry_to_eof_ms": [
+          234.7336529493332
+        ],
+        "last_observation_age_plus_eof_gap_ms": 3245.1371380090714,
+        "events_sha256": "42a82cbd966c89ad75093795c7c6d487015b8cb4caeb267bf0bc2e29363421d0",
+        "decisions_sha256": "b60eeba2330ee87a2449aa06feebbc90a297efa9feef1de9fa78606e613d3e79",
+        "status": "FAILED",
+        "reason": "source expired or observation age plus following gap exceeded freshness"
+      }
+    ]
+  },
+  "delivery_freshness_assessment": "FAILED"
 }
