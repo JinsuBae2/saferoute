@@ -3,13 +3,15 @@
  * 명세 5.2 적용 순서를 그대로 따른다. 판단은 commandGuard의 순수 함수가 하고
  * 여기서는 네트워크·타이머·화면 반영 시점만 다룬다.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import type { Session, SignCommand, SignState } from "@contracts";
 
 import { ApiError, fetchSession, fetchSignCommand, postSignAck } from "../api/client";
 import type { DiscardReason, TerminalState } from "./commandGuard";
+import type { InvalidKind } from "./faults";
+import { INVALID_LABEL, buildInvalidCommand } from "./faults";
 import {
   acceptCommand,
   ackableCommand,
@@ -35,6 +37,20 @@ export type AckOutcome = {
   readonly applicationStatus: SignState["application_status"] | null;
 };
 
+/** 점검용 장애 주입 상태. 전부 단말 안에서만 쓰이고 서버로 가지 않는다. */
+export type FaultState = {
+  /** 통신을 끊은 것처럼 조회를 멈춘다. 기존 명령은 기한이 지나면 지워진다. */
+  readonly offline: boolean;
+  /** 응답 처리를 늦춰 늦게 도착한 명령을 재현한다. */
+  readonly responseDelayMs: number;
+};
+
+export type TerminalControls = {
+  readonly setOffline: (value: boolean) => void;
+  readonly setResponseDelayMs: (value: number) => void;
+  readonly injectInvalid: (kind: InvalidKind) => void;
+};
+
 export type TerminalView = {
   readonly state: TerminalState;
   readonly session: Session | null;
@@ -45,7 +61,14 @@ export type TerminalView = {
   readonly fatal: string | null;
   readonly commandCount: number;
   readonly hidden: boolean;
+  readonly faults: FaultState;
+  readonly controls: TerminalControls;
+  /** 마지막 주입 결과. 무효 명령이 적용되지 않았음을 화면에서 보여주는 근거다. */
+  readonly lastInjection: string | null;
 };
+
+/** 조회 루프가 관리하는 부분. 장애 조작은 바깥에서 따로 들고 있는다. */
+type BaseView = Omit<TerminalView, "faults" | "controls" | "lastInjection">;
 
 const DISCARD_NOTICE: Record<DiscardReason, string> = {
   SIGN_MISMATCH: "다른 유도등의 명령이라 적용하지 않았습니다.",
@@ -83,7 +106,28 @@ export function useSignTerminal(signId: string): TerminalView {
   instanceRef.current ??= crypto.randomUUID();
   const terminalInstanceId = instanceRef.current;
 
-  const [view, setView] = useState<TerminalView>(() => ({
+  const offlineRef = useRef(false);
+  const delayRef = useRef(0);
+  const injectRef = useRef<((kind: InvalidKind) => void) | null>(null);
+  const [faults, setFaults] = useState<FaultState>({ offline: false, responseDelayMs: 0 });
+  const [lastInjection, setLastInjection] = useState<string | null>(null);
+
+  const controls = useMemo<TerminalControls>(
+    () => ({
+      setOffline: (value) => {
+        offlineRef.current = value;
+        setFaults((previous) => ({ ...previous, offline: value }));
+      },
+      setResponseDelayMs: (value) => {
+        delayRef.current = Math.max(0, value);
+        setFaults((previous) => ({ ...previous, responseDelayMs: Math.max(0, value) }));
+      },
+      injectInvalid: (kind) => injectRef.current?.(kind),
+    }),
+    [],
+  );
+
+  const [base, setBase] = useState<BaseView>(() => ({
     state: createTerminalState(signId),
     session: null,
     terminalInstanceId,
@@ -106,10 +150,11 @@ export function useSignTerminal(signId: string): TerminalView {
     let notice: string | null = null;
     let fatal: string | null = null;
     let commandCount = 0;
+    let lastCommand: SignCommand | null = null;
 
     const publish = () => {
       if (stopped) return;
-      setView({
+      setBase({
         state,
         session,
         terminalInstanceId,
@@ -209,6 +254,13 @@ export function useSignTerminal(signId: string): TerminalView {
 
     const tick = async () => {
       if (stopped || fatal !== null) return;
+      if (offlineRef.current) {
+        // 점검: 통신이 끊긴 상태. 조회를 멈추면 기존 명령은 만료 감시가 지운다.
+        notice = "점검 중: 제어기와의 통신을 끊었습니다. 기한이 지나면 방향 표시가 사라집니다.";
+        publish();
+        scheduleNext();
+        return;
+      }
       if (document.visibilityState !== "visible") {
         // 숨은 탭에서는 명령을 발행받지 않는다. 기존 명령은 만료 감시가 지운다.
         publish();
@@ -241,6 +293,12 @@ export function useSignTerminal(signId: string): TerminalView {
         return;
       }
 
+      if (delayRef.current > 0) {
+        // 점검: 응답이 늦게 도착한 상황. 요청 시작 시각은 그대로라 기한이 먼저 지난다.
+        await new Promise((resolve) => setTimeout(resolve, delayRef.current));
+        if (stopped) return;
+      }
+
       commandCount += 1;
       const result = acceptCommand({
         state,
@@ -266,6 +324,7 @@ export function useSignTerminal(signId: string): TerminalView {
       }
 
       notice = null;
+      lastCommand = command;
       await applyAndAck(command);
       scheduleNext();
     };
@@ -281,6 +340,35 @@ export function useSignTerminal(signId: string): TerminalView {
       if (document.visibilityState === "visible") scheduleNext(0);
     };
 
+    injectRef.current = (kind) => {
+      if (stopped) return;
+      const injection = buildInvalidCommand(kind, state.command ?? lastCommand, session, performance.now());
+      if (injection === null) {
+        setLastInjection(`${INVALID_LABEL[kind]}: 아직 받은 명령이 없어 주입할 수 없습니다`);
+        return;
+      }
+      if (session === null) return;
+      const before = state.display;
+      const result = acceptCommand({
+        state,
+        command: injection.command,
+        session,
+        requestStartedAtMs: injection.requestStartedAtMs,
+        nowMs: performance.now(),
+      });
+      // 주입한 명령으로는 ACK를 보내지 않는다. 서버 기록을 더럽히지 않기 위해서다.
+      state = result.state;
+      const outcome =
+        result.outcome === "ACCEPTED"
+          ? "적용됨(예상과 다름)"
+          : result.outcome === "RUN_CHANGED"
+            ? "폐기하고 세션을 다시 읽습니다"
+            : `적용하지 않음 (${result.reason})`;
+      const changed = state.display !== before ? " · 표시 상태 변경" : " · 표시 유지";
+      setLastInjection(`${INVALID_LABEL[kind]} → ${outcome}${changed}`);
+      publish();
+    };
+
     const expiryTimer = setInterval(watchExpiry, EXPIRY_WATCH_MS);
     document.addEventListener("visibilitychange", onVisibility);
     void tick();
@@ -290,9 +378,10 @@ export function useSignTerminal(signId: string): TerminalView {
       clearInterval(expiryTimer);
       clearTimeout(pollTimer);
       document.removeEventListener("visibilitychange", onVisibility);
+      injectRef.current = null;
       abort.abort();
     };
   }, [signId, terminalInstanceId]);
 
-  return view;
+  return { ...base, faults, controls, lastInjection };
 }
