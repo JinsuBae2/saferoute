@@ -2,10 +2,21 @@
  * 별도 유도등 단말 화면. 관제 화면의 자식이 아니라 자기 sign_id로 직접 API를 조회한다.
  * 표시 내용은 전부 서버 명령의 faces에서 온다.
  */
+import { useSearchParams } from "react-router-dom";
+
 import type { FaceResult } from "@contracts";
 
 import { ArrowGlyph, DISPLAY_LABEL, UnavailableGlyph } from "./ArrowDisplay";
+import { INVALID_LABEL } from "./faults";
+import type { InvalidKind } from "./faults";
 import { useSignTerminal } from "./useSignTerminal";
+
+const INVALID_KINDS: readonly InvalidKind[] = [
+  "STALE_SEQUENCE",
+  "RUN_MISMATCH",
+  "SIGN_MISMATCH",
+  "LATE_ARRIVAL",
+];
 
 type Mode = FaceResult["mode"];
 type ReasonCode = FaceResult["reason_codes"][number];
@@ -95,7 +106,10 @@ function Placeholder({ title, detail }: { title: string; detail: string }) {
 
 export function SignTerminal({ signId }: { signId: string }) {
   const view = useSignTerminal(signId);
-  const { state, session, lastAck } = view;
+  const [params] = useSearchParams();
+  // 점검 패널은 ?fault=1 일 때만 나온다. 시연 화면에 섞이지 않게 한다.
+  const faultPanel = params.get("fault") === "1";
+  const { state, session, lastAck, controls, faults } = view;
   const live = state.display.kind === "LIVE" ? state.display : null;
   const remaining = view.remainingMs;
 
@@ -171,6 +185,44 @@ export function SignTerminal({ signId }: { signId: string }) {
           </p>
         )}
         {view.notice !== null && <p className="terminal__notice">{view.notice}</p>}
+
+        {faultPanel && (
+          <div className="faults">
+            <div className="terminal__row">
+              <span className="terminal__label">점검</span>
+              <button
+                type="button"
+                className={faults.offline ? "chip chip--on" : "chip"}
+                onClick={() => controls.setOffline(!faults.offline)}
+              >
+                {faults.offline ? "통신 끊김" : "통신 끊기"}
+              </button>
+              <button
+                type="button"
+                className={faults.responseDelayMs > 0 ? "chip chip--on" : "chip"}
+                onClick={() => controls.setResponseDelayMs(faults.responseDelayMs > 0 ? 0 : 4000)}
+              >
+                응답 지연 {faults.responseDelayMs > 0 ? `${faults.responseDelayMs}ms` : "끄기"}
+              </button>
+              {INVALID_KINDS.map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  className="chip"
+                  onClick={() => controls.injectInvalid(kind)}
+                >
+                  {INVALID_LABEL[kind]} 주입
+                </button>
+              ))}
+            </div>
+            {view.lastInjection !== null && (
+              <p className="terminal__notice">주입 결과: {view.lastInjection}</p>
+            )}
+            <p className="terminal__hint">
+              주입한 명령은 이 단말 안에서만 쓰입니다. 서버로 보내지 않고 적용 응답도 만들지 않습니다.
+            </p>
+          </div>
+        )}
       </footer>
     </main>
   );
