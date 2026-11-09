@@ -5,6 +5,7 @@ from datetime import timedelta
 import math
 import multiprocessing
 from queue import Empty, Full
+import signal
 import sys
 
 import httpx
@@ -52,6 +53,8 @@ def status_value(identity, status, reason=None):
 
 
 def publish_loop(queue, terminal, url, identity):
+    # The parent handles console Ctrl+C and sends OPERATOR_STOPPED through terminal.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     import cv2
     sequence = 0
     with httpx.Client(timeout=0.5, trust_env=False, follow_redirects=False) as client:

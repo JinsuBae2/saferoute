@@ -41,6 +41,7 @@ Windows는 각 환경의 `Scripts/python.exe`를 사용한다. `--preview-url`�
 - 내부 전송 순번과 frame_index가 이전보다 높아야 한다. 지연된 요청이 최신 결과를 덮어쓰지 않는다. 현재 세션·건물·VIDEO_AI 등록과 유효기간을 확인한 뒤 저장/조회한다. 이전 실행은 자동으로 새 실행에 재귀속하지 않는다.
 - worker EOF는 EOF, 읽기 실패는 DECODE_FAILED, 추론/검출 오류는 INFERENCE_FAILED, 관측 전송 실패는 DELIVERY_FAILED, 사용자 중단은 OPERATOR_STOPPED를 전달한다. terminal 상태 뒤 같은 실행의 늦은 프레임을 거부한다. controller 연결 실패는 캐시 이미지를 비우되 순번·종료 기록은 유지한다.
 - 자식 종료 대기는 AI 작업이 끝난 뒤 최대 2초, 이어 terminate/join 최대 1초다. 프로세스 강제 종료나 API 단절로 종료 알림 자체가 전달되지 않으면 마지막 이미지는 원래 기한까지만 유효하고 이후 STALE이다. EOF를 받았다고 꾸미지 않는다. 서비스/화면 단절은 관측 전송이나 경보 해제를 유발하지 않는다.
+- 전송 자식은 SIGINT를 무시하고 부모가 전달한 종료 사유로 마무리한다. 부모의 Ctrl+C가 OPERATOR_STOPPED 경로를 실행하며, 자식이 같은 SIGINT로 먼저 죽어 알림을 잃지 않게 한다. 자식 부팅 전 강제 종료·알림 전송 실패는 위 만료 규칙을 따른다.
 - READY의 generated_at은 조회 시점이고 frame의 취득/만료 시각은 그대로다. 이 둘은 다른 의미다. 미리보기와 제어 API의 스냅샷 사이에 reset이 발생할 수 있어 화면도 표시 직전 현재 실행을 확인해야 한다.
 
 worker 로그의 prediction.preview_frame_id로 프레임을 분석 기록에 연결한다. `preview_finished.dropped_pending_frames`는 큐/자식 상태/입력 크기로 게시를 생략한 수이며 네트워크 실패 전체 개수는 아니다. 전송 오류 유형은 작업자의 stderr에 남는다. JPEG와 실제 영상은 Git에 저장하지 않는다.
@@ -54,6 +55,6 @@ worker 로그의 prediction.preview_frame_id로 프레임을 분석 기록에 �
 
 실제 검증기는 새 출력 폴더를 요구하고 개발 manifest의 모델·영상 SHA-256을 확인한다. 자체 제어기/미리보기 API/실제 AI worker로 정상 후보·불꽃·연기를 실행한다. 내려받은 JPEG를 같은 원본 프레임의 재인코딩 결과와 바이트 대조하고 상자·취득/완료/영상 시각·프레임 ID를 AI 로그와 맞춘다. 2초 업로드 지연 및 연결 거부에서도 실제 관측 payload가 모두 수신됐는지 확인한다. 생성한 프로세스를 종료한다.
 
-실측 수치와 소스/원본 기록 해시는 [개발 실측 JSON](../../deploy/resource-checks/2026-11-10-preview-delivery.json)에 기록한다. 최초 actual01에서는 영상/관측 대조는 통과했으나 느린 업로더의 연결 중단에서 미처리 ClientDisconnect 로그가 발생했다. 이를 정상 오류 응답으로 처리하는 회귀 검사를 추가하고 actual02로 다시 실행했다. 이후 Fable 검토에서 제어기 단절 뒤 EOF/오류 상태 보존과 공통 HTTP 오류 상태표 누락을 수정하고, 복구 회귀 검사·actual03 실제 실행으로 재검증했다. 현재 JSON은 actual03 소스에 대응한다. 실패 흔적을 독립 성능 통과로 바꾸지 않는다.
+실측 수치와 소스/원본 기록 해시는 [개발 실측 JSON](../../deploy/resource-checks/2026-11-10-preview-delivery.json)에 기록한다. 최초 actual01에서는 영상/관측 대조는 통과했으나 느린 업로더의 연결 중단에서 미처리 ClientDisconnect 로그가 발생했다. 이를 정상 오류 응답으로 처리하는 회귀 검사를 추가하고 actual02로 다시 실행했다. 이후 Fable 검토에서 제어기 단절 뒤 EOF/오류 상태 보존과 공통 HTTP 오류 상태표 누락을 수정하고, 복구 회귀 검사·actual03 실제 실행으로 재검증했다. 두 번째 수정에서 자식의 SIGINT 처리를 보강하고 별도 Python 프로세스에 SIGINT를 주입해 OPERATOR_STOPPED/null 프레임 전송 경로와 무예외 종료를 확인했다(HTTP는 모의 수신이며 사용자 콘솔 전체에 Ctrl+C를 보내지 않음). 실제 영상 5개 시험도 actual04로 재수행했으며 현재 JSON은 actual04 소스에 대응한다. 실패 흔적을 독립 성능 통과로 바꾸지 않는다.
 
 읽기/추론 실패·동일 실행의 두 등록 카메라 분리·만료·reset·과거 순번·잘못된 입력은 자동 주입 시험이다. 실제 장비 두 대/실시간 CCTV/브라우저 화면·WFI 전체 통합·지원 서버 동시 부하·독립 감지 정확도 검증은 아니다. 원본 AI 모델과 임계값 후보 선정은 #9/#12, 화면 구현은 #74에서 계속한다.

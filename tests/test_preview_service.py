@@ -6,6 +6,10 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
+import json
+import os
+import subprocess
+import sys
 
 from fastapi.testclient import TestClient
 import pytest
@@ -255,3 +259,36 @@ def test_preview_encoding_error_survives_controller_outage_and_can_recover(api):
     assert query(api).json()['error_code']=='PREVIEW_FAILED'
     assert api.client.post('/internal/preview',json=update(api,2,16)).status_code==204
     assert query(api).json()['status']=='READY'
+
+
+def test_publisher_child_ignores_sigint_and_sends_operator_stopped():
+    # Signal a disposable Python process, never pytest/the user's console group.
+    code='''
+import json, signal, sys
+from types import SimpleNamespace
+sys.modules['cv2']=SimpleNamespace()
+from ai_worker.preview import publish_loop, REASONS
+import ai_worker.preview as preview
+class Terminal:
+    @property
+    def value(self):
+        signal.raise_signal(signal.SIGINT)
+        return REASONS.index('OPERATOR_STOPPED')+1
+class Client:
+    def __enter__(self): return self
+    def __exit__(self,*args): pass
+    def post(self,url,*,json):
+        print(__import__('json').dumps(json))
+        return SimpleNamespace(raise_for_status=lambda:None)
+preview.httpx.Client=lambda **kwargs:Client()
+publish_loop(None,Terminal(),'http://127.0.0.1:8003',dict(schema_version=1,
+    run_id='11111111-1111-4111-8111-111111111111',building_id='TWO_ROUTE',building_version=1,
+    source_id='CAM-A',freshness_ms=3000))
+'''
+    result=subprocess.run([sys.executable,'-c',code],capture_output=True,encoding='utf-8',
+                          timeout=10,env=os.environ|{'PYTHONUTF8':'1'})
+    assert result.returncode==0 and 'KeyboardInterrupt' not in result.stderr
+    update=json.loads(result.stdout)
+    assert update['preview']['status']=='UNAVAILABLE'
+    assert update['preview']['error_code']=='OPERATOR_STOPPED'
+    assert update['preview']['frame'] is None and update['jpeg_base64'] is None
