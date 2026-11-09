@@ -138,6 +138,24 @@ def test_single_corridor_alarm_leaves_a_detour(zone_id):
     assert others and all(n.node_id in dist for n in others)
 
 
+def test_one_zone_alarm_never_closes_both_exits():
+    """M03: 활성 출구가 한 구역에 몰리면 경보 하나로 건물 전체가 안내 불가가 된다."""
+    exit_zones = [NODES[n].zone_id for n in ENABLED_EXITS]
+    assert len(set(exit_zones)) == len(exit_zones)
+
+
+@pytest.mark.parametrize("zone_id", sorted(ZONES))
+def test_single_zone_alarm_only_strands_dead_end_room_doors(zone_id):
+    """경보 구역 밖에서 출구를 잃는 노드는 문이 그 구역 쪽에만 있는 방 문(또는 비활성 출구)뿐이어야 한다."""
+    zone = ZONES[zone_id]
+    blocked = set(zone.blocked_edge_ids)
+    dist = shortest_to_exit([e for e in BUILDING.edges if e.traversable and e.edge_id not in blocked
+                             and e.from_node_id not in zone.blocked_node_ids
+                             and e.to_node_id not in zone.blocked_node_ids])
+    lost = set(NODES) - set(zone.blocked_node_ids) - set(dist)
+    assert all(NODES[n].kind in ("DOOR", "EXIT") and n not in ENABLED_EXITS for n in lost), sorted(lost)
+
+
 def test_sign_defaults_follow_normal_shortest_route():
     out = {}
     for e in BUILDING.edges:
@@ -168,7 +186,7 @@ def test_virtual_sources_cover_corridors():
     for zone in ["F2-CORR-W", "F2-CORR-E", "F3-CORR-W", "F3-CORR-E"]:
         assert ("VIDEO_AI", zone) in zones
     corridors = [z.zone_id for z in BUILDING.zones if "-CORR-" in z.zone_id]
-    for zone in corridors + ["F1-LOBBY", "F1-PASSAGE", "F2-VOID"]:
+    for zone in corridors + ["F1-LOBBY", "F1-PASSAGE-N", "F1-PASSAGE-S", "F2-VOID"]:
         assert ("SIM_SMOKE_DETECTOR", zone) in zones and ("SIM_SPRINKLER", zone) in zones
 
 

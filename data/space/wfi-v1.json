@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "building_id": "WFI",
-  "building_version": 1,
+  "building_version": 2,
   "coordinate_system": {
     "unit": "m",
     "measured": false,
@@ -286,9 +286,9 @@
       ]
     },
     {
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-N",
       "floor_id": "F1",
-      "label": "블록 사이 통로",
+      "label": "블록 사이 통로 북쪽",
       "polygon": [
         {
           "x": 29.2,
@@ -315,6 +315,40 @@
           "z": 15.6
         },
         {
+          "x": 29.2,
+          "z": 15.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-X-N",
+        "F1-J-PN",
+        "F1-J-PM"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-X-N-F1-J-PN",
+        "E-F1-J-PN-F1-X-N",
+        "E-F1-J-PN-F1-J-PM",
+        "E-F1-J-PM-F1-J-PN",
+        "E-F1-J-PM-F1-J-PS",
+        "E-F1-J-PS-F1-J-PM",
+        "E-F1-J-PM-F1-S-B",
+        "E-F1-S-B-F1-J-PM",
+        "E-F1-J-LNW-F1-J-PN",
+        "E-F1-J-PN-F1-J-LNW",
+        "E-F1-J-LM-F1-J-PM",
+        "E-F1-J-PM-F1-J-LM"
+      ]
+    },
+    {
+      "zone_id": "F1-PASSAGE-S",
+      "floor_id": "F1",
+      "label": "블록 사이 통로 남쪽",
+      "polygon": [
+        {
+          "x": 29.2,
+          "z": 15.6
+        },
+        {
           "x": 35.2,
           "z": 15.6
         },
@@ -328,29 +362,16 @@
         }
       ],
       "blocked_node_ids": [
-        "F1-X-N",
         "F1-X-S",
-        "F1-J-PN",
-        "F1-J-PM",
         "F1-J-PS"
       ],
       "blocked_edge_ids": [
-        "E-F1-X-N-F1-J-PN",
-        "E-F1-J-PN-F1-X-N",
-        "E-F1-J-PN-F1-J-PM",
-        "E-F1-J-PM-F1-J-PN",
         "E-F1-J-PM-F1-J-PS",
         "E-F1-J-PS-F1-J-PM",
         "E-F1-J-PS-F1-X-S",
         "E-F1-X-S-F1-J-PS",
-        "E-F1-J-PM-F1-S-B",
-        "E-F1-S-B-F1-J-PM",
         "E-F1-J-PS-F1-D-R101",
         "E-F1-D-R101-F1-J-PS",
-        "E-F1-J-LNW-F1-J-PN",
-        "E-F1-J-PN-F1-J-LNW",
-        "E-F1-J-LM-F1-J-PM",
-        "E-F1-J-PM-F1-J-LM",
         "E-F1-J-LS-F1-J-PS",
         "E-F1-J-PS-F1-J-LS"
       ]
@@ -1656,7 +1677,7 @@
     {
       "node_id": "F1-X-N",
       "floor_id": "F1",
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-N",
       "position": {
         "x": 32.4,
         "y": 0.0,
@@ -1667,7 +1688,7 @@
     {
       "node_id": "F1-X-S",
       "floor_id": "F1",
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-S",
       "position": {
         "x": 32.4,
         "y": 0.0,
@@ -1700,7 +1721,7 @@
     {
       "node_id": "F1-J-PN",
       "floor_id": "F1",
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-N",
       "position": {
         "x": 32.4,
         "y": 0.0,
@@ -1711,7 +1732,7 @@
     {
       "node_id": "F1-J-PM",
       "floor_id": "F1",
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-N",
       "position": {
         "x": 32.4,
         "y": 0.0,
@@ -1722,7 +1743,7 @@
     {
       "node_id": "F1-J-PS",
       "floor_id": "F1",
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-S",
       "position": {
         "x": 32.4,
         "y": 0.0,
@@ -4191,9 +4212,19 @@
       ]
     },
     {
-      "source_id": "SMK-F1-PASSAGE",
+      "source_id": "SMK-F1-PASSAGE-N",
       "source_type": "SIM_SMOKE_DETECTOR",
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-N",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F1-PASSAGE-S",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F1-PASSAGE-S",
       "required": true,
       "freshness_ms": 3000,
       "allowed_hazard_types": [
@@ -4301,9 +4332,19 @@
       ]
     },
     {
-      "source_id": "SPK-F1-PASSAGE",
+      "source_id": "SPK-F1-PASSAGE-N",
       "source_type": "SIM_SPRINKLER",
-      "zone_id": "F1-PASSAGE",
+      "zone_id": "F1-PASSAGE-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F1-PASSAGE-S",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F1-PASSAGE-S",
       "required": false,
       "freshness_ms": 3000,
       "allowed_hazard_types": [
@@ -5617,7 +5658,7 @@
     {
       "item": "A05 기본 출구",
       "basis": "1F 블록 사이 통로 양 끝의 외곽 벽 끊김",
-      "description": "EXIT-N·EXIT-S만 활성. EXIT-NW·EXIT-SE는 비활성으로 남긴다",
+      "description": "EXIT-N·EXIT-S만 활성. EXIT-NW·EXIT-SE는 비활성으로 남긴다. 통로를 남북 구역으로 나눠 한쪽 경보 시 반대편 출구가 남게 했다(M03)",
       "reviewer": null
     },
     {
