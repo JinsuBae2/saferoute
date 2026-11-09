@@ -1,0 +1,74 @@
+/**
+ * 제어 백엔드(B01~B03) 호출만 담당한다. 경로·방향 판단은 서버가 하며 여기서 계산하지 않는다.
+ * 개발 서버에서는 vite.config.ts의 프록시가 /api를 127.0.0.1:8000으로 넘긴다.
+ */
+import type { Building, ErrorResponse, Session, SignAck, SignCommand, SignState } from "@contracts";
+
+const BASE = "/api";
+
+/** 서버가 05번 명세 6.1절 형식으로 돌려준 오류. code는 본문이 없으면 null이다. */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+  readonly field: string | null;
+
+  constructor(status: number, code: string | null, field: string | null, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.field = field;
+  }
+}
+
+function isErrorResponse(value: unknown): value is ErrorResponse {
+  if (typeof value !== "object" || value === null || !("error" in value)) return false;
+  const detail: unknown = (value as { error: unknown }).error;
+  return typeof detail === "object" && detail !== null && "code" in detail && "message" in detail;
+}
+
+async function toApiError(response: Response): Promise<ApiError> {
+  let code: string | null = null;
+  let field: string | null = null;
+  let message = `HTTP ${response.status}`;
+  try {
+    const body: unknown = await response.json();
+    if (isErrorResponse(body)) {
+      code = body.error.code;
+      field = body.error.field;
+      message = body.error.message;
+    }
+  } catch {
+    // 본문이 JSON이 아닌 경우가 있다. 상태 코드만으로 처리한다.
+  }
+  return new ApiError(response.status, code, field, message);
+}
+
+async function request<T>(path: string, init: RequestInit): Promise<T> {
+  const response = await fetch(`${BASE}${path}`, { cache: "no-store", ...init });
+  if (!response.ok) throw await toApiError(response);
+  return (await response.json()) as T;
+}
+
+export function fetchSession(signal?: AbortSignal): Promise<Session> {
+  return request<Session>("/session", { method: "GET", signal });
+}
+
+/** 현재 실행이 검증한 공간 자료. 단말 목록을 하드코딩하지 않으려고 읽는다. */
+export function fetchBuilding(signal?: AbortSignal): Promise<Building> {
+  return request<Building>("/building", { method: "GET", signal });
+}
+
+/** 조회 1회가 명령 1건 발행이다. 서버가 command_id·command_sequence를 새로 만든다. */
+export function fetchSignCommand(signId: string, signal?: AbortSignal): Promise<SignCommand> {
+  return request<SignCommand>(`/signs/${encodeURIComponent(signId)}/command`, { method: "GET", signal });
+}
+
+export function postSignAck(signId: string, ack: SignAck, signal?: AbortSignal): Promise<SignState> {
+  return request<SignState>(`/signs/${encodeURIComponent(signId)}/ack`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(ack),
+    signal,
+  });
+}
