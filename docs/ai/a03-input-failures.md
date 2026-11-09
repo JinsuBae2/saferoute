@@ -25,10 +25,12 @@ OpenCV가 읽기를 끝냈을 때 실제 읽은 프레임 수가 사전 디코�
 | ffprobe 없음·60초 timeout | UNAVAILABLE / VIDEO_PREFLIGHT_UNAVAILABLE, 오류 종료 1 |
 | 영상 시각 역행·비정상 수치 | UNAVAILABLE / INVALID_MEDIA_TIME, 오류 종료 1 |
 | 추론 예외·유효하지 않은 모델 출력 | UNAVAILABLE / INFERENCE_FAILED 또는 INVALID_DETECTION, 오류 종료 1 |
-| 작업 중 Ctrl+C | 가능한 경우 UNAVAILABLE / OPERATOR_STOPPED, 종료 130 |
+| 작업 중 Ctrl+C | OPERATOR_STOPPED 로그, 전송 구간 밖에서는 가능한 경우 UNAVAILABLE / OPERATOR_STOPPED, 종료 130 |
 | 관측 전송 실패·이미 오래된 결과 | 같은 이벤트의 제한 재시도 또는 즉시 실패, 실패 로그, 종료 1 |
 
 오류 알림도 기존 EventSender의 session 확인·동일 바이트 재시도·freshness 검사를 따른다. 알림 전달 실패는 `unavailable_delivery_failed`로 별도 기록하고 최초 오류를 보존한다. 일반 관측 전송 자체가 실패했으면 새 이벤트로 두 번째 전송 루프를 시작하지 않는다. 프로세스 강제 종료·통신 불가로 알림을 못 보낸 경우 서버의 기존 freshness 기한으로 관측이 만료된다.
+
+session 재확인·POST를 포함하는 전송 구간에서 Ctrl+C가 발생해도 로그는 OPERATOR_STOPPED로 구분한다. 해당 구간은 수락 여부가 불명확할 수 있으므로 새 알림 전송을 시작하지 않는다. 전송 전에 거부된 오래된 시각·실행 변경도 STALE_OR_FUTURE_OBSERVATION·RUN_OR_BUILDING_CHANGED를 보존해 일반 DELIVERY_FAILED와 구분한다.
 
 어떤 종료·실패도 clear/reset을 호출하지 않는다. 기존 경보는 정상 미검출·EOF·UNAVAILABLE·STALE 후에도 남는다. 같은 run의 이미 사용한 관측원에 재시작하면 A02의 SOURCE_ALREADY_USED_RESET_REQUIRED로 거부하며 자동 reset하지 않는다.
 

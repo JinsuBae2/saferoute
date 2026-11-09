@@ -108,10 +108,11 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
             return result
         except (Exception, KeyboardInterrupt) as error:
             reason = "OPERATOR_STOPPED" if isinstance(error, KeyboardInterrupt) else failure_reason
+            if not can_notify and not isinstance(error, KeyboardInterrupt):
+                reason = str(error) if isinstance(error, WorkerError) else "DELIVERY_FAILED"
             if isinstance(error, WorkerError) and str(error).startswith("VIDEO_PREFLIGHT_UNAVAILABLE:"):
                 reason = "VIDEO_PREFLIGHT_UNAVAILABLE"
-            log("failed", reason_code=reason if can_notify else "DELIVERY_FAILED",
-                error_type=type(error).__name__, detail=str(error))
+            log("failed", reason_code=reason, error_type=type(error).__name__, detail=str(error))
             if can_notify:
                 try:
                     sender.send(builder.unavailable(reason, clock.utcnow(), last_media))

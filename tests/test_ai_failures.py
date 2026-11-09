@@ -139,6 +139,42 @@ def test_unavailable_delivery_failure_preserves_original_inference_error(setup):
     assert any(r["operation"] == "unavailable_delivery_failed" for r in records(setup))
 
 
+@pytest.mark.parametrize("location", ["session", "post"])
+def test_interrupt_in_delivery_keeps_stop_reason_without_second_send_loop(setup, location):
+    original, posts, sessions = setup.client, [], []
+    def handle(request):
+        if request.url.path == "/api/session":
+            sessions.append(1)
+            if location == "session" and len(sessions) == 2: raise KeyboardInterrupt()
+        if request.method == "GET": return original.get(request.url.path)
+        posts.append(request.content)
+        raise KeyboardInterrupt()
+    video = Video([0])
+    with httpx.Client(transport=httpx.MockTransport(handle), base_url="http://test") as client:
+        setup.client = client
+        with pytest.raises(KeyboardInterrupt): execute(setup, video, lambda frame: [])
+    setup.client = original
+    assert len(posts) == (1 if location == "post" else 0) and video.released
+    assert next(r for r in records(setup) if r["operation"] == "failed")["reason_code"] == "OPERATOR_STOPPED"
+    assert not any(json.loads(body)["event_kind"] == "UNAVAILABLE" for body in posts)
+
+
+@pytest.mark.parametrize("cause", ["STALE_OR_FUTURE_OBSERVATION", "RUN_OR_BUILDING_CHANGED"])
+def test_pre_send_refusal_keeps_exact_reason_and_never_rebinds(setup, cause):
+    def predict(frame):
+        if cause == "STALE_OR_FUTURE_OBSERVATION":
+            setup.clock.advance(3001)
+        else:
+            response = setup.client.post("/api/control/reset", json=dict(schema_version=1,
+                                         run_id=setup.session.run_id, reason="test operator reset"))
+            assert response.status_code == 200
+        return []
+    with pytest.raises(WorkerError, match=cause): execute(setup, Video([0]), predict)
+    logged = records(setup)
+    assert next(r for r in logged if r["operation"] == "failed")["reason_code"] == cause
+    assert not any(r["operation"] == "send_attempt" for r in logged)
+
+
 def test_delivery_failure_is_bounded_then_expires_without_clearing(setup):
     original, bodies = setup.client, []
     def handle(request):
