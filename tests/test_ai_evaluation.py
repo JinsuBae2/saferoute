@@ -143,6 +143,53 @@ def test_transport_retry_does_not_inflate_detections_and_hashes_bind_inputs():
     assert report["inputs"]["ground_truth_sha256"] == hashlib.sha256(annotation).hexdigest()
 
 
+@pytest.mark.parametrize("shutdown", ["preview_finished", "preview_unavailable", None])
+def test_preview_telemetry_preserves_metrics_and_complete_raw_input_hash(shutdown):
+    rows, gt = log_rows([(0, []), (500, ["FIRE"])]), truth([("FIRE", 0, 1000)])
+    baseline = evaluate(*encoded(rows, gt))
+    unavailable = {k: rows[0][k] for k in ("run_id", "source_id", "source_type", "recorded_at")}
+    unavailable.update(operation="preview_unavailable", error_type="RuntimeError")
+    rows.insert(1, deepcopy(unavailable))  # Publisher initialization failure.
+    rows.insert(-1, deepcopy(unavailable))  # Optional frame publication failure.
+    if shutdown:
+        terminal = deepcopy(unavailable)
+        if shutdown == "preview_finished":
+            terminal.pop("error_type")
+            terminal.update(operation=shutdown, dropped_pending_frames=2)
+        rows.append(terminal)
+    data, annotation = encoded(rows, gt)
+    report = evaluate(data, annotation)
+    assert report["classes"] == baseline["classes"]
+    assert report["processing"] == baseline["processing"]
+    assert report["inputs"]["predictions_sha256"] == hashlib.sha256(data).hexdigest()
+    assert report["inputs"]["predictions_sha256"] != baseline["inputs"]["predictions_sha256"]
+
+
+@pytest.mark.parametrize("change", ["mixed_run", "mixed_source", "sim", "unknown", "failed",
+                                   "missing_finish", "after_finish", "early_shutdown", "duplicate_shutdown",
+                                   "negative_dropped", "bool_dropped", "missing_dropped", "missing_error"])
+def test_preview_telemetry_cannot_hide_invalid_or_unfinished_ai_run(change):
+    rows = log_rows([(0, [])])
+    terminal = {k: rows[0][k] for k in ("run_id", "source_id", "source_type", "recorded_at")}
+    terminal.update(operation="preview_finished", dropped_pending_frames=0)
+    rows.append(terminal)
+    if change == "mixed_run": terminal["run_id"] = str(uuid4())
+    elif change == "mixed_source": terminal["source_id"] = "CAM-B"
+    elif change == "sim": terminal["source_type"] = "SIM_SMOKE_DETECTOR"
+    elif change == "unknown": terminal["operation"] = "preview_unknown"
+    elif change == "failed": rows[-2]["operation"] = "failed"
+    elif change == "missing_finish": rows.pop(-2)
+    elif change == "after_finish": rows.insert(-1, deepcopy(rows[2]))
+    elif change == "early_shutdown": rows.insert(1, rows.pop())
+    elif change == "duplicate_shutdown": rows.append(deepcopy(terminal))
+    elif change == "negative_dropped": terminal["dropped_pending_frames"] = -1
+    elif change == "bool_dropped": terminal["dropped_pending_frames"] = False
+    elif change == "missing_dropped": terminal.pop("dropped_pending_frames")
+    elif change == "missing_error": terminal["operation"] = "preview_unavailable"
+    with pytest.raises(ValueError):
+        evaluate(*encoded(rows, truth()))
+
+
 @pytest.mark.parametrize("change", ["hash", "mixed_source", "mixed_run", "failed", "missing_receipt",
                                    "altered_payload", "frame_time", "finished_count", "missing_start",
                                    "sequence", "old_termination", "negative_elapsed", "duplicate_prediction"])

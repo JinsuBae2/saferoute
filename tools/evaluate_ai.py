@@ -110,12 +110,27 @@ def event_identity(event, start, config):
 
 
 def read_run(rows, truth):
-    require(rows and rows[0].get("operation") == "start" and rows[-1].get("operation") == "finished",
-            "run must have start and successful finished records")
-    start, finish = rows[0], rows[-1]
+    require(rows and rows[0].get("operation") == "start", "run must begin with start")
+    start = rows[0]
     config = AIConfig.model_validate(start.get("config"))
     require(start.get("video_sha256") == truth.video_sha256, "video hash does not match annotations")
     require(start.get("source_id") == config.source_id, "config source does not match log")
+    core_rows = []
+    for index, row in enumerate(rows):
+        record = LogRecord.model_validate(row)
+        require((record.run_id, record.source_id) == (start["run_id"], config.source_id), "mixed log identity")
+        if record.operation == "preview_unavailable":
+            TypeAdapter(Text).validate_python(row.get("error_type"), strict=True)
+        elif record.operation == "preview_finished":
+            require(index == len(rows)-1 and core_rows[-1].get("operation") == "finished",
+                    "preview shutdown must follow completed AI run and end the log")
+            TypeAdapter(NonnegativeInt).validate_python(row.get("dropped_pending_frames"), strict=True)
+        else:
+            core_rows.append(row)
+    # Preview availability is separate from AI completion; never filter failed/unknown AI operations.
+    rows = core_rows
+    require(rows[-1].get("operation") == "finished", "run must have successful finished record")
+    finish = rows[-1]
     predictions, predicted, sent, receipts, preflights = [], {}, {}, set(), []
     previous_media, previous_frame, skipped = -1, -1, 0
     allowed = {"start", "video_preflight", "prediction", "send_attempt", "send_result", "send_rejected",

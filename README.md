@@ -54,7 +54,7 @@ Windows에서는 설치된 Python 3.12로 가상환경을 만들고 `.venv\Scrip
 
 영상 파일의 EOF·읽기/추론 실패 처리와 추가 실행 환경(ffprobe)은 [A03-1 장애 처리 기록](docs/ai/a03-input-failures.md)에 있습니다.
 
-완료된 AI 실행 한 건의 사건 집계·정답 파일 형식은 [A04-1 평가 도구](docs/ai/a04-event-evaluation.md)에 있습니다. 형식 예제는 독립 평가 정답이 아니며, 실제 평가·목표 판정은 A04에서 별도로 수행합니다.
+완료된 AI 실행 한 건의 사건 집계·정답 파일 형식은 [A04-1 평가 도구](docs/ai/a04-event-evaluation.md)에 있습니다. 미리보기 실행 로그 호환·개발 정답 3건 대조와 독립 평가 준비 상태는 [A04-2](docs/ai/a04-development-comparison.md)에 있습니다. 형식 예제·개발 대조는 독립 평가가 아니며, 독립 평가·목표 판정은 A04에서 별도로 수행합니다.
 
 공통 모델은 [backend/contracts](backend/contracts/), 수락·거부 샘플은 [data/contracts](data/contracts/), 프론트 형식은 [contracts/types.generated.ts](contracts/types.generated.ts)에 있습니다. 모델이나 샘플을 변경하면 `python -m tools.export_contracts`를 실행해 생성 파일도 함께 커밋합니다. TypeScript는 정적 형식 검사이며 브라우저 실행 시 검증은 단말 구현에서 추가합니다. 함수별 사용 기준은 [명세서 10절](docs/05-data-interface-spec.md#10-c02-구현팀-인계-기준)을 참고하세요.
 
