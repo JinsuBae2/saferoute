@@ -260,6 +260,19 @@ export type SignState = {
   "terminals": Array<TerminalState>;
 };
 
+export type SimulationState = {
+  "schema_version": 1;
+  "building_id": string;
+  "building_version": number;
+  "scenario_id": string;
+  "run_id": string;
+  "simulation_time_ms": number;
+  "simulation_sequence": number;
+  "status": "WAITING_FOR_ARM" | "RUNNING" | "COMPLETED" | "FAILED" | "STOPPED";
+  "zones": Array<ZoneSmoke>;
+  "error_code": string | null;
+};
+
 export type Source = {
   "source_id": string;
   "source_type": "VIDEO_AI" | "SIM_SMOKE_DETECTOR" | "SIM_SPRINKLER" | "MANUAL_TEST";
@@ -307,4 +320,9 @@ export type Zone = {
   "polygon": Array<PlanPoint>;
   "blocked_node_ids": Array<string>;
   "blocked_edge_ids": Array<string>;
+};
+
+export type ZoneSmoke = {
+  "zone_id": string;
+  "smoke": number;
 };

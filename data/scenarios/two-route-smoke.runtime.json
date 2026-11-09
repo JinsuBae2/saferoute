@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "scenario_id": "two-route-smoke-v1",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "seed": 1,
+  "duration_ms": 45000,
+  "start_trigger": "ARM",
+  "initial_observations": [
+    {"source_id": "DETECTOR-A", "event_kind": "OBSERVATION", "hazard_type": null},
+    {"source_id": "DETECTOR-B", "event_kind": "OBSERVATION", "hazard_type": null}
+  ],
+  "smoke_timeline": [
+    {"time_ms": 0, "zone_id": "Z-A", "smoke": 0.0},
+    {"time_ms": 0, "zone_id": "Z-B", "smoke": 0.0},
+    {"time_ms": 10000, "zone_id": "Z-A", "smoke": 0.4},
+    {"time_ms": 15000, "zone_id": "Z-A", "smoke": 0.7},
+    {"time_ms": 25000, "zone_id": "Z-B", "smoke": 0.7},
+    {"time_ms": 35000, "zone_id": "Z-A", "smoke": 0.0}
+  ],
+  "observation_rules": [
+    {"source_id": "DETECTOR-A", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
+    {"source_id": "DETECTOR-B", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000}
+  ],
+  "faults": []
+}

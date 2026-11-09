@@ -220,6 +220,8 @@ face의 mode는 `DEFAULT`, `DYNAMIC`, `NO_ROUTE`, `UNKNOWN`이다. DEFAULT도 �
 
 서버는 guidance_version이 같아도 매 조회에 새로운 command_sequence·command_id를 발행한다. 동일한 방향을 유지하면서 유효기간을 갱신할 수 있다. 늦은 동일 버전 응답도 순번으로 배제한다.
 
+명령 기록 중 관측이 만료되어 안내 버전이 바뀌면 COMMAND_MISMATCH, 명령 자체가 만료되면 COMMAND_EXPIRED(409)로 응답하고 해당 명령을 반환하지 않는다. 단말은 실패 응답으로 기존 명령의 기한을 연장하지 않고 새 명령을 다시 조회한다. ACK 처리도 로그 저장 후 만료를 반영한 현재 SignState를 반환한다.
+
 브라우저 백그라운드·절전에서는 타이머가 지연될 수 있다. visibilitychange·복귀 시 먼저 만료를 확인하고 신선한 명령 전까지 방향을 표시하지 않는다. 브라우저 기반 시험으로 실제 등기구의 정확한 시간 보장이나 전기적 고장 동작을 입증하지 않는다.
 
 ### 5.3 적용 응답
@@ -246,6 +248,13 @@ status는 APPLIED 또는 REJECTED다. 서버는 발행한 명령과 sign_id·run
 
 HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 반영은 소프트웨어 적용 증거이며 실제 화면은 별도 관찰로 확인한다. 최신 명령이 미적용이면 예전 ACK가 늦게 도착해도 최신 적용 상태를 성공으로 바꾸지 않는다. 동일 sign_id의 여러 브라우저 인스턴스는 중복 단말로 표시하고 두 개의 유도등으로 세지 않는다.
 
+B03의 성공 응답은 HTTP 200과 해당 유도등의 `SignState` 객체(`sign_id`, `faces`, `latest_command`, `application_status`, `terminals`)다. 200은 응답 접수이며 유효한 과거 명령의 ACK는 현재 상태를 PENDING으로 남길 수 있다. 다음 규칙을 따른다.
+
+- 같은 단말·명령의 동일 ACK는 중복으로 기록하고 기존 수신 시각을 갱신하지 않는다. 내용이 달라지면 COMMAND_MISMATCH로 거부한다. 명령이 이미 만료됐다면 중복 ACK도 COMMAND_EXPIRED다.
+- 단말별 마지막 ACK는 명령 순번이 더 높은 경우에만 갱신한다. 서로 다른 terminal_instance_id가 같은 sign_id에 유효 ACK를 보내면 실행 동안 DUPLICATE_TERMINAL로 표시한다. 이는 확인된 인스턴스 이력이며 현재 온라인 여부를 뜻하지 않는다. 자동으로 하나를 선택하거나 이력을 지우지 않고 새 실행에서 초기화한다.
+- 적용 상태 판정 순서는 NOT_ISSUED → 중복 인스턴스 확인 → 명령 만료 확인 → 현재 안내·명령과 ACK 일치 확인이다. 현재 명령의 유효 APPLIED는 APPLIED, 유효 REJECTED는 REJECTED, 아직 확인되지 않은 현재 안내는 PENDING이다.
+- 명령·ACK 로그 쓰기에 실패하면 503으로 드러내며 적용 성공을 반환하지 않는다. 서버의 APPLIED는 검증된 응답을 받았다는 뜻이고, 실제 화면 관찰은 별도다.
+
 ## 6. API 목록
 
 | 메서드·경로 | 요청 | 성공 응답·용도 |
@@ -254,9 +263,10 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 | GET /api/session | 없음 | run_id, 건물 버전, controller_mode, schema_version |
 | GET /api/building | 없음 | 현재 실행이 사용하는 검증된 공간 자료 |
 | GET /api/state | 없음 | 하나의 안내 버전으로 묶인 상태·경로·단말 적용 현황 |
+| GET /api/explanations/current | 없음 | A05 설명 작업자(8002)의 현재 설명·기준 버전·기한·상태. 구현 예정 |
 | POST /api/events | 3절 이벤트 | 수락·중복 여부와 해당 판단 버전 |
 | GET /api/signs/{sign_id}/command | 없음 | 단말별 새 명령 |
-| POST /api/signs/{sign_id}/ack | 5절 응답 | 응답 접수. 검증 실패 시 오류 |
+| POST /api/signs/{sign_id}/ack | 5절 응답 | 해당 SignState. 응답 접수와 현재 적용 상태를 구분, 검증 실패 시 오류 |
 | POST /api/control/arm | run_id, reason | 초기 관측 확인 후 시연 시작 허용 |
 | POST /api/control/clear | run_id, source_id, hazard_type, reason | 특정 원인 확인 해제. 원인 없으면 명시 오류 |
 | POST /api/control/reset | run_id, reason | 기존 실행 종료·새 run_id 생성·INITIALIZING |
@@ -271,7 +281,7 @@ HTTP 수신 성공만으로 APPLIED를 보내지 않는다. 브라우저 상태 
 
 조회 응답은 `Cache-Control: no-store`로 제공한다. 클라이언트도 캐시를 사용하지 않는다. POST 제어 기능은 기본 배포에서 SSH 접속 권한이 있는 팀원만 접근하는 내부 경로다. 공개 배포가 결정되면 인증·권한을 먼저 구현하고 무인증 reset·clear·event 전송을 열지 않는다.
 
-B01에서 health·session·building·state·events·arm·clear·reset을 구현했다. `/api/signs/*`와 `/sim/*`는 아직 구현하지 않았다. B01의 controller_mode는 관측·경보 상태이며 NORMAL도 경로 기능의 완성을 의미하지 않는다. 경로 모듈 연결 전 routes는 안내 불가, signs는 UNKNOWN/NOT_ISSUED다. arm 전에는 INITIALIZING, arm 이후에는 CONTROLLER_UNAVAILABLE 사유를 사용한다.
+B01에서 health·session·building·state·events·arm·clear·reset, B02에서 상태별 경로, B03에서 현재 표시면·단말별 명령·ACK·감사 로그를 구현했다. INITIALIZING·DEGRADED는 각각 INITIALIZING·REQUIRED_OBSERVATION_UNKNOWN 사유와 UNKNOWN 표시다. NORMAL은 DEFAULT, EMERGENCY는 DYNAMIC 또는 NO_ROUTE이며, 등록된 출구 지점은 EXIT, 지원하지 않는 면은 NO_ROUTE·UNSUPPORTED_DISPLAY다. B04에서 `/sim/*`와 설정·운영·로그 검증 도구를 구현했다. 실제 브라우저 단말은 후속 구현이다. 경로·표시면 조회는 명령 발행·적용 완료를 의미하지 않는다.
 
 ### 6.1 오류
 
@@ -295,26 +305,44 @@ B01에서 health·session·building·state·events·arm·clear·reset을 구현�
 
 - `smoke_timeline`: 시간·구역·0~1 표현 강도. 실제 농도·물리 예측값이 아님.
 - `observation_rules`: 가상 관측원, 임계값, 관측 주기, 지연. 정답에서 이벤트를 만드는 시험 장치의 규칙.
-- `faults`: 특정 관측 누락·프로세스 단절·전송 지연 등의 구간.
+- `faults`: 모의 관측 DROP·추가 DELAY·UNAVAILABLE 구간. 실제 프로세스 종료 시험은 별도로 수행한다.
 - `initial_observations`: 초기 필수 관측 확인. 모든 구역을 무조건 정상이라고 간주하지 않음.
 - `seed`: 난수를 쓸 때만 의미가 있으며 반복 시험에서 고정.
 - 시나리오 실행기는 시작 시 현재 run_id를 읽고 고정한다. 실행 도중 run_id가 바뀌면 전송을 중단한다.
 - arm 전에는 초기 관측·상태 확인만 전달하고 주요 시간표는 대기한다. arm 확인을 시나리오 t=0으로 한다. 실제 AI 경보를 시작 조건으로 쓰는 기능은 별도 설정·시험 후 추가한다.
 
-`/sim/state`는 scenario_id, run_id, building_version, simulation_time_ms, simulation_sequence, running/completed/failed 상태와 현재 구역별 smoke 값만 제공한다. 관제는 연기 정답과 제어기 관측을 별도 범례로 표시한다. 미래 정답은 화면에도 필요 이상 보내지 않는다.
+실행 설정 샘플은 `data/scenarios/two-route-smoke.runtime.json`이며 기존 `two-route-smoke.json`은 독립적인 Q02 기대 결과 문서다. 실행 설정에는 기대 경로를 넣지 않는다.
+
+| 배열 | 요소 필드·조건 |
+| --- | --- |
+| smoke_timeline | `time_ms`(0 이상 정수), `zone_id`, `smoke`(0~1). 구역별 t=0 필수, 같은 구역·시각 중복 금지, duration 이내. 값은 다음 항목까지 유지 |
+| observation_rules | `source_id`, `threshold`(0 초과~1), `interval_ms`(양의 정수), `delay_ms`(0 이상). 등록된 SIM 관측원만 허용, source 중복 금지 |
+| initial_observations | rule source마다 `source_id`, `event_kind`(OBSERVATION/ALARM), `hazard_type`(null/SMOKE/SPRINKLER). 초기 연기·임계값·관측원 종류와 일치해야 함 |
+| faults | `source_id`, `kind`(DROP/DELAY/UNAVAILABLE), `start_ms`, `end_ms`, `delay_ms`. [start,end), duration 이내, 같은 source 구간 중복 금지. DELAY만 양의 추가 지연, 나머지는 0 |
+
+seed는 현재 결정적 시간표에서 난수를 사용하지 않으므로 결과에 영향을 주지 않는다. 관측원 임계값·초기값은 실제 설비 사양이 아닌 시험 가정이다. DROP도 관측 순번을 소비하고, DELAY는 원래 시각을 보존하며, UNAVAILABLE은 SMOKE 경보를 자동 해제하지 않는다. arm 전에는 초기 관측을 즉시·주기적으로 전송하고 주요 시간표·fault는 대기한다. arm 확인 후에 delay·fault 규칙을 적용한다. 오래 지연된 마지막 큐는 완료 시 버리며 이후 입력을 만들지 않는다. 같은 source를 다른 공급자와 공유하지 않는다. 초기 관측에서 순번 충돌이 발생하면 SOURCE_CONFLICT로 중단한다. 이는 운영 충돌 감지이며 분산 소유권·인증 잠금 기능은 아니다.
+
+`/sim/state`의 공통 형식은 `SimulationState`다. schema_version, building_id, building_version, scenario_id, 고정 run_id, simulation_time_ms, simulation_sequence, status, zones(`{zone_id, smoke}` 객체 배열), error_code(null 또는 문자열)를 제공한다. status는 WAITING_FOR_ARM·RUNNING·COMPLETED·FAILED·STOPPED다. 시간과 순번은 프로세스가 진행시키며 GET 요청은 진행시키지 않는다. 기동 시 백엔드·설정 불일치면 서비스가 뜨지 않는다. 실행 중 오류면 FAILED 상태를 유지하고 새 실행기로 재시작해야 한다. GET /sim/health는 현재 status만 반환하므로 HTTP 200만으로 정상 진행을 판정하지 않는다. 응답은 no-store다. 현재 값 외 시간표·미래 값·경로·기대 결과는 노출하지 않는다. 관제는 연기 정답과 제어기 관측을 별도 범례로 표시한다.
 
 ## 8. 저장·감사 로그
 
 | 파일 | 기록 |
 | --- | --- |
-| manifest.json | run_id, 코드 commit, 설정·건물·모델 해시, OS·장비, 시작·종료, 시나리오·평가 모드 |
+| manifest.json | schema_version=1, run_id, building_id/version/SHA-256, 코드 commit·dirty(null 허용), Python·OS, 시작·종료·closed·마지막 순번 |
+| building.json | 해당 실행이 사용한 건물·설비 설정의 정확한 사본 |
 | events.jsonl | 수신·거부·중복 입력, 수신 UTC·서버 monotonic, 거부 이유 |
-| decisions.jsonl | 원인 이벤트 또는 만료, 전후 상태, 차단 대상, 안내 버전, 계산 시간 |
+| decisions.jsonl | 시작·종료·초기화, 원인 이벤트/운영 명령/만료, 적용 후 상태·차단·경로·표시면·안내 버전 |
 | commands.jsonl | 명령 ID·순번·대상·안내 버전·발행 시각·기한 |
 | acks.jsonl | 수신·검증 결과, 적용 여부, 서버 수신 시각 |
-| verification.json | 시험 ID, 기대·실제 결과, 판정, 증거 경로 |
+| verification.json | scope=LOG_INTEGRITY, PASS/FAIL, 기록·명령·ACK 개수, 파일별 해시, 오류 파일·줄·사유 |
 
 JSONL은 한 줄에 JSON 객체 하나다. 중간에 로그가 깨졌으면 검증 도구가 해당 줄을 오류로 보고하며 조용히 건너뛰어 성공률을 높이지 않는다. 로그 기록 실패·디스크 부족은 운영 오류로 드러내고 측정 증거 미완료로 처리한다.
+
+B03의 commands 로그는 전체 `command`와 `issued_monotonic_ms`·`expires_at_monotonic_ms`를 기록한다. acks 로그는 원본 payload·accepted/duplicate/rejected·verified·confirms_current·서버 수신 시각·server_ack_elapsed_ms를 기록하며 거부 시 오류 코드를 남긴다. verified는 해당 발행 명령의 APPLIED 내용 검증, confirms_current는 수신 시 현재 안내·최신 명령과의 일치다. 중복 단말 여부까지 반영한 전체 적용 판정은 SignState에서 확인한다. 서버 경과 시간은 클라이언트의 화면 렌더링 시간과 구분한다. decisions의 안내 변경 기록에는 같은 버전의 경로와 표시면을 함께 남긴다.
+
+B04의 JSONL 공통 필드는 run_id, recorded_at(UTC), server_monotonic_ms, record_sequence(1부터 네 파일 전체에서 연속)다. manifest의 closed는 생성 시 false이며 reset·정상 shutdown에서만 true로 확정된다. 검증기는 종료 시각·이유·last_record_sequence와 마지막 reset/stop 결정을 확인한다. 기록 실패 시 제어기는 CONTROLLER_NOT_READY로 중단하고 미완료 manifest를 유지한다. 검증기가 원본 로그를 고치거나 누락을 보충하지 않는다.
+
+시나리오 기록은 `simulations/<시나리오 실행 UUID>/manifest.json`, `scenario.json` 사본, `scenario.jsonl`이다. 샘플·예정 전달 시각·누락·전송 결과·실패·완료와 남은 큐 폐기 개수를 남긴다. 이 자료에는 시험 정답이 있으므로 제어기 입력과 분리한다. LOG_INTEGRITY 검증기는 제어 로그만 검사하며 시나리오 물리 타당성·영상 추론·실제 화면·최단 경로 재계산을 판정하지 않는다. `acks_applied`, `acks_confirming_current`는 조건에 맞는 ACK 레코드 수로 중복 응답이 포함될 수 있다. 단말 수·독립 적용 횟수로 해석하지 않는다. accepted/duplicate 개수는 별도 제공한다.
 
 실행 종료 후 S3의 `outputs/runs/<run_id>/`에 필요한 증거를 복사한다. 제어 요청 처리 안에서 매번 S3 업로드를 기다리지 않는다. PEM, AWS 자격증명, 개인 영상은 로그·Git·S3 공개 자료에 넣지 않는다.
 
@@ -380,3 +408,26 @@ Position은 x·y·z, polygon 점은 x·z다. 좌표는 유한한 수다. 모든 
 application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERMINAL이다. 마지막 발행 명령·과거 ACK는 감사용으로 현재 안내보다 이전 버전일 수 있다. **현재 안내는 faces이고, 과거 명령을 현재 적용 성공으로 표시하지 않는다.** APPLIED는 현재 안내 버전·명령·표시면과 일치하는 검증된 단말 하나의 ACK가 있을 때만 허용한다. 단말이 여러 개면 중복 인스턴스를 숨기지 않는다.
 
 출구 자체의 Route는 path_node_ids=[현재 노드], next_node_id=null, cost=0, exit_id=해당 출구, reason_codes=[]다. 안내 불가 Route는 6절의 null·빈 경로·사유 규칙을 따른다.
+
+## 11. F11 상황 설명 계약 — A05 구현 예정
+
+설명은 기존 `StateSnapshot`·관측·명령·ACK에 필수 필드를 추가하지 않는 별도 DTO/API다. A05에서 Python 모델·생성 TypeScript·수락/거부 샘플·계약 시험을 함께 추가한다. 현재 서버에 이 엔드포인트가 구현된 것으로 소개하지 않는다.
+
+| 필드 | 형식·규칙 |
+| --- | --- |
+| schema_version | 1 |
+| run_id·building_id·building_version·guidance_version | 현재 설명의 근거 세션과 안내 버전. 모든 ID는 기존 계약 형식 |
+| status | PENDING / READY / UNAVAILABLE |
+| basis_generated_at | 근거 스냅샷의 generated_at(UTC) |
+| generated_at·expires_at | READY에서는 UTC 시각, 나머지 상태에서는 null. expires_at은 근거 시각 + 설정 유효기간을 넘지 않음 |
+| summary | READY에서 비어 있지 않은 한국어 설명, 그 외 null |
+| fact_refs | 작업자가 제공한 사실 ID의 중복 없는 배열. READY에서 한 개 이상, 그 외 빈 배열 |
+| model_id·prompt_version | READY에서 실제 호출 모델 ID·고정 프롬프트 버전, 그 외 null 허용 |
+| error_code | UNAVAILABLE이면 BEDROCK_UNAVAILABLE / INVALID_RESPONSE / STALE_BASIS / EXPLANATION_LOG_ERROR / DISABLED 중 하나, 그 외 null |
+
+- 사실 ID는 해당 실행·버전 안에서만 유효하다. 예: 활성 원인의 `cause:<source_id>:<hazard_type>`, 차단 대상의 `blocked-node:<node_id>`·`blocked-edge:<edge_id>`, 계산 결과의 `route:<node_id>`. 실제 존재하는 항목만 입력 목록에 제공한다.
+- 모델은 summary·fact_refs만 생성한다. 실행·건물·안내 버전과 기한·모델 ID는 작업자가 붙이며 모델 출력으로 덮어쓰지 않는다. 알 수 없는 사실 ID·깨진 JSON·빈 설명은 INVALID_RESPONSE다.
+- API는 알려진 상태를 HTTP 200과 `Cache-Control: no-store`로 반환한다. 아직 현재 제어 세션을 읽지 못하면 503을 반환하고 이전 실행 결과를 대신 내보내지 않는다. 프론트는 설명 조회 실패를 설명 영역에만 반영한다.
+- UI는 `/api/state`의 현재 실행·건물·안내 버전과 모두 일치하는 READY만 표시한다. 안내 변경·reset·네트워크 단절·설명 만료 시 문장을 숨긴다. 남은 유효시간은 근거 시각부터 계산하고 수신 시 TTL을 새로 시작하지 않는다.
+- 서로 다른 시계로 만료를 추정하지 않도록 서버 시각·응답 나이를 이용하고 불확실하면 표시하지 않는다. 형식·기한 검사와 자연어의 사실 정확성 시험은 별개다.
+- 이 API는 제어 동작을 수행하지 않는다. Bedrock 결과를 `/api/events`·clear·arm·유도등 명령에 전달하는 연결은 두지 않는다.

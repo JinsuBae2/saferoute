@@ -49,8 +49,8 @@ def generated_files(root):
         f"export type {name} = {render_type(definition)};"
         for name, definition in sorted(schema["$defs"].items())
     ) + "\n"
-    samples = json.loads((root / "data/contracts/valid.json").read_text())
-    samples["building"] = {"model": "Building", "payload": json.loads((root / "data/fixtures/two-route-v1.json").read_text())}
+    samples = json.loads((root / "data/contracts/valid.json").read_text(encoding="utf-8"))
+    samples["building"] = {"model": "Building", "payload": json.loads((root / "data/fixtures/two-route-v1.json").read_text(encoding="utf-8"))}
     examples = header + 'import type * as Contracts from "./types.generated";\n\n'
     for name, item in samples.items():
         payload = json.dumps(item["payload"], ensure_ascii=False, indent=2)
@@ -66,7 +66,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     for path, content in generated_files(root).items():
         if args.check:
-            if not path.exists() or path.read_text() != content: stale.append(str(path.relative_to(root)))
+            if not path.exists() or path.read_text(encoding="utf-8") != content: stale.append(str(path.relative_to(root)))
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
