@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import hashlib
+import importlib.metadata
 import json
 from pathlib import Path
 from uuid import uuid4
@@ -9,8 +10,19 @@ from uuid import uuid4
 import pytest
 
 from tools.evaluate_ai import GroundTruth, decode, evaluate, main
+from ai_worker.inference import package_version
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_unavailable_distribution_metadata_is_null_without_stopping_inference(monkeypatch):
+    def version(name):
+        if name == "opencv-python":
+            raise importlib.metadata.PackageNotFoundError(name)
+        return "fixture-version"
+    monkeypatch.setattr(importlib.metadata, "version", version)
+    assert package_version("opencv-python") is None
+    assert package_version("torch") == "fixture-version"
 
 
 def truth(events=(), duration=5000, **changes):

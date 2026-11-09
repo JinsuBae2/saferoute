@@ -247,6 +247,7 @@ def evaluate(prediction_bytes, truth_bytes):
                 limitations=["Input provenance and annotations are declarations, not independently authenticated.",
                              "No accuracy pass/fail, mAP, field generalization or dataset-wide score is inferred.",
                              "Loop throughput includes playback, transmission and logging; excludes model/preflight setup.",
+                             "Read-to-completion starts after frame read and includes playback waiting and event preparation; not inference-only time.",
                              "Null runtime/elapsed fields in older logs mean unrecorded evidence, not zero cost."])
 
 

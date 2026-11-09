@@ -13,6 +13,13 @@ def file_hash(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def package_version(name):
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return None  # missing distribution metadata must not stop working inference
+
+
 class Detector:
     def __init__(self, config):
         path = ROOT / config.model_path
@@ -33,7 +40,7 @@ class Detector:
         self.metadata = dict(device="cpu", python=platform.python_version(), os=platform.platform(),
                              cpu=platform.processor(), logical_cpu_count=os.cpu_count(),
                              torch_threads=torch.get_num_threads(),
-                             packages={p: importlib.metadata.version(p) for p in
+                             packages={p: package_version(p) for p in
                                        ("torch", "torchvision", "ultralytics", "opencv-python", "numpy")})
 
     def predict(self, frame):

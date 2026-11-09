@@ -175,6 +175,7 @@ def test_pipeline_preserves_acquisition_time_and_end_does_not_clear_alarm(setup)
     assert records[0]["runtime"] is None  # fake detector cannot claim actual hardware evidence
     assert records[-1]["result"]["processing_elapsed_ms"] == result["processing_elapsed_ms"]
     assert [r["media_time_ms"] for r in frames] == [0, 500, 1000]
+    assert [r["read_to_completion_ms"] for r in frames] == pytest.approx([100, 500, 500])
     assert all(datetime.fromisoformat(r["observed_at"]) < datetime.fromisoformat(r["inference_completed_at"])
                for r in frames)
     assert all(e["observed_at"] == r["observed_at"] for r in frames for e in r["events"])
