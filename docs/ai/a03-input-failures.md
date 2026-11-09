@@ -21,6 +21,7 @@ OpenCV가 읽기를 끝냈을 때 실제 읽은 프레임 수가 사전 디코�
 | --- | --- |
 | 디코드 수 일치, 실제 분석 후 읽기 종료 | UNAVAILABLE / EOF, 성공 종료 0 |
 | 파일 사전 디코드 오류·읽기 실패·프레임 수 불일치 | UNAVAILABLE / DECODE_FAILED, 오류 종료 1 |
+| 정상 디코드됐지만 지연으로 모든 분석 프레임을 건너뜀 | UNAVAILABLE / NO_ANALYZED_FRAMES, 오류 종료 1 |
 | ffprobe 없음·60초 timeout | UNAVAILABLE / VIDEO_PREFLIGHT_UNAVAILABLE, 오류 종료 1 |
 | 영상 시각 역행·비정상 수치 | UNAVAILABLE / INVALID_MEDIA_TIME, 오류 종료 1 |
 | 추론 예외·유효하지 않은 모델 출력 | UNAVAILABLE / INFERENCE_FAILED 또는 INVALID_DETECTION, 오류 종료 1 |

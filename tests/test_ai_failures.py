@@ -68,6 +68,22 @@ def test_read_ending_before_verified_count_fails_and_keeps_alarm(setup):
     assert not any(r["operation"] == "finished" for r in records(setup))
 
 
+def test_clean_file_with_all_frames_late_reports_analysis_gap_not_decode_error(setup):
+    class SlowVideo(Video):
+        def read(self):
+            value = super().read()
+            if value[0]: setup.clock.advance(1000)
+            return value
+    video = SlowVideo([0])
+    with pytest.raises(WorkerError, match="NO_ANALYZED_FRAMES"):
+        execute(setup, video, lambda frame: pytest.fail("late frame must be skipped"))
+    logged = records(setup)
+    assert any(r["operation"] == "skip_late_frame" for r in logged)
+    assert next(r for r in logged if r["operation"] == "failed")["reason_code"] == "NO_ANALYZED_FRAMES"
+    assert next(r["event"] for r in logged if r["operation"] == "send_attempt")["reason_code"] == "NO_ANALYZED_FRAMES"
+    assert video.released
+
+
 @pytest.mark.parametrize("error,reason", [(RuntimeError("model failure"), "INFERENCE_FAILED"),
                                        (KeyboardInterrupt(), "OPERATOR_STOPPED")])
 def test_inference_failure_or_operator_stop_reports_unavailable_without_clearing(setup, error, reason):

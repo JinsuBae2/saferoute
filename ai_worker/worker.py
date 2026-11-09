@@ -59,6 +59,7 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                     if frames != inspection["decoded_frames"]:
                         raise WorkerError(f"DECODE_FRAME_COUNT_MISMATCH: {frames}/{inspection['decoded_frames']}")
                     if not samples:
+                        failure_reason = "NO_ANALYZED_FRAMES"
                         raise WorkerError("NO_ANALYZED_FRAMES")
                     can_notify = False
                     sender.send(builder.unavailable("EOF", clock.utcnow(), last_media))
