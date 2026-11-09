@@ -6,6 +6,8 @@ import { defineConfig } from "vitest/config";
 // 백엔드(backend/app.py)에는 CORS 미들웨어가 없다. 개발 서버에서 8000을 직접 부르면
 // 전부 차단되므로 /api를 프록시로 같은 오리진에 묶는다. 배포(D02)의 Nginx 구조와 같다.
 const CONTROL_API = process.env.SAFEROUTE_API ?? "http://127.0.0.1:8000";
+// 시나리오 실행기는 별도 프로세스(8001)다. 꺼져 있어도 관제는 동작해야 한다.
+const SCENARIO_API = process.env.SAFEROUTE_SIM_API ?? "http://127.0.0.1:8001";
 
 export default defineConfig({
   plugins: [react()],
@@ -21,6 +23,7 @@ export default defineConfig({
     fs: { allow: [".."] },
     proxy: {
       "/api": { target: CONTROL_API, changeOrigin: false },
+      "/sim": { target: SCENARIO_API, changeOrigin: false },
     },
   },
   test: {

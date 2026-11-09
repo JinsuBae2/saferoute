@@ -1,0 +1,466 @@
+/**
+ * 관제 화면. 서버가 확정한 한 안내 버전의 상태·위험·경로·단말 현황을 표시한다.
+ * 경로나 방향을 여기서 계산하지 않고, 미적용·단절·오래된 버전을 숨기지 않는다.
+ */
+import { useState } from "react";
+import { Link } from "react-router-dom";
+
+import type { StateSnapshot } from "@contracts";
+
+import {
+  checkExplanation,
+  connectionHealth,
+  simulationMatchesRun,
+  summarizeRoutes,
+  summarizeSigns,
+  summarizeSources,
+} from "./controlModel";
+import type { ExplanationBlockReason } from "./controlModel";
+import { EXPLANATION_ERROR_LABEL } from "./explanation";
+import { useControlSnapshot } from "./useControlSnapshot";
+
+type Mode = StateSnapshot["controller_mode"];
+type Validity = StateSnapshot["sources"][number]["validity"];
+type Hazard = StateSnapshot["active_causes"][number]["hazard_type"];
+type ApplicationStatus = StateSnapshot["signs"][number]["application_status"];
+
+const MODE_LABEL: Record<Mode, string> = {
+  INITIALIZING: "준비 중",
+  NORMAL: "평상시",
+  EMERGENCY: "화재 대응",
+  DEGRADED: "확인 불가",
+};
+
+const MODE_TONE: Record<Mode, string> = {
+  INITIALIZING: "muted",
+  NORMAL: "route",
+  EMERGENCY: "fire",
+  DEGRADED: "warn",
+};
+
+const VALIDITY_LABEL: Record<Validity, string> = {
+  VALID: "유효",
+  STALE: "오래됨",
+  UNAVAILABLE: "관측 불가",
+  INITIALIZING: "준비 중",
+};
+
+const VALIDITY_TONE: Record<Validity, string> = {
+  VALID: "route",
+  STALE: "warn",
+  UNAVAILABLE: "fire",
+  INITIALIZING: "muted",
+};
+
+const HAZARD_LABEL: Record<Hazard, string> = {
+  FIRE: "화재",
+  SMOKE: "연기",
+  SPRINKLER: "스프링클러",
+};
+
+const HAZARD_TONE: Record<Hazard, string> = {
+  FIRE: "fire",
+  SMOKE: "warn",
+  SPRINKLER: "warn",
+};
+
+const APPLICATION_LABEL: Record<ApplicationStatus, string> = {
+  NOT_ISSUED: "미발행",
+  PENDING: "확인 대기",
+  APPLIED: "적용 확인",
+  REJECTED: "적용 실패",
+  EXPIRED: "기한 만료",
+  DUPLICATE_TERMINAL: "중복 단말",
+};
+
+const APPLICATION_TONE: Record<ApplicationStatus, string> = {
+  NOT_ISSUED: "muted",
+  PENDING: "warn",
+  APPLIED: "route",
+  REJECTED: "fire",
+  EXPIRED: "warn",
+  DUPLICATE_TERMINAL: "fire",
+};
+
+const EXPLANATION_BLOCK_LABEL: Record<ExplanationBlockReason, string> = {
+  NOT_LOADED: "설명을 아직 받지 못했습니다",
+  NOT_READY: "설명을 준비 중이거나 제공할 수 없습니다",
+  RUN_MISMATCH: "다른 실행의 설명이라 숨겼습니다",
+  BUILDING_MISMATCH: "다른 건물 자료의 설명이라 숨겼습니다",
+  GUIDANCE_MISMATCH: "안내가 바뀌어 이전 설명을 숨겼습니다",
+  EXPIRED: "설명 유효기간이 지나 숨겼습니다",
+  MISSING_FIELDS: "설명 내용이나 근거가 비어 있습니다",
+};
+
+function Badge({ tone, children }: { tone: string; children: React.ReactNode }) {
+  return <span className={`badge badge--${tone}`}>{children}</span>;
+}
+
+function Tile({ label, value, note, tone }: { label: string; value: string; note?: string; tone?: string }) {
+  return (
+    <div className="tile">
+      <span className="tile__label">{label}</span>
+      <strong className={tone === undefined ? "tile__value" : `tile__value tile__value--${tone}`}>{value}</strong>
+      {note !== undefined && <span className="tile__note">{note}</span>}
+    </div>
+  );
+}
+
+function Panel({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
+  return (
+    <section className="panel">
+      <header className="panel__head">
+        <h2>{title}</h2>
+        {note !== undefined && <span className="panel__note">{note}</span>}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+export function ControlDashboard() {
+  const view = useControlSnapshot();
+  const [onlyUnavailable, setOnlyUnavailable] = useState(false);
+  const state = view.state;
+
+  const health = connectionHealth(view.lastStateSuccessAtMs, view.nowMs, view.pollIntervalMs * 3);
+
+  if (state === null) {
+    return (
+      <main className="control">
+        <Panel title="제어기에 연결하는 중">
+          <p className="panel__empty">
+            {view.stateError ?? "상태를 기다리는 중입니다."}
+            <br />
+            제어 백엔드가 떠 있는지 확인하세요.
+          </p>
+        </Panel>
+      </main>
+    );
+  }
+
+  const signs = summarizeSigns(state);
+  const routes = summarizeRoutes(state);
+  const sources = summarizeSources(state);
+  const explanation = checkExplanation(view.explanation, state);
+  const simulation = simulationMatchesRun(view.simulation, state) ? view.simulation : null;
+  const visibleRoutes = onlyUnavailable
+    ? state.routes.filter((route) => route.reason_codes.length > 0)
+    : state.routes;
+
+  return (
+    <main className="control">
+      <header className="control__header">
+        <div>
+          <h1>saferoute 관제</h1>
+          <p className="control__ids">
+            실행 <code>{state.run_id}</code> · {state.building_id} v{state.building_version} · 안내 버전{" "}
+            <strong>{state.guidance_version}</strong> · 기준 시각 {state.generated_at}
+          </p>
+        </div>
+        <Badge tone={MODE_TONE[state.controller_mode]}>{MODE_LABEL[state.controller_mode]}</Badge>
+      </header>
+
+      {(health.stale || view.stateError !== null) && (
+        <p className="control__alert">
+          {view.stateError ?? "제어 상태 조회가 지연되고 있습니다."}{" "}
+          {health.ageMs === null
+            ? "아직 한 번도 읽지 못했습니다."
+            : `마지막 조회 ${(health.ageMs / 1000).toFixed(1)}초 전. 아래 값은 그때 기준입니다.`}
+        </p>
+      )}
+
+      <div className="tiles">
+        <Tile
+          label="활성 경보"
+          value={`${state.active_causes.length}건`}
+          tone={state.active_causes.length > 0 ? "fire" : undefined}
+          note={state.active_causes.length === 0 ? "원인별 해제만 가능" : "확인 해제 전까지 유지"}
+        />
+        <Tile
+          label="차단"
+          value={`지점 ${state.blocked_nodes.length} · 통로 ${state.blocked_edges.length}`}
+          tone={state.blocked_nodes.length > 0 ? "warn" : undefined}
+        />
+        <Tile
+          label="안내"
+          value={`${routes.guided} / ${routes.total} 지점`}
+          tone={routes.unavailable > 0 ? "warn" : "route"}
+          note={`안내 불가 ${routes.unavailable}곳`}
+        />
+        <Tile
+          label="관측원"
+          value={`${sources.valid} / ${sources.total} 유효`}
+          tone={sources.anyUnconfirmed ? "warn" : "route"}
+        />
+        <Tile
+          label="단말 적용"
+          value={`${signs.confirmedCurrent} / ${signs.total}`}
+          tone={signs.unconfirmed > 0 ? "warn" : "route"}
+          note={signs.mixedVersion ? "혼합 버전 표시 중" : `미확인 ${signs.unconfirmed}대`}
+        />
+      </div>
+
+      {signs.mixedVersion && (
+        <p className="control__alert control__alert--warn">
+          단말들이 서로 다른 안내 버전을 표시하고 있습니다. 이전 버전 {signs.behindGuidance}대.
+        </p>
+      )}
+
+      <Panel
+        title="상황 설명"
+        note="Bedrock 작성 · 제어 판단과 별개이며 새 행동 지시를 만들지 않습니다"
+      >
+        {explanation.usable ? (
+          <div className="explanation">
+            <p className="explanation__text">{explanation.explanation.summary}</p>
+            <p className="explanation__meta">
+              AI 작성 · 근거 시각 {explanation.explanation.basis_generated_at} · 안내 버전{" "}
+              {explanation.explanation.guidance_version} · 모델 {explanation.explanation.model_id ?? "미기재"}
+            </p>
+            <ul className="explanation__facts">
+              {explanation.explanation.fact_refs.map((ref) => (
+                <li key={ref}>
+                  <code>{ref}</code>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="panel__empty">
+            {EXPLANATION_BLOCK_LABEL[explanation.reason]}
+            {view.explanation?.error_code != null && ` — ${EXPLANATION_ERROR_LABEL[view.explanation.error_code]}`}
+            {view.explanationError !== null && ` (${view.explanationError})`}
+            <br />
+            경로·방향·적용 현황은 아래 제어 결과로 계속 표시됩니다.
+          </p>
+        )}
+      </Panel>
+
+      <div className="columns">
+        <Panel title="관측원" note="경보 상태와 관측 유효성은 별개입니다">
+          <table className="grid">
+            <thead>
+              <tr>
+                <th>관측원</th>
+                <th>유효성</th>
+                <th>마지막 관측</th>
+                <th>순번</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.sources.map((source) => (
+                <tr key={source.source_id}>
+                  <td>
+                    <code>{source.source_id}</code>
+                  </td>
+                  <td>
+                    <Badge tone={VALIDITY_TONE[source.validity]}>{VALIDITY_LABEL[source.validity]}</Badge>
+                  </td>
+                  <td className="grid__dim">{source.last_observed_at ?? "—"}</td>
+                  <td className="grid__dim">{source.last_source_sequence ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Panel>
+
+        <Panel title="활성 경보" note="다른 관측원의 정상 신호로 지워지지 않습니다">
+          {state.active_causes.length === 0 ? (
+            <p className="panel__empty">활성 경보가 없습니다.</p>
+          ) : (
+            <ul className="causes">
+              {state.active_causes.map((cause) => (
+                <li key={`${cause.source_id}:${cause.hazard_type}`}>
+                  <Badge tone={HAZARD_TONE[cause.hazard_type]}>{HAZARD_LABEL[cause.hazard_type]}</Badge>
+                  <code>{cause.source_id}</code>
+                  <span className="grid__dim">{cause.activated_at}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
+
+      <Panel
+        title="차단 구간"
+        note="관측된 위험과 통행 불가만 포함합니다"
+      >
+        {state.blocked_nodes.length === 0 && state.blocked_edges.length === 0 ? (
+          <p className="panel__empty">차단된 지점·통로가 없습니다.</p>
+        ) : (
+          <div className="blocked">
+            <div>
+              <h3>지점 {state.blocked_nodes.length}</h3>
+              <ul>
+                {state.blocked_nodes.map((node) => (
+                  <li key={node.node_id}>
+                    <code>{node.node_id}</code> <span className="grid__dim">{node.reason_codes.join(", ")}</span>
+                    {node.source_ids.length > 0 && <span className="grid__dim"> · {node.source_ids.join(", ")}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3>통로 {state.blocked_edges.length}</h3>
+              <ul>
+                {state.blocked_edges.map((edge) => (
+                  <li key={edge.edge_id}>
+                    <code>{edge.edge_id}</code> <span className="grid__dim">{edge.reason_codes.join(", ")}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </Panel>
+
+      <Panel
+        title="유도등 단말 적용 현황"
+        note="적용 확인은 단말이 화면에 반영하고 응답한 것만 셉니다"
+      >
+        <table className="grid">
+          <thead>
+            <tr>
+              <th>유도등</th>
+              <th>현재 안내</th>
+              <th>적용 상태</th>
+              <th>명령</th>
+              <th>단말</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {state.signs.map((sign) => {
+              const command = sign.latest_command;
+              const behind = command !== null && command.guidance_version !== state.guidance_version;
+              return (
+                <tr key={sign.sign_id}>
+                  <td>
+                    <code>{sign.sign_id}</code>
+                  </td>
+                  <td>
+                    {sign.faces.map((face) => (
+                      <span key={face.face_id} className="face-chip">
+                        {face.face_id} {face.display ?? face.mode}
+                      </span>
+                    ))}
+                  </td>
+                  <td>
+                    <Badge tone={APPLICATION_TONE[sign.application_status]}>
+                      {APPLICATION_LABEL[sign.application_status]}
+                    </Badge>
+                  </td>
+                  <td className="grid__dim">
+                    {command === null ? (
+                      "—"
+                    ) : (
+                      <>
+                        #{command.command_sequence} · v{command.guidance_version}
+                        {behind && <span className="grid__behind"> 이전 버전</span>}
+                      </>
+                    )}
+                  </td>
+                  <td className="grid__dim">
+                    {sign.terminals.length === 0
+                      ? "없음"
+                      : sign.terminals
+                          .map((terminal) => `${terminal.terminal_instance_id.slice(0, 8)}${terminal.verified ? "" : "(미검증)"}`)
+                          .join(", ")}
+                  </td>
+                  <td>
+                    <Link className="grid__link" to={`/sign/${encodeURIComponent(sign.sign_id)}`}>
+                      단말 열기
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Panel>
+
+      <Panel
+        title="경로"
+        note="cost는 경로 선택용 모델 비용입니다. 거리나 피난 시간이 아닙니다"
+      >
+        <label className="filter">
+          <input
+            type="checkbox"
+            checked={onlyUnavailable}
+            onChange={(event) => setOnlyUnavailable(event.target.checked)}
+          />
+          안내 불가만 보기 ({routes.unavailable}곳)
+        </label>
+
+        {routes.reasons.length > 0 && (
+          <p className="panel__note">
+            사유: {routes.reasons.map(([reason, count]) => `${reason} ${count}`).join(" · ")}
+          </p>
+        )}
+
+        <div className="grid__scroll">
+          <table className="grid">
+            <thead>
+              <tr>
+                <th>지점</th>
+                <th>다음</th>
+                <th>목적지</th>
+                <th>모델 비용</th>
+                <th>사유</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRoutes.map((route) => (
+                <tr key={route.node_id}>
+                  <td>
+                    <code>{route.node_id}</code>
+                  </td>
+                  <td>{route.next_node_id ?? "—"}</td>
+                  <td>{route.exit_id ?? "—"}</td>
+                  <td className="grid__dim">{route.cost ?? "—"}</td>
+                  <td className="grid__reason">{route.reason_codes.join(", ") || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+
+      <Panel
+        title="시나리오 연기 정답"
+        note="시험용 값이며 제어기가 관측한 위험과 다릅니다"
+      >
+        {simulation === null ? (
+          <p className="panel__empty">
+            시나리오 실행기가 연결되지 않았습니다.
+            {view.simulationError !== null && ` (${view.simulationError})`}
+            <br />
+            제어 결과 표시에는 영향이 없습니다.
+          </p>
+        ) : (
+          <>
+            <p className="panel__note">
+              <code>{simulation.scenario_id}</code> · {simulation.status} · 진행 {simulation.simulation_time_ms}ms
+            </p>
+            <ul className="smoke">
+              {simulation.zones.map((zone) => (
+                <li key={zone.zone_id}>
+                  <code>{zone.zone_id}</code>
+                  <span className="smoke__bar" aria-hidden>
+                    <span style={{ width: `${Math.round(zone.smoke * 100)}%` }} />
+                  </span>
+                  <span className="grid__dim">{zone.smoke.toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </Panel>
+
+      <footer className="control__footer">
+        이 화면은 조회만 합니다. 닫아도 제어기와 유도등 단말은 그대로 동작합니다.
+      </footer>
+    </main>
+  );
+}
