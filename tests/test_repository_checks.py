@@ -76,21 +76,21 @@ class DocumentTests(unittest.TestCase):
     def test_valid_korean_anchor_and_json(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "README.md").write_text("[문서](guide.md#1-설정-확인)\n")
-            (root / "guide.md").write_text('# 1. 설정 확인\n\n```json\n{"version": 1}\n```\n')
+            (root / "README.md").write_text("[문서](guide.md#1-설정-확인)\n", encoding="utf-8")
+            (root / "guide.md").write_text('# 1. 설정 확인\n\n```json\n{"version": 1}\n```\n', encoding="utf-8")
             self.assertEqual(check_documents(root, [Path("README.md"), Path("guide.md")]), [])
 
     def test_rejects_missing_file_and_anchor(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "README.md").write_text("# 안내\n\n[없음](missing.md)\n[절](#없는-절)\n")
+            (root / "README.md").write_text("# 안내\n\n[없음](missing.md)\n[절](#없는-절)\n", encoding="utf-8")
             self.assertEqual(len(check_documents(root, [Path("README.md")])), 2)
 
     def test_rejects_invalid_json_and_unclosed_fence(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for content in ['```json\n{broken}\n```\n', '```text\nnever closed\n']:
-                (root / "README.md").write_text(content)
+                (root / "README.md").write_text(content, encoding="utf-8")
                 self.assertTrue(check_documents(root, [Path("README.md")]))
 
 

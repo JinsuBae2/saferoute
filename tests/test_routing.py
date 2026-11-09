@@ -15,7 +15,7 @@ from backend.routing import calculate_routes, validate_default_routes
 from test_observation_state import building, clock, controller, control, payload, prepare
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = json.loads((ROOT / "tests/fixtures/routing-cases.json").read_text())["cases"]
+CASES = json.loads((ROOT / "tests/fixtures/routing-cases.json").read_text(encoding="utf-8"))["cases"]
 
 
 def modified(building, *, edges=None, disabled=(), costs=None, signs=None):
@@ -217,7 +217,7 @@ def test_controller_g07_g08_g09_and_route_audit_are_same_version(controller,cloc
     snapshot=controller.snapshot()
     assert snapshot.controller_mode=="NORMAL"
     assert rows(snapshot.routes)==CASES[8]["expected"]
-    decisions=[json.loads(line) for line in (tmp_path/"runs"/snapshot.run_id/"decisions.jsonl").read_text().splitlines()]
+    decisions=[json.loads(line) for line in (tmp_path/"runs"/snapshot.run_id/"decisions.jsonl").read_text(encoding="utf-8").splitlines()]
     assert decisions[-1]["guidance_version"]==snapshot.guidance_version
     assert decisions[-1]["routes"]==[r.model_dump(mode="json") for r in snapshot.routes]
     clock.advance(3000)

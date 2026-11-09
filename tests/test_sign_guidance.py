@@ -50,7 +50,7 @@ def post_ack(client, value, target=None):
 
 
 def records(tmp_path, run_id, category):
-    return [json.loads(line) for line in (tmp_path / "runs" / run_id / f"{category}.jsonl").read_text().splitlines()]
+    return [json.loads(line) for line in (tmp_path / "runs" / run_id / f"{category}.jsonl").read_text(encoding="utf-8").splitlines()]
 
 
 def test_faces_follow_readiness_route_and_view_direction(controller, clock):

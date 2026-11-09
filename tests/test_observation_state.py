@@ -30,7 +30,7 @@ class FakeClock:
 
 @pytest.fixture
 def building():
-    return parse_contract("Building", json.loads((ROOT / "data/fixtures/two-route-v1.json").read_text()))
+    return parse_contract("Building", json.loads((ROOT / "data/fixtures/two-route-v1.json").read_text(encoding="utf-8")))
 
 
 @pytest.fixture
@@ -179,7 +179,7 @@ def test_concurrent_duplicates_and_expiry_have_single_effect(controller,clock,tm
     clock.advance(3000)
     with ThreadPoolExecutor(max_workers=8) as pool:
         list(pool.map(lambda _:controller.expire(),range(20)))
-    records=[json.loads(line) for line in (tmp_path/"runs"/controller.session().run_id/"decisions.jsonl").read_text().splitlines()]
+    records=[json.loads(line) for line in (tmp_path/"runs"/controller.session().run_id/"decisions.jsonl").read_text(encoding="utf-8").splitlines()]
     assert sum(r["operation"]=="expire" for r in records)==1
     assert validity(controller,"CAM-A")=="STALE"
 
@@ -189,10 +189,10 @@ def test_clear_actor_reason_and_rejection_are_recorded(controller,clock,tmp_path
     controller.clear(control(controller,source_id="CAM-A",hazard_type="FIRE"))
     with pytest.raises(ContractError): controller.clear(control(controller,source_id="CAM-A",hazard_type="FIRE"))
     log=tmp_path/"runs"/controller.session().run_id
-    decisions=[json.loads(line) for line in (log/"decisions.jsonl").read_text().splitlines()]
+    decisions=[json.loads(line) for line in (log/"decisions.jsonl").read_text(encoding="utf-8").splitlines()]
     clear=next(r for r in decisions if r["operation"]=="clear")
     assert clear["actor"]=="test-operator" and clear["reason"]=="test operator confirmation"
-    events=[json.loads(line) for line in (log/"events.jsonl").read_text().splitlines()]
+    events=[json.loads(line) for line in (log/"events.jsonl").read_text(encoding="utf-8").splitlines()]
     assert any(r.get("error_code")=="SOURCE_CAUSE_INACTIVE" for r in events)
 
 
@@ -254,7 +254,7 @@ def test_bad_numeric_input_is_logged_without_disabling_controller(controller,clo
         controller.receive(payload(controller,clock,confidence=float("nan")))
     assert error.value.code=="SCHEMA_VALIDATION_FAILED"
     assert controller.receive(payload(controller,clock)).accepted
-    rows=(tmp_path/"runs"/controller.session().run_id/"events.jsonl").read_text().splitlines()
+    rows=(tmp_path/"runs"/controller.session().run_id/"events.jsonl").read_text(encoding="utf-8").splitlines()
     assert json.loads(rows[0])["error_code"]=="SCHEMA_VALIDATION_FAILED"
 
 
