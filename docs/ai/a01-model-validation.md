@@ -1,6 +1,7 @@
 # A01 로컬 실행 검증 — 2026-11-09
 
 관련 이슈: [A01 #9](https://github.com/JinsuBae2/saferoute/issues/9). 담당: Rinhaze / 1번.
+후속 입력 크기 비교·재생 속도 측정·사용 조건·서버 인계는 [후속 검증 기록](a01-selection-and-server-check.md)에 정리했다.
 최초 실험 기준 develop: `5a0c169393cb4a7e80be4600a6cd980a864eb251`.
 PR 준비 시 최신 develop `fe5bbabf1692f48771f1a232bd10b31595f6c034`를 반영하고 공통 검사를 다시 실행했다.
 검토 지적 보완 시 develop `77a5298`의 팀 작업을 추가 반영했다.

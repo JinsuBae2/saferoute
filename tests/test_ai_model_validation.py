@@ -37,8 +37,19 @@ def test_changed_or_missing_asset_cannot_silently_run(tmp_path):
         verify_file(tmp_path / "missing", expected)
 
 
-@pytest.mark.parametrize("timestamps, invalid", [([0, 0, 500], False), ([500, 0], True)])
-def test_timestamp_duplicates_are_logged_but_regression_fails(tmp_path, monkeypatch, timestamps, invalid):
+@pytest.mark.parametrize("timestamps, invalid, pace, predict_seconds", [
+    ([0, 0, 500], False, False, 0), ([500, 0], True, False, 0),
+    ([0, 0, 500], False, True, .1), ([0, 0, 500], False, True, 3.1),
+])
+def test_timestamp_sampling_and_playback_timing(tmp_path, monkeypatch, timestamps, invalid, pace, predict_seconds):
+    clock = SimpleNamespace(now=0.0)
+
+    def advance(seconds):
+        clock.now += seconds
+
+    monkeypatch.setattr(trial.time, "perf_counter", lambda: clock.now)
+    monkeypatch.setattr(trial.time, "sleep", advance)
+
     class Capture:
         index = -1
         released = False
@@ -47,6 +58,7 @@ def test_timestamp_duplicates_are_logged_but_regression_fails(tmp_path, monkeypa
             return True
 
         def read(self):
+            advance(.01)
             self.index += 1
             return self.index < len(timestamps), object()
 
@@ -70,21 +82,31 @@ def test_timestamp_duplicates_are_logged_but_regression_fails(tmp_path, monkeypa
 
     def predict(*args, **kwargs):
         calls.append(cap.index)
+        advance(predict_seconds)
         return [result]
 
     model = SimpleNamespace(names={}, predict=predict)
     args = (model, {"path": "dummy.webm", "asset_id": "sample"}, tmp_path, tmp_path, 640, 500, .25)
     if invalid:
         with pytest.raises(ValueError, match="regressing"):
-            trial.run_video(*args)
+            trial.run_video(*args, pace=pace)
     else:
-        report = trial.run_video(*args)
+        report = trial.run_video(*args, pace=pace)
         assert report["decoded_frames"] == 3
         assert report["skipped_duplicate_timestamp_frames"] == 1
         assert report["sampled_frames"] == 2
         assert calls == [0, 2]
         frames = [json.loads(line) for line in (tmp_path / "sample.jsonl").read_text(encoding="utf-8").splitlines()]
         assert [(f["frame_index"], f["media_time_ms"]) for f in frames] == [(0, 0), (2, 500)]
+        if pace and predict_seconds < 1:
+            assert report["max_completion_gap_ms"] == pytest.approx(490)
+            assert report["max_read_to_completion_ms"] == pytest.approx(470)
+            assert report["max_playback_lateness_ms"] == pytest.approx(110)
+        elif pace:
+            assert report["max_completion_gap_ms"] > 3000
+            assert report["max_playback_lateness_ms"] > 3000
+        else:
+            assert report["max_playback_lateness_ms"] is None
     assert cap.released
 
 

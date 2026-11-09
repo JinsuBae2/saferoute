@@ -39,7 +39,7 @@ def summarize_frames(frames):
     }
 
 
-def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
+def run_video(model, asset, root, output, imgsz, interval_ms, confidence, pace=False):
     import cv2
     import psutil
 
@@ -52,6 +52,7 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
     previous = -1.0
     process = psutil.Process()
     started = time.perf_counter()
+    previous_completion = None
     metadata = {
         "reported_fps": cap.get(cv2.CAP_PROP_FPS),
         "reported_frame_count": cap.get(cv2.CAP_PROP_FRAME_COUNT),
@@ -68,6 +69,8 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
                 ok, frame = cap.read()
                 if not ok:
                     break
+                acquired = time.perf_counter()
+                acquired_at = datetime.now(timezone.utc).isoformat()
                 timestamp = cap.get(cv2.CAP_PROP_POS_MSEC)
                 if not math.isfinite(timestamp) or timestamp < 0 or timestamp < previous:
                     raise ValueError(f"Invalid or regressing media timestamp: {path}: {timestamp}")
@@ -79,14 +82,24 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
                 if timestamp + 1e-6 < next_due:
                     continue
                 next_due = (math.floor((timestamp + 1e-6) / interval_ms) + 1) * interval_ms
+                if pace:
+                    time.sleep(max(0.0, started + timestamp / 1000 - time.perf_counter()))
                 before = time.perf_counter()
                 result = model.predict(frame, device="cpu", imgsz=imgsz,
                                        conf=confidence, verbose=False)[0]
-                elapsed_ms = (time.perf_counter() - before) * 1000
+                completed = time.perf_counter()
+                elapsed_ms = (completed - before) * 1000
                 record = {
                     "frame_index": decoded - 1,
                     "media_time_ms": timestamp,
                     "predict_ms": elapsed_ms,
+                    "frame_read_completed_at": acquired_at,
+                    "analysis_completed_at": datetime.now(timezone.utc).isoformat(),
+                    "read_to_completion_ms": (completed - acquired) * 1000,
+                    "completion_gap_ms": (completed - previous_completion) * 1000
+                    if previous_completion is not None else None,
+                    "playback_lateness_ms": max(0.0, (completed - started) * 1000 - timestamp)
+                    if pace else None,
                     "stages_ms": result.speed,
                     "rss_mib": process.memory_info().rss / 1024**2,
                     "boxes": [
@@ -97,6 +110,7 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
                     ],
                 }
                 frames.append(record)
+                previous_completion = completed
                 log.write(json.dumps(record) + "\n")
                 if len(frames) == 1:
                     if not cv2.imwrite(str(output / f'{asset["asset_id"]}-first.jpg'), result.plot()):
@@ -112,6 +126,12 @@ def run_video(model, asset, root, output, imgsz, interval_ms, confidence):
         "read_termination": "read_returned_false_not_verified_eof",
         "offline_elapsed_s": elapsed_s,
         "offline_sample_throughput_fps": len(frames) / elapsed_s,
+        "paced_playback": pace,
+        "max_read_to_completion_ms": max((f["read_to_completion_ms"] for f in frames), default=None),
+        "max_completion_gap_ms": max((f["completion_gap_ms"] for f in frames
+                                      if f["completion_gap_ms"] is not None), default=None),
+        "max_playback_lateness_ms": max((f["playback_lateness_ms"] for f in frames
+                                         if f["playback_lateness_ms"] is not None), default=None),
         **summarize_frames(frames),
     }
 
@@ -124,6 +144,7 @@ def main():
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--interval-ms", type=int, default=500)
     parser.add_argument("--confidence", type=float, default=.25)
+    parser.add_argument("--pace", action="store_true", help="Pace sampled inference to media time; no API transmission")
     args = parser.parse_args()
     if args.imgsz <= 0 or args.interval_ms <= 0 or not 0 < args.confidence < 1:
         parser.error("imgsz/interval must be positive and confidence between 0 and 1")
@@ -170,6 +191,7 @@ def main():
         "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
         "model_sha256": weights["sha256"], "actual_classes": model.names,
         "imgsz": args.imgsz, "interval_ms": args.interval_ms, "confidence": args.confidence,
+        "paced_playback": args.pace,
         "model_load_s": load_s, "synthetic_warmup_s": warmup_s,
         "synthetic_warmup_torch_threads_before": warmup_threads_before,
         "synthetic_warmup_torch_threads_after": warmup_threads_after,
@@ -177,7 +199,7 @@ def main():
     }
     for asset in assets:
         result = run_video(model, asset, root, args.output, args.imgsz,
-                           args.interval_ms, args.confidence)
+                           args.interval_ms, args.confidence, args.pace)
         report["videos"].append(result)
         print(json.dumps(result), flush=True)
     (args.output / "summary.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
