@@ -47,6 +47,10 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None):
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError): await task
+            try:
+                await asyncio.to_thread(app.state.controller.close)
+            except ContractError:
+                LOGGER.exception("Run could not be finalized; logs remain incomplete")
 
     app = FastAPI(title="saferoute observation API", version="0.1.0", lifespan=lifespan)
 

@@ -33,6 +33,7 @@ class Controller:
         self.lock = RLock()
         self.audit = AuditLog(runs_dir)
         self.audit_failed = False
+        self.closed = False
         self.source_config = {s.source_id: s for s in self.building.sources}
         self.zones = {z.zone_id: z for z in self.building.zones}
         self.sign_config = {s.sign_id: s for s in self.building.signs}
@@ -61,7 +62,7 @@ class Controller:
         self._snapshot = self._build_snapshot()
 
     def _ensure_ready(self):
-        if self.audit_failed:
+        if self.audit_failed or self.closed:
             raise ContractError("CONTROLLER_NOT_READY", "실행 기록 오류로 제어를 중단했습니다")
 
     def _write(self, category, **record):
@@ -191,6 +192,20 @@ class Controller:
 
     def expire(self):
         with self.lock: self._expire_locked()
+
+    def _finish_run(self, reason):
+        try:
+            self.audit.finish(self.run_id, utc_text(self.clock.utcnow()), reason)
+        except (OSError, ValueError) as error:
+            self.audit_failed = True
+            raise ContractError("CONTROLLER_NOT_READY", "실행 종료 기록을 저장하지 못했습니다") from error
+
+    def close(self):
+        with self.lock:
+            if self.closed: return
+            self._write("decisions", operation="stop", actor=self.operator_id, reason="controller shutdown")
+            self._finish_run("shutdown")
+            self.closed = True
 
     def session(self):
         with self.lock:
@@ -355,6 +370,7 @@ class Controller:
             if operation == "reset":
                 previous, new = self.run_id, str(uuid4())
                 self._write("decisions",operation="reset",next_run_id=new,**evidence)
+                self._finish_run("reset")
                 try: self._start_run(new)
                 except OSError as error:
                     self.audit_failed = True

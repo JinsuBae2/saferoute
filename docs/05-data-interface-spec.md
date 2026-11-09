@@ -281,7 +281,7 @@ B03의 성공 응답은 HTTP 200과 해당 유도등의 `SignState` 객체(`sign
 
 조회 응답은 `Cache-Control: no-store`로 제공한다. 클라이언트도 캐시를 사용하지 않는다. POST 제어 기능은 기본 배포에서 SSH 접속 권한이 있는 팀원만 접근하는 내부 경로다. 공개 배포가 결정되면 인증·권한을 먼저 구현하고 무인증 reset·clear·event 전송을 열지 않는다.
 
-B01에서 health·session·building·state·events·arm·clear·reset, B02에서 상태별 경로, B03에서 현재 표시면·단말별 명령·ACK·감사 로그를 구현했다. INITIALIZING·DEGRADED는 각각 INITIALIZING·REQUIRED_OBSERVATION_UNKNOWN 사유와 UNKNOWN 표시다. NORMAL은 DEFAULT, EMERGENCY는 DYNAMIC 또는 NO_ROUTE이며, 등록된 출구 지점은 EXIT, 지원하지 않는 면은 NO_ROUTE·UNSUPPORTED_DISPLAY다. `/sim/*`와 실제 브라우저 단말은 후속 구현이다. 경로·표시면 조회는 명령 발행·적용 완료를 의미하지 않는다.
+B01에서 health·session·building·state·events·arm·clear·reset, B02에서 상태별 경로, B03에서 현재 표시면·단말별 명령·ACK·감사 로그를 구현했다. INITIALIZING·DEGRADED는 각각 INITIALIZING·REQUIRED_OBSERVATION_UNKNOWN 사유와 UNKNOWN 표시다. NORMAL은 DEFAULT, EMERGENCY는 DYNAMIC 또는 NO_ROUTE이며, 등록된 출구 지점은 EXIT, 지원하지 않는 면은 NO_ROUTE·UNSUPPORTED_DISPLAY다. B04에서 `/sim/*`와 설정·운영·로그 검증 도구를 구현했다. 실제 브라우저 단말은 후속 구현이다. 경로·표시면 조회는 명령 발행·적용 완료를 의미하지 않는다.
 
 ### 6.1 오류
 
@@ -305,28 +305,44 @@ B01에서 health·session·building·state·events·arm·clear·reset, B02에서
 
 - `smoke_timeline`: 시간·구역·0~1 표현 강도. 실제 농도·물리 예측값이 아님.
 - `observation_rules`: 가상 관측원, 임계값, 관측 주기, 지연. 정답에서 이벤트를 만드는 시험 장치의 규칙.
-- `faults`: 특정 관측 누락·프로세스 단절·전송 지연 등의 구간.
+- `faults`: 모의 관측 DROP·추가 DELAY·UNAVAILABLE 구간. 실제 프로세스 종료 시험은 별도로 수행한다.
 - `initial_observations`: 초기 필수 관측 확인. 모든 구역을 무조건 정상이라고 간주하지 않음.
 - `seed`: 난수를 쓸 때만 의미가 있으며 반복 시험에서 고정.
 - 시나리오 실행기는 시작 시 현재 run_id를 읽고 고정한다. 실행 도중 run_id가 바뀌면 전송을 중단한다.
 - arm 전에는 초기 관측·상태 확인만 전달하고 주요 시간표는 대기한다. arm 확인을 시나리오 t=0으로 한다. 실제 AI 경보를 시작 조건으로 쓰는 기능은 별도 설정·시험 후 추가한다.
 
-`/sim/state`는 scenario_id, run_id, building_version, simulation_time_ms, simulation_sequence, running/completed/failed 상태와 현재 구역별 smoke 값만 제공한다. 관제는 연기 정답과 제어기 관측을 별도 범례로 표시한다. 미래 정답은 화면에도 필요 이상 보내지 않는다.
+실행 설정 샘플은 `data/scenarios/two-route-smoke.runtime.json`이며 기존 `two-route-smoke.json`은 독립적인 Q02 기대 결과 문서다. 실행 설정에는 기대 경로를 넣지 않는다.
+
+| 배열 | 요소 필드·조건 |
+| --- | --- |
+| smoke_timeline | `time_ms`(0 이상 정수), `zone_id`, `smoke`(0~1). 구역별 t=0 필수, 같은 구역·시각 중복 금지, duration 이내. 값은 다음 항목까지 유지 |
+| observation_rules | `source_id`, `threshold`(0 초과~1), `interval_ms`(양의 정수), `delay_ms`(0 이상). 등록된 SIM 관측원만 허용, source 중복 금지 |
+| initial_observations | rule source마다 `source_id`, `event_kind`(OBSERVATION/ALARM), `hazard_type`(null/SMOKE/SPRINKLER). 초기 연기·임계값·관측원 종류와 일치해야 함 |
+| faults | `source_id`, `kind`(DROP/DELAY/UNAVAILABLE), `start_ms`, `end_ms`, `delay_ms`. [start,end), duration 이내, 같은 source 구간 중복 금지. DELAY만 양의 추가 지연, 나머지는 0 |
+
+seed는 현재 결정적 시간표에서 난수를 사용하지 않으므로 결과에 영향을 주지 않는다. 관측원 임계값·초기값은 실제 설비 사양이 아닌 시험 가정이다. DROP도 관측 순번을 소비하고, DELAY는 원래 시각을 보존하며, UNAVAILABLE은 SMOKE 경보를 자동 해제하지 않는다. arm 전에는 초기 관측을 즉시·주기적으로 전송하고 주요 시간표·fault는 대기한다. arm 확인 후에 delay·fault 규칙을 적용한다. 오래 지연된 마지막 큐는 완료 시 버리며 이후 입력을 만들지 않는다. 같은 source를 다른 공급자와 공유하지 않는다. 초기 관측에서 순번 충돌이 발생하면 SOURCE_CONFLICT로 중단한다. 이는 운영 충돌 감지이며 분산 소유권·인증 잠금 기능은 아니다.
+
+`/sim/state`의 공통 형식은 `SimulationState`다. schema_version, building_id, building_version, scenario_id, 고정 run_id, simulation_time_ms, simulation_sequence, status, zones(`{zone_id, smoke}` 객체 배열), error_code(null 또는 문자열)를 제공한다. status는 WAITING_FOR_ARM·RUNNING·COMPLETED·FAILED·STOPPED다. 시간과 순번은 프로세스가 진행시키며 GET 요청은 진행시키지 않는다. 기동 시 백엔드·설정 불일치면 서비스가 뜨지 않는다. 실행 중 오류면 FAILED 상태를 유지하고 새 실행기로 재시작해야 한다. GET /sim/health는 현재 status만 반환하므로 HTTP 200만으로 정상 진행을 판정하지 않는다. 응답은 no-store다. 현재 값 외 시간표·미래 값·경로·기대 결과는 노출하지 않는다. 관제는 연기 정답과 제어기 관측을 별도 범례로 표시한다.
 
 ## 8. 저장·감사 로그
 
 | 파일 | 기록 |
 | --- | --- |
-| manifest.json | run_id, 코드 commit, 설정·건물·모델 해시, OS·장비, 시작·종료, 시나리오·평가 모드 |
+| manifest.json | schema_version=1, run_id, building_id/version/SHA-256, 코드 commit·dirty(null 허용), Python·OS, 시작·종료·closed·마지막 순번 |
+| building.json | 해당 실행이 사용한 건물·설비 설정의 정확한 사본 |
 | events.jsonl | 수신·거부·중복 입력, 수신 UTC·서버 monotonic, 거부 이유 |
-| decisions.jsonl | 원인 이벤트 또는 만료, 전후 상태, 차단 대상, 안내 버전, 계산 시간 |
+| decisions.jsonl | 시작·종료·초기화, 원인 이벤트/운영 명령/만료, 적용 후 상태·차단·경로·표시면·안내 버전 |
 | commands.jsonl | 명령 ID·순번·대상·안내 버전·발행 시각·기한 |
 | acks.jsonl | 수신·검증 결과, 적용 여부, 서버 수신 시각 |
-| verification.json | 시험 ID, 기대·실제 결과, 판정, 증거 경로 |
+| verification.json | scope=LOG_INTEGRITY, PASS/FAIL, 기록·명령·ACK 개수, 파일별 해시, 오류 파일·줄·사유 |
 
 JSONL은 한 줄에 JSON 객체 하나다. 중간에 로그가 깨졌으면 검증 도구가 해당 줄을 오류로 보고하며 조용히 건너뛰어 성공률을 높이지 않는다. 로그 기록 실패·디스크 부족은 운영 오류로 드러내고 측정 증거 미완료로 처리한다.
 
 B03의 commands 로그는 전체 `command`와 `issued_monotonic_ms`·`expires_at_monotonic_ms`를 기록한다. acks 로그는 원본 payload·accepted/duplicate/rejected·verified·confirms_current·서버 수신 시각·server_ack_elapsed_ms를 기록하며 거부 시 오류 코드를 남긴다. verified는 해당 발행 명령의 APPLIED 내용 검증, confirms_current는 수신 시 현재 안내·최신 명령과의 일치다. 중복 단말 여부까지 반영한 전체 적용 판정은 SignState에서 확인한다. 서버 경과 시간은 클라이언트의 화면 렌더링 시간과 구분한다. decisions의 안내 변경 기록에는 같은 버전의 경로와 표시면을 함께 남긴다.
+
+B04의 JSONL 공통 필드는 run_id, recorded_at(UTC), server_monotonic_ms, record_sequence(1부터 네 파일 전체에서 연속)다. manifest의 closed는 생성 시 false이며 reset·정상 shutdown에서만 true로 확정된다. 검증기는 종료 시각·이유·last_record_sequence와 마지막 reset/stop 결정을 확인한다. 기록 실패 시 제어기는 CONTROLLER_NOT_READY로 중단하고 미완료 manifest를 유지한다. 검증기가 원본 로그를 고치거나 누락을 보충하지 않는다.
+
+시나리오 기록은 `simulations/<시나리오 실행 UUID>/manifest.json`, `scenario.json` 사본, `scenario.jsonl`이다. 샘플·예정 전달 시각·누락·전송 결과·실패·완료와 남은 큐 폐기 개수를 남긴다. 이 자료에는 시험 정답이 있으므로 제어기 입력과 분리한다. LOG_INTEGRITY 검증기는 제어 로그만 검사하며 시나리오 물리 타당성·영상 추론·실제 화면·최단 경로 재계산을 판정하지 않는다. `acks_applied`, `acks_confirming_current`는 조건에 맞는 ACK 레코드 수로 중복 응답이 포함될 수 있다. 단말 수·독립 적용 횟수로 해석하지 않는다. accepted/duplicate 개수는 별도 제공한다.
 
 실행 종료 후 S3의 `outputs/runs/<run_id>/`에 필요한 증거를 복사한다. 제어 요청 처리 안에서 매번 S3 업로드를 기다리지 않는다. PEM, AWS 자격증명, 개인 영상은 로그·Git·S3 공개 자료에 넣지 않는다.
 

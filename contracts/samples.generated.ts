@@ -750,6 +750,28 @@ export const emergency_state = {
   ]
 } satisfies Contracts.StateSnapshot;
 
+export const simulation_state = {
+  "schema_version": 1,
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "scenario_id": "two-route-smoke-v1",
+  "run_id": "00000000-0000-4000-8000-000000000001",
+  "simulation_time_ms": 15000,
+  "simulation_sequence": 150,
+  "status": "RUNNING",
+  "zones": [
+    {
+      "zone_id": "Z-A",
+      "smoke": 0.7
+    },
+    {
+      "zone_id": "Z-B",
+      "smoke": 0.0
+    }
+  ],
+  "error_code": null
+} satisfies Contracts.SimulationState;
+
 export const building = {
   "schema_version": 1,
   "building_id": "TWO_ROUTE",

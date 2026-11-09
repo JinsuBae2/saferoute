@@ -4,7 +4,7 @@
 
 [2026 동북권 개발자 대상 오픈소스 아이디어 경진대회](https://hackathon.tbitcloud.com/northeast-oss)의 지정 주제 **AI 기반 재난 대응 행동요령 안내 서비스**를 건물 화재의 대피 방향 안내로 구체화합니다. 감지는 오픈소스 불꽃·연기 모델, 경로·유도등 판단은 제어 알고리즘, 상황 설명은 Amazon Bedrock이 담당합니다. 설명이 실패해도 제어는 계속 동작하도록 설계합니다. 공식 기준과 주제 대응은 [기획서 0절](docs/01-project-proposal.md#0-공식-대회-기준과-주제-대응)을 참고하세요.
 
-현재는 C02 공통 계약, B01 관측·경보 API, B02 위험 배제 경로, B03 표시면별 명령·ACK·감사 로그를 구현한 단계입니다. 실제 단말 화면 연동·오픈소스 감지 연결·Bedrock 설명(F11/A05)·서버 배포는 후속 작업입니다. 감지 모델의 구체적인 가중치는 실제 실행·사용 조건 확인 후 선정합니다.
+현재는 C02 공통 계약, B01 관측·경보 API, B02 위험 배제 경로, B03 표시면별 명령·ACK·감사 로그, B04 독립 시나리오·운영·로그 검증 도구를 구현한 단계입니다. 실제 단말 화면 연동·오픈소스 감지 연결·Bedrock 설명(F11/A05)·서버 배포는 후속 작업입니다. 감지 모델의 구체적인 가중치는 실제 실행·사용 조건 확인 후 선정합니다.
 
 ## 개발 문서
 
@@ -66,6 +66,49 @@ B01 집중 검사: `python -m pytest tests/test_observation_state.py -q`. API �
 B02 집중 검사: `python -m pytest tests/test_routing.py -q`. G01~G10의 전체 노드 수계산 정답, 독립 경로 열거, 위험 배제·동률·순환·기본 방향 검증을 확인합니다. 경로 비용은 모델 값이며 실제 피난 시간을 의미하지 않습니다.
 
 B03 집중 검사: `python -m pytest tests/test_sign_guidance.py -q`. 정면·반대 면 매핑, 두 sign_id의 상태 분리, 명령 갱신·만료, 변조·역순·중복 ACK, reset·동시 요청·로그 실패를 확인합니다. 시험 클라이언트의 ACK는 실제 브라우저 화면이나 등기구를 관찰한 증거가 아닙니다. P01·I01의 두 화면 연결과 V06 검수는 별도로 수행합니다.
+
+## 관제 없이 연기 시나리오 실행
+
+가상환경을 활성화한 터미널에서 건물·시나리오를 검사합니다. `two-route-smoke.json`은 사람이 읽는 Q02 시험 계획, `two-route-smoke.runtime.json`은 실행 설정입니다.
+
+```sh
+python -m tools.validate_config --building data/fixtures/two-route-v1.json --scenario data/scenarios/two-route-smoke.runtime.json
+```
+
+1. 위 명령으로 백엔드를 먼저 시작합니다. 재시연이면 이전 실행기를 종료하고 `reset`부터 수행합니다.
+2. 별도 터미널에서 아래 실행기를 시작합니다. 초기 관측만 반복 전송하며 운영자의 arm을 기다립니다. 이미 사용 중인 관측원이나 arm된 실행에는 붙지 않습니다.
+
+```sh
+python -m scenario_runner --controller-url http://127.0.0.1:8000 --port 8001
+python -m tools.control session
+python -m tools.control state
+```
+
+3. 출력된 run_id를 아래 `RUN_ID` 자리에 직접 넣습니다. 제어 도구는 ID·관측 시각을 새 값으로 자동 교체하지 않습니다. 아래 예제는 실제 실행 ID로 치환한 후 실행합니다.
+
+```sh
+python -m tools.control arm --run-id RUN_ID --reason "시연 초기 관측 확인"
+```
+
+4. `http://127.0.0.1:8001/sim/state`에서 현재 연기, `http://127.0.0.1:8000/api/state`에서 관측·안내를 별도로 확인합니다. 실행기가 arm을 확인한 시점이 t=0입니다. t=15초 A 연기 증가 → 약 t=17초 우회, t=25초 B 증가 → 약 t=27초 S의 NO_ROUTE입니다. 시간표는 계단식 값이며 실제 연기 물리 모델이 아닙니다. 서버 부하에 따른 지연은 기록에 드러납니다.
+5. t=35초 A의 연기가 줄어도 경보는 남습니다. t=40초에 아래처럼 A 원인만 명시적으로 해제하면 A 쪽 안내가 복구됩니다. 실제 안전 확인을 대신하는 자동 해제 기능이 아닙니다.
+
+```sh
+python -m tools.control clear --run-id RUN_ID --source-id DETECTOR-A --hazard-type SMOKE --reason "시험 A 구역 확인"
+```
+
+6. t=45초 완료 후 입력이 멈추면 관측은 만료됩니다. 실행기를 Ctrl+C로 종료하고 아래 reset으로 새 실행을 시작합니다. 기존 제어 기록은 확정·보존됩니다. 새 시연은 새 실행기를 띄워 진행합니다. 백엔드 정상 종료도 현재 로그를 확정합니다.
+
+```sh
+python -m tools.control reset --run-id RUN_ID --reason "다음 시험 준비"
+python -m tools.verify_run runs/RUN_ID
+```
+
+검증기는 **종료된 실행의 로그 무결성**만 판정하며 `verification.json`을 작성합니다. 실행 중·강제 종료·손상·구형 로그는 FAIL입니다. PASS는 실제 AI·브라우저 표시·실물 유도등 검증을 의미하지 않습니다. 명령·ACK가 없는 실행은 해당 개수가 0으로 기록됩니다. 시나리오 증거는 `runs/<run_id>/simulations/<별도 실행 ID>/`에 분리됩니다.
+
+운영 도구의 다른 서버 접속은 `python -m tools.control --url http://127.0.0.1:8000 state`처럼 지정합니다. 직접 관측 전송은 `python -m tools.control event --file 관측.json`입니다. 설정 검사는 성공 0·오류 2, control은 성공 0·통신/서버 오류 1·입력 오류 2, 로그 검증은 PASS 0·FAIL 1·인자 오류 2를 반환합니다. 실행기는 잘못된 설정이면 2, 기동 실패면 비정상 종료하며 실행 중 오류는 `/sim/state`의 FAILED·error_code로 표시합니다. 실패 후 자동 재연결하지 않습니다.
+
+B04 집중 검사: `python -m pytest tests/test_operating_tools.py tests/test_scenario_runner.py tests/test_audit_lifecycle.py tests/test_run_verification.py -q`. 초기화·지연·누락·역순·손상 로그와 기존 B01/B03의 오래된 입력·ACK 방어를 함께 확인합니다. 실제 화면 검수는 P01·I01에서 수행합니다.
 
 ## 협업 규칙 검사
 
