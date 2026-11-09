@@ -123,6 +123,23 @@ export type Exit = {
   "assumption": string;
 };
 
+export type Explanation = {
+  "schema_version": 1;
+  "building_id": string;
+  "building_version": number;
+  "run_id": string;
+  "guidance_version": number;
+  "status": "PENDING" | "READY" | "UNAVAILABLE";
+  "basis_generated_at": string;
+  "generated_at": string | null;
+  "expires_at": string | null;
+  "summary": string | null;
+  "fact_refs": Array<string>;
+  "model_id": string | null;
+  "prompt_version": string | null;
+  "error_code": "BEDROCK_UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_BASIS" | "EXPLANATION_LOG_ERROR" | "DISABLED" | null;
+};
+
 export type FaceResult = {
   "face_id": string;
   "mode": "DEFAULT" | "DYNAMIC" | "NO_ROUTE" | "UNKNOWN";
