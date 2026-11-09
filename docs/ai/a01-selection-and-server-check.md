@@ -2,7 +2,7 @@
 
 관련 이슈: [#9](https://github.com/JinsuBae2/saferoute/issues/9). 2026-11-09, 조대성 / Rinhaze.
 
-**개발 기준 후보는 rabahdev/fire-smoke-yolov8n의 640 / 500ms / confidence 0.25를 유지한다. 최종 채택은 서버 실측과 팀 라이선스 결정 전까지 보류한다.** 기존 자료·환경은 [실행 기록](a01-model-validation.md), 원본 해시는 [manifest](../../data/manifests/assets.json)에 있다. 이 문서는 A01 판단 근거이며 A02 이벤트 전송이나 A04 독립 평가를 구현하지 않는다.
+**개발 기준 후보는 rabahdev/fire-smoke-yolov8n의 640 / 500ms / confidence 0.25를 유지한다. 서버 실측은 [A01-2 기록](a01-server-validation.md)에 추가했고, 입력 호환성·샘플 누락을 반영한 최종 채택과 팀 라이선스 결정은 남아 있다.** 기존 자료·환경은 [실행 기록](a01-model-validation.md), 원본 해시는 [manifest](../../data/manifests/assets.json)에 있다. 이 문서는 A01 판단 근거이며 A02 이벤트 전송이나 A04 독립 평가를 구현하지 않는다.
 
 ## 1. 같은 개발 영상에서 입력 크기 비교
 
@@ -60,7 +60,7 @@
 
 ## 4. 지원 서버에서 이어서 실행할 절차
 
-대상 사양은 [D01 기록](../../deploy/README.md)의 Ubuntu 24.04.5 / t3.xlarge / 4 vCPU / GPU 없음이다. 이 PC에는 해당 SSH 설정이 없어서 서버 실행은 아직 못 했다. 호스트·사용자·키 경로를 확인하거나 담당자가 아래 절차를 실행해야 한다. 접속 정보·키는 공개 저장소에 넣지 않는다.
+대상 사양은 [D01 기록](../../deploy/README.md)의 Ubuntu 24.04.5 / t3.xlarge / 4 vCPU / GPU 없음이다. 아래는 A01-1 당시 인계 절차다. 이후 접속 정보를 확인하여 **A01-2 #81에서 실제 서버 검증을 수행했다.** 원본 AV1 실패·명시적 복사본 준비·core/AI lock 함께 설치·실제 전송을 포함한 최신 재현 절차는 [서버 검증 기록](a01-server-validation.md#5-재현)을 따른다. 접속 정보·키는 공개 저장소에 넣지 않는다.
 
 1. A01-1 #79가 통합된 develop의 검토된 커밋을 별도 작업 디렉터리에 받아 `git rev-parse HEAD`를 기록한다. 운영 서비스 디렉터리를 덮어쓰지 않는다.
 2. `models/fire-smoke-yolov8n.pt`와 manifest의 `data/videos/` 원본 6개를 같은 상대 경로로 준비한다. 현재 PC의 검증된 원본을 팀 내부로 전달하거나 manifest의 원본 URL에서 확보한다. 실행 도구가 모두 SHA-256으로 확인한다.
@@ -79,7 +79,9 @@ Linux x86_64 / manylinux_2_39 / Python 3.12 대상 `uv pip compile`은 기존 39
 ## 5. 완료 상태
 
 - 완료: 실제 두 클래스·해시·실행 환경 기록, 개발 6개 비교, 320/640/960 선택 근거, 로컬 재생 속도 측정, 주요 사용 조건·서버 인계 절차 정리.
-- 대기: 팀 라이선스 결정, 지원 서버 실제 측정 및 그 결과를 반영한 최종 후보 채택.
+- 추가 완료: [A01-2 서버 실제 측정·전송 검증](a01-server-validation.md). 원본 AV1 2개 실패와 연기 worker 샘플 12/20 건너뜀, EOF 전 STALE 1회로 관측 유효성 연속 유지 실패를 함께 기록했다.
+- 후속 개선: [A01-3 UTVideo 입력 준비](a01-input-latency.md)로 같은 픽셀·시각을 보존하고 두 번의 실제 전송에서 연기 20/20 분석·건너뜀 0·STALE 0을 확인했다. 이 명시적 개발 파일 준비 경로의 결과이며 AV1 원본 직접 입력 지원이나 최종 모델 채택이 아니다.
+- 대기: 팀 라이선스 결정, 서버 실측의 호환성·지연 한계를 반영한 최종 후보 채택.
 - 별도 반영 완료: A02 #10 / PR #58 이벤트 연결, A03-1 #60 / PR #64 장애 처리, A04-1 #76 / PR #78 영상별 사건 집계. 각 기록은 [A02](a02-video-events.md), [A03-1](a03-input-failures.md), [A04-1](a04-event-evaluation.md)에 있다. A03 #12 평가 조건 고정·A04 #30 독립 평가는 계속 남아 있다.
 
 ## 6. 팀 연결 기준 — A01-1 #79

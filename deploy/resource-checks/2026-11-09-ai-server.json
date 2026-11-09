@@ -1,0 +1,496 @@
+{
+  "schema_version": 1,
+  "issue": 81,
+  "parent_issue": 9,
+  "date_kst": "2026-11-09",
+  "base_code_commit": "38bb83c9d572d947be61e6004b7168abca52b6b4",
+  "scope": "SERVER_DEVELOPMENT_CPU_AND_LOOPBACK_PROBE",
+  "independent_accuracy_assessed": false,
+  "final_model_adopted": false,
+  "environment": {
+    "os_release": "Ubuntu 24.04.5 LTS",
+    "kernel": "7.0.0-1014-aws",
+    "python": "3.12.3",
+    "cpu_model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+    "cpu_count": 4,
+    "memory_total_kib": 16162352,
+    "disk_free_bytes": 24286203904,
+    "listening_ports": [
+      "22",
+      "53"
+    ],
+    "packages": {
+      "torch": "2.15.0+cpu",
+      "torchvision": "0.29.2+cpu",
+      "ultralytics": "8.4.208",
+      "opencv-python": "5.0.0.93",
+      "numpy": "2.5.4",
+      "psutil": "7.2.2",
+      "fastapi": "0.162.2",
+      "httpx": "0.28.1",
+      "uvicorn": "0.54.0"
+    },
+    "ffprobe_version": "ffprobe version 6.1.1-3ubuntu5 Copyright (c) 2007-2023 the FFmpeg developers",
+    "probe_script_sha256": "706208fb2a7b360cb982ce0cb047e382245c2d1f191611547fe4ae53dd54e4f3"
+  },
+  "original_manifest_sha256": "fd11ed9f23841a14562c7f225d6ff9f7b5d6e579d63c3de5d8f8e122b9d67609",
+  "initial_native_trial": {
+    "status": "FAILED",
+    "reason": "Linux OpenCV cannot decode first AV1 frame",
+    "affected_asset_ids": [
+      "dev-smoke-0009",
+      "dev-metro-ermita-corridor"
+    ],
+    "originals_preserved": true
+  },
+  "lossless_conversion": [
+    {
+      "asset_id": "dev-smoke-0009",
+      "original_path": "data/videos/smoke-0009.webm",
+      "original_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+      "derived_path": "runs/server-video-preparation/smoke-0009-ffv1.mkv",
+      "derived_sha256": "50c8217ff2da8d3ba54982738ff04cfe67bf0c8bf8bc32653f25e24b8433dff5",
+      "decoded_frames": 292,
+      "decoded_yuv420p_hashes_equal": true,
+      "frame_media_timestamps_ms_equal": true,
+      "original_scene_unchanged": true
+    },
+    {
+      "asset_id": "dev-metro-ermita-corridor",
+      "original_path": "data/videos/metro-ermita-corridor.webm",
+      "original_sha256": "001dde94d2146b0bb6f06ed3b9b72eac7262cde20e7eb66a0d79530bb95b385e",
+      "derived_path": "runs/server-video-preparation/metro-ermita-corridor-ffv1.mkv",
+      "derived_sha256": "8e07701a490295b6ffccc42276f9d1f2ff107463d2adbc565677f98a05660bfc",
+      "decoded_frames": 367,
+      "decoded_yuv420p_hashes_equal": true,
+      "frame_media_timestamps_ms_equal": true,
+      "original_scene_unchanged": true
+    }
+  ],
+  "compatible_trial": {
+    "kind": "development_execution_trial_not_accuracy_evaluation",
+    "created_at": "2026-11-09T10:27:26.347226+00:00",
+    "python": "3.12.3",
+    "os": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "cpu": "x86_64",
+    "logical_cpu_count": 4,
+    "device": "cpu",
+    "torch_threads": 4,
+    "packages": {
+      "torch": "2.15.0+cpu",
+      "torchvision": "0.29.2+cpu",
+      "ultralytics": "8.4.208",
+      "opencv-python": "5.0.0.93",
+      "numpy": "2.5.4",
+      "psutil": "7.2.2"
+    },
+    "manifest_sha256": "471cc74cf49f10dd4c1979ddc9072da7407b36e25b260ac766faa3e693a28dda",
+    "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+    "actual_classes": {
+      "0": "smoke",
+      "1": "fire"
+    },
+    "imgsz": 640,
+    "interval_ms": 500,
+    "confidence": 0.25,
+    "paced_playback": true,
+    "model_load_s": 0.057313194032758474,
+    "synthetic_warmup_s": 2.2077432189835235,
+    "synthetic_warmup_torch_threads_before": 2,
+    "synthetic_warmup_torch_threads_after": 3,
+    "videos": [
+      {
+        "asset_id": "dev-flameless-candle",
+        "video_metadata": {
+          "reported_fps": 1000.0,
+          "reported_frame_count": 8683.0,
+          "width": 1920.0,
+          "height": 1080.0,
+          "fourcc": "VP80"
+        },
+        "decoded_frames": 217,
+        "last_decoded_media_time_ms": 8640.0,
+        "skipped_duplicate_timestamp_frames": 0,
+        "read_termination": "read_returned_false_not_verified_eof",
+        "offline_elapsed_s": 8.610257873078808,
+        "offline_sample_throughput_fps": 2.0905297222606483,
+        "paced_playback": true,
+        "max_read_to_completion_ms": 483.38578699622303,
+        "max_completion_gap_ms": 533.3999899448827,
+        "max_playback_lateness_ms": 132.26749701425433,
+        "sampled_frames": 18,
+        "frames_with_detection": {
+          "fire": 0,
+          "smoke": 0
+        },
+        "predict_mean_ms": 58.43140365323052,
+        "predict_p95_ms": 105.84917792584747,
+        "predict_max_ms": 105.84917792584747,
+        "sampled_rss_max_mib": 462.39453125
+      },
+      {
+        "asset_id": "dev-candle-match",
+        "video_metadata": {
+          "reported_fps": 29.97002997002997,
+          "reported_frame_count": 763.0,
+          "width": 640.0,
+          "height": 480.0,
+          "fourcc": "theo"
+        },
+        "decoded_frames": 761,
+        "last_decoded_media_time_ms": 25358.666666666668,
+        "skipped_duplicate_timestamp_frames": 0,
+        "read_termination": "read_returned_false_not_verified_eof",
+        "offline_elapsed_s": 25.14024293399416,
+        "offline_sample_throughput_fps": 2.028620015085008,
+        "paced_playback": true,
+        "max_read_to_completion_ms": 959.8094010725617,
+        "max_completion_gap_ms": 972.6546980673447,
+        "max_playback_lateness_ms": 587.8406809903681,
+        "sampled_frames": 51,
+        "frames_with_detection": {
+          "fire": 16,
+          "smoke": 0
+        },
+        "predict_mean_ms": 84.13671291725454,
+        "predict_p95_ms": 170.95647903624922,
+        "predict_max_ms": 587.6907809870318,
+        "sampled_rss_max_mib": 468.10546875
+      },
+      {
+        "asset_id": "dev-joss-smoke",
+        "video_metadata": {
+          "reported_fps": 30.0,
+          "reported_frame_count": 155.0,
+          "width": 1486.0,
+          "height": 950.0,
+          "fourcc": "VP90"
+        },
+        "decoded_frames": 155,
+        "last_decoded_media_time_ms": 5133.0,
+        "skipped_duplicate_timestamp_frames": 0,
+        "read_termination": "read_returned_false_not_verified_eof",
+        "offline_elapsed_s": 5.069201518082991,
+        "offline_sample_throughput_fps": 2.169966997910915,
+        "paced_playback": true,
+        "max_read_to_completion_ms": 449.9553310452029,
+        "max_completion_gap_ms": 526.9173220731318,
+        "max_playback_lateness_ms": 172.10601409897208,
+        "sampled_frames": 11,
+        "frames_with_detection": {
+          "fire": 0,
+          "smoke": 0
+        },
+        "predict_mean_ms": 73.07394581254233,
+        "predict_p95_ms": 137.30870105791837,
+        "predict_max_ms": 137.30870105791837,
+        "sampled_rss_max_mib": 484.625
+      },
+      {
+        "asset_id": "dev-smoke-0009",
+        "video_metadata": {
+          "reported_fps": 30.0,
+          "reported_frame_count": 292.0,
+          "width": 1920.0,
+          "height": 1080.0,
+          "fourcc": "ffv1"
+        },
+        "decoded_frames": 292,
+        "last_decoded_media_time_ms": 9700.000000000002,
+        "skipped_duplicate_timestamp_frames": 0,
+        "read_termination": "read_returned_false_not_verified_eof",
+        "offline_elapsed_s": 9.773715376970358,
+        "offline_sample_throughput_fps": 2.0463047294302905,
+        "paced_playback": true,
+        "max_read_to_completion_ms": 151.216403930448,
+        "max_completion_gap_ms": 545.3124541090801,
+        "max_playback_lateness_ms": 208.20423995610327,
+        "sampled_frames": 20,
+        "frames_with_detection": {
+          "fire": 0,
+          "smoke": 20
+        },
+        "predict_mean_ms": 96.02497118175961,
+        "predict_p95_ms": 132.735013961792,
+        "predict_max_ms": 134.65603592339903,
+        "sampled_rss_max_mib": 494.39453125
+      },
+      {
+        "asset_id": "dev-metro-ermita-corridor",
+        "video_metadata": {
+          "reported_fps": 29.97002997002997,
+          "reported_frame_count": 367.0,
+          "width": 1920.0,
+          "height": 1080.0,
+          "fourcc": "ffv1"
+        },
+        "decoded_frames": 367,
+        "last_decoded_media_time_ms": 12212.0,
+        "skipped_duplicate_timestamp_frames": 0,
+        "read_termination": "read_returned_false_not_verified_eof",
+        "offline_elapsed_s": 12.15954767295625,
+        "offline_sample_throughput_fps": 2.05599753152018,
+        "paced_playback": true,
+        "max_read_to_completion_ms": 221.56349499709904,
+        "max_completion_gap_ms": 553.0969119863585,
+        "max_playback_lateness_ms": 206.46347396541387,
+        "sampled_frames": 25,
+        "frames_with_detection": {
+          "fire": 0,
+          "smoke": 0
+        },
+        "predict_mean_ms": 77.64545468613505,
+        "predict_p95_ms": 128.68784798774868,
+        "predict_max_ms": 144.8527229949832,
+        "sampled_rss_max_mib": 496.51171875
+      },
+      {
+        "asset_id": "dev-chemical-plant-steam",
+        "video_metadata": {
+          "reported_fps": 29.833333333333332,
+          "reported_frame_count": 289.0,
+          "width": 1920.0,
+          "height": 1080.0,
+          "fourcc": "VP90"
+        },
+        "decoded_frames": 267,
+        "last_decoded_media_time_ms": 9352.0,
+        "skipped_duplicate_timestamp_frames": 0,
+        "read_termination": "read_returned_false_not_verified_eof",
+        "offline_elapsed_s": 9.116638766019605,
+        "offline_sample_throughput_fps": 2.0841014421695188,
+        "paced_playback": true,
+        "max_read_to_completion_ms": 431.7907990189269,
+        "max_completion_gap_ms": 556.5650280332193,
+        "max_playback_lateness_ms": 112.89109208155423,
+        "sampled_frames": 19,
+        "frames_with_detection": {
+          "fire": 0,
+          "smoke": 7
+        },
+        "predict_mean_ms": 61.92691089266813,
+        "predict_p95_ms": 111.61771998740733,
+        "predict_max_ms": 111.61771998740733,
+        "sampled_rss_max_mib": 504.65234375
+      }
+    ]
+  },
+  "delivery": {
+    "scope": "DEVELOPMENT_LOOPBACK_DELIVERY",
+    "building_id": "TWO_ROUTE",
+    "building_version": 1,
+    "freshness_ms": 3000,
+    "videos": [
+      {
+        "video": "flameless-candle.webm",
+        "asset_id": "dev-flameless-candle",
+        "video_sha256": "a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a",
+        "run_id": "eab378dc-ddd1-4f07-87d3-9f46a66d7804",
+        "status": "PASS",
+        "exit_code": 0,
+        "analyzed_frames": 18,
+        "accepted_events": 19,
+        "alarms": {},
+        "max_acquisition_to_audit_ms": 527.3330000000001,
+        "max_observation_audit_gap_ms": 643.8747329711914,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "eab378dc-ddd1-4f07-87d3-9f46a66d7804",
+          "frames": 217,
+          "analyzed_frames": 18,
+          "skipped_late_frames": 0,
+          "accepted_events": 19,
+          "processing_elapsed_ms": 8774.485187022947,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "ebc4ec9c6239b4425dd9230f3759a47f09d2754804dd886197fb839479df0b4a",
+        "source_validity": "UNAVAILABLE",
+        "active_hazards": [],
+        "log_integrity": true
+      },
+      {
+        "video": "candle-and-match.ogv",
+        "asset_id": "dev-candle-match",
+        "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+        "run_id": "e472c2dc-4da8-4058-ac1e-bfeb60996067",
+        "status": "PASS",
+        "exit_code": 0,
+        "analyzed_frames": 51,
+        "accepted_events": 52,
+        "alarms": {
+          "FIRE": 11
+        },
+        "max_acquisition_to_audit_ms": 496.546,
+        "max_observation_audit_gap_ms": 561.5830750465393,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "e472c2dc-4da8-4058-ac1e-bfeb60996067",
+          "frames": 761,
+          "analyzed_frames": 51,
+          "skipped_late_frames": 0,
+          "accepted_events": 52,
+          "processing_elapsed_ms": 25254.30556794163,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "f7ff8d66ea0416ea6d8942716786a5cf3e9075b037d3ee250248a246bdd1d8a2",
+        "source_validity": "UNAVAILABLE",
+        "active_hazards": [
+          "FIRE"
+        ],
+        "log_integrity": true
+      },
+      {
+        "video": "smoke-0009-ffv1.mkv",
+        "asset_id": "dev-smoke-0009",
+        "video_sha256": "50c8217ff2da8d3ba54982738ff04cfe67bf0c8bf8bc32653f25e24b8433dff5",
+        "run_id": "75807b3c-9644-4fd9-9343-6bde7de34bc4",
+        "status": "PASS",
+        "exit_code": 0,
+        "analyzed_frames": 8,
+        "accepted_events": 9,
+        "alarms": {
+          "SMOKE": 5
+        },
+        "max_acquisition_to_audit_ms": 322.959,
+        "max_observation_audit_gap_ms": 1681.489292025566,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "75807b3c-9644-4fd9-9343-6bde7de34bc4",
+          "frames": 292,
+          "analyzed_frames": 8,
+          "skipped_late_frames": 12,
+          "accepted_events": 9,
+          "processing_elapsed_ms": 10286.329741007648,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "0dc30feef7bb2c3baa187602142e77a0bb9f324913212c99ad7df58e11639fb8",
+        "source_validity": "UNAVAILABLE",
+        "active_hazards": [
+          "SMOKE"
+        ],
+        "log_integrity": true
+      }
+    ],
+    "status": "PASS",
+    "manifest_sha256": "471cc74cf49f10dd4c1979ddc9072da7407b36e25b260ac766faa3e693a28dda",
+    "controller_stopped": true
+  },
+  "raw_evidence_sha256": {
+    "evidence/actual-paced-console.txt": "3aacd2a958db85465bda3d1cc13363d7e7965c951bcb00e736c916d870ea7c8e",
+    "evidence/native-av1-probe.txt": "42f39da5f860ac62190b48961acfb5fbd6b9d6b93f3485d77f2ef360b211e83e",
+    "evidence/after.json": "3d302a5509c4a876173523bb4a3df4763adb48761fefddae68e07648493756c7",
+    "evidence/pip-freeze.txt": "5a6028f6985ea1c97138167bd898976cb6118cd59de2b05eac84271e6c95e97d",
+    "repo/runs/a01-server-compatible-paced-640/summary.json": "65a7bcbdc96dbd2babc8a77ce542a6c75530956b74e5b76749a72e9d5fe03a1b",
+    "repo/runs/a01-server-delivery/summary.json": "7ec46f4decef934d6197a9e8b715ffc6635b7e0256434f62234c26efb710018d",
+    "repo/runs/server-video-preparation/conversion-evidence.json": "fc9bba134174b7ab4f2c392d899ac697bb41a9c388cc067b2672acd7c7c5b7b3",
+    "repo/runs/server-video-preparation/assets.server.json": "471cc74cf49f10dd4c1979ddc9072da7407b36e25b260ac766faa3e693a28dda",
+    "repo/tools/validate_ai_delivery.py": "706208fb2a7b360cb982ce0cb047e382245c2d1f191611547fe4ae53dd54e4f3"
+  },
+  "limitations": [
+    "FFV1 derivatives were used for two AV1 clips; original Linux OpenCV path fails.",
+    "SMOKE worker sampled 8 frames and skipped 12 late sample opportunities; not an independent accuracy result.",
+    "3s observation age/gap checks exclude model setup, preflight, time before the first observation and after EOF.",
+    "Acquisition-to-audit uses the same server UTC clock; gap uses server monotonic timestamps. No cross-machine/network benchmark.",
+    "TWO_ROUTE fixture only; no WFI/required sensor arm/browser/physical device/full deployment validation.",
+    "Single sequential run per development asset; sustained load, CPU credits and concurrent cameras not measured.",
+    "Runtime environment and evidence directory retained for reproduction; probe controller stopped, no app listener remains.",
+    "Original delivery PASS did not check expiry decisions or remaining lifetime. Corrected audit found CAM-A STALE before smoke EOF; freshness continuity FAILED. Payload/EOF/log integrity results remain valid."
+  ],
+  "preparation_correction_recheck": {
+    "status": "PASS",
+    "python_optimize": 1,
+    "derived_assets": 2,
+    "original_validation_fields_removed": true,
+    "transformation_corrected": true,
+    "script_sha256": "d5bfefb552a23ad26d0c38ffc53d948855203f2af07019fa23d4f503b641f5b8",
+    "manifest_sha256": "e107019e1a342e635848ad3f2b01728f6da866780fb433f945686d0244f39dfa",
+    "conversion": [
+      {
+        "asset_id": "dev-smoke-0009",
+        "original_path": "data/videos/smoke-0009.webm",
+        "original_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+        "derived_path": "runs/server-video-preparation/smoke-0009-ffv1.mkv",
+        "derived_sha256": "34a8678d3266f166ca48bff529417debe92e7ddfa4d9705cf9f9e4dc44b18de9",
+        "decoded_frames": 292,
+        "decoded_yuv420p_hashes_equal": true,
+        "frame_media_timestamps_ms_equal": true,
+        "original_scene_unchanged": true
+      },
+      {
+        "asset_id": "dev-metro-ermita-corridor",
+        "original_path": "data/videos/metro-ermita-corridor.webm",
+        "original_sha256": "001dde94d2146b0bb6f06ed3b9b72eac7262cde20e7eb66a0d79530bb95b385e",
+        "derived_path": "runs/server-video-preparation/metro-ermita-corridor-ffv1.mkv",
+        "derived_sha256": "f53a874bede70c48795d2d0c1665778329d8870caba47801b2ed808f393a95e0",
+        "decoded_frames": 367,
+        "decoded_yuv420p_hashes_equal": true,
+        "frame_media_timestamps_ms_equal": true,
+        "original_scene_unchanged": true
+      }
+    ],
+    "scope": "Preparation correction only; earlier inference/delivery measurements and their original evidence remain unchanged.",
+    "evidence_sha256": {
+      "a01-81-prepare.sh": "d5bfefb552a23ad26d0c38ffc53d948855203f2af07019fa23d4f503b641f5b8",
+      "evidence/preparation-recheck-console.txt": "97c0e656b0b18c26db67e283139dddb78d7fb75fe898eed0b46534fd046d9a8d",
+      "evidence/preparation-recheck.json": "70828765e093e3bbf34d91b61be77b69ce3f2ebbf60fad2a2a1202b3a4a21d63",
+      "preparation-recheck/runs/server-video-preparation/assets.server.json": "e107019e1a342e635848ad3f2b01728f6da866780fb433f945686d0244f39dfa",
+      "preparation-recheck/runs/server-video-preparation/conversion-evidence.json": "924145c532b8eb55bf98f7c0ba984bc4729b29a058efa340d83990fb27b195c4"
+    }
+  },
+  "freshness_correction_recheck": {
+    "status": "FAILED",
+    "scope": "Local one-off audit analysis applied check_observation_freshness from validator_code_path to original real-server logs. Extra EOF intervals and log SHA-256 values were computed by that analysis, not emitted by the CLI. No inference rerun claimed. Supersedes original summary PASS for continuity through EOF.",
+    "freshness_ms": 3000,
+    "validator_code_sha256_lf": "b82b5dfa7cef1a4b1db9d2a829b770300d01466a9500809647acd0a7014d434e",
+    "videos": [
+      {
+        "asset_id": "dev-flameless-candle",
+        "run_id": "eab378dc-ddd1-4f07-87d3-9f46a66d7804",
+        "max_age_plus_following_gap_ms": 1064.8127329711915,
+        "source_expirations": 0,
+        "expiry_to_eof_ms": [],
+        "last_observation_age_plus_eof_gap_ms": 520.5783030986786,
+        "events_sha256": "00550392955aabe1b8d99bb270dfd50ca433fa6483364d60e60efd51b8608546",
+        "decisions_sha256": "661b4f24c44846c21a2d3181ec31913bd6e1fea61502d3f0c5fde71cf7f6912c",
+        "status": "PASS"
+      },
+      {
+        "asset_id": "dev-candle-match",
+        "run_id": "e472c2dc-4da8-4058-ac1e-bfeb60996067",
+        "max_age_plus_following_gap_ms": 980.825555024147,
+        "source_expirations": 0,
+        "expiry_to_eof_ms": [],
+        "last_observation_age_plus_eof_gap_ms": 533.9967699050903,
+        "events_sha256": "564ad5beaae6e38c2a1f6a91b450e6682458ba7ba2141650fa385319c2731aea",
+        "decisions_sha256": "546971d39bb413ddf819d7517018bdf2a5e6181ab018979fff2e95049fa72d7c",
+        "status": "PASS"
+      },
+      {
+        "asset_id": "dev-smoke-0009",
+        "run_id": "75807b3c-9644-4fd9-9343-6bde7de34bc4",
+        "max_age_plus_following_gap_ms": 1879.434292025566,
+        "source_expirations": 1,
+        "expiry_to_eof_ms": [
+          234.7336529493332
+        ],
+        "last_observation_age_plus_eof_gap_ms": 3245.1371380090714,
+        "events_sha256": "42a82cbd966c89ad75093795c7c6d487015b8cb4caeb267bf0bc2e29363421d0",
+        "decisions_sha256": "b60eeba2330ee87a2449aa06feebbc90a297efa9feef1de9fa78606e613d3e79",
+        "status": "FAILED",
+        "reason": "source expired or observation age plus following gap exceeded freshness"
+      }
+    ],
+    "validator_code_path": "tools/validate_ai_delivery.py",
+    "validator_hash_representation": "Committed Git blob with LF line endings; not the one-off audit analysis code."
+  },
+  "delivery_freshness_assessment": "FAILED"
+}

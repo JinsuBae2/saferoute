@@ -819,5 +819,197 @@
       ],
       "error_code": null
     }
+  },
+  "explanation_pending": {
+    "model": "Explanation",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "guidance_version": 3,
+      "status": "PENDING",
+      "basis_generated_at": "2026-11-10T01:00:00.300Z",
+      "generated_at": null,
+      "expires_at": null,
+      "summary": null,
+      "fact_refs": [],
+      "model_id": null,
+      "prompt_version": null,
+      "error_code": null
+    }
+  },
+  "explanation_ready": {
+    "model": "Explanation",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "guidance_version": 3,
+      "status": "READY",
+      "basis_generated_at": "2026-11-10T01:00:00.300Z",
+      "generated_at": "2026-11-10T01:00:01.000Z",
+      "expires_at": "2026-11-10T01:00:15.000Z",
+      "summary": "CAM-A의 FIRE 원인으로 A가 차단되어 S의 경로는 B와 Y를 거칩니다.",
+      "fact_refs": [
+        "cause:CAM-A:FIRE",
+        "blocked-node:A",
+        "route:S"
+      ],
+      "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "prompt_version": "sample-v1",
+      "error_code": null
+    }
+  },
+  "explanation_unavailable": {
+    "model": "Explanation",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "guidance_version": 3,
+      "status": "UNAVAILABLE",
+      "basis_generated_at": "2026-11-10T01:00:00.300Z",
+      "generated_at": null,
+      "expires_at": null,
+      "summary": null,
+      "fact_refs": [],
+      "model_id": null,
+      "prompt_version": null,
+      "error_code": "BEDROCK_UNAVAILABLE"
+    }
+  },
+  "preview_ready": {
+    "model": "Preview",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "source_id": "CAM-A",
+      "generated_at": "2026-11-10T01:00:00.200Z",
+      "freshness_ms": 3000,
+      "status": "READY",
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      },
+      "error_code": null
+    }
+  },
+  "preview_initializing": {
+    "model": "Preview",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "source_id": "CAM-A",
+      "generated_at": "2026-11-10T01:00:00.200Z",
+      "freshness_ms": 3000,
+      "status": "INITIALIZING",
+      "frame": null,
+      "error_code": null
+    }
+  },
+  "preview_stale": {
+    "model": "Preview",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "source_id": "CAM-A",
+      "generated_at": "2026-11-10T01:00:00.200Z",
+      "freshness_ms": 3000,
+      "status": "STALE",
+      "frame": null,
+      "error_code": null
+    }
+  },
+  "preview_eof": {
+    "model": "Preview",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "source_id": "CAM-A",
+      "generated_at": "2026-11-10T01:00:00.200Z",
+      "freshness_ms": 3000,
+      "status": "EOF",
+      "frame": null,
+      "error_code": null
+    }
+  },
+  "preview_unavailable": {
+    "model": "Preview",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "source_id": "CAM-A",
+      "generated_at": "2026-11-10T01:00:00.200Z",
+      "freshness_ms": 3000,
+      "status": "UNAVAILABLE",
+      "frame": null,
+      "error_code": "DECODE_FAILED"
+    }
+  },
+  "preview_no_detections": {
+    "model": "Preview",
+    "payload": {
+      "schema_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "source_id": "CAM-A",
+      "generated_at": "2026-11-10T01:00:00.200Z",
+      "freshness_ms": 3000,
+      "status": "READY",
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": []
+      },
+      "error_code": null
+    }
   }
 }

@@ -1,0 +1,442 @@
+﻿Q01 출처와 사용 조건
+이 묶음 전체를 단일 라이선스로 재허가하지 않음 영상별 아래 조건 유지
+새 전달 영상은 원본 해상도 유지 H264 변환본이며 MmodalFire는 명시된 구간 발췌본
+미리보기는 해당 전달 영상의 프레임을 추출 축소하고 시각을 표시한 파생물
+CC BY는 저작자 출처 라이선스 변경 표시를 유지
+CC BY-SA는 저작자 출처 라이선스 변경 표시와 동일조건변경허락을 유지
+CAVIAR는 배포처가 BY-SA 버전을 명시하지 않아 임의 버전을 붙이지 않음
+기존 개발 4개는 원본 바이트 그대로이며 기존 라이선스 적용
+원본 전체 파일은 링크에서 재확보 가능하며 원본 SHA256과 아카이브 검증 기록 제공
+
+dev-flameless-candle
+기존 개발 LED 모형 촛불
+Author Bastenbas (derivative), Elfix (original)
+Source https://commons.wikimedia.org/wiki/File:Flameless_candle_1.webm
+Download https://upload.wikimedia.org/wikipedia/commons/9/92/Flameless_candle_1.webm
+License CC0-1.0
+License reference https://creativecommons.org/publicdomain/zero/1.0/
+Source SHA256 a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a
+Delivered SHA256 a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a
+Changes Original video bytes unchanged
+
+dev-candle-match
+기존 개발 성냥과 촛불 슬로모션
+Author LoKiLeCh
+Source https://commons.wikimedia.org/wiki/File:Candle_and_Match.ogv
+Download https://upload.wikimedia.org/wikipedia/commons/6/6c/Candle_and_Match.ogv
+License CC-BY-SA-3.0
+License reference https://creativecommons.org/licenses/by-sa/3.0/
+Source SHA256 248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5
+Delivered SHA256 248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5
+Changes Original video bytes unchanged
+
+dev-joss-smoke
+기존 개발 야외 소각 연기
+Author Waydwaid
+Source https://commons.wikimedia.org/wiki/File:Joss_paper_burning_with_cloud_of_smoke_Tai_Po_HK_2026.webm
+Download https://upload.wikimedia.org/wikipedia/commons/3/30/Joss_paper_burning_with_cloud_of_smoke_Tai_Po_HK_2026.webm
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 dce80b81f2ba1aed314a867145a07621b33344447d3582754e6f7989b1fb5407
+Delivered SHA256 dce80b81f2ba1aed314a867145a07621b33344447d3582754e6f7989b1fb5407
+Changes Original video bytes unchanged
+
+dev-smoke-0009
+기존 개발 짙은 야외 연기
+Author Amuzujoe
+Source https://commons.wikimedia.org/wiki/File:Smoke_0009.webm
+Download https://upload.wikimedia.org/wikipedia/commons/9/90/Smoke_0009.webm
+License CC-BY-SA-4.0
+License reference https://creativecommons.org/licenses/by-sa/4.0/
+Source SHA256 ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6
+Delivered SHA256 ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6
+Changes Original video bytes unchanged
+
+eval-mm-cotton-bright
+면 연소 밝은 조건 발화 전후
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 9cb7c40d4378d6247695ea6bf229ac50d5cd526d7095cf8eb52a0438132b1754
+Delivered SHA256 96dac9dad614a8a2b0387c06e194a6cebf53cfd58bfc66c0df2ece81552ccc67
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000005000000.mp4
+Extracted original media interval [2715.0, 3075.0) seconds
+Mapped source experiment Cotton 1
+
+eval-mm-cotton-dim
+면 연소 어두운 조건 발화 전후
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 7cd27f97074cbd3552140106db7035109c8dcf86a87b1fe3b62e864c1f7ee51b
+Delivered SHA256 23b7e44a1f5dcb41ce2515fa5b2bd75572092d92c519eda96e4e5bf7f61e2bca
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000005000100.mp4
+Extracted original media interval [484.0, 964.0) seconds
+Mapped source experiment Cotton 2
+
+eval-mm-heptane-bright
+액체 연료 밝은 조건 발화 전후
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 31c39a3532d7c64108b334cde082734d158327740c01793e2c9133ebca3b008a
+Delivered SHA256 e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000010000000.mp4
+Extracted original media interval [2012.0, 2372.0) seconds
+Mapped source experiment N-heptane 1
+
+eval-mm-heptane-dim
+액체 연료 어두운 조건 발화 전후
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 31c39a3532d7c64108b334cde082734d158327740c01793e2c9133ebca3b008a
+Delivered SHA256 5ff807898eb3277d66ec71f6286024a588e0f1959291833767f09f3bed122d72
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000010000000.mp4
+Extracted original media interval [4172.0, 4532.0) seconds
+Mapped source experiment N-heptane 3
+
+eval-mm-polyurethane-bright
+폴리우레탄 연소와 짙어지는 연기
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 de5217f098613d72575eb4ac2681181ce85586efb44c2cb6db3834c8aeb26ba9
+Delivered SHA256 d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000014000100.mp4
+Extracted original media interval [496.0, 856.0) seconds
+Mapped source experiment Polyurethane 1
+
+eval-mm-polyurethane-dim
+폴리우레탄 낮은 조도와 바람 조건
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 48ffc1251d2b31a0447fc8aec27d199cd2e2fcc690286e4b06f27f20a315aef0
+Delivered SHA256 84ffd762fadae70713d47ed97f5e9842019d4666980a8d40122e5b917dd45ba1
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000017000000.mp4
+Extracted original media interval [2587.0, 2947.0) seconds
+Mapped source experiment Polyurethane 3
+
+eval-mm-wood-early
+목재 가열 초기 연기 진행
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 abd9173fdec7048fad656ba770567f6e41f00e081fb223b253a598e0ae80936b
+Delivered SHA256 d8d1821207bfd8e74ac1011104f99389d42788ab37117f2271258cf40dfdf82b
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000022000000.mp4
+Extracted original media interval [2395.0, 2995.0) seconds
+Mapped source experiment Wood 3
+
+eval-mm-dryice-hotwater
+온수와 드라이아이스의 흰 안개
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 acd80d6e62b5f35a3ecab1184038664abd90d0348e0a17e572d0f3c4b4b6d267
+Delivered SHA256 155d34cb026263e32ceef1acdcf74d9f3f7ecb994438eadb305ef678f1daf44e
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000013000000.mp4
+Extracted original media interval [5145.0, 5445.0) seconds
+Mapped source experiment Dry ice 2
+
+eval-mm-dryice-dim
+낮은 조도 드라이아이스 안개
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 ca9b37c23bf4a0678d4a7baefd1e69df58a70436d311230884228a3c919719ac
+Delivered SHA256 65cf36b5965b685d6f87ac2d00a914d8eff6077a30daaac84e75a39f6b21c393
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000014000000.mp4
+Extracted original media interval [492.0, 792.0) seconds
+Mapped source experiment Dry ice 4
+
+eval-mm-mist-bright
+밝은 조건 가습기 미스트
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 863e64bc418ca603ac3c310f53bb9c7fe67e8ccf12929032c16445d521399374
+Delivered SHA256 fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000023000000.mp4
+Extracted original media interval [3995.0, 4295.0) seconds
+Mapped source experiment Mist 1
+
+eval-mm-mist-dim
+낮은 조도 가습기 미스트
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 863e64bc418ca603ac3c310f53bb9c7fe67e8ccf12929032c16445d521399374
+Delivered SHA256 44710afc6b39ab948d5d481f3dcc179d144ac4fc97cada626f761ecb500e581f
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000023000000.mp4
+Extracted original media interval [5255.0, 5495.0) seconds
+Mapped source experiment Mist 3
+
+eval-mm-blank-bright
+밝은 조건 실험실 대조군
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 94bcacd9f00d06f080a86d8ad6f99123d1154f221d1dba52343c577b0681ff80
+Delivered SHA256 49659d9ae02f2660e32d58eedeb6eab3aeb91f236c4f3c463ec4332fdf70624c
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000024000000.mp4
+Extracted original media interval [705.0, 825.0) seconds
+Mapped source experiment Blank control 1
+
+eval-mm-blank-dim
+어두운 조건 실험실 대조군
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 94bcacd9f00d06f080a86d8ad6f99123d1154f221d1dba52343c577b0681ff80
+Delivered SHA256 dd4c99fae7a406917b80527d4d2b72deb53712add4fa90bb494e10d4be2020af
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000024000000.mp4
+Extracted original media interval [825.0, 945.0) seconds
+Mapped source experiment Blank control 2
+
+eval-mm-normal-setup
+실험실 인원과 장비 준비 정상 후보
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 83700b12e4d3e7488785d4ed81b046a60db5465b5e791457a71d573eedf69bb5
+Delivered SHA256 40cf1a5ea84ff3a29b8cbbf58682510c4276fb509b3f7410c60a01a39d309940
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000002000000.mp4
+Extracted original media interval [0.0, 180.0) seconds
+Mapped source experiment No mapped experiment
+
+eval-mm-normal-midday
+실험 사이의 실험실 정상 후보 8분
+Author Qixing Zhang; Yang Jia; Yihan Guo; Yetang Chen; Xinmeng Zhang; Gang Wang
+Source https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448
+Download https://ndownloader.figshare.com/files/53696243
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 5f443a2c09b365ca8afffe992495927c0b1fce010efae9aa920b1ed93fa16a38
+Delivered SHA256 4aec06b1a13768a98ec425dd889faa3cf805659943baca7561b87b4dae2f5fbe
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive MmodalFire.rar
+Member 原始数据/Video/Downtest_ch01_00000000021000000.mp4
+Extracted original media interval [1337.0, 1817.0) seconds
+Mapped source experiment Between listed experiments
+
+dev-caviar-browse-whilewaiting2
+그르노블 실내 로비 정상 후보 Browse_WhileWaiting2
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/Browse_WhileWaiting2/Browse_WhileWaiting2.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 975324fe121725a0cf74e47acf111ec6d403e46107d5d2742df126a1f3567bd8
+Delivered SHA256 938c219f8b43efc2c0d8ab1d44f7d66768189487cf8b2d7d54410eb596c63147
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+dev-caviar-meet-walktogether1
+그르노블 실내 로비 정상 후보 Meet_WalkTogether1
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/Meet_WalkTogether1/Meet_WalkTogether1.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 95969a486f39ffd7a9a0365db070aba89062ae78c021ef1afc7cabff5e9a6452
+Delivered SHA256 8fb18d0c4c6bb7a895480e53e08e7b02bfd7f0e6876dc05bdd049b8805176e82
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+eval-caviar-oneshoponewait2cor
+리스본 쇼핑센터 복도 정상 후보 OneShopOneWait2cor
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA2/OneShopOneWait2cor/OneShopOneWait2cor.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 5adeb464ec45aa7b20e742115a42dec3328e99630362103aa2bba562a8f69ef3
+Delivered SHA256 f93f33348a01de150efb244c9cb562c2bb1c2990e7ce25ac1da579a0858bc7ec
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+eval-caviar-onestopenter1cor
+리스본 쇼핑센터 복도 정상 후보 OneStopEnter1cor
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA2/OneStopEnter1cor/OneStopEnter1cor.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 05340115b48889f344f45c05593322b0c3cb9852081092226833f8e73d3ffb83
+Delivered SHA256 ee17cb6f0765574f29c2fff59bda2f138f1fd5a66bc6a4164ad2653fb635418c
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+eval-caviar-shopassistant1cor
+리스본 쇼핑센터 복도 정상 후보 ShopAssistant1cor
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA2/ShopAssistant1cor/ShopAssistant1cor.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 504caed65c426688f1002426dbabdf9513ff78a6bfde6b971e6a6866198eba8a
+Delivered SHA256 dc9d23b25d5d4771c9b9fd11e3415b72351594910b809ae06383203e81555446
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+eval-caviar-threepastshop2cor
+리스본 쇼핑센터 복도 정상 후보 ThreePastShop2cor
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA2/ThreePastShop2cor/ThreePastShop2cor.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 1fa7d41d113332c2dde21b49c6bfb0a19f01a9720637247338830384620115d6
+Delivered SHA256 16c763a20b5723ab9fdce2be4953c6aca29df7252e87b28c77c843fffce91a5b
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+eval-caviar-twoentershop2cor
+리스본 쇼핑센터 복도 정상 후보 TwoEnterShop2cor
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA2/TwoEnterShop2cor/TwoEnterShop2cor.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 baf85c387735dbe30d7f1426a383ed6a6f323e5c79d1bf4b72fa8c89ce11ac0e
+Delivered SHA256 4d97790d61e5b561426ab08bfb43f3444238351bec67fbf54dc9ae242e8173cf
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+dev-caviar-walk1
+그르노블 실내 로비 정상 후보 Walk1
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/Walk1/Walk1.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 a5d6dc7d7def01c1bdaeea8ff620195c148b366e1a52589bf4e46f15b6daa0c2
+Delivered SHA256 025ac73f433aac90256481c2c7972e3caa90fc857cdefa80cd8262ed821b1391
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+eval-caviar-walkbyshop1cor
+리스본 쇼핑센터 복도 정상 후보 WalkByShop1cor
+Author EC Funded CAVIAR project / IST 2001 37540
+Source https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Download https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA2/WalkByShop1cor/WalkByShop1cor.mpg
+License CC-BY-SA (version unspecified by publisher)
+License reference https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+Source SHA256 8adc5aa3a54080fc389f47d5d44e6a326e592fd8843db645ab1d7d5af079183f
+Delivered SHA256 44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c
+Changes All source decoded frames retained in order Timestamps rebuilt at publisher stated 25 FPS Encoded H264 CRF20 veryfast No resizing Audio omitted
+
+eval-fs-small-fire-coast
+야외 고정 CCTV 작은 불꽃 해안 장면
+Author Nikos Grammalidis; Kosmas Dimitropoulos; Enis Cetin
+Source https://zenodo.org/records/836749
+Download https://zenodo.org/api/records/836749/files/fire_videos.1406.zip/content
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 94bd37ea4a952fab0d76028c199607d0f42c2b58df312ab53bea5954599e7912
+Delivered SHA256 4c511e08d80a6cf9bba6ef382ecafbcb33c51b6d7f188c6cf244829acd0e863b
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive fire_videos.1406.zip
+Member pos/posVideo6.875.avi
+
+eval-fs-small-fire-fence
+야외 고정 CCTV 작은 불꽃 울타리 장면
+Author Nikos Grammalidis; Kosmas Dimitropoulos; Enis Cetin
+Source https://zenodo.org/records/836749
+Download https://zenodo.org/api/records/836749/files/fire_videos.1406.zip/content
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 6e84a2a5890e94de8a7d003a196ba361d43db6c880c01f5f1d02196afdb9f50e
+Delivered SHA256 138e66195ebf3cfbaf4371e2de941f946c1c92ed9d35c97e4ed22d92511828df
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive fire_videos.1406.zip
+Member pos/posVideo7.876.avi
+
+eval-fs-building-smoke
+건물 창문에서 나오는 연기 외부 촬영
+Author Nikos Grammalidis; Kosmas Dimitropoulos; Enis Cetin
+Source https://zenodo.org/records/836749
+Download https://zenodo.org/api/records/836749/files/smoke_videos.1407.zip/content
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 f09934deee5aafc7e460d3b74313c2f8a172b1c9c8278515ab92aa6b042b0dc1
+Delivered SHA256 24990af2bcc6009ccc6bee008c61e15829601308651e40db44bc42ea629f0b74
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive smoke_videos.1407.zip
+Member pos/testpos02.818.avi
+
+eval-fs-orange-object
+사무실에서 사람이 주황색 물체를 이동
+Author Nikos Grammalidis; Kosmas Dimitropoulos; Enis Cetin
+Source https://zenodo.org/records/836749
+Download https://zenodo.org/api/records/836749/files/fire_videos.1406.zip/content
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 1c3481d319f2266903c83f560d69db8ea328141b24904483a8ef2c0231eea5a6
+Delivered SHA256 3649461956b2db6b4ba46a21b544e7d2a15920199d139d1366e64ca24c024dc2
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive fire_videos.1406.zip
+Member neg/negsVideo10.1072.avi
+
+eval-fs-reflections
+반짝이는 반사 혼동 장면
+Author Nikos Grammalidis; Kosmas Dimitropoulos; Enis Cetin
+Source https://zenodo.org/records/836749
+Download https://zenodo.org/api/records/836749/files/fire_videos.1406.zip/content
+License CC-BY-4.0
+License reference https://creativecommons.org/licenses/by/4.0/
+Source SHA256 10993dadf9a1161405df742a0ef573e0671baaf4561ad444ad04015d4bfaef89
+Delivered SHA256 753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e
+Changes Source interval extracted and encoded H264 CRF20 veryfast Original resolution and relative playback time retained No crop no speed change Audio omitted Starts at media time zero
+Archive fire_videos.1406.zip
+Member neg/negsVideo7.864.avi

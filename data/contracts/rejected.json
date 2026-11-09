@@ -196,5 +196,825 @@
     },
     "expected_code": "EVENT_ID_CONFLICT",
     "context": "seen_event"
+  },
+  {
+    "name": "explanation-ready-empty-text",
+    "sample": "explanation_ready",
+    "changes": {
+      "summary": ""
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-whitespace-text",
+    "sample": "explanation_ready",
+    "changes": {
+      "summary": "   "
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-no-facts",
+    "sample": "explanation_ready",
+    "changes": {
+      "fact_refs": []
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-duplicate-facts",
+    "sample": "explanation_ready",
+    "changes": {
+      "fact_refs": [
+        "mode",
+        "mode"
+      ]
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-generation-before-basis",
+    "sample": "explanation_ready",
+    "changes": {
+      "generated_at": "2026-11-10T00:59:59Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-expired-at-generation",
+    "sample": "explanation_ready",
+    "changes": {
+      "expires_at": "2026-11-10T01:00:01.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-with-error",
+    "sample": "explanation_ready",
+    "changes": {
+      "error_code": "INVALID_RESPONSE"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-summary",
+    "sample": "explanation_pending",
+    "changes": {
+      "summary": "표시하면 안 되는 설명"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-facts",
+    "sample": "explanation_pending",
+    "changes": {
+      "fact_refs": [
+        "mode"
+      ]
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-result-time",
+    "sample": "explanation_pending",
+    "changes": {
+      "generated_at": "2026-11-10T01:00:01.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-error",
+    "sample": "explanation_pending",
+    "changes": {
+      "error_code": "DISABLED"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-unavailable-no-error",
+    "sample": "explanation_unavailable",
+    "changes": {
+      "error_code": null
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-unavailable-with-expiry",
+    "sample": "explanation_unavailable",
+    "changes": {
+      "expires_at": "2026-11-10T01:00:15.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-unsupported-error",
+    "sample": "explanation_unavailable",
+    "changes": {
+      "error_code": "UNKNOWN"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-extra-field",
+    "sample": "explanation_ready",
+    "changes": {
+      "instruction": "new action"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-ready-no-frame",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": null
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-eof-with-frame",
+    "sample": "preview_eof",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-stale-with-frame",
+    "sample": "preview_stale",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-initializing-with-frame",
+    "sample": "preview_initializing",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-unavailable-with-frame",
+    "sample": "preview_unavailable",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-unavailable-no-error",
+    "sample": "preview_unavailable",
+    "changes": {
+      "error_code": null
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-ready-with-error",
+    "sample": "preview_ready",
+    "changes": {
+      "error_code": "PREVIEW_FAILED"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-unknown-status",
+    "sample": "preview_ready",
+    "changes": {
+      "status": "LIVE"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-unknown-error",
+    "sample": "preview_unavailable",
+    "changes": {
+      "error_code": "UNKNOWN"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-expired-response",
+    "sample": "preview_ready",
+    "changes": {
+      "generated_at": "2026-11-10T01:00:03.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-future-inference",
+    "sample": "preview_ready",
+    "changes": {
+      "generated_at": "2026-11-10T01:00:00.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-renewed-ttl",
+    "sample": "preview_ready",
+    "changes": {
+      "freshness_ms": 2999
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-extra-field",
+    "sample": "preview_ready",
+    "changes": {
+      "is_safe": true
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-inverted-box",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.5,
+              0.2,
+              0.2,
+              0.5
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-flat-box",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.5,
+              0.2,
+              0.5,
+              0.5
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-outside-box",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              -0.1,
+              0.2,
+              0.5,
+              0.5
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-short-box",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.2,
+              0.2,
+              0.5
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-invalid-class",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "PERSON",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-invalid-score",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 1.1,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-zero-width",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 0,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-boolean-index",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": true,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-invalid-frame-id",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "frame-15",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:00.100Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-backward-time",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-09T23:59:59Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "preview-expired-inference",
+    "sample": "preview_ready",
+    "changes": {
+      "frame": {
+        "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "frame_index": 15,
+        "media_time_ms": 500,
+        "observed_at": "2026-11-10T01:00:00.000Z",
+        "inference_completed_at": "2026-11-10T01:00:03.000Z",
+        "expires_at": "2026-11-10T01:00:03.000Z",
+        "width": 1280,
+        "height": 720,
+        "detections": [
+          {
+            "hazard_type": "FIRE",
+            "confidence": 0.8,
+            "xyxy": [
+              0.25,
+              0.25,
+              0.5,
+              0.75
+            ]
+          },
+          {
+            "hazard_type": "SMOKE",
+            "confidence": 0.6,
+            "xyxy": [
+              0.5,
+              0.0,
+              1.0,
+              0.5
+            ]
+          }
+        ]
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
   }
 ]
