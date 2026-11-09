@@ -15,6 +15,8 @@ export default defineConfig({
     alias: {
       "@contracts": fileURLToPath(new URL("../contracts/types.generated.ts", import.meta.url)),
       "@samples": fileURLToPath(new URL("../contracts/samples.generated.ts", import.meta.url)),
+      // 3D 형상 자료는 Building 계약이 아니라 정적 자산으로 받는다(05번 2.3절).
+      "@space": fileURLToPath(new URL("../data/space", import.meta.url)),
     },
   },
   server: {
