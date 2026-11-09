@@ -46,7 +46,7 @@ start부터 verified EOF finished까지의 단일 실행만 받는다. 영상 �
 - 같은 정답 안에서 두 번째로 시작한 별개 예측은 FP다. 예측별 event_id·대응 정답 ID와 미검출 정답을 출력해 사람이 대조할 수 있다.
 - precision은 TP/(TP+FP), recall은 TP/(TP+FN). 분모 0이면 `value: null`과 실제 numerator/denominator를 기록한다.
 - `latency_ms`는 **영상 시각 기준** 예측 사건 시작−정답 시작이다. 대응 사건의 수·개별 값·평균·최댓값과 FN을 함께 보고한다. 실제 API 수신까지의 벽시계 지연이나 순수 추론 시간은 아니다.
-- 정상 영상 오탐은 전체 영상이 정상으로 주석된 경우에만 FP 사건 수/전체 길이로 시간당 값을 계산한다. 위험 영상 안의 부분 정상 구간까지 분모로 확장하지 않는다.
+- 정상 영상 오탐은 전체 영상이 정상으로 주석된 경우에만 FP 사건 수/전체 길이로 시간당 값을 계산한다. 위험 영상에는 해당 지표의 FP·길이·시간당 값을 모두 null로 기록한다. 위험 영상 안의 부분 정상 구간까지 분모로 확장하지 않는다.
 - 새 worker 로그는 장비·Python/패키지 버전과 monotonic 기준 `processing_elapsed_ms`를 남긴다. `video_loop_frames_per_second`는 분석 프레임 수/루프 실소요시간이다. 재생 대기·프레임 읽기·추론·전송·로그·EOF 처리가 포함되며 모델 로딩·사전 전체 디코드는 제외된다. 모델 단독 벤치마크 FPS와 비교하지 않는다.
 - `max_read_to_completion_ms`는 worker가 측정한 프레임 읽기부터 추론 완료까지의 최댓값이다. 구형 로그에 runtime/elapsed가 없으면 null로 표시하며 추정값을 채우지 않는다.
 

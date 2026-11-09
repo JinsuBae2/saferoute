@@ -80,6 +80,7 @@ def test_hand_calculated_tp_fp_fn_gap_boundary_and_media_latency():
     assert len(fire["predicted_events"][0]["event_ids"]) == 3  # exactly 1000ms stays one event
     assert (smoke["tp"], smoke["fp"], smoke["fn"]) == (1, 0, 0)
     assert smoke["latency_ms"]["mean"] == 100
+    assert fire["normal_video_false_alarms"] == dict(fp=None, duration_ms=None, per_hour=None)
     assert report["processing"]["video_loop_frames_per_second"] == 1.4
     assert report["dataset_split"] == "fixture" and report["performance_verdict"] == "NOT_ASSESSED"
 

@@ -220,7 +220,7 @@ def score_events(events, truth):
                                                maximum=max(latencies) if latencies else None),
                                normal_video_false_alarms=dict(
                                    fp=fp if truth.normal_video else None,
-                                   duration_ms=truth.duration_ms if truth.normal_video else 0,
+                                   duration_ms=truth.duration_ms if truth.normal_video else None,
                                    per_hour=fp*3600000/truth.duration_ms if truth.normal_video else None))
     return classes
 
