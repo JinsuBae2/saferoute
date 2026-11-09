@@ -1,6 +1,6 @@
 # WFI 창업지원허브 공간 기준 (M01·M02)
 
-원주미래산업진흥원 창업지원허브의 공개 층별안내도를 바탕으로 공간 ID·좌표·가정을 정리한 문서다. 2번(그래프)과 3번(3D 표시)이 같은 ID와 좌표 규칙을 쓰도록 하는 기준이며, 실제 공간 JSON은 M02에서 이 규칙대로 만들었다(10절). 필드 정의는 [데이터·인터페이스 명세서 2절](../../docs/05-data-interface-spec.md#2-공간-자료)을 따른다.
+원주미래산업진흥원 창업지원허브의 공개 층별안내도를 바탕으로 공간 ID·좌표·가정을 정리한 문서다. 2번(그래프)과 3번(3D 표시)이 같은 ID와 좌표 규칙을 쓰도록 하는 기준이며, 실제 공간 JSON은 M02에서 이 규칙대로 만들었다(10절). Building 계약의 필드 정의는 [데이터·인터페이스 명세서 2절](../../docs/05-data-interface-spec.md#2-공간-자료)을 따르고, 계약 밖의 3D 형상 파일은 이 문서의 10.1절을 정본으로 한다.
 
 이 문서는 공개 안내도를 사람이 판독한 결과다. 실측 도면이 아니며, 설비 배치·치수·통행 조건은 시연 가정이다. 기존 기획 PDF의 생성된 5층 이미지는 도면으로 쓰지 않는다.
 
@@ -290,12 +290,24 @@ M01 규칙대로 만든 1~3층 자료다. 두 파일은 같은 좌표계(2절)�
 
 ### 10.1 3D 형상 파일
 
+이 절은 `wfi-geometry-v1.json` 형식과 관리 규칙의 정본(기준 문서)이다. 이 파일은 3D 표시용 보조 자료이며 Building 계약에 포함하지 않는다. `wfi-v1.json`과 별도로 유지하고, 형상 필드를 Building JSON에 합치지 않는다.
+
+두 파일은 같은 좌표계(2절)를 쓰며 `building_id`와 `building_version`이 일치해야 한다. `wfi-v1.json`의 `building_version`을 올릴 때는 형상 변경 여부와 관계없이 `wfi-geometry-v1.json`도 같은 값으로 함께 올린다.
+
 | 필드 | 뜻 |
 | --- | --- |
+| `format` / `format_version` | 형상 파일 형식 `saferoute-geometry` / 형식 버전 `1`. 건물 자료의 `building_version`과 별개 |
+| `building_id` / `building_version` | 대응하는 `wfi-v1.json`의 건물 식별자 / 자료 버전과 같은 값 |
+| `unit` | 좌표·길이 단위 `m`. 실측이 아닌 모델용 값 |
+| `floor_height` / `wall_height` / `slab_thickness` | 층 높이 4.0 m / 벽 높이 3.0 m / 바닥 두께 0.2 m |
+| `note` | 좌표계·형상 해석에 관한 설명 |
+| `floors[].floor_id` / `floors[].elevation` | Building의 층 ID / 해당 층 바닥 높이(y)와 같은 값 |
 | `floors[].slab` | 층 바닥 외곽 (x·z 점) |
-| `floors[].slab_holes` | 바닥에 뚫린 곳. 2F `F2-VOID` |
+| `floors[].slab_holes` | 바닥에 뚫린 곳의 `zone_id`와 `polygon`(x·z 점 배열). 현재 2F `F2-VOID`, 없으면 빈 배열 |
 | `floors[].walls` | 벽 직사각형 `[x0, z0, x1, z1]`. 바닥(층 elevation)부터 `wall_height` 3.0 m |
-| `stairs[]` | 계단 A~D의 평면 범위와 잇는 층. C·D는 `OPEN` |
+| `stairs[].stair_id` / `stairs[].kind` | 계단 A~D / A·B는 `ENCLOSED`, C·D는 `OPEN` |
+| `stairs[].floors` / `stairs[].footprint` | 계단이 잇는 층 ID 배열 / 평면 범위(x·z 점 배열) |
+| `stairs[].note` | 필요한 경우 덧붙이는 계단별 설명 |
 
 벽은 안내도의 진한 선(밝기 100 미만)을 0.1 m 칸으로 바꾼 뒤 직사각형으로 합친 것이다. 문 틈은 안내도의 벽 끊김 그대로 비어 있다. 열린 계단 C의 난간 선 일부도 낮은 벽처럼 남아 있으니 3D에서 필요하면 계단 범위 안의 벽을 숨긴다. GLB는 만들지 않았다. 3번이 이 파일로 상자 벽을 그리면 ID·좌표 대응이 그대로 유지된다.
 
