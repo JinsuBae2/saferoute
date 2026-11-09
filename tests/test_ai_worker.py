@@ -149,11 +149,13 @@ class Video:
     def release(self): self.released = True
 
 
-def execute(setup, video, predict):
+def execute(setup, video, predict, *, video_probe=None):
     path = setup.directory / "fake-video"
     path.write_bytes(b"fixture, not actual inference evidence")
     return run(setup.config, path, setup.client, setup.directory / "ai",
-               SimpleNamespace(predict=predict), clock=setup.clock, cv2_module=video)
+               SimpleNamespace(predict=predict), clock=setup.clock, cv2_module=video,
+               video_probe=video_probe or (lambda path: {"decoded_frames": len(video.timestamps),
+                                                       "method": "test_fixture_only"}))
 
 
 def test_pipeline_preserves_acquisition_time_and_end_does_not_clear_alarm(setup):
@@ -162,7 +164,7 @@ def test_pipeline_preserves_acquisition_time_and_end_does_not_clear_alarm(setup)
         setup.clock.advance(100)
         return [detection()] if frame < 2 else []
     result = execute(setup, video, predict)
-    assert result["accepted_events"] == 4 and video.released
+    assert result["accepted_events"] == 4 and result["termination"] == "EOF" and video.released
     state = setup.client.get("/api/state").json()
     assert [(c["source_id"], c["hazard_type"]) for c in state["active_causes"]] == [("CAM-A", "FIRE")]
     assert next(s for s in state["sources"] if s["source_id"] == "CAM-A")["validity"] == "UNAVAILABLE"

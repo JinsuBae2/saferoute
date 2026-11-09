@@ -4,9 +4,11 @@ import os
 
 from .events import Clock, EventBuilder, EventSender, WorkerError, get_contract, utc_text
 from .inference import file_hash
+from .video import inspect_video
 
 
-def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=None):
+def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=None,
+        video_probe=inspect_video):
     clock = clock or Clock()
     if cv2_module is None:
         import cv2 as cv2_module
@@ -37,26 +39,34 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
         log("start", config=config.model_dump(mode="json"), video_sha256=video_sha256,
             video_name=video.name, mapped_zone_id=source.zone_id,
             model_status="development_candidate_A01_not_final")
-        cap = cv2_module.VideoCapture(str(video))
+        cap = None
         frames, samples, skipped, sent = 0, 0, 0, 0
         previous, next_due, last_media = -1.0, 0, None
-        epoch = clock.monotonic()
+        failure_reason, can_notify = "DECODE_FAILED", True
         try:
+            inspection = video_probe(video)
+            log("video_preflight", **inspection)
+            failure_reason = "DECODE_FAILED"
+            cap = cv2_module.VideoCapture(str(video))
             if not cap.isOpened():
-                sender.send(builder.unavailable("DECODE_FAILED", clock.utcnow()))
                 raise WorkerError("VIDEO_OPEN_FAILED")
+            epoch = clock.monotonic()
             while True:
+                failure_reason = "DECODE_FAILED"
                 ok, frame = cap.read()
                 acquired_at, acquired_mono = clock.utcnow(), clock.monotonic()
                 if not ok:
-                    # A03 must distinguish verified EOF from a damaged/truncated stream.
-                    reason = "READ_ENDED_UNVERIFIED" if frames else "DECODE_FAILED"
-                    sender.send(builder.unavailable(reason, clock.utcnow(), last_media))
+                    if frames != inspection["decoded_frames"]:
+                        raise WorkerError(f"DECODE_FRAME_COUNT_MISMATCH: {frames}/{inspection['decoded_frames']}")
+                    if not samples:
+                        raise WorkerError("NO_ANALYZED_FRAMES")
+                    can_notify = False
+                    sender.send(builder.unavailable("EOF", clock.utcnow(), last_media))
                     sent += 1
                     break
                 timestamp = cap.get(cv2_module.CAP_PROP_POS_MSEC)
                 if not math.isfinite(timestamp) or timestamp < 0 or timestamp < previous:
-                    sender.send(builder.unavailable("INVALID_MEDIA_TIME", clock.utcnow(), last_media))
+                    failure_reason = "INVALID_MEDIA_TIME"
                     raise WorkerError("INVALID_MEDIA_TIME")
                 frames += 1
                 if timestamp == previous:
@@ -74,26 +84,40 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                         lateness_ms=lateness_ms)
                     continue
                 clock.sleep(max(0.0, epoch + timestamp / 1000 - clock.monotonic()))
+                failure_reason = "INFERENCE_FAILED"
                 detections = detector.predict(frame)
                 completed_at = clock.utcnow()
                 last_media, samples = media_ms, samples + 1
+                failure_reason = "INVALID_DETECTION"
                 events = builder.observation(media_ms, acquired_at, detections)
                 log("prediction", frame_index=frames-1, media_time_ms=media_ms,
                     observed_at=utc_text(acquired_at), inference_completed_at=utc_text(completed_at),
                     read_to_completion_ms=(clock.monotonic()-acquired_mono)*1000,
                     detections=detections, events=events)
                 for event in events:
+                    # Do not start a second delivery loop after an ambiguous API failure.
+                    can_notify = False
                     sender.send(event)
                     sent += 1
-            if not samples:
-                raise WorkerError("NO_ANALYZED_FRAMES")
+                    can_notify = True
             result = dict(run_id=session.run_id, frames=frames, analyzed_frames=samples,
                           skipped_late_frames=skipped, accepted_events=sent,
-                          termination="READ_ENDED_UNVERIFIED")
+                          termination="EOF")
             log("finished", result=result)
             return result
-        except Exception as error:
-            log("failed", error_type=type(error).__name__, detail=str(error))
+        except (Exception, KeyboardInterrupt) as error:
+            reason = "OPERATOR_STOPPED" if isinstance(error, KeyboardInterrupt) else failure_reason
+            if isinstance(error, WorkerError) and str(error).startswith("VIDEO_PREFLIGHT_UNAVAILABLE:"):
+                reason = "VIDEO_PREFLIGHT_UNAVAILABLE"
+            log("failed", reason_code=reason if can_notify else "DELIVERY_FAILED",
+                error_type=type(error).__name__, detail=str(error))
+            if can_notify:
+                try:
+                    sender.send(builder.unavailable(reason, clock.utcnow(), last_media))
+                except Exception as delivery_error:
+                    log("unavailable_delivery_failed", error_type=type(delivery_error).__name__,
+                        detail=str(delivery_error))
             raise
         finally:
-            cap.release()
+            if cap is not None:
+                cap.release()
