@@ -8,7 +8,7 @@
 
 ## 1. 실행 환경과 범위
 
-- 기준 코드: `38bb83c9d572d947be61e6004b7168abca52b6b4`에 이번 PR의 [전송 검증 도구](../../tools/validate_ai_delivery.py)를 추가하여 실행했다. 실행 도구 SHA-256은 `706208fb2a7b360cb982ce0cb047e382245c2d1f191611547fe4ae53dd54e4f3`이다.
+- 당시 서버 기준 코드: `38bb83c9d572d947be61e6004b7168abca52b6b4`에 **수정 전 전송 검증 도구**를 추가하여 실행했다. 그 원본 버전의 SHA-256은 `706208fb2a7b360cb982ce0cb047e382245c2d1f191611547fe4ae53dd54e4f3`이며 로컬 증거 `runs/a01-server-evidence/repo/tools/validate_ai_delivery.py`에 보존했다. 이 해시는 현재 PR의 파일 해시가 아니다. 현재 [전송 검증 도구](../../tools/validate_ai_delivery.py)는 만료 판정을 수정한 버전이며 LF 정규화 SHA-256은 `b82b5dfa7cef1a4b1db9d2a829b770300d01466a9500809647acd0a7014d434e`이다.
 - Ubuntu 24.04.5 LTS, Python 3.12.3, Xeon Platinum 8259CL / 논리 CPU 4개, RAM 약 15.41 GiB, GPU 없음. t3.xlarge 자원 안내는 [D01](../../deploy/README.md)을 따른다.
 - 별도 `.venv-ai`에 기존 core·AI lock을 함께 설치했고 `pip check`를 통과했다. torch 2.15.0+cpu, ultralytics 8.4.208, OpenCV 패키지 5.0.0.93이며 전체 주요 버전은 실측 JSON에 있다. 시스템 Python 패키지는 변경하지 않았다.
 - 시스템 실행 의존성 `ffmpeg`·`libgl1`을 설치했다. ffprobe 6.1.1-3ubuntu5를 사용했다. 이 패키지와 격리한 실행 디렉터리·가상환경·증거는 재현을 위해 남겼다.
@@ -55,6 +55,8 @@ Fable 검토 후 준비 스크립트의 `assert`를 명시적 오류 처리로 �
 최초 도구는 CAM-A 유효기간 3000ms와 관측 age·연속 관측 기록 간격을 따로 비교해 PASS로 기록했다. 이 방식은 **도착 당시의 지연으로 이미 소모한 유효기간과 마지막 관측→EOF 사이의 만료를 놓칠 수 있어 불충분했다.** Fable 지적을 확인하여 현재 도구는 `age_i + gap_i < freshness_ms`와 제어 로그의 CAM-A `expire` 부재를 함께 검사한다. 해당 결함과 경계·만료 사례의 회귀 테스트 8개를 추가했다.
 
 수정한 판정을 원본 서버 감사 로그에 적용한 결과는 실측 JSON의 `freshness_correction_recheck`다. 정상·불꽃은 만료 0회, 연기는 **만료 1회로 FAILED**다. 연기의 마지막 관측 취득→EOF 감사 기록은 약 3245.14ms였고, 실제 만료 결정부터 EOF 수신 기록까지 234.73ms였다. 연속 관측 사이 age+gap 최대 1879.43ms만 보면 이 마지막 공백이 드러나지 않는다. 따라서 원본 `delivery.status=PASS`는 당시 부족했던 검사 출력으로 보존하며, 최신 유효성 판정은 `delivery_freshness_assessment=FAILED`가 대체한다. payload 80개·EOF/UNAVAILABLE·경보 유지·로그 무결성 확인 자체는 유효하다. 재판정은 저장된 실제 로그에 대한 검사이며 새 모델 추론 실행으로 표시하지 않는다.
+
+재판정은 로컬 일회성 분석 코드가 원본 `events.jsonl`·`decisions.jsonl`을 읽고 현재 도구의 `check_observation_freshness`를 호출한 결과다. `validator_code_sha256_lf`는 그 분석 코드가 아니라 **저장소의 `tools/validate_ai_delivery.py` Git blob(LF) 해시**다. 추가 필드 `expiry_to_eof_ms`는 EOF 이벤트 감사 단조 시각−만료 결정 단조 시각, `last_observation_age_plus_eof_gap_ms`는 마지막 관측 age+마지막 관측부터 EOF까지의 감사 단조 시각 차이이며, 로그 파일 SHA-256과 함께 해당 일회성 분석에서 계산했다. 이 추가 필드를 CLI 자체의 직접 출력이라고 취급하지 않는다. 원본 증거의 실제 파일 경로·해시는 실측 JSON에서 대조할 수 있다.
 
 age는 같은 서버 UTC의 `recorded_at - observed_at`, 간격·만료→EOF는 서버 단조 시각으로 계산한다. 감사 기록까지의 시간이며 정확한 API 접수 순간이나 외부 네트워크 지연을 뜻하지 않는다. 모델 로딩·예열·preflight·첫 관측 이전·EOF 이후 공백은 별도이며, EOF 직전의 만료는 이번 실패에 포함한다. WFI 필수 감지기·arm·실제 단말·브라우저·경로 시연은 검증하지 않았다.
 

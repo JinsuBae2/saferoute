@@ -448,7 +448,7 @@
   },
   "freshness_correction_recheck": {
     "status": "FAILED",
-    "scope": "Corrected validator applied to original real-server audit logs; no inference rerun claimed. Supersedes original summary PASS for continuity through EOF.",
+    "scope": "Local one-off audit analysis applied check_observation_freshness from validator_code_path to original real-server logs. Extra EOF intervals and log SHA-256 values were computed by that analysis, not emitted by the CLI. No inference rerun claimed. Supersedes original summary PASS for continuity through EOF.",
     "freshness_ms": 3000,
     "validator_code_sha256_lf": "b82b5dfa7cef1a4b1db9d2a829b770300d01466a9500809647acd0a7014d434e",
     "videos": [
@@ -488,7 +488,9 @@
         "status": "FAILED",
         "reason": "source expired or observation age plus following gap exceeded freshness"
       }
-    ]
+    ],
+    "validator_code_path": "tools/validate_ai_delivery.py",
+    "validator_hash_representation": "Committed Git blob with LF line endings; not the one-off audit analysis code."
   },
   "delivery_freshness_assessment": "FAILED"
 }
