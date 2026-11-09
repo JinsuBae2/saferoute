@@ -32,13 +32,13 @@
     "explanation_worker/config.py": "0c8ce0c0fdb2315be2e966759e1dce3395b40770c8f4ac0aae307282cee90411",
     "explanation_worker/facts.py": "0b153617dc9216e58858592e3cdc76210723a2747c139eb903cee8990080f587",
     "explanation_worker/journal.py": "8d3ebf90002a8e1b007830726e945201b20b6dfd0babb43b5cb7b8db758100a8",
-    "explanation_worker/service.py": "a0289b91a964add323efefd50e2a3b137a57a9b721e9a3981f93428c958b358d",
+    "explanation_worker/service.py": "09b61774d8a12932e710296ab8facb24181fc653f78e5c7fd1ed74f8bbcf7553",
     "tools/validate_explanation.py": "19912bc6aebf3b097a5f115234c616c36facc36c35a2a5da993dffb088537d5d"
   },
   "artifacts_sha256": {
-    "report": "e42722c1c453170ecd2f7134d265f0c4e7ce184e14d11f51ac0bf33c48d5e302",
-    "explanations": "454f09ec01fa819fe9492e40e9b65f375f6bd3219b99bd865ee14c3a22f17a89",
-    "ai_predictions": "c66ab1fe9cc0d42cc484ced31ca0384efbae85eee9e4a0a34813e69d6b2ebfb7"
+    "report": "d2ac84323e49fb26d6738abab6e0d65896c30c2f3f86b3ec1cead641577b567b",
+    "explanations": "d71b2d1f829ac30f8ec544cff3f796202bc7f45a1437db15c8f62274efbc9da2",
+    "ai_predictions": "3b7abfba5a0b9bc66b59a2257b4be7d8237922248c2c2ca98a776f60ac92bcaf"
   },
   "actual_ai": {
     "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
@@ -52,18 +52,18 @@
     "discarded": 1,
     "timeout": 0
   },
-  "input_tokens": 10172,
-  "output_tokens": 1268,
+  "input_tokens": 10144,
+  "output_tokens": 1309,
   "cases": [
     {
       "scenario": "G01",
       "basis": {
         "schema_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "building_id": "TWO_ROUTE",
         "building_version": 1,
         "guidance_version": 3,
-        "basis_generated_at": "2026-11-09T12:55:20.136747Z",
+        "basis_generated_at": "2026-11-09T13:06:59.401227Z",
         "facts": {
           "mode": {
             "controller_mode": "NORMAL"
@@ -138,49 +138,48 @@
         "schema_version": 1,
         "building_id": "TWO_ROUTE",
         "building_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "guidance_version": 3,
         "status": "READY",
-        "basis_generated_at": "2026-11-09T12:55:20.136747Z",
-        "generated_at": "2026-11-09T12:55:21.627861Z",
-        "expires_at": "2026-11-09T12:55:35.136747Z",
-        "summary": "제어 모드는 NORMAL이며, 노드 A, B, S, X, Y에서는 계산된 경로가 있고 노드 I에서는 계산된 출구 경로가 없습니다.",
+        "basis_generated_at": "2026-11-09T13:06:59.401227Z",
+        "generated_at": "2026-11-09T13:07:00.916867Z",
+        "expires_at": "2026-11-09T13:07:14.401227Z",
+        "summary": "제어 모드는 NORMAL이며, 노드 A에서 EXIT-X로 가는 경로, 노드 B에서 EXIT-Y로 가는 경로, 노드 S에서 EXIT-X로 가는 경로가 계산되어 있고, 노드 I에서는 계산된 출구 경로가 없습니다.",
         "fact_refs": [
           "mode",
           "route:A",
           "route:B",
           "route:S",
-          "route:X",
-          "route:Y",
           "route:I"
         ],
         "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
         "prompt_version": "a05-v2",
         "error_code": null
       },
-      "requested_at": "2026-11-09T12:55:20.141795Z",
-      "responded_at": "2026-11-09T12:55:21.627861Z",
+      "requested_at": "2026-11-09T13:06:59.405108Z",
+      "dispatched_at": "2026-11-09T13:06:59.408918Z",
+      "responded_at": "2026-11-09T13:07:00.916867Z",
       "usage": {
-        "inputTokens": 1205,
-        "outputTokens": 110,
-        "totalTokens": 1315,
+        "inputTokens": 1201,
+        "outputTokens": 139,
+        "totalTokens": 1340,
         "cacheReadInputTokens": 0,
         "cacheWriteInputTokens": 0
       },
       "metrics": {
-        "latencyMs": 1233
+        "latencyMs": 1273
       },
-      "server_time": "2026-11-09T12:55:21.821641Z"
+      "server_time": "2026-11-09T13:07:01.091883Z"
     },
     {
       "scenario": "G02_actual_video",
       "basis": {
         "schema_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "building_id": "TWO_ROUTE",
         "building_version": 1,
         "guidance_version": 4,
-        "basis_generated_at": "2026-11-09T12:55:26.898628Z",
+        "basis_generated_at": "2026-11-09T13:07:06.799872Z",
         "facts": {
           "mode": {
             "controller_mode": "EMERGENCY"
@@ -303,12 +302,12 @@
         "schema_version": 1,
         "building_id": "TWO_ROUTE",
         "building_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "guidance_version": 4,
         "status": "READY",
-        "basis_generated_at": "2026-11-09T12:55:26.898628Z",
-        "generated_at": "2026-11-09T12:55:28.727309Z",
-        "expires_at": "2026-11-09T12:55:41.898628Z",
+        "basis_generated_at": "2026-11-09T13:07:06.799872Z",
+        "generated_at": "2026-11-09T13:07:08.765867Z",
+        "expires_at": "2026-11-09T13:07:21.799872Z",
         "summary": "제어 모드는 긴급(EMERGENCY)이며, CAM-A에서 감지된 화재로 인해 노드 A와 A 주변 경로(A-S, A-X, S-A, X-A)가 차단되었다. 노드 B, S, X, Y에서는 계산된 경로가 있으나 노드 I에서는 도달 가능한 출구 경로가 없다.",
         "fact_refs": [
           "mode",
@@ -318,39 +317,41 @@
           "blocked-edge:A-X",
           "blocked-edge:S-A",
           "blocked-edge:X-A",
+          "route:A",
           "route:B",
+          "route:I",
           "route:S",
           "route:X",
-          "route:Y",
-          "route:I"
+          "route:Y"
         ],
         "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
         "prompt_version": "a05-v2",
         "error_code": null
       },
-      "requested_at": "2026-11-09T12:55:26.901467Z",
-      "responded_at": "2026-11-09T12:55:28.727309Z",
+      "requested_at": "2026-11-09T13:07:06.804955Z",
+      "dispatched_at": "2026-11-09T13:07:06.808529Z",
+      "responded_at": "2026-11-09T13:07:08.765867Z",
       "usage": {
-        "inputTokens": 1443,
-        "outputTokens": 209,
+        "inputTokens": 1439,
+        "outputTokens": 213,
         "totalTokens": 1652,
         "cacheReadInputTokens": 0,
         "cacheWriteInputTokens": 0
       },
       "metrics": {
-        "latencyMs": 1812
+        "latencyMs": 1930
       },
-      "server_time": "2026-11-09T12:55:28.915868Z"
+      "server_time": "2026-11-09T13:07:08.898611Z"
     },
     {
       "scenario": "G04",
       "basis": {
         "schema_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "building_id": "TWO_ROUTE",
         "building_version": 1,
         "guidance_version": 5,
-        "basis_generated_at": "2026-11-09T12:55:52.834052Z",
+        "basis_generated_at": "2026-11-09T13:07:32.826011Z",
         "facts": {
           "mode": {
             "controller_mode": "EMERGENCY"
@@ -519,12 +520,12 @@
         "schema_version": 1,
         "building_id": "TWO_ROUTE",
         "building_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "guidance_version": 5,
         "status": "READY",
-        "basis_generated_at": "2026-11-09T12:55:52.834052Z",
-        "generated_at": "2026-11-09T12:55:54.749068Z",
-        "expires_at": "2026-11-09T12:56:07.834052Z",
+        "basis_generated_at": "2026-11-09T13:07:32.826011Z",
+        "generated_at": "2026-11-09T13:07:34.793317Z",
+        "expires_at": "2026-11-09T13:07:47.826011Z",
         "summary": "제어 모드는 긴급(EMERGENCY)이며, CAM-A의 화재와 DETECTOR-B의 연기 감지로 인해 노드 A, B와 이들을 연결하는 경로들이 차단되었고, 노드 I와 S는 도달 가능한 출구 경로가 없는 상태입니다.",
         "fact_refs": [
           "mode",
@@ -540,8 +541,6 @@
           "blocked-edge:S-B",
           "blocked-edge:X-A",
           "blocked-edge:Y-B",
-          "route:A",
-          "route:B",
           "route:I",
           "route:S"
         ],
@@ -549,29 +548,30 @@
         "prompt_version": "a05-v2",
         "error_code": null
       },
-      "requested_at": "2026-11-09T12:55:52.836664Z",
-      "responded_at": "2026-11-09T12:55:54.749068Z",
+      "requested_at": "2026-11-09T13:07:32.829899Z",
+      "dispatched_at": "2026-11-09T13:07:32.833527Z",
+      "responded_at": "2026-11-09T13:07:34.793317Z",
       "usage": {
-        "inputTokens": 1675,
-        "outputTokens": 248,
-        "totalTokens": 1923,
+        "inputTokens": 1671,
+        "outputTokens": 238,
+        "totalTokens": 1909,
         "cacheReadInputTokens": 0,
         "cacheWriteInputTokens": 0
       },
       "metrics": {
-        "latencyMs": 1899
+        "latencyMs": 1950
       },
-      "server_time": "2026-11-09T12:55:54.821640Z"
+      "server_time": "2026-11-09T13:07:34.927821Z"
     },
     {
       "scenario": "G07",
       "basis": {
         "schema_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "building_id": "TWO_ROUTE",
         "building_version": 1,
         "guidance_version": 8,
-        "basis_generated_at": "2026-11-09T12:56:03.009372Z",
+        "basis_generated_at": "2026-11-09T13:07:42.987088Z",
         "facts": {
           "mode": {
             "controller_mode": "DEGRADED"
@@ -691,13 +691,13 @@
         "schema_version": 1,
         "building_id": "TWO_ROUTE",
         "building_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "guidance_version": 8,
         "status": "READY",
-        "basis_generated_at": "2026-11-09T12:56:03.009372Z",
-        "generated_at": "2026-11-09T12:56:04.794091Z",
-        "expires_at": "2026-11-09T12:56:18.009372Z",
-        "summary": "제어 모드는 DEGRADED이며, 노드 A와 이에 연결된 모서리들이 DETECTOR-A의 관측 불가 상태로 차단되어 있다. 노드 B, S, X, Y에서는 계산된 경로가 있고, 노드 I에서는 도달 가능한 출구 경로가 없다.",
+        "basis_generated_at": "2026-11-09T13:07:42.987088Z",
+        "generated_at": "2026-11-09T13:07:44.618018Z",
+        "expires_at": "2026-11-09T13:07:57.987088Z",
+        "summary": "제어 모드는 DEGRADED이며, 노드 A와 이에 연결된 모든 경로가 DETECTOR-A의 관측 불가로 차단되어 있다. 노드 B, S, X, Y에서는 계산된 경로가 있고, 노드 I에서는 도달 가능한 출구 경로가 없다.",
         "fact_refs": [
           "mode",
           "blocked-node:A",
@@ -716,29 +716,30 @@
         "prompt_version": "a05-v2",
         "error_code": null
       },
-      "requested_at": "2026-11-09T12:56:03.011838Z",
-      "responded_at": "2026-11-09T12:56:04.794091Z",
+      "requested_at": "2026-11-09T13:07:42.989594Z",
+      "dispatched_at": "2026-11-09T13:07:42.992868Z",
+      "responded_at": "2026-11-09T13:07:44.618018Z",
       "usage": {
-        "inputTokens": 1436,
-        "outputTokens": 198,
-        "totalTokens": 1634,
+        "inputTokens": 1432,
+        "outputTokens": 196,
+        "totalTokens": 1628,
         "cacheReadInputTokens": 0,
         "cacheWriteInputTokens": 0
       },
       "metrics": {
-        "latencyMs": 1771
+        "latencyMs": 1615
       },
-      "server_time": "2026-11-09T12:56:04.847651Z"
+      "server_time": "2026-11-09T13:07:44.691792Z"
     },
     {
       "scenario": "G09",
       "basis": {
         "schema_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "building_id": "TWO_ROUTE",
         "building_version": 1,
         "guidance_version": 9,
-        "basis_generated_at": "2026-11-09T12:56:08.061417Z",
+        "basis_generated_at": "2026-11-09T13:07:48.076913Z",
         "facts": {
           "mode": {
             "controller_mode": "NORMAL"
@@ -813,13 +814,13 @@
         "schema_version": 1,
         "building_id": "TWO_ROUTE",
         "building_version": 1,
-        "run_id": "62bbb37a-9f2f-4d96-87e7-5a64c6dd66ec",
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
         "guidance_version": 9,
         "status": "READY",
-        "basis_generated_at": "2026-11-09T12:56:08.061417Z",
-        "generated_at": "2026-11-09T12:56:09.279047Z",
-        "expires_at": "2026-11-09T12:56:23.061417Z",
-        "summary": "제어 모드는 NORMAL이며, 노드 A, B, S, X, Y에서는 계산된 경로가 있고, 노드 I에서는 계산된 출구 경로가 없습니다.",
+        "basis_generated_at": "2026-11-09T13:07:48.076913Z",
+        "generated_at": "2026-11-09T13:07:49.281793Z",
+        "expires_at": "2026-11-09T13:08:03.076913Z",
+        "summary": "제어 모드는 NORMAL이며, 노드 A, B, S, X, Y에서는 계산된 경로가 있고 노드 I에서는 계산된 출구 경로가 없습니다.",
         "fact_refs": [
           "mode",
           "route:A",
@@ -833,19 +834,20 @@
         "prompt_version": "a05-v2",
         "error_code": null
       },
-      "requested_at": "2026-11-09T12:56:08.065347Z",
-      "responded_at": "2026-11-09T12:56:09.279047Z",
+      "requested_at": "2026-11-09T13:07:48.080042Z",
+      "dispatched_at": "2026-11-09T13:07:48.083480Z",
+      "responded_at": "2026-11-09T13:07:49.281793Z",
       "usage": {
-        "inputTokens": 1205,
-        "outputTokens": 111,
-        "totalTokens": 1316,
+        "inputTokens": 1201,
+        "outputTokens": 110,
+        "totalTokens": 1311,
         "cacheReadInputTokens": 0,
         "cacheWriteInputTokens": 0
       },
       "metrics": {
-        "latencyMs": 1201
+        "latencyMs": 1190
       },
-      "server_time": "2026-11-09T12:56:09.393526Z"
+      "server_time": "2026-11-09T13:07:49.412925Z"
     }
   ]
 }

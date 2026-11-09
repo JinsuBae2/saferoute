@@ -38,6 +38,7 @@ class Service:
     def disconnected(self):
         self.epoch += 1
         self.result = None
+        self.last_error = None
 
     def _call(self, basis):
         try:
@@ -53,6 +54,7 @@ class Service:
         record = {"request_id": flight["id"], "basis": flight["basis"],
                   "model_id": self.config.model_id, "prompt_version": PROMPT_VERSION,
                   "requested_at": utc_text(flight["requested"]),
+                  "dispatched_at": flight.get("dispatched_at"),
                   "responded_at": utc_text(finished) if finished else None,
                   "recorded_at": utc_text(self.utcnow()), "outcome": outcome, "error": error,
                   "provider_error": provider_error,
@@ -81,13 +83,16 @@ class Service:
                             or now >= datetime.fromisoformat(self.result.expires_at)):
             self.result = None
         flight = self.flight
+        obsolete = flight is not None and (flight["epoch"] != self.epoch or identity(flight["basis"]) != identity(basis))
         if flight and flight["future"].done():
             response, failure, finished, finished_mono = flight["future"].result()
+            now, mono = self.utcnow(), self.monotonic()
             expiry = datetime.fromisoformat(flight["basis"]["basis_generated_at"]) + timedelta(seconds=self.config.ttl_seconds)
-            if flight["timed_out"] or finished_mono - flight["started"] >= self.config.timeout_seconds:
+            if obsolete:
+                error = "STALE_BASIS"
+            elif flight["timed_out"] or finished_mono - flight["started"] >= self.config.timeout_seconds:
                 error = "BEDROCK_UNAVAILABLE"
-            elif (flight["epoch"] != self.epoch or identity(flight["basis"]) != identity(basis)
-                  or now >= expiry or finished < flight["requested"] or finished > now):
+            elif now >= expiry or finished < flight["requested"] or finished > now:
                 error = "STALE_BASIS"
             elif failure:
                 error = "BEDROCK_UNAVAILABLE"
@@ -103,10 +108,12 @@ class Service:
             self._record(flight, "discarded" if error else "accepted", response=response,
                          error=error, finished=finished, provider_error=failure)
             self.flight = None
+            if obsolete:
+                error = None  # An old request's error does not describe the fresh pending basis.
         elif flight and mono - flight["started"] >= self.config.timeout_seconds:
-            error = "BEDROCK_UNAVAILABLE"
+            error = None if obsolete else "BEDROCK_UNAVAILABLE"
             if not flight["timed_out"]:
-                self._record(flight, "timeout", error=error)
+                self._record(flight, "timeout", error="BEDROCK_UNAVAILABLE")
                 flight["timed_out"] = True
 
         if self.log_failed:
@@ -131,7 +138,14 @@ class Service:
             self._record(flight, "requested")
             if self.log_failed:
                 return self._empty(basis, "EXPLANATION_LOG_ERROR")
-            self.last_start = mono
+            dispatched = self.utcnow()
+            if not 0 <= (dispatched - basis_time).total_seconds() < self.config.ttl_seconds:
+                self._record(flight, "discarded", error="STALE_BASIS")
+                return self._empty(basis, "STALE_BASIS")
+            # Log latency must not shorten spacing between actual submissions.
+            self.last_start = self.monotonic()
+            flight["started"] = self.last_start
+            flight["dispatched_at"] = utc_text(dispatched)
             self.last_error = None
             flight["future"] = self.executor.submit(self._call, basis)
             self.flight = flight

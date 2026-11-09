@@ -285,7 +285,7 @@ Closes #이슈번호
 | .github/ | 이슈·PR 템플릿, CI | 배진수 |
 | backend/ | 상태·경로·유도등 제어 API | 배진수 |
 | ai_worker/ | 영상 추론·관측 이벤트 | 조대성 |
-| explanation_worker/ | Bedrock 상황 설명·별도 조회 API. A05에서 추가 예정 | 조대성, 계약·배포는 배진수 지원 |
+| explanation_worker/ | Bedrock 상황 설명·별도 조회 API. [A05-2 구현·실측](ai/a05-explanation-api.md), 독립 V15 검수는 별도 | 조대성, 계약·배포는 배진수 지원 |
 | web/ | 관제·3D·별도 단말 | 김성은 |
 | data/ | 공간·시나리오·독립 정답·출처 목록 | 김효정·박준영 |
 | configs/ | 공통 설정 예제·버전 | 조대성·배진수 |

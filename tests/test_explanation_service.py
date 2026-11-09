@@ -84,9 +84,33 @@ def test_old_identity_or_lost_session_cannot_adopt_response(controller, clock, s
         state = state.model_copy(deep=True)
         setattr(state, change, {"run_id": "22222222-2222-4222-8222-222222222222", "building_id": "NEW",
                                "building_version": 2, "guidance_version": 1}[change])
-    assert service.tick(state).error_code == "STALE_BASIS"
+    assert service.tick(state).status == "PENDING"
     assert service.result is None
     assert service.journal.records[-1]["outcome"] == "discarded"
+    assert service.journal.records[-1]["error"] == "STALE_BASIS"
+
+
+def test_completion_between_clock_read_and_future_check_is_not_discarded(controller, clock, service):
+    service.tick(controller.snapshot())
+    def completed_now():
+        clock.advance(1)
+        finish(service, clock)
+        return True
+    service.flight["future"].done = completed_now
+    assert service.tick(controller.snapshot()).status == "READY"
+
+
+def test_old_timed_out_request_does_not_mark_fresh_guidance_unavailable(controller, clock, service):
+    prepare(controller, clock)
+    service.tick(controller.snapshot())
+    clock.advance(5000)
+    controller.receive(payload(controller, clock))
+    current = controller.snapshot()
+    assert service.tick(current).status == "PENDING"
+    finish(service, clock)
+    # The newest basis can start immediately once the old flight actually ends.
+    assert service.tick(current).status == "PENDING"
+    assert len(service.executor.calls) == 2
 
 
 def test_timeout_keeps_one_flight_and_never_adopts_late_result(controller, clock, service):
@@ -159,6 +183,30 @@ def test_expiry_during_log_write_cannot_publish_ready(controller, clock, service
     service.journal.write = lambda _: clock.advance(15000)
     assert service.tick(state).error_code == "STALE_BASIS"
     assert service.result is None
+
+
+def test_slow_request_log_does_not_shorten_actual_call_spacing(controller, clock, service):
+    records = service.journal.records
+    def write(record):
+        if not records: clock.advance(3000)
+        records.append(record)
+    service.journal.write = write
+    service.tick(controller.snapshot())
+    clock.advance(100)
+    finish(service, clock, error="AccessDeniedException")
+    service.tick(controller.snapshot())
+    clock.advance(1900)
+    service.tick(controller.snapshot())
+    assert len(service.executor.calls) == 1
+    clock.advance(3000)
+    service.tick(controller.snapshot())
+    assert len(service.executor.calls) == 2
+
+
+def test_expired_basis_during_request_log_does_not_call_provider(controller, clock, service):
+    service.journal.write = lambda _: clock.advance(15000)
+    assert service.tick(controller.snapshot()).error_code == "STALE_BASIS"
+    assert not service.executor.calls
 
 
 def test_journal_appends_and_excludes_second_writer(tmp_path):

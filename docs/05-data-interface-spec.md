@@ -275,7 +275,7 @@ B03의 성공 응답은 HTTP 200과 해당 유도등의 `SignState` 객체(`sign
 | GET /api/session | 없음 | run_id, 건물 버전, controller_mode, schema_version |
 | GET /api/building | 없음 | 현재 실행이 사용하는 검증된 공간 자료 |
 | GET /api/state | 없음 | 하나의 안내 버전으로 묶인 상태·경로·단말 적용 현황 |
-| GET /api/explanations/current | 없음 | A05 설명 작업자(8002)의 현재 설명·기준 버전·기한·상태. 구현 예정 |
+| GET /api/explanations/current | 없음 | A05 설명 작업자(8002)의 현재 설명·기준 버전·기한·상태. [A05-2 실행](ai/a05-explanation-api.md) |
 | POST /api/events | 3절 이벤트 | 수락·중복 여부와 해당 판단 버전 |
 | GET /api/signs/{sign_id}/command | 없음 | 단말별 새 명령 |
 | POST /api/signs/{sign_id}/ack | 5절 응답 | 해당 SignState. 응답 접수와 현재 적용 상태를 구분, 검증 실패 시 오류 |
@@ -421,7 +421,7 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 
 출구 자체의 Route는 path_node_ids=[현재 노드], next_node_id=null, cost=0, exit_id=해당 출구, reason_codes=[]다. 안내 불가 Route는 6절의 null·빈 경로·사유 규칙을 따른다.
 
-## 11. F11 상황 설명 계약 — A05 구현 예정
+## 11. F11 상황 설명 계약 — A05
 
 설명은 기존 `StateSnapshot`·관측·명령·ACK에 필수 필드를 추가하지 않는 별도 DTO/API다. A05-1에서 Python 모델·생성 TypeScript·수락/거부 샘플·계약 시험을 추가했다. [A05-2](ai/a05-explanation-api.md)는 별도 8002 프로세스의 실제 API·호출을 구현한다. 서버 상시 서비스 배포·독립 V15 완료를 의미하지 않는다.
 
