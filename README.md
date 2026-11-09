@@ -18,6 +18,8 @@
 
 지원 서버·S3·Bedrock의 실제 접근 결과와 배포 준비 항목은 [D01 자원 확인 기록](deploy/README.md)에 있습니다.
 
+서버 개발 영상의 FFV1 디코딩 지연·EOF 전 관측 만료는 [A01-3 UTVideo 준비 경로](docs/ai/a01-input-latency.md)에서 두 번의 실제 전송으로 개선을 확인했습니다. 원본 AV1 직접 입력 지원과 전체 배포 완료는 별도입니다.
+
 ## 협업
 
 최신 develop에서 이슈 선택 → `type/번호-작업명` 브랜치 → `type(scope): 변경 내용 (#번호)` 커밋 → push → develop 대상 PR → `ci` 통과 → Squash merge.

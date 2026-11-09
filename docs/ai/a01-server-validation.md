@@ -2,6 +2,8 @@
 
 관련: [#81](https://github.com/JinsuBae2/saferoute/issues/81), 상위 [A01 #9](https://github.com/JinsuBae2/saferoute/issues/9). 2026-11-09, 조대성 / Rinhaze.
 
+후속 [A01-3 #84](a01-input-latency.md)에서는 명시적 UTVideo 준비 경로로 두 번의 실제 전송에서 연기 20/20 분석·건너뜀 0·STALE 0을 확인했다. 아래 A01-2 실패 기록과 원본 증거는 당시 결과로 보존한다.
+
 **서버 CPU에서 개발 영상 6개를 실행했고, 정상·불꽃·연기 3개 실행의 payload 전송·EOF·로그 무결성은 확인했다. 그러나 연기 실행은 EOF 전에 CAM-A가 STALE로 만료되어 관측 유효성 연속 유지에 실패했다.** AV1 원본 2개는 직접 디코딩에 실패하여 검증한 FFV1 복사본을 사용했고, 연기 worker는 예정 샘플 20개 중 12개를 건너뛰었다. 최종 모델 채택·독립 정확도·전체 배포의 합격 판정이 아니다.
 
 공개 수치·해시·원본/파생 대응은 [실측 JSON](../../deploy/resource-checks/2026-11-09-ai-server.json)에 있다. 기존 [Windows 비교 기록](a01-selection-and-server-check.md)은 당시 결과로 보존한다.
