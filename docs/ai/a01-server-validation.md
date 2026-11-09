@@ -23,6 +23,8 @@
 
 변환 경로·새 파일 해시는 `runs/server-video-preparation/assets.server.json`에만 기록한다. canonical manifest는 변경하지 않는다. 각 파생 파일의 출처·사용 조건은 원본 manifest 항목을 유지하며 `server_derivation`으로 변경 사실을 기록한다. **원본·파생본 모두 같은 development 장면**이므로 독립 평가에 재사용하지 않는다. 원본 해시를 기대하는 평가 정답에 파생 파일을 원본인 것처럼 연결하지 않는다. 다른 실행에서는 컨테이너 메타데이터 등으로 파일 해시가 달라질 수 있으므로 그 실행의 검증 결과·해시를 새로 보존한다.
 
+Fable 검토 후 준비 스크립트의 `assert`를 명시적 오류 처리로 바꿔 Python 최적화 모드에서도 불일치를 거부하도록 했고, 파생 manifest에 남았던 원본 전용 `read_validation`을 제거하고 `transformation`을 정정했다. 최적화된 코드에서 해시·프레임·시각 불일치와 정상 메타데이터를 확인하는 회귀 테스트 4개를 추가했다. 같은 서버의 새 격리 checkout에서 `PYTHONOPTIMIZE=1`로 준비 절차를 실제 재실행하여 292/367프레임·시각 일치와 수정된 메타데이터를 확인했다. 실측 JSON의 `preparation_correction_recheck`가 별도 근거다. 최초 추론·전송 결과와 그때의 raw manifest는 당시 증거로 보존하므로, 원본 설명이 남았던 과거 manifest를 최신 재현 템플릿으로 사용하지 않는다. 아래 성능 수치는 최초 실측이며 준비 절차 재검증을 새로운 추론 측정으로 집계하지 않았다.
+
 ## 3. 6개 영상 CPU 재생 속도 측정
 
 `tools.validate_ai_model --pace`는 늦어진 샘플을 폐기하지 않고 측정한다. 정상 원본 4개와 검증한 FFV1 복사본 2개에서 총 144샘플을 처리했다. 샘플 수와 FIRE/SMOKE 검출 프레임 수는 기존 Windows 640 결과와 모두 같았다.

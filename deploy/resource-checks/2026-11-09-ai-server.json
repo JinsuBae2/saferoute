@@ -403,5 +403,46 @@
     "TWO_ROUTE fixture only; no WFI/required sensor arm/browser/physical device/full deployment validation.",
     "Single sequential run per development asset; sustained load, CPU credits and concurrent cameras not measured.",
     "Runtime environment and evidence directory retained for reproduction; probe controller stopped, no app listener remains."
-  ]
+  ],
+  "preparation_correction_recheck": {
+    "status": "PASS",
+    "python_optimize": 1,
+    "derived_assets": 2,
+    "original_validation_fields_removed": true,
+    "transformation_corrected": true,
+    "script_sha256": "d5bfefb552a23ad26d0c38ffc53d948855203f2af07019fa23d4f503b641f5b8",
+    "manifest_sha256": "e107019e1a342e635848ad3f2b01728f6da866780fb433f945686d0244f39dfa",
+    "conversion": [
+      {
+        "asset_id": "dev-smoke-0009",
+        "original_path": "data/videos/smoke-0009.webm",
+        "original_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+        "derived_path": "runs/server-video-preparation/smoke-0009-ffv1.mkv",
+        "derived_sha256": "34a8678d3266f166ca48bff529417debe92e7ddfa4d9705cf9f9e4dc44b18de9",
+        "decoded_frames": 292,
+        "decoded_yuv420p_hashes_equal": true,
+        "frame_media_timestamps_ms_equal": true,
+        "original_scene_unchanged": true
+      },
+      {
+        "asset_id": "dev-metro-ermita-corridor",
+        "original_path": "data/videos/metro-ermita-corridor.webm",
+        "original_sha256": "001dde94d2146b0bb6f06ed3b9b72eac7262cde20e7eb66a0d79530bb95b385e",
+        "derived_path": "runs/server-video-preparation/metro-ermita-corridor-ffv1.mkv",
+        "derived_sha256": "f53a874bede70c48795d2d0c1665778329d8870caba47801b2ed808f393a95e0",
+        "decoded_frames": 367,
+        "decoded_yuv420p_hashes_equal": true,
+        "frame_media_timestamps_ms_equal": true,
+        "original_scene_unchanged": true
+      }
+    ],
+    "scope": "Preparation correction only; earlier inference/delivery measurements and their original evidence remain unchanged.",
+    "evidence_sha256": {
+      "a01-81-prepare.sh": "d5bfefb552a23ad26d0c38ffc53d948855203f2af07019fa23d4f503b641f5b8",
+      "evidence/preparation-recheck-console.txt": "97c0e656b0b18c26db67e283139dddb78d7fb75fe898eed0b46534fd046d9a8d",
+      "evidence/preparation-recheck.json": "70828765e093e3bbf34d91b61be77b69ce3f2ebbf60fad2a2a1202b3a4a21d63",
+      "preparation-recheck/runs/server-video-preparation/assets.server.json": "e107019e1a342e635848ad3f2b01728f6da866780fb433f945686d0244f39dfa",
+      "preparation-recheck/runs/server-video-preparation/conversion-evidence.json": "924145c532b8eb55bf98f7c0ba984bc4729b29a058efa340d83990fb27b195c4"
+    }
+  }
 }
