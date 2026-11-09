@@ -23,7 +23,7 @@ type ReasonCode = FaceResult["reason_codes"][number];
 
 const MODE_LABEL: Record<Mode, string> = {
   DEFAULT: "평상시 기본 안내",
-  DYNAMIC: "화재 대응 안내",
+  DYNAMIC: "동적 경로 안내",
   NO_ROUTE: "안내 불가",
   UNKNOWN: "확인 불가",
 };

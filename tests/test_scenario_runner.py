@@ -82,7 +82,7 @@ def test_reset_stops_producer_without_rebinding_or_sending_old_queue(setup, cloc
 
 
 @pytest.mark.parametrize("kind,delay,error", [("DROP",0,None),("DELAY",4000,"STALE_SEQUENCE"),("UNAVAILABLE",0,None)])
-def test_faults_preserve_original_samples_and_fail_closed(building, scenario, clock, tmp_path, kind, delay, error):
+def test_faults_preserve_original_samples_and_exclude_unobserved_zone(building, scenario, clock, tmp_path, kind, delay, error):
     data = scenario.model_dump()
     data["faults"] = [dict(source_id="DETECTOR-A",kind=kind,start_ms=0,end_ms=2000,delay_ms=delay)]
     scenario = Scenario.model_validate(data).validate_for(building)
@@ -92,7 +92,10 @@ def test_faults_preserve_original_samples_and_fail_closed(building, scenario, cl
         arm(client)
         runner.tick()
         advance(runner, clock, 3500)
-        assert at_s(client)["reason_codes"] == ["REQUIRED_OBSERVATION_UNKNOWN"]
+        state = client.get("/api/state").json()
+        assert state["controller_mode"] == "DEGRADED"
+        route = next(r for r in state["routes"] if r["node_id"] == "S")
+        assert route["path_node_ids"] == ["S", "B", "Y"] and not route["reason_codes"]
         advance(runner, clock, 7000)
         assert runner.state().status == "RUNNING"
         evidence = [json.loads(line) for line in runner.log_path.read_text(encoding="utf-8").splitlines()]

@@ -8,7 +8,7 @@ def sign_faces(sign, route, controller_mode):
     for face in sign.faces:
         reasons = list(route.reason_codes)
         display = None
-        if controller_mode in {"INITIALIZING", "DEGRADED"}:
+        if controller_mode == "INITIALIZING":
             mode = "UNKNOWN"
         elif reasons:
             mode = "NO_ROUTE"

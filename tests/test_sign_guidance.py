@@ -66,11 +66,57 @@ def test_faces_follow_readiness_route_and_view_direction(controller, clock):
     assert all(f.mode == "NO_ROUTE" and "ORIGIN_BLOCKED" in f.reason_codes for f in sign_state(controller, "SIGN-B").faces)
 
 
-def test_stale_required_observations_remove_default_arrows(controller, clock):
+@pytest.mark.parametrize("validity", ["STALE", "UNAVAILABLE"])
+def test_required_observation_loss_reroutes_commands_and_recovery_restores_defaults(api, clock, validity):
+    client, controller = api
+    original = command(client)
+    if validity == "STALE":
+        clock.advance(1000)
+        controller.receive(payload(controller, clock, "DETECTOR-B", kind="OBSERVATION", sequence=2))
+        clock.advance(2000)
+    else:
+        controller.receive(payload(controller, clock, "DETECTOR-A", kind="UNAVAILABLE", sequence=2))
+    state = controller.snapshot()
+    assert state.controller_mode == "DEGRADED" and not state.active_causes
+    assert next(s.validity for s in state.sources if s.source_id == "DETECTOR-A") == validity
+    assert {n.node_id for n in state.blocked_nodes} == {"A"}
+    route = next(r for r in state.routes if r.node_id == "S")
+    assert route.path_node_ids == ["S", "B", "Y"] and not route.reason_codes
+    assert displays(sign_state(controller)) == [("FRONT", "DYNAMIC", "RIGHT", "B", "EXIT-Y"), ("REAR", "DYNAMIC", "LEFT", "B", "EXIT-Y")]
+    assert displays(sign_state(controller, "SIGN-B")) == [("FRONT", "DYNAMIC", "FORWARD", "Y", "EXIT-Y")]
+    rerouted = command(client)
+    assert rerouted["guidance_version"] > original["guidance_version"]
+    assert rerouted["faces"] == [f.model_dump(mode="json") for f in sign_state(controller).faces]
+    assert post_ack(client, ack(rerouted)).json()["application_status"] == "APPLIED"
+
+    controller.receive(payload(controller, clock, "DETECTOR-A", kind="OBSERVATION", sequence=3))
+    restored = controller.snapshot()
+    assert restored.controller_mode == "NORMAL" and not restored.blocked_nodes and not restored.blocked_edges
+    assert next(r.path_node_ids for r in restored.routes if r.node_id == "S") == ["S", "A", "X"]
+    recovered = command(client)
+    assert recovered["guidance_version"] > rerouted["guidance_version"]
+    assert recovered["faces"] == original["faces"]
+
+
+def test_stale_required_observations_only_remove_arrows_without_a_route(controller, clock):
     prepare(controller, clock)
     clock.advance(3000)
     controller.expire()
-    assert all(f.mode == "UNKNOWN" and f.display is None and f.reason_codes == ["REQUIRED_OBSERVATION_UNKNOWN"] for s in controller.snapshot().signs for f in s.faces)
+    assert all(f.mode == "NO_ROUTE" and f.display is None and f.reason_codes == ["NO_REACHABLE_EXIT", "REQUIRED_OBSERVATION_UNKNOWN"] for f in sign_state(controller).faces)
+    assert all(f.mode == "NO_ROUTE" and f.display is None and f.reason_codes == ["ORIGIN_BLOCKED", "REQUIRED_OBSERVATION_UNKNOWN"] for f in sign_state(controller, "SIGN-B").faces)
+
+
+def test_clearing_last_alarm_keeps_unknown_zone_excluded(controller, clock):
+    prepare(controller, clock)
+    controller.receive(payload(controller, clock, "DETECTOR-A", kind="UNAVAILABLE", sequence=2))
+    controller.receive(payload(controller, clock, "DETECTOR-B", hazard="SMOKE", sequence=2))
+    assert controller.snapshot().controller_mode == "EMERGENCY"
+    assert all(f.mode == "NO_ROUTE" and f.display is None for f in sign_state(controller).faces)
+    controller.clear(control(controller, source_id="DETECTOR-B", hazard_type="SMOKE"))
+    state = controller.snapshot()
+    assert state.controller_mode == "DEGRADED" and not state.active_causes
+    assert {n.node_id for n in state.blocked_nodes} == {"A"}
+    assert displays(sign_state(controller)) == [("FRONT", "DYNAMIC", "RIGHT", "B", "EXIT-Y"), ("REAR", "DYNAMIC", "LEFT", "B", "EXIT-Y")]
 
 
 def test_missing_face_mapping_does_not_invent_a_direction(building, clock, tmp_path):
@@ -285,7 +331,7 @@ def test_ack_response_rechecks_observations_after_log_io(api, clock, monkeypatch
     response = post_ack(client, ack(issued))
     assert response.status_code == 200
     assert response.json()["application_status"] == "PENDING"
-    assert all(f["mode"] == "UNKNOWN" for f in response.json()["faces"])
+    assert all(f["mode"] == "NO_ROUTE" and f["display"] is None and f["reason_codes"] == ["NO_REACHABLE_EXIT", "REQUIRED_OBSERVATION_UNKNOWN"] for f in response.json()["faces"])
 
 
 @pytest.mark.parametrize("advance,delay,code", [(2990,20,"COMMAND_MISMATCH"), (0,3000,"COMMAND_EXPIRED")])
@@ -296,4 +342,4 @@ def test_command_changed_or_expired_during_log_io_is_not_delivered(api, clock, m
     response = client.get("/api/signs/SIGN-S/command")
     assert response.status_code == 409 and response.json()["error"]["code"] == code
     assert records(tmp_path, store.run_id, "commands")[-1]["outcome"] == "discarded"
-    assert all(f["mode"] == "UNKNOWN" for f in command(client)["faces"])
+    assert all(f["mode"] == "NO_ROUTE" and f["display"] is None and f["reason_codes"] == ["NO_REACHABLE_EXIT", "REQUIRED_OBSERVATION_UNKNOWN"] for f in command(client)["faces"])

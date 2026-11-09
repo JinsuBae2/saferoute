@@ -97,6 +97,21 @@ G06은 출구 조건을 바꾼 별도 실행의 경로 함수 시험으로 수�
 
 B02의 백엔드 회귀 시험은 [routing-cases.json](../tests/fixtures/routing-cases.json)에 이 표의 전체 노드 정답을 고정하고 [test_routing.py](../tests/test_routing.py)에서 비교한다. 유도등 표시·명령·단말 적용과 Q02의 통합 시연 자료 검수는 이 경로 시험만으로 완료 처리하지 않는다.
 
+### 3.3 운전 중 필수 관측 장애
+
+필수 감지기 설정은 유지한다. arm 전에 필요한 관측이 없으면 시작하지 않으며, 아래 사례는 정상 관측을 확인하고 arm한 뒤 수행한다.
+
+| 입력 조건 | 기대 결과 |
+| --- | --- |
+| 경보 없이 DETECTOR-A만 STALE 또는 UNAVAILABLE | DEGRADED 유지, A와 지정 연결 제외, S→B→Y 동적 RIGHT 안내 |
+| DETECTOR-A 복구, 경보 없음 | NORMAL 복귀, S→A→X 기본 LEFT 안내 |
+| DETECTOR-A·B 모두 만료 | S는 NO_ROUTE·NO_REACHABLE_EXIT·REQUIRED_OBSERVATION_UNKNOWN, B는 NO_ROUTE·ORIGIN_BLOCKED·REQUIRED_OBSERVATION_UNKNOWN. X·Y의 출구 경로는 유지 |
+| DETECTOR-A 관측 불가와 B 경보가 동시 발생 | EMERGENCY, 두 구역 제외, S의 이전 화살표 제거 |
+| 위 상태에서 B 경보만 명시적으로 해제 | DEGRADED, A 제외 유지, S→B→Y 동적 안내 재개 |
+| WFI의 필수 연기감지기 12개를 각각 하나씩 만료 | 해당 구역의 노드·연결을 모든 안내 경로에서 제외하면서 나머지 도달 가능한 경로 안내. 복구 시 기본 경로 복귀 |
+
+[test_sign_guidance.py](../tests/test_sign_guidance.py)에서 작은 그래프의 경로·표시면·명령·복구를, [test_wfi_routing.py](../tests/test_wfi_routing.py)에서 WFI의 12개 단일 감지기 만료를 검사한다. 관제에는 관측 장애를 표시하고, DYNAMIC을 화재 발생으로 표현하지 않는다. 이 회귀 검사는 실제 등기구 동작 검수를 대신하지 않는다.
+
 ## 4. 연기 변화 시간표
 
 `data/scenarios/two-route-smoke.json`의 기본 시연이다. 정상 상태를 확인한 arm 시점부터 시간표를 진행한다. 가상 감지기의 예시 임계값 0.5는 **시나리오 표현값**이며 실제 농도 기준이 아니다.
