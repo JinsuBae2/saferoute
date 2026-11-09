@@ -169,13 +169,13 @@
 
 통합 실행의 AI 작업자는 시작 시 session에서 run_id를 읽고 `runs/<run_id>/ai-predictions.jsonl`에 프레임 시각·추론 완료 시각·클래스·점수·지속 조건·전송 event_id를 기록한다. 제어기와 별도 파일에 쓰며 이벤트 수신 로그를 덮어쓰지 않는다. run_id가 바뀌면 이전 영상 결과의 전송을 멈추고 운영자의 새 실행을 기다린다.
 
-평가 도구는 다음 인터페이스로 구현한다.
+완료된 단일 영상 실행의 평가 도구는 다음 인터페이스로 실행한다.
 
 ```sh
 .venv-ai/bin/python -m tools.evaluate_ai --predictions runs/AI_RUN/ai-predictions.jsonl --ground-truth data/expected/ai/evaluation.json --output runs/AI_RUN/ai-evaluation.json
 ```
 
-AI_RUN은 실제 실행 디렉터리로 바꾼다. 평가 도구는 출처가 SIM인 결과를 AI 성능 분모에 포함하지 않는다.
+AI_RUN은 실제 실행 디렉터리로 바꾼다. 평가 도구는 출처가 SIM인 결과를 AI 성능 분모에 포함하지 않는다. [A04-1 실행·정답 형식](ai/a04-event-evaluation.md)의 예제는 형식 시험용이다. 실제 독립 자료와 목표 고정, 전체 평가·5번 대조는 A04의 남은 작업이다.
 
 ## 6. 평가 방법
 

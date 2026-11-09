@@ -1,6 +1,8 @@
 import hashlib
+import importlib.metadata
 import os
 from pathlib import Path
+import platform
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,6 +11,13 @@ ROOT = Path(__file__).resolve().parents[1]
 def file_hash(path):
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def package_version(name):
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return None  # missing distribution metadata must not stop working inference
 
 
 class Detector:
@@ -28,6 +37,11 @@ class Detector:
             raise ValueError("candidate classes must be smoke=0/fire=1")
         self.predict(np.zeros((config.imgsz, config.imgsz, 3), dtype=np.uint8))
         torch.set_num_threads(4)
+        self.metadata = dict(device="cpu", python=platform.python_version(), os=platform.platform(),
+                             cpu=platform.processor(), logical_cpu_count=os.cpu_count(),
+                             torch_threads=torch.get_num_threads(),
+                             packages={p: package_version(p) for p in
+                                       ("torch", "torchvision", "ultralytics", "opencv-python", "numpy")})
 
     def predict(self, frame):
         result = self.model.predict(frame, device="cpu", imgsz=self.config.imgsz,
