@@ -61,7 +61,7 @@ python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 8000 
 - `GET /api/session`으로 현재 run_id를 읽고, `GET /api/building`의 관측원 설정에 맞춰 새 이벤트를 `POST /api/events`로 보냅니다.
 - 필수 관측원을 확인한 뒤 `POST /api/control/arm`으로 시작합니다. 경보는 정상 관측·영상 종료·시간 만료로 지워지지 않습니다. 운영자가 `clear`로 특정 원인을 해제하거나 `reset`으로 새 실행을 시작합니다.
 - 요청이 없어도 100ms 주기의 만료 작업이 실행됩니다. 실제 실행 지연은 OS·로그 기록·잠금 대기에 영향을 받으며 실시간 보장값은 아닙니다.
-- 상태·차단·경로·현재 표시면·단말 적용 현황을 `GET /api/state`로 확인합니다. NORMAL은 DEFAULT, EMERGENCY는 경로에 따라 DYNAMIC 또는 NO_ROUTE, INITIALIZING·DEGRADED는 UNKNOWN 표시입니다. 상태 조회만으로 명령을 발행하거나 적용 성공으로 표시하지 않습니다.
+- 상태·차단·경로·현재 표시면·단말 적용 현황을 `GET /api/state`로 확인합니다. NORMAL은 DEFAULT, EMERGENCY·DEGRADED는 경로에 따라 DYNAMIC 또는 NO_ROUTE, INITIALIZING은 UNKNOWN 표시입니다. DEGRADED는 관측 장애 상태를 유지하면서 필수 관측 불가 구역을 제외한 경로를 안내합니다. 상태 조회만으로 명령을 발행하거나 적용 성공으로 표시하지 않습니다.
 - 단말은 `GET /api/signs/{sign_id}/command`로 3초 유효 명령을 받고, 화면에 적용한 뒤 `POST /api/signs/{sign_id}/ack`로 응답합니다. 각 조회는 새 ID·순번을 발행하며 ACK 성공 응답은 해당 `SignState`입니다. [명령·응답 규칙](docs/05-data-interface-spec.md#53-적용-응답)을 따릅니다.
 - 실행 증거는 `runs/<run_id>/manifest.json`, `events.jsonl`, `decisions.jsonl`, `commands.jsonl`, `acks.jsonl`에 남고 Git에서 제외됩니다. reset은 이전 기록을 보존합니다.
 

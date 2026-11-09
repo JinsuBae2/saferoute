@@ -32,7 +32,7 @@ const MODE_LABEL: Record<Mode, string> = {
   INITIALIZING: "준비 중",
   NORMAL: "평상시",
   EMERGENCY: "화재 대응",
-  DEGRADED: "확인 불가",
+  DEGRADED: "관측 장애",
 };
 
 const MODE_TONE: Record<Mode, string> = {

@@ -223,7 +223,9 @@ def test_controller_g07_g08_g09_and_route_audit_are_same_version(controller,cloc
     clock.advance(3000)
     controller.expire()
     assert controller.snapshot().controller_mode=="DEGRADED"
-    assert all(not r.path_node_ids for r in controller.snapshot().routes)
+    routes = controller.snapshot().routes
+    assert {r.node_id for r in routes if r.path_node_ids} == {"X", "Y"}
+    assert_safe(controller.building, routes, {"A", "B"})
 
 
 def test_same_alarm_does_not_recompute_routes(controller,clock,monkeypatch):

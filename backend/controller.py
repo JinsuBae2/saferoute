@@ -134,10 +134,9 @@ class Controller:
         if key != self._route_key:
             mode = self._mode()
             if mode == "NORMAL": self._routes = self.normal_routes
-            elif mode == "EMERGENCY": self._routes = calculate_routes(self.building,node_blocks,edge_blocks)
+            elif mode in {"EMERGENCY", "DEGRADED"}: self._routes = calculate_routes(self.building,node_blocks,edge_blocks)
             else:
-                self._routes = unavailable_routes(self.building,
-                    "INITIALIZING" if mode == "INITIALIZING" else "REQUIRED_OBSERVATION_UNKNOWN")
+                self._routes = unavailable_routes(self.building, "INITIALIZING")
             self._route_key = key
         return StateSnapshot(**self._session().model_dump(), guidance_version=self.guidance_version,
             generated_at=utc_text(self.clock.utcnow()),

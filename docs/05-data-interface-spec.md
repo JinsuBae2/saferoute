@@ -218,7 +218,7 @@ VIDEO_AI는 FIRE·SMOKE, SIM_SMOKE_DETECTOR는 SMOKE, SIM_SPRINKLER는 SPRINKLER
 }
 ```
 
-face의 mode는 `DEFAULT`, `DYNAMIC`, `NO_ROUTE`, `UNKNOWN`이다. DEFAULT도 확인된 정상 조건에서만 제공한다. NO_ROUTE·UNKNOWN에서는 display·next_node_id·exit_id가 null이며 reason_codes가 비어 있으면 안 된다.
+face의 mode는 `DEFAULT`, `DYNAMIC`, `NO_ROUTE`, `UNKNOWN`이다. DEFAULT도 확인된 정상 조건에서만 제공한다. DYNAMIC은 EMERGENCY뿐 아니라 필수 관측 불가 구역을 제외한 DEGRADED의 안내에도 사용하므로 화재 발생 자체를 뜻하지 않는다. NO_ROUTE·UNKNOWN에서는 display·next_node_id·exit_id가 null이며 reason_codes가 비어 있으면 안 된다.
 
 ### 5.2 단말 적용 순서
 
@@ -293,7 +293,7 @@ B03의 성공 응답은 HTTP 200과 해당 유도등의 `SignState` 객체(`sign
 
 조회 응답은 `Cache-Control: no-store`로 제공한다. 클라이언트도 캐시를 사용하지 않는다. POST 제어 기능은 기본 배포에서 SSH 접속 권한이 있는 팀원만 접근하는 내부 경로다. 공개 배포가 결정되면 인증·권한을 먼저 구현하고 무인증 reset·clear·event 전송을 열지 않는다.
 
-B01에서 health·session·building·state·events·arm·clear·reset, B02에서 상태별 경로, B03에서 현재 표시면·단말별 명령·ACK·감사 로그를 구현했다. INITIALIZING·DEGRADED는 각각 INITIALIZING·REQUIRED_OBSERVATION_UNKNOWN 사유와 UNKNOWN 표시다. NORMAL은 DEFAULT, EMERGENCY는 DYNAMIC 또는 NO_ROUTE이며, 등록된 출구 지점은 EXIT, 지원하지 않는 면은 NO_ROUTE·UNSUPPORTED_DISPLAY다. B04에서 `/sim/*`와 설정·운영·로그 검증 도구를 구현했다. 실제 브라우저 단말은 후속 구현이다. 경로·표시면 조회는 명령 발행·적용 완료를 의미하지 않는다.
+B01에서 health·session·building·state·events·arm·clear·reset, B02에서 상태별 경로, B03에서 현재 표시면·단말별 명령·ACK·감사 로그를 구현했다. INITIALIZING은 INITIALIZING 사유와 UNKNOWN 표시다. NORMAL은 DEFAULT, DEGRADED·EMERGENCY는 DYNAMIC 또는 NO_ROUTE이며, 등록된 출구 지점은 EXIT, 지원하지 않는 면은 NO_ROUTE·UNSUPPORTED_DISPLAY다. DEGRADED에서도 필수 관측 불가 구역의 차단 사유는 REQUIRED_OBSERVATION_UNKNOWN으로 남으며, 경로가 없으면 ORIGIN_BLOCKED·NO_REACHABLE_EXIT 등 해당 위치의 사유를 제공한다. 안내 가능한 표시면에는 실패 사유를 넣지 않는다. B04에서 `/sim/*`와 설정·운영·로그 검증 도구를 구현했다. 실제 브라우저 단말은 후속 구현이다. 경로·표시면 조회는 명령 발행·적용 완료를 의미하지 않는다.
 
 ### 6.1 오류
 
