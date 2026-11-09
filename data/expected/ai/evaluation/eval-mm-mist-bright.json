@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "asset_id": "eval-mm-mist-bright",
+  "scene_id": "mmodalfire-lab-camera-ch01",
+  "video_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+  "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
+  "split": "evaluation",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": false,
+  "duration_ms": 300000,
+  "normal_video": true,  
+  "events": []
+}

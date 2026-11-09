@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "asset_id": "eval-fs-reflections",
+  "scene_id": "firesense-reflections",
+  "video_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+  "source": "https://zenodo.org/records/836749",
+  "split": "evaluation",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,  
+  "training_overlap": "unknown",
+  "development_used": false,
+  "duration_ms": 18030,    
+  "normal_video": true,  
+  "events": []
+}

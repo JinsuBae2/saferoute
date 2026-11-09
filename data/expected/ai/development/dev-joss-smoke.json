@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "asset_id": "dev-joss-smoke",
+  "scene_id": "commons-tai-wo-estate-20260330",
+  "video_sha256": "dce80b81f2ba1aed314a867145a07621b33344447d3582754e6f7989b1fb5407",
+  "source": "https://commons.wikimedia.org/wiki/File:Joss_paper_burning_with_cloud_of_smoke_Tai_Po_HK_2026.webm",
+  "split": "development",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": true,
+  "duration_ms": 5170,
+  "normal_video": false,  
+  "events": [
+{
+    "event_id": "ev1",
+    "hazard_type": "SMOKE",
+    "start_ms": 0,
+    "end_ms": 5170
+  }
+]
+
+}
