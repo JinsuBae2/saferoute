@@ -7,11 +7,15 @@ import subprocess
 import pytest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "deploy/resource-checks/a01-81-prepare.sh"
+SCRIPTS = Path(__file__).resolve().parents[1] / "deploy/resource-checks"
 
 
 @pytest.mark.parametrize("fault", ["source_hash", "frames", "timestamps", None])
-def test_preparation_verifies_before_publishing(tmp_path, monkeypatch, fault):
+@pytest.mark.parametrize("script_name,output_dir,codec", [
+    ("a01-81-prepare.sh", "server-video-preparation", "FFV1"),
+    ("a01-84-prepare.sh", "server-video-preparation-utvideo", "UTVideo"),
+])
+def test_preparation_verifies_before_publishing(tmp_path, monkeypatch, fault, script_name, output_dir, codec):
     source = tmp_path / "smoke.webm"
     source.write_bytes(b"original")
     manifest_dir = tmp_path / "data/manifests"
@@ -37,9 +41,10 @@ def test_preparation_verifies_before_publishing(tmp_path, monkeypatch, fault):
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     monkeypatch.chdir(tmp_path)
-    embedded = SCRIPT.read_text(encoding="utf-8").split("<<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
-    optimized = compile(embedded, str(SCRIPT), "exec", optimize=2)
-    output = tmp_path / "runs/server-video-preparation/assets.server.json"
+    script = SCRIPTS / script_name
+    embedded = script.read_text(encoding="utf-8").split("<<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+    optimized = compile(embedded, str(script), "exec", optimize=2)
+    output = tmp_path / "runs" / output_dir / "assets.server.json"
     if fault:
         with pytest.raises(ValueError, match="mismatch"):
             exec(optimized, {})
@@ -48,7 +53,7 @@ def test_preparation_verifies_before_publishing(tmp_path, monkeypatch, fault):
         exec(optimized, {})
         derived = json.loads(output.read_text(encoding="utf-8"))["videos"][0]
         assert "read_validation" not in derived
-        assert "FFV1" in derived["transformation"]
+        assert codec in derived["transformation"]
         assert derived["license"] == asset["license"]
         assert derived["split"] == "development"
         assert derived["server_derivation"]["original_sha256"] == asset["sha256"]
