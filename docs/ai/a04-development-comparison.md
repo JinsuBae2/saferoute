@@ -1,5 +1,7 @@
 # A04-2 미리보기 실행 평가 호환·개발 정답 대조
 
+후속 [A04-3](a04-seven-development.md)에서 개발 영상 7개 전체를 새로 실행했다. 아래는 당시 3개 대조 기록으로 보존하며 최신 전체 개발 결과는 후속 기록을 사용한다.
+
 담당 1의 [#96](https://github.com/JinsuBae2/saferoute/issues/96). [#93](https://github.com/JinsuBae2/saferoute/issues/93)의 개발 정답을 [A06 actual04](a06-preview-delivery.md)의 기존 실제 추론 로그 3건에 적용했다. **개발용 7개 중 3개에 대한 사건 집계이며 독립 평가·성능 합격·최종 모델 채택이 아니다.** 기록 시점의 develop은 `6f2d71e522962e2fd9fca877504b2f623397a7c2`다.
 
 ## 수정한 연결 오류

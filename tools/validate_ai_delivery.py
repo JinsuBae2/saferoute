@@ -21,6 +21,7 @@ import uvicorn
 
 from backend.app import create_app
 from backend.contracts.building import Building
+from ai_worker.config import AIConfig
 from .validate_ai_model import verify_file
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,20 +47,37 @@ def check_observation_freshness(ages, gaps, freshness_ms, source_expirations=0):
     return max(spans, default=None)
 
 
-def main():
+def select_assets(manifest, requested):
+    check(requested and len(set(requested)) == len(requested), "asset selection must be nonempty and unique")
+    assets = []
+    for key in requested:
+        matches = [a for a in manifest["videos"] if a["asset_id"] == key]
+        check(len(matches) == 1, f"asset must have exactly one manifest entry: {key}")
+        check(matches[0]["split"] == "development", "only development clips are allowed")
+        assets.append(matches[0])
+    return assets
+
+
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="New evidence directory")
     parser.add_argument("--manifest", type=Path, default=ROOT / "data/manifests/assets.json")
-    args = parser.parse_args()
-    manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-    assets = [next(a for a in manifest["videos"] if a["asset_id"] == key) for key in ASSETS]
+    parser.add_argument("--asset-id", action="append", help="Development asset to run; repeat for each selected clip")
+    parser.add_argument("--config", type=Path, default=ROOT / "configs/ai.example.json")
+    args = parser.parse_args(argv)
+    manifest_bytes = args.manifest.read_bytes()
+    manifest = json.loads(manifest_bytes)
+    assets = select_assets(manifest, args.asset_id if args.asset_id is not None else ASSETS)
     for asset in assets:
         check(asset["split"] == "development", "only development clips are allowed")
         verify_file(ROOT / asset["path"], asset["sha256"])
+    config_bytes = args.config.read_bytes()
+    AIConfig.model_validate_json(config_bytes)
     building = Building.model_validate_json((ROOT / "data/fixtures/two-route-v1.json").read_bytes())
     freshness_ms = next(s.freshness_ms for s in building.sources if s.source_id == "CAM-A")
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
+    (out / "ai.config.json").write_bytes(config_bytes)
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
@@ -69,7 +87,9 @@ def main():
     results = []
     report = dict(scope="DEVELOPMENT_LOOPBACK_DELIVERY", building_id="TWO_ROUTE", building_version=1,
                   freshness_ms=freshness_ms, videos=results, status="FAILED",
-                  manifest_sha256=hashlib.sha256(args.manifest.read_bytes()).hexdigest())
+                  performance_verdict="NOT_ASSESSED", selected_assets=[a["asset_id"] for a in assets],
+                  config_sha256=hashlib.sha256(config_bytes).hexdigest(),
+                  manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest())
     try:
         for _ in range(100):
             if server.started:
@@ -85,7 +105,7 @@ def main():
                 result = dict(video=name, asset_id=asset["asset_id"], video_sha256=asset["sha256"],
                               run_id=run_id, status="FAILED")
                 results.append(result)
-                command = [sys.executable, "-m", "ai_worker", "--config", "configs/ai.example.json",
+                command = [sys.executable, "-m", "ai_worker", "--config", str(out / "ai.config.json"),
                            "--video", str(ROOT / asset["path"]), "--controller", str(client.base_url),
                            "--runs-dir", str(out / "ai")]
                 completed = subprocess.run(command, cwd=ROOT, env=os.environ | {"PYTHONUTF8": "1"},
@@ -138,8 +158,9 @@ def main():
                 check(result["log_integrity"], "controller log integrity failed")
                 result["status"] = "PASS"
                 print(json.dumps(result), flush=True)
-        check(any(r["alarms"].get("FIRE") for r in results) and any(r["alarms"].get("SMOKE") for r in results),
-              "both actual alarm classes were not observed in development clips")
+        if args.asset_id is None:
+            check(any(r["alarms"].get("FIRE") for r in results) and any(r["alarms"].get("SMOKE") for r in results),
+                  "both actual alarm classes were not observed in development clips")
         report["status"] = "PASS"
     except Exception as error:
         report["error"] = f"{type(error).__name__}: {error}"
