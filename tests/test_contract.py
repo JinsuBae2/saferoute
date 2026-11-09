@@ -12,9 +12,9 @@ from backend.contracts import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-SAMPLES = json.loads((ROOT / "data/contracts/valid.json").read_text())
-REJECTED = json.loads((ROOT / "data/contracts/rejected.json").read_text())
-BUILDING = json.loads((ROOT / "data/fixtures/two-route-v1.json").read_text())
+SAMPLES = json.loads((ROOT / "data/contracts/valid.json").read_text(encoding="utf-8"))
+REJECTED = json.loads((ROOT / "data/contracts/rejected.json").read_text(encoding="utf-8"))
+BUILDING = json.loads((ROOT / "data/fixtures/two-route-v1.json").read_text(encoding="utf-8"))
 NOW = datetime(2026, 11, 10, 1, 0, 0, 200000, tzinfo=timezone.utc)
 
 

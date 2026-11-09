@@ -8,7 +8,7 @@ from tools.export_contracts import generated_files, render_type
 def test_checked_in_contracts_match_python_models_and_shared_samples():
     root = Path(__file__).resolve().parents[1]
     for path, content in generated_files(root).items():
-        assert path.read_text() == content, f"Regenerate {path} with python -m tools.export_contracts"
+        assert path.read_text(encoding="utf-8") == content, f"Regenerate {path} with python -m tools.export_contracts"
 
 
 def test_exporter_fails_instead_of_silently_weakening_unknown_schema():
