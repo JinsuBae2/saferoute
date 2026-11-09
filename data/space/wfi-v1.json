@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "building_id": "WFI",
-  "building_version": 2,
+  "building_version": 3,
   "coordinate_system": {
     "unit": "m",
     "measured": false,
@@ -4098,7 +4098,7 @@
       "from_node_id": "F1-S-C",
       "to_node_id": "F2-S-C",
       "kind": "STAIR",
-      "cost": 40.0,
+      "cost": 781.6,
       "traversable": true,
       "door_open": null
     },
@@ -4107,7 +4107,7 @@
       "from_node_id": "F2-S-C",
       "to_node_id": "F1-S-C",
       "kind": "STAIR",
-      "cost": 40.0,
+      "cost": 781.6,
       "traversable": true,
       "door_open": null
     },
@@ -4116,7 +4116,7 @@
       "from_node_id": "F2-S-D",
       "to_node_id": "F3-S-D",
       "kind": "STAIR",
-      "cost": 40.0,
+      "cost": 781.6,
       "traversable": true,
       "door_open": null
     },
@@ -4125,7 +4125,7 @@
       "from_node_id": "F3-S-D",
       "to_node_id": "F2-S-D",
       "kind": "STAIR",
-      "cost": 40.0,
+      "cost": 781.6,
       "traversable": true,
       "door_open": null
     }
@@ -5652,7 +5652,7 @@
     {
       "item": "A04 열린 계단 C·D는 우회용",
       "basis": "팀 결정 2026-11-08. 연기가 열린 공간을 타고 퍼지기 쉬운 일반 원칙",
-      "description": "C·D 계단 cost에 우회 가중치 30을 더한다(2번과 확정 전 임시값). F2-VOID 경보 시 C·D, F3-CORR-E 경보 시 D 통로도 막는다",
+      "description": "C·D 각 방향의 cost는 781.6(기본 10 + C·D를 제외한 모든 방향 통로 cost 합계 771.6)이다. 양수 비용의 일반 경로가 있으면 C·D보다 항상 저렴하므로 A·B를 먼저 쓴다(#52). 통로·비용 변경 시 이 상한 조건을 다시 검사한다. F2-VOID 경보 시 C·D, F3-CORR-E 경보 시 D 통로도 막는다",
       "reviewer": null
     },
     {
