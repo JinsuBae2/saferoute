@@ -40,7 +40,25 @@
       "reviewer": null,
       "building_zone_mapping": null,
       "transformation": "Original bytes unchanged. Locally sampled/resized frames and annotated previews; previews excluded from Git.",
-      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation."
+      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation.",
+      "read_validation": {
+        "evidence_path": "runs/a01-cpu-640-final/summary.json",
+        "evidence_sha256": "059ef99213e7bfee0530d87d4726d55885819ddc5ee0bfb8d7a5b959fc64dbe5",
+        "created_at": "2026-11-08T16:27:00.337087+00:00",
+        "opencv_version": "5.0.0.93",
+        "read_success": true,
+        "read_success_scope": "Frames decoded with strictly increasing media timestamps; complete EOF and file integrity beyond the recorded SHA-256 are not certified.",
+        "video_metadata": {
+          "reported_fps": 1000.0,
+          "reported_frame_count": 8683.0,
+          "width": 1920.0,
+          "height": 1080.0,
+          "fourcc": "VP80"
+        },
+        "decoded_frames": 217,
+        "last_decoded_media_time_ms": 8640.0,
+        "read_termination": "read_returned_false_not_verified_eof"
+      }
     },
     {
       "asset_id": "dev-candle-match",
@@ -65,7 +83,25 @@
       "reviewer": null,
       "building_zone_mapping": null,
       "transformation": "Original bytes unchanged. Locally sampled/resized frames and annotated previews; previews excluded from Git.",
-      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation."
+      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation.",
+      "read_validation": {
+        "evidence_path": "runs/a01-cpu-640-final/summary.json",
+        "evidence_sha256": "059ef99213e7bfee0530d87d4726d55885819ddc5ee0bfb8d7a5b959fc64dbe5",
+        "created_at": "2026-11-08T16:27:00.337087+00:00",
+        "opencv_version": "5.0.0.93",
+        "read_success": true,
+        "read_success_scope": "Frames decoded with strictly increasing media timestamps; complete EOF and file integrity beyond the recorded SHA-256 are not certified.",
+        "video_metadata": {
+          "reported_fps": 29.97002997002997,
+          "reported_frame_count": 763.0,
+          "width": 640.0,
+          "height": 480.0,
+          "fourcc": "theo"
+        },
+        "decoded_frames": 761,
+        "last_decoded_media_time_ms": 25358.666666666668,
+        "read_termination": "read_returned_false_not_verified_eof"
+      }
     },
     {
       "asset_id": "dev-joss-smoke",
@@ -90,7 +126,25 @@
       "reviewer": null,
       "building_zone_mapping": null,
       "transformation": "Original bytes unchanged. Locally sampled/resized frames and annotated previews; previews excluded from Git.",
-      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation."
+      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation.",
+      "read_validation": {
+        "evidence_path": "runs/a01-cpu-640-final/summary.json",
+        "evidence_sha256": "059ef99213e7bfee0530d87d4726d55885819ddc5ee0bfb8d7a5b959fc64dbe5",
+        "created_at": "2026-11-08T16:27:00.337087+00:00",
+        "opencv_version": "5.0.0.93",
+        "read_success": true,
+        "read_success_scope": "Frames decoded with strictly increasing media timestamps; complete EOF and file integrity beyond the recorded SHA-256 are not certified.",
+        "video_metadata": {
+          "reported_fps": 30.0,
+          "reported_frame_count": 155.0,
+          "width": 1486.0,
+          "height": 950.0,
+          "fourcc": "VP90"
+        },
+        "decoded_frames": 155,
+        "last_decoded_media_time_ms": 5133.0,
+        "read_termination": "read_returned_false_not_verified_eof"
+      }
     },
     {
       "asset_id": "dev-smoke-0009",
@@ -115,7 +169,25 @@
       "reviewer": null,
       "building_zone_mapping": null,
       "transformation": "Original bytes unchanged. Locally sampled/resized frames and annotated previews; previews excluded from Git.",
-      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation."
+      "independent_evaluation_exclusion": "This original scene and its derivatives are reserved for development; not independent evaluation.",
+      "read_validation": {
+        "evidence_path": "runs/a01-cpu-640-final/summary.json",
+        "evidence_sha256": "059ef99213e7bfee0530d87d4726d55885819ddc5ee0bfb8d7a5b959fc64dbe5",
+        "created_at": "2026-11-08T16:27:00.337087+00:00",
+        "opencv_version": "5.0.0.93",
+        "read_success": true,
+        "read_success_scope": "Frames decoded with strictly increasing media timestamps; complete EOF and file integrity beyond the recorded SHA-256 are not certified.",
+        "video_metadata": {
+          "reported_fps": 30.0,
+          "reported_frame_count": 292.0,
+          "width": 1920.0,
+          "height": 1080.0,
+          "fourcc": "AV01"
+        },
+        "decoded_frames": 292,
+        "last_decoded_media_time_ms": 9700.000000000002,
+        "read_termination": "read_returned_false_not_verified_eof"
+      }
     }
   ]
 }

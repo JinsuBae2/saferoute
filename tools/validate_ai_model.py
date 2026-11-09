@@ -142,11 +142,13 @@ def main():
     if model.names != {0: "smoke", 1: "fire"}:
         raise ValueError(f"Unexpected actual classes: {model.names}")
     load_s = time.perf_counter() - started
+    warmup_threads_before = torch.get_num_threads()
     started = time.perf_counter()
     # Synthetic warm-up is timing only; never counted as development evidence.
     model.predict(np.zeros((args.imgsz, args.imgsz, 3), dtype=np.uint8), device="cpu",
                   imgsz=args.imgsz, conf=args.confidence, verbose=False)
     warmup_s = time.perf_counter() - started
+    warmup_threads_after = torch.get_num_threads()
     # Ultralytics sets CPU threads on first predict; fix the trial count afterwards.
     torch.set_num_threads(4)
     report = {
@@ -161,6 +163,8 @@ def main():
         "model_sha256": weights["sha256"], "actual_classes": model.names,
         "imgsz": args.imgsz, "interval_ms": args.interval_ms, "confidence": args.confidence,
         "model_load_s": load_s, "synthetic_warmup_s": warmup_s,
+        "synthetic_warmup_torch_threads_before": warmup_threads_before,
+        "synthetic_warmup_torch_threads_after": warmup_threads_after,
         "videos": [],
     }
     for asset in assets:
