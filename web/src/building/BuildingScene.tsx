@@ -14,10 +14,13 @@ import type { Building, StateSnapshot } from "@contracts";
 
 import type { BuildingGeometry } from "./geometry";
 import { visibleWalls, wallBox } from "./geometry";
+import type { ViewBox, ViewMode } from "./view";
+import { clampTarget, displayY, fitPose, floorLift, visibleBox } from "./view";
 
+// M05: 바닥과 벽의 명암 차이를 키워 어두운 배경에서도 방·복도 윤곽이 보이게 한다.
 const COLOR = {
-  slab: 0x161c24,
-  wall: 0x3d4a5a,
+  slab: 0x2a3442,
+  wall: 0x7d8da3,
   stairEnclosed: 0x3f6b55,
   stairOpen: 0x55504a,
   node: 0x6b7a8c,
@@ -27,9 +30,12 @@ const COLOR = {
   blockedUnknown: 0xf59e0b,
   sign: 0xe7edf4,
   smoke: 0xf59e0b,
-  hazardFire: 0xef4444,
-  hazardOther: 0xf59e0b,
+  // 관측 위험은 원인(FIRE·SMOKE·SPRINKLER)과 관계없이 범례대로 빨강이다.
+  // 주황은 시험용 연기 정답 전용이라 섞이면 정답을 보고 판단하는 것처럼 보인다.
+  hazard: 0xef4444,
 } as const;
+
+const FOV = 50;
 
 type Props = {
   readonly geometry: BuildingGeometry;
@@ -38,6 +44,10 @@ type Props = {
   /** 시나리오 실행기의 구역별 연기 정답. 제어 판단과 분리된 시험값이다. */
   readonly smokeByZone: ReadonlyMap<string, number> | null;
   readonly visibleFloors: ReadonlySet<string>;
+  /** 층 사이를 더 벌리는 간격(m). 실제 좌표는 바꾸지 않고 그리는 높이만 바꾼다. */
+  readonly spread: number;
+  /** 시점 요청. nonce가 바뀔 때마다 해당 모드로 화면을 맞춘다. */
+  readonly view: { readonly mode: ViewMode; readonly nonce: number };
 };
 
 type Handles = {
@@ -50,7 +60,22 @@ type Handles = {
   zoneMeshes: Map<string, THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshBasicMaterial>>;
   smokeMeshes: Map<string, THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshBasicMaterial>>;
   disposables: Set<{ dispose(): void }>;
+  /** 현재 보이는 범위. 회전 중심을 이 안으로 묶는다. */
+  box: ViewBox | null;
 };
+
+/** 카메라를 상자에 맞추고, 그 크기에 맞춰 확대·축소 한계를 정한다. */
+function applyPose(handles: Handles, box: ViewBox, mode: ViewMode) {
+  const { camera, controls, renderer } = handles;
+  const size = renderer.getSize(new THREE.Vector2());
+  const pose = fitPose(box, mode, FOV, size.y > 0 ? size.x / size.y : 1.6);
+  camera.position.set(pose.position.x, pose.position.y, pose.position.z);
+  controls.target.set(pose.target.x, pose.target.y, pose.target.z);
+  // 너무 가까이 들어가 벽 속에 갇히거나 너무 멀어져 건물을 잃지 않게 한다.
+  controls.minDistance = Math.max(6, pose.distance * 0.15);
+  controls.maxDistance = pose.distance * 2.5;
+  controls.update();
+}
 
 function shapeFrom(points: readonly { x: number; z: number }[]): THREE.Shape {
   const shape = new THREE.Shape();
@@ -83,9 +108,10 @@ function clearGroup(group: THREE.Group) {
   }
 }
 
-export function BuildingScene({ geometry, building, state, smokeByZone, visibleFloors }: Props) {
+export function BuildingScene({ geometry, building, state, smokeByZone, visibleFloors, spread, view }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
+  const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
 
   const nodeById = useMemo(
     () => new Map(building.nodes.map((node) => [node.node_id, node])),
@@ -108,7 +134,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0b0f14);
 
-    const camera = new THREE.PerspectiveCamera(50, 1, 0.5, 500);
+    const camera = new THREE.PerspectiveCamera(FOV, 1, 0.5, 800);
     camera.position.set(58, 46, 58);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -118,11 +144,17 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.set(22, 6, 14);
+    // 바닥 아래로 내려가 건물을 밑에서 보는 각도는 막는다.
+    controls.maxPolarAngle = Math.PI / 2 - 0.08;
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.1));
-    const key = new THREE.DirectionalLight(0xffffff, 1.4);
-    key.position.set(40, 60, 30);
+    // 위아래 색이 다른 하늘빛으로 벽 윗면과 옆면을 구분하고, 두 방향 조명으로 그늘진 면도 밝힌다.
+    scene.add(new THREE.HemisphereLight(0xdfe8f5, 0x1a2230, 1.6));
+    const key = new THREE.DirectionalLight(0xffffff, 1.5);
+    key.position.set(40, 80, 50);
     scene.add(key);
+    const fill = new THREE.DirectionalLight(0xbcd0ff, 0.6);
+    fill.position.set(-30, 40, -40);
+    scene.add(fill);
 
     const staticGroup = new THREE.Group();
     const dynamicGroup = new THREE.Group();
@@ -138,8 +170,19 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       zoneMeshes: new Map(),
       smokeMeshes: new Map(),
       disposables: new Set(),
+      box: null,
     };
     handlesRef.current = handles;
+
+    // 화면을 끌어도 회전 중심이 건물 밖으로 멀리 나가지 않게 한다.
+    const keepInside = () => {
+      if (handles.box === null) return;
+      const next = clampTarget(controls.target, handles.box);
+      if (next.x !== controls.target.x || next.y !== controls.target.y || next.z !== controls.target.z) {
+        controls.target.set(next.x, next.y, next.z);
+      }
+    };
+    controls.addEventListener("change", keepInside);
 
     let frame = 0;
     const animate = () => {
@@ -164,6 +207,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      controls.removeEventListener("change", keepInside);
       controls.dispose();
       clearGroup(staticGroup);
       clearGroup(dynamicGroup);
@@ -193,7 +237,8 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
         new THREE.ExtrudeGeometry(slabShape, { depth: geometry.slab_thickness, bevelEnabled: false }),
         new THREE.MeshLambertMaterial({ color: COLOR.slab }),
       );
-      layFlat(slab, floor.elevation);
+      const base = displayY(floor.elevation, floor.floor_id, lift);
+      layFlat(slab, base);
       staticGroup.add(slab);
 
       // 벽. 열린 계단 안의 난간 선은 빼고 하나의 인스턴스 메시로 그린다.
@@ -208,7 +253,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
         walls.forEach((wall, index) => {
           const box = wallBox(wall);
           matrix.compose(
-            new THREE.Vector3(box.centerX, floor.elevation + geometry.wall_height / 2, box.centerZ),
+            new THREE.Vector3(box.centerX, base + geometry.wall_height / 2, box.centerZ),
             new THREE.Quaternion(),
             new THREE.Vector3(box.sizeX, geometry.wall_height, box.sizeZ),
           );
@@ -225,9 +270,9 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
         // 낮은 띠로 두껍게 깔아 위에서도 눈에 들어오게 한다.
         const mesh = new THREE.Mesh(
           new THREE.ExtrudeGeometry(shapeFrom(zone.polygon), { depth: 0.4, bevelEnabled: false }),
-          new THREE.MeshBasicMaterial({ color: COLOR.hazardFire, transparent: true, opacity: 0.65 }),
+          new THREE.MeshBasicMaterial({ color: COLOR.hazard, transparent: true, opacity: 0.7 }),
         );
-        layFlat(mesh, floor.elevation + 0.42);
+        layFlat(mesh, base + 0.42);
         mesh.visible = false;
         staticGroup.add(mesh);
         handles.zoneMeshes.set(zone.zone_id, mesh);
@@ -243,8 +288,8 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
           }),
         );
         // 압출이 -y로 가므로 두께만큼 올려야 바닥에서 위로 자란다.
-        layFlat(smoke, floor.elevation + 1);
-        smoke.userData.baseY = floor.elevation;
+        layFlat(smoke, base + 1);
+        smoke.userData.baseY = base;
         smoke.visible = false;
         staticGroup.add(smoke);
         handles.smokeMeshes.set(zone.zone_id, smoke);
@@ -255,8 +300,12 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     for (const stair of geometry.stairs) {
       const shown = stair.floors.filter((id) => visibleFloors.has(id));
       if (shown.length === 0) continue;
+      // 층을 벌리면 계단도 아래층 바닥부터 위층 바닥까지 같이 늘어난다.
       const elevations = stair.floors
-        .map((id) => geometry.floors.find((floor) => floor.floor_id === id)?.elevation)
+        .map((id) => {
+          const elevation = geometry.floors.find((floor) => floor.floor_id === id)?.elevation;
+          return elevation === undefined ? undefined : displayY(elevation, id, lift);
+        })
         .filter((value): value is number => value !== undefined);
       if (elevations.length === 0) continue;
       const bottom = Math.min(...elevations);
@@ -272,7 +321,17 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       layFlat(mesh, bottom);
       staticGroup.add(mesh);
     }
-  }, [geometry, building, visibleFloors]);
+  }, [geometry, building, visibleFloors, lift]);
+
+  // 2-1) 화면 맞춤. 보이는 층이나 간격이 바뀌면 그 범위가 다 보이게 마지막 시점 모드로 맞추고,
+  //      시점 버튼(view.nonce)을 누르면 같은 모드라도 다시 맞춘다.
+  useEffect(() => {
+    const handles = handlesRef.current;
+    if (handles === null) return;
+    const box = visibleBox(geometry, visibleFloors, lift);
+    handles.box = box;
+    if (box !== null) applyPose(handles, box, view.mode);
+  }, [geometry, visibleFloors, lift, view]);
 
   // 3) 서버 결과: 지점 상태·다음 이동 방향·유도등·관측 위험·연기 정답.
   useEffect(() => {
@@ -298,7 +357,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       const matrix = new THREE.Matrix4();
       const color = new THREE.Color();
       shownNodes.forEach((node, index) => {
-        matrix.setPosition(node.position.x, node.position.y + 1.1, node.position.z);
+        matrix.setPosition(node.position.x, displayY(node.position.y, node.floor_id, lift) + 1.1, node.position.z);
         mesh.setMatrixAt(index, matrix);
         const reasons = blockedReason.get(node.node_id);
         const route = routeByNode.get(node.node_id);
@@ -327,8 +386,12 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       if (from === undefined || to === undefined) continue;
       if (!visibleFloors.has(from.floor_id) || !visibleFloors.has(to.floor_id)) continue;
 
-      const start = new THREE.Vector3(from.position.x, from.position.y + 1.1, from.position.z);
-      const end = new THREE.Vector3(to.position.x, to.position.y + 1.1, to.position.z);
+      const start = new THREE.Vector3(
+        from.position.x,
+        displayY(from.position.y, from.floor_id, lift) + 1.1,
+        from.position.z,
+      );
+      const end = new THREE.Vector3(to.position.x, displayY(to.position.y, to.floor_id, lift) + 1.1, to.position.z);
       segments.push(start.x, start.y, start.z, end.x, end.y, end.z);
 
       const direction = end.clone().sub(start);
@@ -383,7 +446,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       shownSigns.forEach((sign, index) => {
         const node = nodeById.get(sign.node_id);
         if (node === undefined) return;
-        matrix.setPosition(node.position.x, node.position.y + 1.2, node.position.z);
+        matrix.setPosition(node.position.x, displayY(node.position.y, node.floor_id, lift) + 1.2, node.position.z);
         posts.setMatrixAt(index, matrix);
         const current = signState.get(sign.sign_id);
         const guiding = current?.faces.some((face) => face.display !== null) ?? false;
@@ -403,7 +466,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       const mesh = handles.zoneMeshes.get(source.zone_id);
       const zone = zoneById.get(source.zone_id);
       if (mesh === undefined || zone === undefined || !visibleFloors.has(zone.floor_id)) continue;
-      mesh.material.color.setHex(cause.hazard_type === "FIRE" ? COLOR.hazardFire : COLOR.hazardOther);
+      mesh.material.color.setHex(COLOR.hazard);
       mesh.visible = true;
     }
 
@@ -423,7 +486,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       mesh.position.y = baseY + height;
       mesh.material.opacity = 0.14 + smoke * 0.32;
     }
-  }, [state, smokeByZone, visibleFloors, building, geometry, nodeById, zoneById, sourceById]);
+  }, [state, smokeByZone, visibleFloors, building, geometry, nodeById, zoneById, sourceById, lift]);
 
   return <div className="scene" ref={mountRef} />;
 }
