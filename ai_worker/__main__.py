@@ -31,6 +31,9 @@ def main():
             result = run(config, args.video, client, args.runs_dir, detector)
         print(json.dumps(result))
         return 0
+    except KeyboardInterrupt:
+        print("AI worker stopped by operator", file=sys.stderr)
+        return 130
     except Exception as error:
         print(f"AI worker stopped: {type(error).__name__}: {error}", file=sys.stderr)
         return 1
