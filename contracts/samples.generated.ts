@@ -827,6 +827,125 @@ export const explanation_unavailable = {
   "error_code": "BEDROCK_UNAVAILABLE"
 } satisfies Contracts.Explanation;
 
+export const preview_ready = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "generated_at": "2026-11-10T01:00:00.200Z",
+  "freshness_ms": 3000,
+  "status": "READY",
+  "frame": {
+    "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "frame_index": 15,
+    "media_time_ms": 500,
+    "observed_at": "2026-11-10T01:00:00.000Z",
+    "inference_completed_at": "2026-11-10T01:00:00.100Z",
+    "expires_at": "2026-11-10T01:00:03.000Z",
+    "width": 1280,
+    "height": 720,
+    "detections": [
+      {
+        "hazard_type": "FIRE",
+        "confidence": 0.8,
+        "xyxy": [
+          0.25,
+          0.25,
+          0.5,
+          0.75
+        ]
+      },
+      {
+        "hazard_type": "SMOKE",
+        "confidence": 0.6,
+        "xyxy": [
+          0.5,
+          0.0,
+          1.0,
+          0.5
+        ]
+      }
+    ]
+  },
+  "error_code": null
+} satisfies Contracts.Preview;
+
+export const preview_initializing = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "generated_at": "2026-11-10T01:00:00.200Z",
+  "freshness_ms": 3000,
+  "status": "INITIALIZING",
+  "frame": null,
+  "error_code": null
+} satisfies Contracts.Preview;
+
+export const preview_stale = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "generated_at": "2026-11-10T01:00:00.200Z",
+  "freshness_ms": 3000,
+  "status": "STALE",
+  "frame": null,
+  "error_code": null
+} satisfies Contracts.Preview;
+
+export const preview_eof = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "generated_at": "2026-11-10T01:00:00.200Z",
+  "freshness_ms": 3000,
+  "status": "EOF",
+  "frame": null,
+  "error_code": null
+} satisfies Contracts.Preview;
+
+export const preview_unavailable = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "generated_at": "2026-11-10T01:00:00.200Z",
+  "freshness_ms": 3000,
+  "status": "UNAVAILABLE",
+  "frame": null,
+  "error_code": "DECODE_FAILED"
+} satisfies Contracts.Preview;
+
+export const preview_no_detections = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "generated_at": "2026-11-10T01:00:00.200Z",
+  "freshness_ms": 3000,
+  "status": "READY",
+  "frame": {
+    "frame_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "frame_index": 15,
+    "media_time_ms": 500,
+    "observed_at": "2026-11-10T01:00:00.000Z",
+    "inference_completed_at": "2026-11-10T01:00:00.100Z",
+    "expires_at": "2026-11-10T01:00:03.000Z",
+    "width": 1280,
+    "height": 720,
+    "detections": []
+  },
+  "error_code": null
+} satisfies Contracts.Preview;
+
 export const building = {
   "schema_version": 1,
   "building_id": "TWO_ROUTE",

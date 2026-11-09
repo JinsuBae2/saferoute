@@ -198,6 +198,37 @@ export type Position = {
   "z": number;
 };
 
+export type Preview = {
+  "schema_version": 1;
+  "building_id": string;
+  "building_version": number;
+  "run_id": string;
+  "source_id": string;
+  "generated_at": string;
+  "freshness_ms": number;
+  "status": "INITIALIZING" | "READY" | "STALE" | "EOF" | "UNAVAILABLE";
+  "frame": PreviewFrame | null;
+  "error_code": "VIDEO_OPEN_FAILED" | "DECODE_FAILED" | "INFERENCE_FAILED" | "DELIVERY_FAILED" | "PREVIEW_FAILED" | "OPERATOR_STOPPED" | null;
+};
+
+export type PreviewDetection = {
+  "hazard_type": "FIRE" | "SMOKE";
+  "confidence": number;
+  "xyxy": Array<number>;
+};
+
+export type PreviewFrame = {
+  "frame_id": string;
+  "frame_index": number;
+  "media_time_ms": number;
+  "observed_at": string;
+  "inference_completed_at": string;
+  "expires_at": string;
+  "width": number;
+  "height": number;
+  "detections": Array<PreviewDetection>;
+};
+
 export type Provenance = {
   "source_url": string | null;
   "checked_on": string;
