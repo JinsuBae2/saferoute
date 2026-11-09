@@ -16,6 +16,8 @@
 6. [AI 개발·평가 계획서](docs/06-ai-development-evaluation-plan.md)
 7. [통합 시험·시연 시나리오서](docs/07-integration-test-demo-scenarios.md)
 
+지원 서버·S3·Bedrock의 실제 접근 결과와 배포 준비 항목은 [D01 자원 확인 기록](deploy/README.md)에 있습니다.
+
 ## 협업
 
 최신 develop에서 이슈 선택 → `type/번호-작업명` 브랜치 → `type(scope): 변경 내용 (#번호)` 커밋 → push → develop 대상 PR → `ci` 통과 → Squash merge.

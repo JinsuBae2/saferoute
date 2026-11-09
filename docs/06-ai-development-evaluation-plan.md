@@ -2,7 +2,7 @@
 
 [요구사항 F01](03-requirements-spec.md#f01-실제-불꽃연기-영상-분석) · [이벤트 계약](05-data-interface-spec.md) · [통합 시험](07-integration-test-demo-scenarios.md)
 
-이 문서는 **오픈소스 불꽃·연기 모델의 실제 영상 추론**과 **Amazon Bedrock의 관제 상황 설명**을 분리해 개발·평가하는 절차다. 이 역할 분담은 2026-11-08 확정했다. 구체적인 감지 가중치·런타임·성능과 Bedrock 실제 접근·지연은 아직 검증 전이며 아래 절차로 확정한다. 모의 센서 성공과 설명 생성 성공을 감지 정확도로 계산하지 않는다.
+이 문서는 **오픈소스 불꽃·연기 모델의 실제 영상 추론**과 **Amazon Bedrock의 관제 상황 설명**을 분리해 개발·평가하는 절차다. 이 역할 분담은 2026-11-08 확정했다. 구체적인 감지 가중치·런타임·성능과 Bedrock의 실제 상황 설명 품질·지연은 아래 절차로 검증한다. [D01](../deploy/README.md)에서는 제공 Haiku 프로파일의 최소 호출 접근만 확인했으며 A05 완료를 의미하지 않는다. 모의 센서 성공과 설명 생성 성공을 감지 정확도로 계산하지 않는다.
 
 ## 1. 목표와 역할
 
@@ -159,7 +159,7 @@
 | data/expected/ai/ | 독립 정답 구간 |
 | tools/evaluate_ai.py | 평가 집계. A04에서 1번 구현, 5번 대조 |
 
-기술 기준은 [개발계획서 2절](02-development-plan.md#2-기술-구성)을 따른다. PyTorch 설치는 OS·CPU/GPU를 선택하는 [공식 안내](https://pytorch.org/get-started/locally/)를 기준으로 한다. 서버는 GPU가 확인되지 않았으므로 CPU 실행을 먼저 검증한다. 실제 설치 절차는 선택한 모델·장비에 맞춰 기록한다.
+기술 기준은 [개발계획서 2절](02-development-plan.md#2-기술-구성)을 따른다. PyTorch 설치는 OS·CPU/GPU를 선택하는 [공식 안내](https://pytorch.org/get-started/locally/)를 기준으로 한다. D01에서 지원 서버는 GPU 가속기가 없는 t3.xlarge로 확인했으므로 CPU 실행을 검증한다. 실제 설치 절차는 선택한 모델·장비에 맞춰 기록한다.
 
 ```sh
 .venv-ai/bin/python -m ai_worker --config configs/ai.local.json --video data/videos/DEMO_VIDEO.mp4 --controller http://127.0.0.1:8000
