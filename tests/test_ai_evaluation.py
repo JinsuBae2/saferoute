@@ -166,6 +166,26 @@ def test_invalid_or_incomplete_evidence_is_rejected(change):
     with pytest.raises(ValueError): evaluate(*encoded(rows, gt))
 
 
+@pytest.mark.parametrize("field", ["decoded_frames", "frames", "analyzed_frames",
+                                  "skipped_late_frames", "accepted_events"])
+@pytest.mark.parametrize("convert", [str, float, bool])
+def test_log_counts_reject_noninteger_types_even_when_values_compare_equal(field, convert):
+    rows = log_rows([(0, [])])
+    record = (next(r for r in rows if r["operation"] == "video_preflight")
+              if field == "decoded_frames" else rows[-1]["result"])
+    record[field] = convert(record[field])
+    with pytest.raises(ValueError):
+        evaluate(*encoded(rows, truth()))
+
+
+@pytest.mark.parametrize("elapsed", ["5000.0", True])
+def test_loop_duration_rejects_string_and_boolean(elapsed):
+    rows = log_rows([(0, [])])
+    rows[-1]["result"]["processing_elapsed_ms"] = elapsed
+    with pytest.raises(ValueError):
+        evaluate(*encoded(rows, truth()))
+
+
 @pytest.mark.parametrize("change", ["overlap", "duplicate_id", "end", "incomplete", "not_bool",
                                    "normal_with_event", "evaluation_development", "evaluation_training", "unreviewed"])
 def test_invalid_annotations_cannot_be_scored(change):

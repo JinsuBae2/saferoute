@@ -128,7 +128,7 @@ def read_run(rows, truth):
         require(op != "start" or index == 0, "multiple starts")
         require(op != "finished" or index == len(rows)-1, "multiple finished records")
         if op == "video_preflight":
-            preflights.append(TypeAdapter(PositiveInt).validate_python(row.get("decoded_frames")))
+            preflights.append(TypeAdapter(PositiveInt).validate_python(row.get("decoded_frames"), strict=True))
         elif op == "skip_late_frame":
             skipped += 1
         elif op == "prediction":
@@ -178,11 +178,11 @@ def read_run(rows, truth):
     require(len(preflights) == 1, "expected one preflight")
     for field, expected in (("frames", preflights[0]), ("analyzed_frames", len(predictions)),
                             ("skipped_late_frames", skipped), ("accepted_events", len(receipts))):
-        require(TypeAdapter(NonnegativeInt).validate_python(result.get(field)) == expected,
+        require(TypeAdapter(NonnegativeInt).validate_python(result.get(field), strict=True) == expected,
                 f"finished {field} disagrees with log")
     elapsed = result.get("processing_elapsed_ms")
     if elapsed is not None:
-        elapsed = TypeAdapter(NonnegativeNumber).validate_python(elapsed)
+        elapsed = TypeAdapter(NonnegativeNumber).validate_python(elapsed, strict=True)
     return start, config, predictions, list(predicted.values()), elapsed, skipped
 
 
