@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "asset_id": "eval-caviar-walkbyshop1cor",
+  "scene_id": "caviar-lisbon-shopping-corridor",
+  "video_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+  "source": "https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/",
+  "split": "evaluation",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": false,
+  "duration_ms": 94400,
+  "normal_video": true,  
+  "events": []
+
+}

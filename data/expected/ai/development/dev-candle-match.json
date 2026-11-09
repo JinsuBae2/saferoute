@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "asset_id": "dev-candle-match",
+  "scene_id": "commons-candle-match-20110719",
+  "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+  "source": "https://commons.wikimedia.org/wiki/File:Candle_and_Match.ogv",
+  "split": "development",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": true,
+  "duration_ms": 25470,
+  "normal_video": false,
+  "events": [
+  {
+    "event_id": "ev1",
+    "hazard_type": "FIRE",
+    "start_ms": 0,
+    "end_ms": 25470
+  }
+]
+
+}
