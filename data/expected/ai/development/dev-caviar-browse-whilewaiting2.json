@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "asset_id": "dev-caviar-browse-whilewaiting2",
+  "scene_id": "caviar-inria-grenoble-lobby",
+  "video_sha256": "938c219f8b43efc2c0d8ab1d44f7d66768189487cf8b2d7d54410eb596c63147",
+  "source": "https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/",
+  "split": "development",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": true,
+  "duration_ms": 75840,
+  "normal_video": true,
+  "events": []
+}

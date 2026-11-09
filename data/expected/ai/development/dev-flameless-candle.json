@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "asset_id": "dev-flameless-candle",
+  "scene_id": "commons-flameless-candle-20221203",
+  "video_sha256": "a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a",
+  "source": "https://commons.wikimedia.org/wiki/File:Flameless_candle_1.webm",
+  "split": "development",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": true,
+  "duration_ms": 8680,
+  "normal_video": true,
+  "events": []
+
+}
