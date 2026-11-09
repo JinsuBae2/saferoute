@@ -1,5 +1,6 @@
 .venv/
 .venv-ai/
+.venv-explanation/
 __pycache__/
 *.py[cod]
 .pytest_cache/

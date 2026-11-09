@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SimulationState, StateSnapshot } from "@contracts";
 import { emergency_state as emergencySample, state as initializingSample } from "@samples";
+import { explanation_ready, explanation_pending, explanation_unavailable } from "@samples";
 
 import {
   checkExplanation,
@@ -20,6 +21,12 @@ import type { Explanation } from "./explanation";
 
 const EMERGENCY: StateSnapshot = emergencySample;
 const INITIALIZING: StateSnapshot = initializingSample;
+
+it("공통 설명 샘플에서 현재 READY만 표시한다", () => {
+  expect(checkExplanation(explanation_ready, EMERGENCY).usable).toBe(true);
+  expect(checkExplanation(explanation_pending, EMERGENCY).usable).toBe(false);
+  expect(checkExplanation(explanation_unavailable, EMERGENCY).usable).toBe(false);
+});
 
 function readyExplanation(patch: Partial<Explanation> = {}): Explanation {
   return {

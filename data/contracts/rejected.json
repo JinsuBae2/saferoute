@@ -196,5 +196,145 @@
     },
     "expected_code": "EVENT_ID_CONFLICT",
     "context": "seen_event"
+  },
+  {
+    "name": "explanation-ready-empty-text",
+    "sample": "explanation_ready",
+    "changes": {
+      "summary": ""
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-whitespace-text",
+    "sample": "explanation_ready",
+    "changes": {
+      "summary": "   "
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-no-facts",
+    "sample": "explanation_ready",
+    "changes": {
+      "fact_refs": []
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-duplicate-facts",
+    "sample": "explanation_ready",
+    "changes": {
+      "fact_refs": [
+        "mode",
+        "mode"
+      ]
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-generation-before-basis",
+    "sample": "explanation_ready",
+    "changes": {
+      "generated_at": "2026-11-10T00:59:59Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-expired-at-generation",
+    "sample": "explanation_ready",
+    "changes": {
+      "expires_at": "2026-11-10T01:00:01.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-ready-with-error",
+    "sample": "explanation_ready",
+    "changes": {
+      "error_code": "INVALID_RESPONSE"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-summary",
+    "sample": "explanation_pending",
+    "changes": {
+      "summary": "표시하면 안 되는 설명"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-facts",
+    "sample": "explanation_pending",
+    "changes": {
+      "fact_refs": [
+        "mode"
+      ]
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-result-time",
+    "sample": "explanation_pending",
+    "changes": {
+      "generated_at": "2026-11-10T01:00:01.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-pending-with-error",
+    "sample": "explanation_pending",
+    "changes": {
+      "error_code": "DISABLED"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-unavailable-no-error",
+    "sample": "explanation_unavailable",
+    "changes": {
+      "error_code": null
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-unavailable-with-expiry",
+    "sample": "explanation_unavailable",
+    "changes": {
+      "expires_at": "2026-11-10T01:00:15.000Z"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-unsupported-error",
+    "sample": "explanation_unavailable",
+    "changes": {
+      "error_code": "UNKNOWN"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "explanation-extra-field",
+    "sample": "explanation_ready",
+    "changes": {
+      "instruction": "new action"
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
   }
 ]

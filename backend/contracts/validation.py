@@ -8,6 +8,7 @@ from typing import Mapping
 from pydantic import ValidationError
 
 from .building import Building
+from .explanations import Explanation
 from .messages import (
     ArmReceipt, ClearReceipt, ClearRequest, ControlRequest, ErrorDetail, ErrorResponse,
     EventReceipt, ObservationEvent, ResetReceipt, Route, Session, SignAck, SignCommand, SimulationState, StateSnapshot,
@@ -15,7 +16,7 @@ from .messages import (
 
 MODEL_TYPES = {model.__name__: model for model in (
     Building, Session, ObservationEvent, SignCommand, SignAck, ControlRequest, ClearRequest,
-    EventReceipt, ArmReceipt, ClearReceipt, ResetReceipt, ErrorResponse, Route, StateSnapshot, SimulationState,
+    EventReceipt, ArmReceipt, ClearReceipt, ResetReceipt, ErrorResponse, Route, StateSnapshot, SimulationState, Explanation,
 )}
 
 ERROR_STATUS = {

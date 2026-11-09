@@ -275,7 +275,7 @@ B03의 성공 응답은 HTTP 200과 해당 유도등의 `SignState` 객체(`sign
 | GET /api/session | 없음 | run_id, 건물 버전, controller_mode, schema_version |
 | GET /api/building | 없음 | 현재 실행이 사용하는 검증된 공간 자료 |
 | GET /api/state | 없음 | 하나의 안내 버전으로 묶인 상태·경로·단말 적용 현황 |
-| GET /api/explanations/current | 없음 | A05 설명 작업자(8002)의 현재 설명·기준 버전·기한·상태. 구현 예정 |
+| GET /api/explanations/current | 없음 | A05 설명 작업자(8002)의 현재 설명·기준 버전·기한·상태. [A05-2 실행](ai/a05-explanation-api.md) |
 | POST /api/events | 3절 이벤트 | 수락·중복 여부와 해당 판단 버전 |
 | GET /api/signs/{sign_id}/command | 없음 | 단말별 새 명령 |
 | POST /api/signs/{sign_id}/ack | 5절 응답 | 해당 SignState. 응답 접수와 현재 적용 상태를 구분, 검증 실패 시 오류 |
@@ -421,9 +421,9 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 
 출구 자체의 Route는 path_node_ids=[현재 노드], next_node_id=null, cost=0, exit_id=해당 출구, reason_codes=[]다. 안내 불가 Route는 6절의 null·빈 경로·사유 규칙을 따른다.
 
-## 11. F11 상황 설명 계약 — A05 구현 예정
+## 11. F11 상황 설명 계약 — A05
 
-설명은 기존 `StateSnapshot`·관측·명령·ACK에 필수 필드를 추가하지 않는 별도 DTO/API다. A05에서 Python 모델·생성 TypeScript·수락/거부 샘플·계약 시험을 함께 추가한다. 현재 서버에 이 엔드포인트가 구현된 것으로 소개하지 않는다.
+설명은 기존 `StateSnapshot`·관측·명령·ACK에 필수 필드를 추가하지 않는 별도 DTO/API다. A05-1에서 Python 모델·생성 TypeScript·수락/거부 샘플·계약 시험을 추가했다. [A05-2](ai/a05-explanation-api.md)는 별도 8002 프로세스의 실제 API·호출을 구현한다. 서버 상시 서비스 배포·독립 V15 완료를 의미하지 않는다.
 
 | 필드 | 형식·규칙 |
 | --- | --- |
@@ -438,6 +438,7 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 | error_code | UNAVAILABLE이면 BEDROCK_UNAVAILABLE / INVALID_RESPONSE / STALE_BASIS / EXPLANATION_LOG_ERROR / DISABLED 중 하나, 그 외 null |
 
 - 사실 ID는 해당 실행·버전 안에서만 유효하다. 예: 활성 원인의 `cause:<source_id>:<hazard_type>`, 차단 대상의 `blocked-node:<node_id>`·`blocked-edge:<edge_id>`, 계산 결과의 `route:<node_id>`. 실제 존재하는 항목만 입력 목록에 제공한다.
+- 현재 제어 모드는 `mode` 사실 ID의 controller_mode 값으로 제공한다. A05-1의 [계약·허용 근거 인계](ai/a05-explanation-contract.md)는 Python 모델·생성 TypeScript·샘플과 순수 추출 함수를 제공한다. 실제 API·호출·응답 채택 검사는 A05-2에서 연결한다.
 - 모델은 summary·fact_refs만 생성한다. 실행·건물·안내 버전과 기한·모델 ID는 작업자가 붙이며 모델 출력으로 덮어쓰지 않는다. 알 수 없는 사실 ID·깨진 JSON·빈 설명은 INVALID_RESPONSE다.
 - API는 알려진 상태를 HTTP 200과 `Cache-Control: no-store`로 반환한다. 아직 현재 제어 세션을 읽지 못하면 503을 반환하고 이전 실행 결과를 대신 내보내지 않는다. 프론트는 설명 조회 실패를 설명 영역에만 반영한다.
 - UI는 `/api/state`의 현재 실행·건물·안내 버전과 모두 일치하는 READY만 표시한다. 안내 변경·reset·네트워크 단절·설명 만료 시 문장을 숨긴다. 남은 유효시간은 근거 시각부터 계산하고 수신 시 TTL을 새로 시작하지 않는다.

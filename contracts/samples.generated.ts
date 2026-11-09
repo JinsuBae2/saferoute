@@ -772,6 +772,61 @@ export const simulation_state = {
   "error_code": null
 } satisfies Contracts.SimulationState;
 
+export const explanation_pending = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "guidance_version": 3,
+  "status": "PENDING",
+  "basis_generated_at": "2026-11-10T01:00:00.300Z",
+  "generated_at": null,
+  "expires_at": null,
+  "summary": null,
+  "fact_refs": [],
+  "model_id": null,
+  "prompt_version": null,
+  "error_code": null
+} satisfies Contracts.Explanation;
+
+export const explanation_ready = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "guidance_version": 3,
+  "status": "READY",
+  "basis_generated_at": "2026-11-10T01:00:00.300Z",
+  "generated_at": "2026-11-10T01:00:01.000Z",
+  "expires_at": "2026-11-10T01:00:15.000Z",
+  "summary": "CAM-A의 FIRE 원인으로 A가 차단되어 S의 경로는 B와 Y를 거칩니다.",
+  "fact_refs": [
+    "cause:CAM-A:FIRE",
+    "blocked-node:A",
+    "route:S"
+  ],
+  "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "prompt_version": "sample-v1",
+  "error_code": null
+} satisfies Contracts.Explanation;
+
+export const explanation_unavailable = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "guidance_version": 3,
+  "status": "UNAVAILABLE",
+  "basis_generated_at": "2026-11-10T01:00:00.300Z",
+  "generated_at": null,
+  "expires_at": null,
+  "summary": null,
+  "fact_refs": [],
+  "model_id": null,
+  "prompt_version": null,
+  "error_code": "BEDROCK_UNAVAILABLE"
+} satisfies Contracts.Explanation;
+
 export const building = {
   "schema_version": 1,
   "building_id": "TWO_ROUTE",
