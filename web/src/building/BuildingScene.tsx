@@ -324,7 +324,8 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       const shown = stair.floors.filter((id) => visibleFloors.has(id));
       if (shown.length === 0) continue;
       // 층을 벌리면 계단도 아래층 바닥부터 위층 바닥까지 같이 늘어난다.
-      const elevations = stair.floors
+      // 보이는 층 범위만 그린다. 한 층만 볼 때 숨긴 층 높이까지 기둥이 뻗어 나오지 않게 한다.
+      const elevations = shown
         .map((id) => {
           const elevation = geometry.floors.find((floor) => floor.floor_id === id)?.elevation;
           return elevation === undefined ? undefined : displayY(elevation, id, lift);
