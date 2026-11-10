@@ -717,7 +717,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
 
     // 유도등. 표지 종류를 모양으로 구분한다(이슈 #70).
     // 가는 기둥으로 설치 지점을 잡고, 그 위에 국내 유도등 모양 아이콘을 띄운다.
-    // 출구 위치 표지는 초록 바탕 피난구 유도등, 가변 방향 안내는 흰 바탕 통로 유도등이다.
+    // 출구 위치 표지는 초록 바탕 피난구 유도등 그림, 가변 방향 안내는 작은 네모 표시등이다(icons.ts).
     // 같은 모양으로 그리면 화재 때 모든 표지가 방향을 바꾸는 것처럼 보인다.
     const shownSigns = building.signs.filter((sign) => {
       const node = nodeById.get(sign.node_id);

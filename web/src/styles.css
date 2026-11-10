@@ -676,7 +676,7 @@ code {
   line-height: 1.6;
 }
 
-/* 3D 아이콘과 같은 색: 피난구 유도등(초록 바탕), 통로 유도등(흰 바탕·초록 테두리), CCTV(파란 원) */
+/* 3D 아이콘과 같은 색: 출구 유도등(초록 바탕 그림), 방향 유도등(흰 테두리 초록 네모), CCTV(파란 원) */
 .key--sign-exit {
   background: #16a34a;
   border: 1px solid #ffffff;
@@ -686,10 +686,10 @@ code {
 }
 
 .key--sign-dir {
-  background: #ffffff;
-  border: 2px solid #16a34a;
-  border-radius: 2px;
-  width: 14px;
+  background: #16a34a;
+  border: 2px solid #ffffff;
+  border-radius: 3px;
+  width: 9px;
   height: 9px;
 }
 

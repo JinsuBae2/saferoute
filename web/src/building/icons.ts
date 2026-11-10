@@ -1,20 +1,20 @@
 /**
  * 3D 설비 아이콘(유도등·CCTV). 멀리서도 무엇인지 알아보게 평면 그림을 항상 화면 쪽으로 띄운다.
  *
- * 모양은 국내 유도등 관례를 따른다.
- * - 출구 위치 표지(피난구 유도등): 초록 바탕, 흰 달리는 사람과 문
- * - 가변 방향 안내(통로 유도등): 흰 바탕, 초록 달리는 사람과 화살표
+ * - 출구 위치 표지(피난구 유도등, 2개): 초록 바탕에 흰 달리는 사람과 문. 출구라는 것이 바로 보이게 크게 그린다
+ * - 가변 방향 안내(35개): 그림 없는 작은 네모 표시등. 그림을 모두 그리면 화면이 그림으로 가득 차고,
+ *   방향은 바닥의 경로 화살표가 이미 보여 주므로 위치와 켜짐 여부만 나타낸다
  * - 안내 불가·확인 불가면 회색으로 바꿔 꺼진 표지처럼 보이게 한다
- * 화살표는 장식이다. 실제 방향은 표시면(FRONT/REAR)마다 다르므로 단말·표에서 확인한다.
+ * 실제 방향은 표시면(FRONT/REAR)마다 다르므로 단말·표에서 확인한다.
  */
 export type IconKind = "EXIT_ON" | "EXIT_OFF" | "DIRECTION_ON" | "DIRECTION_OFF" | "CAMERA" | "CAMERA_PICKED";
 
 /** 화면에 보이는 아이콘 크기(px). 확대·축소와 관계없이 같다. */
 export const ICON_PIXELS: Record<IconKind, { readonly width: number; readonly height: number }> = {
-  EXIT_ON: { width: 40, height: 26 },
-  EXIT_OFF: { width: 40, height: 26 },
-  DIRECTION_ON: { width: 40, height: 26 },
-  DIRECTION_OFF: { width: 40, height: 26 },
+  EXIT_ON: { width: 50, height: 32 },
+  EXIT_OFF: { width: 50, height: 32 },
+  DIRECTION_ON: { width: 14, height: 14 },
+  DIRECTION_OFF: { width: 14, height: 14 },
   CAMERA: { width: 32, height: 32 },
   CAMERA_PICKED: { width: 42, height: 42 },
 };
@@ -91,25 +91,15 @@ function drawExit(ctx: CanvasRenderingContext2D, w: number, h: number, on: boole
   runner(ctx, w * 0.42, h * 0.22, h * 0.68, on ? WHITE : LIGHT);
 }
 
+/** 작은 네모 표시등. 흰 테두리로 어두운 배경과 초록 경로 화살표 위에서도 구분된다. */
 function drawDirection(ctx: CanvasRenderingContext2D, w: number, h: number, on: boolean) {
-  const ink = on ? GREEN : GRAY;
-  roundRect(ctx, 1, 1, w - 2, h - 2, h * 0.14);
-  ctx.fillStyle = on ? WHITE : LIGHT;
+  const line = h * 0.16;
+  roundRect(ctx, line / 2, line / 2, w - line, h - line, h * 0.18);
+  ctx.fillStyle = on ? GREEN : GRAY;
   ctx.fill();
-  ctx.lineWidth = h * 0.06;
-  ctx.strokeStyle = ink;
+  ctx.lineWidth = line;
+  ctx.strokeStyle = on ? WHITE : LIGHT;
   ctx.stroke();
-  runner(ctx, w * 0.3, h * 0.2, h * 0.68, ink);
-  // 화살표
-  ctx.fillStyle = ink;
-  const y = h * 0.52;
-  ctx.fillRect(w * 0.55, y - h * 0.07, w * 0.22, h * 0.14);
-  ctx.beginPath();
-  ctx.moveTo(w * 0.9, y);
-  ctx.lineTo(w * 0.74, y - h * 0.24);
-  ctx.lineTo(w * 0.74, y + h * 0.24);
-  ctx.closePath();
-  ctx.fill();
 }
 
 function drawCamera(ctx: CanvasRenderingContext2D, w: number, h: number, picked: boolean) {
