@@ -44,9 +44,9 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
   const view = useCameraPreview(selected === null ? null : selected.source_id, state.run_id);
   const check = checkPreview(view.preview, state, selected === null ? null : selected.source_id);
 
-  // 상자는 그림과 같은 프레임의 것만 그린다. 그림이 지워지면 상자도 함께 사라진다.
-  const frame = check.usable && view.imageFrameId === check.frame.frame_id ? check.frame : null;
-  const shown = view.imageUrl !== null && frame !== null ? { url: view.imageUrl, frame } : null;
+  // 그림과 상자는 훅이 한 덩어리로 들고 있다. 늘 같은 프레임이고, 지워질 때도 함께 사라진다.
+  const shown = view.shown;
+  const frame = shown?.frame ?? null;
 
   const sourceDisplay = selected === null ? null : display?.sources[selected.source_id] ?? null;
   const installation = sourceDisplay?.installation ?? null;

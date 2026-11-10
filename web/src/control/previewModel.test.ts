@@ -18,6 +18,7 @@ import {
   cameraSources,
   checkPreview,
   detectionBox,
+  holdFrame,
   frameDeadline,
 } from "./previewModel";
 
@@ -149,5 +150,33 @@ describe("카메라 목록", () => {
 
   it("공간 자료가 없으면 빈 목록이다", () => {
     expect(cameraSources(null)).toEqual([]);
+  });
+});
+
+describe("보여주던 프레임 유지", () => {
+  const usable = checkPreview(READY, STATE, SOURCE).usable;
+
+  it("기한 안이면 계속 보여준다", () => {
+    expect(holdFrame(usable, 2_000, 1_900)).toBe("SHOW");
+  });
+
+  it("더 새 프레임이 왔다는 것만으로는 지우지 않는다", () => {
+    // 미리보기 정보가 그림보다 먼저 도착하는 그 사이에도 화면이 비지 않아야 한다.
+    const newer = checkPreview(
+      ready({ frame: { ...READY.frame!, frame_id: "다음-프레임" } }),
+      STATE,
+      SOURCE,
+    ).usable;
+    expect(holdFrame(newer, 2_000, 1_900)).toBe("SHOW");
+  });
+
+  it("기한이 지나면 지운다", () => {
+    expect(holdFrame(usable, 2_000, 2_000)).toBe("EXPIRED");
+    expect(holdFrame(usable, null, 1_900)).toBe("EXPIRED");
+  });
+
+  it("띄우면 안 되는 상태면 지운다", () => {
+    expect(holdFrame(checkPreview(staleSample as Preview, STATE, SOURCE).usable, 9_999, 0)).toBe("BLOCKED");
+    expect(holdFrame(checkPreview(READY, STATE, "CAM-OTHER").usable, 9_999, 0)).toBe("BLOCKED");
   });
 });

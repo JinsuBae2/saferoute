@@ -75,6 +75,27 @@ export function frameDeadline(
   return receivedMs + remaining;
 }
 
+/** 보여주던 프레임을 계속 띄울지. */
+export type FrameHold = "SHOW" | "EXPIRED" | "BLOCKED";
+
+/**
+ * 더 새 프레임이 "있다"는 것만으로는 보여주던 그림을 지우지 않는다.
+ * 미리보기 정보가 그림보다 먼저 도착하므로, 그때마다 비우면 받을 때마다 화면이 깜빡인다.
+ *
+ * 지우는 경우는 두 가지뿐이다.
+ * - BLOCKED: 지금 상태로는 띄우면 안 된다(READY 아님, 다른 실행·건물·카메라).
+ * - EXPIRED: 기한이 지났다. 이때는 조회가 멀쩡해도 지운다.
+ */
+export function holdFrame(
+  usable: boolean,
+  deadlineMs: number | null,
+  nowMs: number,
+): FrameHold {
+  if (!usable) return "BLOCKED";
+  if (deadlineMs === null || nowMs >= deadlineMs) return "EXPIRED";
+  return "SHOW";
+}
+
 export type Box = {
   readonly leftPercent: number;
   readonly topPercent: number;
