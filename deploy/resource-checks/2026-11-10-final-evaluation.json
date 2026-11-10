@@ -1481,5 +1481,6 @@
     "5 clips represent 3 declared scene groups; publisher training overlap unknown.",
     "Short normal-video denominator is not field reliability; no mAP without box labels.",
     "TWO_ROUTE isolated CPU single-worker execution, not WFI joint or deployment acceptance."
-  ]
+  ],
+  "execution_status_note": "execution.status describes completion of the requested runs. execution.videos[*].status PASS covers worker completion, delivery, EOF, freshness, zero skipped samples, log integrity and evaluator acceptance only; it is NOT a per-video performance pass. Only performance_verdict and target_checks assess the locked performance targets; this run is FAIL."
 }

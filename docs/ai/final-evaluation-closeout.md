@@ -47,11 +47,13 @@
 
 첫 서버 준비 명령은 배포 패키지 이름을 `openvino`로 조회해 추론 전에 중단됐다. 설치된 이름 `onnxruntime-ep-openvino`로 메타데이터 조회만 고쳤다. 모델·정답·설정은 유지했고 추론을 골라 재실행하지 않았다. 평가 기록기/동결의 최종 해시는 공개 결과에 연결했다.
 
+공개 JSON의 `execution.videos[*].status=PASS`는 작업자 종료·전송·EOF·유효기간·샘플 폐기0·로그 무결성·평가기 입력 수락만 뜻한다. 영상별 성능 합격이 아니다. `execution.status=COMPLETE`도 목록 전체 실행 완료이며, 성능 판정은 별도의 `performance_verdict=FAIL`과 `target_checks`를 따른다. 원본 서버 summary는 수정하지 않았다.
+
 ## 설명7건 대조
 
 [Codex 문장 대조](v15-ai-closeout.json)는 원본 응답·근거·출처 해시·JSON 위치·run_id·안내 버전을 다시 확인했다. G01/G02/G07/G09 및 실제 관제 NORMAL/FIRE 표시6건에서 명확한 사실 모순을 찾지 못했다. G04의 “이들을 연결하는 경로”는 A/B에 인접한8개 방향 간선을 뜻하는지 모호하다. 직접 A–B 간선은 없으므로 이를 명확한 직접 경로 설명으로 승인하지 않는다. 역사적 실제 응답은 고쳐 쓰지 않았다.
 
-실제 `claude-fable-5-1`의 별도 텍스트 검토에는 [7개 원문과 당시 사실](v15-independent-review.json) 전부를 제공한다. 최종 실제 모델·문장별 판단·시각은 PR과 로컬 Orchestra 영수증으로 남긴다. Fable이 영상을 보거나 직접 시험을 실행했다는 의미가 아니다. 담당5 사람의 작업지는 `PENDING`을 유지하며 서명을 대신하지 않는다.
+실제 `claude-fable-5-1`이 2026-11-10 14:30:12 UTC에 [7개 원문과 당시 사실](v15-independent-review.json)을 별도 텍스트 대조했다. 6건은 명확한 모순 없음, G04는 모호한 표현 비승인 유지다. [검수 기록](v15-ai-closeout.json)에 실제 모델·시각·대조한 커밋·영수증 해시를 남겼다. 이 1차 전체 문서 검토는 영상별 실행 PASS 의미를 명시하라는 P3 1건으로 수정 요청이었으며, 그 수정 후 최종 결함 검토 결과는 PR과 로컬 Orchestra 영수증에 남긴다. Fable이 영상을 보거나 직접 시험을 실행했다는 의미가 아니다. 담당5 사람의 작업지는 `PENDING`을 유지하며 서명을 대신하지 않는다.
 
 실제 Bedrock 호출·표시·작업자 종료 중 제어 유지 근거는 [A05-2](a05-explanation-api.md), [A05-3](a05-browser-validation.md)다. 이번 신규 Bedrock 호출은0회다. 403/429/timeout 등 주입 시험은 실제 AWS 오류를 발생시킨 결과로 표시하지 않는다.
 

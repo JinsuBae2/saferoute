@@ -81,7 +81,46 @@
   "new_bedrock_calls": 0,
   "independent_review_unchanged": true,
   "status": "SELF_CHECK_COMPLETE_WITH_WORDING_CAUTION",
-  "fable_review": "Separate committed-diff review will receive the complete seven summaries and basis_facts. Actual model/verdict/time belong in the PR and local immutable Orchestra receipt, not a fabricated QA5 signature.",
+  "fable_review": {
+    "model": "claude-fable-5-1",
+    "reviewed_at_utc": "2026-11-10T14:30:12.611789+00:00",
+    "reviewed_commit": "f3238c516225111c97baf5b6d3af720f15597dff",
+    "receipt_sha256": "d7964973ce15aa804cc1bb4a259c61fdc02d30f90e929a3744e106960f28bd97",
+    "overall_review_verdict": "changes_requested",
+    "overall_finding": "P3 public per-video execution PASS needs explicit non-performance label; no alteration of raw summary or performance scores.",
+    "scope": "Text-only comparison of all seven historical summaries against basis_facts; did not view video or execute tests; not QA5 human approval.",
+    "case_results": [
+      {
+        "case": "G01",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "G02_actual_video",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "G04",
+        "verdict": "WORDING_REVIEW_NEEDED_NOT_APPROVED"
+      },
+      {
+        "case": "G07",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "G09",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "actual_normal_ready",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "actual_video_fire_ready",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      }
+    ],
+    "G04_note": "Fable agrees hazard/mode/blocked A/B/no-route I/S facts match. Wording may imply nonexistent direct A-B edge and does not mention X/Y exit paths; ambiguous wording is not approved. Historical response remains unchanged."
+  },
   "human_independent_review": "NOT_PERFORMED; original QA5 worksheet remains PENDING.",
   "limitations": [
     "Historical actual Bedrock responses are not rewritten.",

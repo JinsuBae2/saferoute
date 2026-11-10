@@ -110,6 +110,7 @@ def main():
     ports_before=(root.parent/'ports-before.txt').read_text(encoding='utf-8').splitlines()
     ports_after=(root.parent/'ports-after.txt').read_text(encoding='utf-8').splitlines()
     report=dict(schema_version=1,scope='FIRST_FROZEN_EVALUATION_AI_REVIEW_NOT_QA5',
+                execution_status_note='execution.status describes completion of the requested runs. execution.videos[*].status PASS covers worker completion, delivery, EOF, freshness, zero skipped samples, log integrity and evaluator acceptance only; it is NOT a per-video performance pass. Only performance_verdict and target_checks assess the locked performance targets; this run is FAIL.',
                 performance_verdict=verdict,targets=targets,target_checks=checks,
                 source_commit=lock['source_commit'],freeze_sha256=sha('docs/ai/final-evaluation-lock.json'),
                 source_archive_sha256=sha(source_archive), source_lf_sha256=normalized_sources,
