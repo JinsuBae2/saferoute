@@ -147,6 +147,16 @@ python -m tools.verify_run runs/RUN_ID
 
 B04 집중 검사: `python -m pytest tests/test_operating_tools.py tests/test_scenario_runner.py tests/test_audit_lifecycle.py tests/test_run_verification.py -q`. 초기화·지연·누락·역순·손상 로그와 기존 B01/B03의 오래된 입력·ACK 방어를 함께 확인합니다. 실제 화면 검수는 P01·I01에서 수행합니다.
 
+### 화재 위치에서 번지는 연기와 대기용 시나리오
+
+`data/scenarios/wfi-idle.json`은 연기 일정 없이 필수 감지기 12개의 정상 관측만 유지한다. 서버가 켜져 있는 동안 평상시 상태로 대기하고, 화재는 시험 화재나 AI 감지로만 생긴다.
+
+```sh
+python -m scenario_runner --building data/space/wfi-v1.json --scenario data/scenarios/wfi-idle.json --port 8001
+```
+
+시나리오에 `spread`를 두면 실행기가 제어기의 활성 FIRE 원인 구역에서 연기를 번지게 한다. 가까운 구역이 먼저 차고, 다른 층은 `floor_delay_ms`만큼 늦게 `other_floor_cap`까지만 찬다. 번진 연기는 실행기의 가상 감지기가 관측해 제어기에 보내므로 경로가 실제로 바뀐다. 구역 중심 사이의 직선거리를 쓰는 시험용 모형이며 실제 연기 물리가 아니다.
+
 ## 협업 규칙 검사
 
 ```sh

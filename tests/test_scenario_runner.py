@@ -158,6 +158,33 @@ def test_restart_resets_controller_rebinds_and_arms_from_running_or_failed(setup
     restarted()
 
 
+def test_smoke_spreads_from_fire_zone_and_alarms_only_fire_floor_detectors(clock, tmp_path):
+    from test_manual_fire import event
+    wfi = load_building(ROOT / "data/space/wfi-v1.json")
+    with TestClient(create_app(building=wfi, clock=clock, runs_dir=tmp_path / "controller")) as client:
+        runner = Runner(wfi, load_scenario(ROOT / "data/scenarios/wfi-idle.json", wfi), client, tmp_path / "sim", clock=clock)
+        runner.tick()
+        arm(client)
+
+        def run_to(target):
+            while runner.state().simulation_time_ms < target:
+                clock.advance(500)
+                runner.tick()
+            return {zone.zone_id: zone.smoke for zone in runner.state().zones}
+
+        assert not any(run_to(1000).values())
+        run_id = client.get("/api/session").json()["run_id"]
+        assert client.post("/api/events", json=event(clock, run_id, "MANUAL-F2-CORR-E")).status_code == 200
+        early = run_to(15000)
+        assert early["F2-CORR-E"] > early["F2-CORR-W"] and early["F1-LOBBY"] == 0
+        late = run_to(150000)
+        causes = {cause["source_id"] for cause in client.get("/api/state").json()["active_causes"]}
+        assert "SMK-F2-CORR-E" in causes and "SMK-F2-CORR-W" in causes
+        assert not any(source.startswith(("SMK-F1", "SMK-F3")) for source in causes)
+        assert 0 < late["F1-LOBBY"] <= 0.4
+        runner.close()
+
+
 def test_large_clock_jump_does_not_refresh_stale_samples(setup, clock):
     client, runner = setup
     arm(client)

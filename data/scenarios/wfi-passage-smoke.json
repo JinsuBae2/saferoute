@@ -41,16 +41,16 @@
   "observation_rules": [
     {"source_id": "SMK-F1-PASSAGE-N", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
     {"source_id": "SMK-F1-PASSAGE-S", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F1-LOBBY", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F2-VOID", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F2-CORR-N", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F2-CORR-W", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F2-CORR-E", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F2-CORR-E2", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F3-CORR-N", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F3-CORR-W", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F3-CORR-E", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000},
-    {"source_id": "SMK-F3-CORR-E2", "threshold": 0.5, "interval_ms": 500, "delay_ms": 2000}
+    {"source_id": "SMK-F1-LOBBY", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F2-VOID", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F2-CORR-N", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F2-CORR-W", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F2-CORR-E", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F2-CORR-E2", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F3-CORR-N", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F3-CORR-W", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F3-CORR-E", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0},
+    {"source_id": "SMK-F3-CORR-E2", "threshold": 0.5, "interval_ms": 2000, "delay_ms": 0}
   ],
   "faults": []
 }
