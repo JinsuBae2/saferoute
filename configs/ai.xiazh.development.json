@@ -1,0 +1,16 @@
+{
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "expected_zone_id": "Z-A",
+  "model_path": "models/xiazh-fire-smoke-yolo26m.pt",
+  "model_sha256": "a06febf257bff40cf5f3814e77f5120e2a80ab91d3ff3a84370caf6fdf832740",
+  "imgsz": 640,
+  "interval_ms": 500,
+  "confidence": 0.25,
+  "window_ms": 1500,
+  "min_detections": 2,
+  "request_timeout_ms": 750,
+  "max_attempts": 2,
+  "retry_delay_ms": 100
+}
