@@ -11,19 +11,19 @@
  * - 제어기에 어떤 이벤트도 보내지 않는다. 관측은 dev-events.mjs가 따로 만든다.
  * - 따라서 여기서 만든 연기 값은 제어기 판단에 영향을 주지 않는다.
  *   화면에서 "시험 정답"과 "관측 위험"이 다르게 보이는 것이 정상이다.
+ * - 화재가 없으면 연기도 없다. 불이 난 구역에서 시작해 거리에 따라 번진다.
  */
 import { createServer } from "node:http";
 import process from "node:process";
 
+import { fireZones, smokeByZone } from "./dev-smoke-model.mjs";
+
 const CONTROL = process.env.SAFEROUTE_API ?? "http://127.0.0.1:8000";
 const PORT = Number(process.env.SAFEROUTE_SIM_PORT ?? 8001);
-/** 연기가 번지는 순서. 실제 확산 계산이 아니라 화면 확인용 순서다. */
-const SPREAD_DELAY_MS = 6000;
-const RISE_MS = 9000;
+// 번지는 방식은 공용 모형에 있다. CCTV 검출(dev-preview-stub)도 같은 값을 쓴다.
 
 let session = null;
 let building = null;
-let startedAt = Date.now();
 let sequence = 0;
 
 async function readJson(path) {
@@ -37,23 +37,13 @@ async function refresh() {
   if (session === null || next.run_id !== session.run_id) {
     session = next;
     building = await readJson("/api/building");
-    startedAt = Date.now();
     sequence = 0;
     console.log(`  실행 ${session.run_id} · ${session.building_id} v${session.building_version}`);
   }
 }
 
-/** 화재가 난 구역부터 인접 순서 없이 번호 순으로 퍼지는 단순한 시간표다. */
-function smokeZones(elapsedMs) {
-  if (building === null) return [];
-  const ordered = building.zones.map((zone) => zone.zone_id).sort();
-  return ordered.map((zoneId, index) => {
-    const begins = index * SPREAD_DELAY_MS;
-    const progress = (elapsedMs - begins) / RISE_MS;
-    const smoke = Math.max(0, Math.min(1, progress));
-    return { zone_id: zoneId, smoke: Number(smoke.toFixed(2)) };
-  });
-}
+
+
 
 function send(response, status, body) {
   const text = JSON.stringify(body);
@@ -83,7 +73,17 @@ const server = createServer((request, response) => {
       return;
     }
 
-    const elapsed = Date.now() - startedAt;
+    let state;
+    try {
+      state = await readJson("/api/state");
+    } catch (error) {
+      send(response, 503, { error: { code: "CONTROLLER_NOT_READY", message: error.message, field: null } });
+      return;
+    }
+
+    const now = Date.now();
+    const started = fireZones(state, building);
+    const firstFire = started.size === 0 ? null : Math.min(...started.values());
     sequence += 1;
     send(response, 200, {
       schema_version: 1,
@@ -91,10 +91,11 @@ const server = createServer((request, response) => {
       building_version: building.building_version,
       scenario_id: "dev-smoke-stub",
       run_id: session.run_id,
-      simulation_time_ms: elapsed,
+      // 불이 나기 전에는 시간이 흐르지 않는다. 연기는 화재 시각부터 번진다.
+      simulation_time_ms: firstFire === null ? 0 : Math.max(0, now - firstFire),
       simulation_sequence: sequence,
-      status: "RUNNING",
-      zones: smokeZones(elapsed),
+      status: firstFire === null ? "WAITING_FOR_ARM" : "RUNNING",
+      zones: smokeByZone(building, started, now),
       error_code: null,
     });
   })();
