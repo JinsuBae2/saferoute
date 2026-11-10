@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "CRITERIA_APPROVED_INPUTS_NOT_FROZEN",
+  "status": "HISTORICAL_PROPOSAL_SUPERSEDED_FOR_DEADLINE_EVALUATION",
   "proposed_on": "2026-11-10",
   "proposed_by": "Rinhaze / role 1 (Codex-assisted)",
   "reference_commit": "9d708d5704f5294ce16cf2a566b8048552e0acf3",
@@ -141,5 +141,7 @@
     "INCOMPLETE",
     "FAIL",
     "PASS"
-  ]
+  ],
+  "superseded_by": "docs/ai/final-evaluation-lock.json",
+  "supersession_note": "Original PT proposal and QA5 human requirement preserved as history. Deadline evaluation uses already selected ONNX/CLAHE/native profile with Codex sampled visual review; no QA5 approval is asserted. Numeric targets and matching unchanged."
 }

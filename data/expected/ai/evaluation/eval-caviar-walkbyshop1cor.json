@@ -6,12 +6,11 @@
   "source": "https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/",
   "split": "evaluation",
   "annotator": "준영",
-  "reviewer": null,
+  "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
   "annotation_complete": true,
   "training_overlap": "unknown",
   "development_used": false,
   "duration_ms": 94400,
-  "normal_video": true,  
+  "normal_video": true,
   "events": []
-
 }

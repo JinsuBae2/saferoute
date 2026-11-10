@@ -1,0 +1,865 @@
+{
+  "reviewer": "Codex visual review (AI; not QA5 or human independent approval)",
+  "reviewed_at_utc": "2026-11-10T13:58:24.147915+00:00",
+  "predictions_seen": false,
+  "method": "Whole-clip coarse contact sheets at 10s for long clips and 2s for short clips, last frame; cropped boundary contacts at 200/250/500ms; polyurethane 30..66s at 1s; enlarged original frames. This is sampled visual review, not every-frame annotation.",
+  "limitations": [
+    "Original event boundaries retained, not independently certified to millisecond accuracy.",
+    "Small ignition intermittency and gradual smoke onset have annotation uncertainty; strict delay scores inherit it.",
+    "No bounding-box ground truth or mAP.",
+    "Publisher model training overlap remains unknown. No QA5 human sign-off."
+  ],
+  "cases": [
+    {
+      "asset_id": "eval-caviar-walkbyshop1cor",
+      "before": {
+        "schema_version": 1,
+        "asset_id": "eval-caviar-walkbyshop1cor",
+        "scene_id": "caviar-lisbon-shopping-corridor",
+        "video_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+        "source": "https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": null,
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 94400,
+        "normal_video": true,
+        "events": []
+      },
+      "before_local_sha256": "a3e7c7f246e2885993a50aaec069455c8beb32dd783be727cd32a0e3b1835891",
+      "before_git_sha256": "7037b4afed8e8e2fba4d6933fb995562217726d20b76d46f5c997bfa4aeb6d42",
+      "after_sha256": "65a6ebb2a3d8f7ea944b7ca6812eeb6e0edd7f28a4c9f94ea94d22011034579b",
+      "events_changed": false,
+      "note": "Corridor and pedestrian activity, no visible FIRE/SMOKE in sampled frames."
+    },
+    {
+      "asset_id": "eval-fs-reflections",
+      "before": {
+        "schema_version": 1,
+        "asset_id": "eval-fs-reflections",
+        "scene_id": "firesense-reflections",
+        "video_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+        "source": "https://zenodo.org/records/836749",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": null,
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 18030,
+        "normal_video": true,
+        "events": []
+      },
+      "before_local_sha256": "e877f1b3f6d29f37755b436e538d4f8373d7475de70250533f9f7f8b34a097fe",
+      "before_git_sha256": "51d901f6bc66b27b8d377f3fef74d2ed5a6059fd5134fdd49f0d12af7a6202ff",
+      "after_sha256": "9dcbb584a4b4e319937a5312e794f9ad944cbd92d5cf40c6f507b9d0e593d91b",
+      "events_changed": false,
+      "note": "Defocused colored reflections, no visible FIRE/SMOKE in sampled frames."
+    },
+    {
+      "asset_id": "eval-mm-heptane-bright",
+      "before": {
+        "schema_version": 1,
+        "asset_id": "eval-mm-heptane-bright",
+        "scene_id": "mmodalfire-lab-camera-ch01",
+        "video_sha256": "e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7",
+        "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": null,
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 360000,
+        "normal_video": false,
+        "events": [
+          {
+            "event_id": "ev1",
+            "hazard_type": "FIRE",
+            "start_ms": 100000,
+            "end_ms": 360000
+          }
+        ]
+      },
+      "before_local_sha256": "7f23b03eecb352bce0eeb6297ddcdd16a30e42787f910f9f3ea5b39710e5f392",
+      "before_git_sha256": "57c65224630067de1fa55448db2f2d509090c9b1a5628871ab699b68a7413ca3",
+      "after_sha256": "7ede2b9d797dbbe55a3cdc1c375f4c3ea4cbe886bff0cd846f022c858b7999eb",
+      "events_changed": false,
+      "note": "Ignition around 100s then sustained visible flame; original 100000ms boundary retained at annotator resolution. No clear smoke plume in sampled full-clip frames."
+    },
+    {
+      "asset_id": "eval-mm-mist-bright",
+      "before": {
+        "schema_version": 1,
+        "asset_id": "eval-mm-mist-bright",
+        "scene_id": "mmodalfire-lab-camera-ch01",
+        "video_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+        "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": null,
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 300000,
+        "normal_video": true,
+        "events": []
+      },
+      "before_local_sha256": "de4f5207b942acbfa3e63266b43c71027c9b7a6c00de76dc017e9586e35637c4",
+      "before_git_sha256": "ff63982aeb62941c04f32ed06318fd22a7ded266523f5eb9da27a2a68edcef58",
+      "after_sha256": "34d490d08c0dba7fa2e69d23a5a9c3fc3005babe4edd0947badd72ef360dd21e",
+      "events_changed": false,
+      "note": "White mist produced by device, treated as non-fire confuser; no combustion observed."
+    },
+    {
+      "asset_id": "eval-mm-polyurethane-bright",
+      "before": {
+        "schema_version": 1,
+        "asset_id": "eval-mm-polyurethane-bright",
+        "scene_id": "mmodalfire-lab-camera-ch01",
+        "video_sha256": "d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451",
+        "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": null,
+        "annotation_complete": false,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 360000,
+        "normal_video": false,
+        "events": [
+          {
+            "event_id": "ev1",
+            "hazard_type": "FIRE",
+            "start_ms": 26000,
+            "end_ms": 27000
+          },
+          {
+            "event_id": "ev2",
+            "hazard_type": "FIRE",
+            "start_ms": 28000,
+            "end_ms": 360000
+          },
+          {
+            "event_id": "ev3",
+            "hazard_type": "SMOKE",
+            "start_ms": 122300,
+            "end_ms": 360000
+          }
+        ]
+      },
+      "before_local_sha256": "f3bd7f200f2ac97be46b6f481b93488fbfe6af381b3353335389044a632039a9",
+      "before_git_sha256": "9ab9dda60762b0823026216aa0727b7384a0175c49d0dc84fb84e9c774aa568d",
+      "after_sha256": "26fee68be4ea0d938af74be718517bc8407a639114aa2be69263c4ce66bbcc6a",
+      "events_changed": false,
+      "note": "Tiny flame at rear/right of foam near 26s, intermittent around 27s, present from 28s onward, growing by 30..66s. Haze develops around original 122.3s boundary then thickens and persists through end. Original author intervals retained; gradual smoke boundary uncertain."
+    }
+  ],
+  "contacts": [
+    {
+      "asset_id": "eval-caviar-walkbyshop1cor",
+      "source_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+      "review_grid_seconds": 2,
+      "frames": [
+        {
+          "frame": 0,
+          "ms": 0
+        },
+        {
+          "frame": 50,
+          "ms": 2000
+        },
+        {
+          "frame": 100,
+          "ms": 4000
+        },
+        {
+          "frame": 150,
+          "ms": 6000
+        },
+        {
+          "frame": 200,
+          "ms": 8000
+        },
+        {
+          "frame": 250,
+          "ms": 10000
+        },
+        {
+          "frame": 300,
+          "ms": 12000
+        },
+        {
+          "frame": 350,
+          "ms": 14000
+        },
+        {
+          "frame": 400,
+          "ms": 16000
+        },
+        {
+          "frame": 450,
+          "ms": 18000
+        },
+        {
+          "frame": 500,
+          "ms": 20000
+        },
+        {
+          "frame": 550,
+          "ms": 22000
+        },
+        {
+          "frame": 600,
+          "ms": 24000
+        },
+        {
+          "frame": 650,
+          "ms": 26000
+        },
+        {
+          "frame": 700,
+          "ms": 28000
+        },
+        {
+          "frame": 750,
+          "ms": 30000
+        },
+        {
+          "frame": 800,
+          "ms": 32000
+        },
+        {
+          "frame": 850,
+          "ms": 34000
+        },
+        {
+          "frame": 900,
+          "ms": 36000
+        },
+        {
+          "frame": 950,
+          "ms": 38000
+        },
+        {
+          "frame": 1000,
+          "ms": 40000
+        },
+        {
+          "frame": 1050,
+          "ms": 42000
+        },
+        {
+          "frame": 1100,
+          "ms": 44000
+        },
+        {
+          "frame": 1150,
+          "ms": 46000
+        },
+        {
+          "frame": 1200,
+          "ms": 48000
+        },
+        {
+          "frame": 1250,
+          "ms": 50000
+        },
+        {
+          "frame": 1300,
+          "ms": 52000
+        },
+        {
+          "frame": 1350,
+          "ms": 54000
+        },
+        {
+          "frame": 1400,
+          "ms": 56000
+        },
+        {
+          "frame": 1450,
+          "ms": 58000
+        },
+        {
+          "frame": 1500,
+          "ms": 60000
+        },
+        {
+          "frame": 1550,
+          "ms": 62000
+        },
+        {
+          "frame": 1600,
+          "ms": 64000
+        },
+        {
+          "frame": 1650,
+          "ms": 66000
+        },
+        {
+          "frame": 1700,
+          "ms": 68000
+        },
+        {
+          "frame": 1750,
+          "ms": 70000
+        },
+        {
+          "frame": 1800,
+          "ms": 72000
+        },
+        {
+          "frame": 1850,
+          "ms": 74000
+        },
+        {
+          "frame": 1900,
+          "ms": 76000
+        },
+        {
+          "frame": 1950,
+          "ms": 78000
+        },
+        {
+          "frame": 2000,
+          "ms": 80000
+        },
+        {
+          "frame": 2050,
+          "ms": 82000
+        },
+        {
+          "frame": 2100,
+          "ms": 84000
+        },
+        {
+          "frame": 2150,
+          "ms": 86000
+        },
+        {
+          "frame": 2200,
+          "ms": 88000
+        },
+        {
+          "frame": 2250,
+          "ms": 90000
+        },
+        {
+          "frame": 2300,
+          "ms": 92000
+        },
+        {
+          "frame": 2350,
+          "ms": 94000
+        },
+        {
+          "frame": 2359,
+          "ms": 94360
+        }
+      ],
+      "contact_sha256": "2ea9cfc5ee328c70fd998d002aca6a09a2dc176d4ff6dc62af5cf51fa7a645eb"
+    },
+    {
+      "asset_id": "eval-fs-reflections",
+      "source_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+      "review_grid_seconds": 2,
+      "frames": [
+        {
+          "frame": 0,
+          "ms": 0
+        },
+        {
+          "frame": 60,
+          "ms": 2000
+        },
+        {
+          "frame": 120,
+          "ms": 4000
+        },
+        {
+          "frame": 180,
+          "ms": 6000
+        },
+        {
+          "frame": 240,
+          "ms": 8000
+        },
+        {
+          "frame": 300,
+          "ms": 10000
+        },
+        {
+          "frame": 360,
+          "ms": 12000
+        },
+        {
+          "frame": 420,
+          "ms": 14000
+        },
+        {
+          "frame": 480,
+          "ms": 16000
+        },
+        {
+          "frame": 540,
+          "ms": 18000
+        }
+      ],
+      "contact_sha256": "b00aa8cf3200b1e1ee53c58cfbcfcb0c42624aedc24cf9183a4af8e11264aa86"
+    },
+    {
+      "asset_id": "eval-mm-heptane-bright",
+      "source_sha256": "e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7",
+      "review_grid_seconds": 10,
+      "frames": [
+        {
+          "frame": 0,
+          "ms": 0
+        },
+        {
+          "frame": 250,
+          "ms": 10000
+        },
+        {
+          "frame": 500,
+          "ms": 20000
+        },
+        {
+          "frame": 750,
+          "ms": 30000
+        },
+        {
+          "frame": 1000,
+          "ms": 40000
+        },
+        {
+          "frame": 1250,
+          "ms": 50000
+        },
+        {
+          "frame": 1500,
+          "ms": 60000
+        },
+        {
+          "frame": 1750,
+          "ms": 70000
+        },
+        {
+          "frame": 2000,
+          "ms": 80000
+        },
+        {
+          "frame": 2250,
+          "ms": 90000
+        },
+        {
+          "frame": 2500,
+          "ms": 100000
+        },
+        {
+          "frame": 2750,
+          "ms": 110000
+        },
+        {
+          "frame": 3000,
+          "ms": 120000
+        },
+        {
+          "frame": 3250,
+          "ms": 130000
+        },
+        {
+          "frame": 3500,
+          "ms": 140000
+        },
+        {
+          "frame": 3750,
+          "ms": 150000
+        },
+        {
+          "frame": 4000,
+          "ms": 160000
+        },
+        {
+          "frame": 4250,
+          "ms": 170000
+        },
+        {
+          "frame": 4500,
+          "ms": 180000
+        },
+        {
+          "frame": 4750,
+          "ms": 190000
+        },
+        {
+          "frame": 5000,
+          "ms": 200000
+        },
+        {
+          "frame": 5250,
+          "ms": 210000
+        },
+        {
+          "frame": 5500,
+          "ms": 220000
+        },
+        {
+          "frame": 5750,
+          "ms": 230000
+        },
+        {
+          "frame": 6000,
+          "ms": 240000
+        },
+        {
+          "frame": 6250,
+          "ms": 250000
+        },
+        {
+          "frame": 6500,
+          "ms": 260000
+        },
+        {
+          "frame": 6750,
+          "ms": 270000
+        },
+        {
+          "frame": 7000,
+          "ms": 280000
+        },
+        {
+          "frame": 7250,
+          "ms": 290000
+        },
+        {
+          "frame": 7500,
+          "ms": 300000
+        },
+        {
+          "frame": 7750,
+          "ms": 310000
+        },
+        {
+          "frame": 8000,
+          "ms": 320000
+        },
+        {
+          "frame": 8250,
+          "ms": 330000
+        },
+        {
+          "frame": 8500,
+          "ms": 340000
+        },
+        {
+          "frame": 8750,
+          "ms": 350000
+        },
+        {
+          "frame": 8999,
+          "ms": 359960
+        }
+      ],
+      "contact_sha256": "aea2f41ceb0c9dc3ee57abf5522e0febc977a615a087b9141d4a57c216dc7fb7"
+    },
+    {
+      "asset_id": "eval-mm-mist-bright",
+      "source_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+      "review_grid_seconds": 10,
+      "frames": [
+        {
+          "frame": 0,
+          "ms": 0
+        },
+        {
+          "frame": 250,
+          "ms": 10000
+        },
+        {
+          "frame": 500,
+          "ms": 20000
+        },
+        {
+          "frame": 750,
+          "ms": 30000
+        },
+        {
+          "frame": 1000,
+          "ms": 40000
+        },
+        {
+          "frame": 1250,
+          "ms": 50000
+        },
+        {
+          "frame": 1500,
+          "ms": 60000
+        },
+        {
+          "frame": 1750,
+          "ms": 70000
+        },
+        {
+          "frame": 2000,
+          "ms": 80000
+        },
+        {
+          "frame": 2250,
+          "ms": 90000
+        },
+        {
+          "frame": 2500,
+          "ms": 100000
+        },
+        {
+          "frame": 2750,
+          "ms": 110000
+        },
+        {
+          "frame": 3000,
+          "ms": 120000
+        },
+        {
+          "frame": 3250,
+          "ms": 130000
+        },
+        {
+          "frame": 3500,
+          "ms": 140000
+        },
+        {
+          "frame": 3750,
+          "ms": 150000
+        },
+        {
+          "frame": 4000,
+          "ms": 160000
+        },
+        {
+          "frame": 4250,
+          "ms": 170000
+        },
+        {
+          "frame": 4500,
+          "ms": 180000
+        },
+        {
+          "frame": 4750,
+          "ms": 190000
+        },
+        {
+          "frame": 5000,
+          "ms": 200000
+        },
+        {
+          "frame": 5250,
+          "ms": 210000
+        },
+        {
+          "frame": 5500,
+          "ms": 220000
+        },
+        {
+          "frame": 5750,
+          "ms": 230000
+        },
+        {
+          "frame": 6000,
+          "ms": 240000
+        },
+        {
+          "frame": 6250,
+          "ms": 250000
+        },
+        {
+          "frame": 6500,
+          "ms": 260000
+        },
+        {
+          "frame": 6750,
+          "ms": 270000
+        },
+        {
+          "frame": 7000,
+          "ms": 280000
+        },
+        {
+          "frame": 7250,
+          "ms": 290000
+        },
+        {
+          "frame": 7499,
+          "ms": 299960
+        }
+      ],
+      "contact_sha256": "6ac9f63c478d487a70791bc08cc195a0a04d3c33dbb076990ff5af6cc97b272e"
+    },
+    {
+      "asset_id": "eval-mm-polyurethane-bright",
+      "source_sha256": "d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451",
+      "review_grid_seconds": 10,
+      "frames": [
+        {
+          "frame": 0,
+          "ms": 0
+        },
+        {
+          "frame": 250,
+          "ms": 10000
+        },
+        {
+          "frame": 500,
+          "ms": 20000
+        },
+        {
+          "frame": 750,
+          "ms": 30000
+        },
+        {
+          "frame": 1000,
+          "ms": 40000
+        },
+        {
+          "frame": 1250,
+          "ms": 50000
+        },
+        {
+          "frame": 1500,
+          "ms": 60000
+        },
+        {
+          "frame": 1750,
+          "ms": 70000
+        },
+        {
+          "frame": 2000,
+          "ms": 80000
+        },
+        {
+          "frame": 2250,
+          "ms": 90000
+        },
+        {
+          "frame": 2500,
+          "ms": 100000
+        },
+        {
+          "frame": 2750,
+          "ms": 110000
+        },
+        {
+          "frame": 3000,
+          "ms": 120000
+        },
+        {
+          "frame": 3250,
+          "ms": 130000
+        },
+        {
+          "frame": 3500,
+          "ms": 140000
+        },
+        {
+          "frame": 3750,
+          "ms": 150000
+        },
+        {
+          "frame": 4000,
+          "ms": 160000
+        },
+        {
+          "frame": 4250,
+          "ms": 170000
+        },
+        {
+          "frame": 4500,
+          "ms": 180000
+        },
+        {
+          "frame": 4750,
+          "ms": 190000
+        },
+        {
+          "frame": 5000,
+          "ms": 200000
+        },
+        {
+          "frame": 5250,
+          "ms": 210000
+        },
+        {
+          "frame": 5500,
+          "ms": 220000
+        },
+        {
+          "frame": 5750,
+          "ms": 230000
+        },
+        {
+          "frame": 6000,
+          "ms": 240000
+        },
+        {
+          "frame": 6250,
+          "ms": 250000
+        },
+        {
+          "frame": 6500,
+          "ms": 260000
+        },
+        {
+          "frame": 6750,
+          "ms": 270000
+        },
+        {
+          "frame": 7000,
+          "ms": 280000
+        },
+        {
+          "frame": 7250,
+          "ms": 290000
+        },
+        {
+          "frame": 7500,
+          "ms": 300000
+        },
+        {
+          "frame": 7750,
+          "ms": 310000
+        },
+        {
+          "frame": 8000,
+          "ms": 320000
+        },
+        {
+          "frame": 8250,
+          "ms": 330000
+        },
+        {
+          "frame": 8500,
+          "ms": 340000
+        },
+        {
+          "frame": 8750,
+          "ms": 350000
+        },
+        {
+          "frame": 8999,
+          "ms": 359960
+        }
+      ],
+      "contact_sha256": "f4a42d1ae58ce979e819e386f4970f0c71c60e9337a506816779d1afc8cbfb9d"
+    }
+  ],
+  "boundary_contacts": {
+    "heptane-fire.jpg": "7d2e9c7515bcac6c0a8872a92520d42cba10b5337bcc7eab14a1190c15c5521b",
+    "poly-early.jpg": "7aed861f24a59f9dd39a0a5ed56e9db6794e963cae0dd73dc733831217df1140",
+    "poly-fire.jpg": "2f0fe36917152366576b9c5a8a55d61b154f86df93aa20b66b8bbfa9017b286b",
+    "poly-first.jpg": "dbcec2f4d19652228d013347c7e87527a726bd81377478319f3b97a74ebdd997",
+    "poly-smoke.jpg": "2f8220427d4bc46494341ee5963966c65ea98db5d5e059b5e3b286c00d2d54c2"
+  }
+}

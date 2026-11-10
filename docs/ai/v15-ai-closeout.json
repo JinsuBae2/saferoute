@@ -1,0 +1,131 @@
+{
+  "scope": "CODEX_SENTENCE_REVIEW_FOR_DEADLINE_CLOSEOUT_NOT_QA5",
+  "at_utc": "2026-11-10T14:02:15.382791+00:00",
+  "reviewer": "Codex / role1 self-check",
+  "method": "Assistant manually compared all seven sentences and cited facts; script verifies original response/basis equality, not natural-language correctness.",
+  "worksheet_sha256": "568fd684f43de7421eb0deb538018e6287939574e1f0dfb5e825c201b4f5f324",
+  "cases": [
+    {
+      "case": "G01",
+      "source_path": "deploy/resource-checks/2026-11-09-bedrock-explanation.json",
+      "source_sha256": "5f22b364fe2f44c04dc5e0fb2e236ac1d6d529335fffaf9c658a77b2b62aa535",
+      "json_pointer": "/cases/0",
+      "source_equality": true,
+      "self_check": "NO_CLEAR_CONTRADICTION_FOUND",
+      "notes": "NORMAL; A→EXIT-X, B→EXIT-Y, S→A→EXIT-X and I without a reachable exit match the route facts.",
+      "independent_verdict": "PENDING"
+    },
+    {
+      "case": "G02_actual_video",
+      "source_path": "deploy/resource-checks/2026-11-09-bedrock-explanation.json",
+      "source_sha256": "5f22b364fe2f44c04dc5e0fb2e236ac1d6d529335fffaf9c658a77b2b62aa535",
+      "json_pointer": "/cases/1",
+      "source_equality": true,
+      "self_check": "NO_CLEAR_CONTRADICTION_FOUND",
+      "notes": "EMERGENCY, CAM-A:FIRE, A and four named adjacent directed edges blocked; B/S/X/Y routes and I without a reachable exit match facts.",
+      "independent_verdict": "PENDING"
+    },
+    {
+      "case": "G04",
+      "source_path": "deploy/resource-checks/2026-11-09-bedrock-explanation.json",
+      "source_sha256": "5f22b364fe2f44c04dc5e0fb2e236ac1d6d529335fffaf9c658a77b2b62aa535",
+      "json_pointer": "/cases/2",
+      "source_equality": true,
+      "self_check": "WORDING_REVIEW_NEEDED",
+      "notes": "EMERGENCY, CAM-A:FIRE, DETECTOR-B:SMOKE, blocked A/B and no route from I/S match facts. Wording \"이들을 연결하는 경로\" is ambiguous; facts list incident edges, not a direct A–B edge. Ask independent reviewer to assess this wording; no original response edited.",
+      "independent_verdict": "PENDING"
+    },
+    {
+      "case": "G07",
+      "source_path": "deploy/resource-checks/2026-11-09-bedrock-explanation.json",
+      "source_sha256": "5f22b364fe2f44c04dc5e0fb2e236ac1d6d529335fffaf9c658a77b2b62aa535",
+      "json_pointer": "/cases/3",
+      "source_equality": true,
+      "self_check": "NO_CLEAR_CONTRADICTION_FOUND",
+      "notes": "DEGRADED and A/four incident edges blocked due to DETECTOR-A REQUIRED_OBSERVATION_UNKNOWN match facts; remaining route claims match.",
+      "independent_verdict": "PENDING"
+    },
+    {
+      "case": "G09",
+      "source_path": "deploy/resource-checks/2026-11-09-bedrock-explanation.json",
+      "source_sha256": "5f22b364fe2f44c04dc5e0fb2e236ac1d6d529335fffaf9c658a77b2b62aa535",
+      "json_pointer": "/cases/4",
+      "source_equality": true,
+      "self_check": "NO_CLEAR_CONTRADICTION_FOUND",
+      "notes": "NORMAL and A/B/S/X/Y paths versus I with no reachable exit match facts. X/Y are already exits (zero-cost paths), not new travel instructions.",
+      "independent_verdict": "PENDING"
+    },
+    {
+      "case": "actual_normal_ready",
+      "source_path": "deploy/resource-checks/2026-11-10-explanation-browser.json",
+      "source_sha256": "c56a2020eba5e009a1020246786b765980a130137023f71a4933a4714e828f9a",
+      "json_pointer": "/actual_browser_cases/0",
+      "source_equality": true,
+      "self_check": "NO_CLEAR_CONTRADICTION_FOUND",
+      "notes": "Displayed normal sentence matches source and the same NORMAL/A/B/S/I facts as G01.",
+      "independent_verdict": "PENDING"
+    },
+    {
+      "case": "actual_video_fire_ready",
+      "source_path": "deploy/resource-checks/2026-11-10-explanation-browser.json",
+      "source_sha256": "c56a2020eba5e009a1020246786b765980a130137023f71a4933a4714e828f9a",
+      "json_pointer": "/actual_browser_cases/1",
+      "source_equality": true,
+      "self_check": "NO_CLEAR_CONTRADICTION_FOUND",
+      "notes": "Displayed fire sentence matches source and the same CAM-A/A-blockage/route facts as G02.",
+      "independent_verdict": "PENDING"
+    }
+  ],
+  "clear_factual_contradictions_found": 0,
+  "wording_review_items": 1,
+  "new_bedrock_calls": 0,
+  "independent_review_unchanged": true,
+  "status": "SELF_CHECK_COMPLETE_WITH_WORDING_CAUTION",
+  "fable_review": {
+    "model": "claude-fable-5-1",
+    "reviewed_at_utc": "2026-11-10T14:30:12.611789+00:00",
+    "reviewed_commit": "f3238c516225111c97baf5b6d3af720f15597dff",
+    "receipt_sha256": "d7964973ce15aa804cc1bb4a259c61fdc02d30f90e929a3744e106960f28bd97",
+    "overall_review_verdict": "changes_requested",
+    "overall_finding": "P3 public per-video execution PASS needs explicit non-performance label; no alteration of raw summary or performance scores.",
+    "scope": "Text-only comparison of all seven historical summaries against basis_facts; did not view video or execute tests; not QA5 human approval.",
+    "case_results": [
+      {
+        "case": "G01",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "G02_actual_video",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "G04",
+        "verdict": "WORDING_REVIEW_NEEDED_NOT_APPROVED"
+      },
+      {
+        "case": "G07",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "G09",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "actual_normal_ready",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      },
+      {
+        "case": "actual_video_fire_ready",
+        "verdict": "NO_CLEAR_CONTRADICTION_FOUND"
+      }
+    ],
+    "G04_note": "Fable agrees hazard/mode/blocked A/B/no-route I/S facts match. Wording may imply nonexistent direct A-B edge and does not mention X/Y exit paths; ambiguous wording is not approved. Historical response remains unchanged."
+  },
+  "human_independent_review": "NOT_PERFORMED; original QA5 worksheet remains PENDING.",
+  "limitations": [
+    "Historical actual Bedrock responses are not rewritten.",
+    "G04 wording is not approved as an unambiguous direct A-B route claim. Eight incident edges are blocked; there is no direct A-B edge.",
+    "Actual Bedrock/worker termination/browser evidence is historical; no new Bedrock calls, no new live WFI acceptance.",
+    "Actual AWS 403/429 are not claimed: those cases were synthetic injection tests."
+  ]
+}

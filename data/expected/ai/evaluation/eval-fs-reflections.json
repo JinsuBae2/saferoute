@@ -6,11 +6,11 @@
   "source": "https://zenodo.org/records/836749",
   "split": "evaluation",
   "annotator": "준영",
-  "reviewer": null,
-  "annotation_complete": true,  
+  "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
+  "annotation_complete": true,
   "training_overlap": "unknown",
   "development_used": false,
-  "duration_ms": 18030,    
-  "normal_video": true,  
+  "duration_ms": 18030,
+  "normal_video": true,
   "events": []
 }

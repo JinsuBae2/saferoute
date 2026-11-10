@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "status": "FROZEN_FOR_FIRST_EVALUATION_AI_REVIEW",
+  "locked_at_utc": "2026-11-10T13:50:41.020443+00:00",
+  "locked_by": "Codex, executing Rinhaze request to finish remaining evaluation",
+  "source_commit": "e191256272b94fdc6107405c5dcf0f2bc42ab486",
+  "config": {
+    "building_id": "TWO_ROUTE",
+    "building_version": 1,
+    "source_id": "CAM-A",
+    "expected_zone_id": "Z-A",
+    "model_path": "models/xiazh-fire-smoke-yolo26m.onnx",
+    "model_sha256": "4163c96eef1ebab77c7f073d0d4001feffda64fbc544f441abf4ca8f4fd69929",
+    "imgsz": 640,
+    "interval_ms": 500,
+    "confidence": 0.25,
+    "cpu_threads": 4,
+    "preprocess": "clahe",
+    "native_input_size": true,
+    "onnx_provider": "openvino",
+    "window_ms": 1500,
+    "min_detections": 2,
+    "request_timeout_ms": 750,
+    "max_attempts": 2,
+    "retry_delay_ms": 100
+  },
+  "matching": {
+    "merge_gap_ms": 1000,
+    "boundary_tolerance_ms": 0,
+    "truth_interval": "[start_ms,end_ms)",
+    "rule": "prediction_start_one_to_one"
+  },
+  "targets": {
+    "FIRE": {
+      "precision_min": 0.8,
+      "recall_min": 0.9
+    },
+    "SMOKE": {
+      "precision_min": 0.8,
+      "recall_min": 0.9
+    },
+    "normal_false_alarms_per_hour_max_per_class": 1,
+    "matched_event_latency_ms_max": 3000,
+    "skipped_late_frames_max": 0,
+    "source_expirations_before_eof_max": 0,
+    "payload_match_required": true,
+    "all_eof_and_log_integrity_required": true
+  },
+  "selected_assets": [
+    "eval-caviar-walkbyshop1cor",
+    "eval-fs-reflections",
+    "eval-mm-heptane-bright",
+    "eval-mm-mist-bright",
+    "eval-mm-polyurethane-bright"
+  ],
+  "policy": "No tuning/training/threshold or matching changes after this lock. Review annotations before seeing model predictions. Record failures and first full-list execution.",
+  "review_scope": "Codex visual annotation review plus separate Fable text/result review; not QA5 human review. Original QA5 approvals remain null.",
+  "ground_truth_freeze_pending": false,
+  "inputs": [
+    {
+      "asset_id": "eval-caviar-walkbyshop1cor",
+      "scene_id": "caviar-lisbon-shopping-corridor",
+      "split": "evaluation",
+      "video_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+      "ground_truth_path": "data/expected/ai/evaluation/eval-caviar-walkbyshop1cor.json",
+      "ground_truth_sha256": "65a6ebb2a3d8f7ea944b7ca6812eeb6e0edd7f28a4c9f94ea94d22011034579b"
+    },
+    {
+      "asset_id": "eval-fs-reflections",
+      "scene_id": "firesense-reflections",
+      "split": "evaluation",
+      "video_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+      "ground_truth_path": "data/expected/ai/evaluation/eval-fs-reflections.json",
+      "ground_truth_sha256": "9dcbb584a4b4e319937a5312e794f9ad944cbd92d5cf40c6f507b9d0e593d91b"
+    },
+    {
+      "asset_id": "eval-mm-heptane-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "split": "evaluation",
+      "video_sha256": "e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7",
+      "ground_truth_path": "data/expected/ai/evaluation/eval-mm-heptane-bright.json",
+      "ground_truth_sha256": "7ede2b9d797dbbe55a3cdc1c375f4c3ea4cbe886bff0cd846f022c858b7999eb"
+    },
+    {
+      "asset_id": "eval-mm-mist-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "split": "evaluation",
+      "video_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+      "ground_truth_path": "data/expected/ai/evaluation/eval-mm-mist-bright.json",
+      "ground_truth_sha256": "34d490d08c0dba7fa2e69d23a5a9c3fc3005babe4edd0947badd72ef360dd21e"
+    },
+    {
+      "asset_id": "eval-mm-polyurethane-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "split": "evaluation",
+      "video_sha256": "d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451",
+      "ground_truth_path": "data/expected/ai/evaluation/eval-mm-polyurethane-bright.json",
+      "ground_truth_sha256": "26fee68be4ea0d938af74be718517bc8407a639114aa2be69263c4ce66bbcc6a"
+    }
+  ],
+  "frozen_at_utc": "2026-11-10T13:58:24.147915+00:00",
+  "annotation_review_sha256": "3f36644fc1084b14ed626ff598e4ee13d8a7574f40260e41b74410cbd3b6fb4b",
+  "runner_path": "deploy/resource-checks/2026-11-10-final-evaluation-runner.py",
+  "runner_sha256": "b92f5abfdac35ea591760802bfc2d81ee806ab166810714a8d7e4962238cb2ce",
+  "environment": "Existing supported-server CPU4 AI venv + pinned OpenVINO/ONNX dependency directories; exact runtime recorded before first worker launch",
+  "qa5_human_approval": null,
+  "approval_scope": "User authorized remaining work and deadline closeout. AI annotation/text review does not claim the original role5 human check.",
+  "config_file_sha256": "84bbd4ba8e70730a12fdf971c234c56397a174ad421d93008a05a8a6e486481f",
+  "preflight_note": "First server shell preflight stopped before any AI worker: queried distribution openvino, but installed provider distribution is onnxruntime-ep-openvino. Metadata query corrected only; no model/config/GT/matching change."
+}
