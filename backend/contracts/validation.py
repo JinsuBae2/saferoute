@@ -8,6 +8,7 @@ from typing import Mapping
 from pydantic import ValidationError
 
 from .building import Building
+from .display import BuildingDisplay
 from .explanations import Explanation
 from .previews import Preview
 from .messages import (
@@ -16,7 +17,7 @@ from .messages import (
 )
 
 MODEL_TYPES = {model.__name__: model for model in (
-    Building, Session, ObservationEvent, SignCommand, SignAck, ControlRequest, ClearRequest,
+    Building, BuildingDisplay, Session, ObservationEvent, SignCommand, SignAck, ControlRequest, ClearRequest,
     EventReceipt, ArmReceipt, ClearReceipt, ResetReceipt, ErrorResponse, Route, StateSnapshot, SimulationState, Explanation, Preview,
 )}
 

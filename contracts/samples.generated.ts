@@ -962,6 +962,89 @@ export const preview_error_update_rejected = {
   }
 } satisfies Contracts.ErrorResponse;
 
+export const building_display = {
+  "schema_version": 1,
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "floor_labels": {
+    "F1": "시험 1층"
+  },
+  "zone_labels": {
+    "Z-S": "중앙 분기점",
+    "Z-A": "좌측 복도",
+    "Z-B": "우측 복도",
+    "Z-X": "좌측 출구 앞",
+    "Z-Y": "우측 출구 앞",
+    "Z-I": "연결되지 않은 시험 공간"
+  },
+  "node_labels": {
+    "S": "중앙 분기점",
+    "A": "좌측 복도",
+    "B": "우측 복도",
+    "X": "좌측 출구",
+    "Y": "우측 출구",
+    "I": "연결되지 않은 시험 지점"
+  },
+  "exit_labels": {
+    "EXIT-X": "좌측 출구 위치 표지",
+    "EXIT-Y": "우측 출구 위치 표지"
+  },
+  "sources": {
+    "CAM-A": {
+      "label": "중앙 분기점에서 좌측 복도를 보는 CAM",
+      "installation": {
+        "floor_id": "F1",
+        "position": {
+          "x": 0,
+          "y": 2,
+          "z": 0
+        },
+        "basis": "SIMULATED"
+      }
+    },
+    "DETECTOR-A": {
+      "label": "좌측 복도 가상 감지기",
+      "installation": null
+    },
+    "SPRINKLER-A": {
+      "label": "좌측 복도 가상 스프링클러",
+      "installation": null
+    },
+    "DETECTOR-B": {
+      "label": "우측 복도 가상 감지기",
+      "installation": null
+    }
+  },
+  "signs": {
+    "SIGN-S": {
+      "label": "중앙 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-B": {
+      "label": "우측 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    }
+  }
+} satisfies Contracts.BuildingDisplay;
+
+export const manual_fire = {
+  "schema_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "event_id": "22222222-2222-4222-8222-222222222222",
+  "source_id": "MANUAL-A",
+  "source_type": "MANUAL_TEST",
+  "source_sequence": 17,
+  "event_kind": "ALARM",
+  "hazard_type": "FIRE",
+  "validity": "VALID",
+  "observed_at": "2026-11-10T01:00:00.000Z",
+  "media_time_ms": null,
+  "confidence": null,
+  "reason_code": null
+} satisfies Contracts.ObservationEvent;
+
 export const building = {
   "schema_version": 1,
   "building_id": "TWO_ROUTE",

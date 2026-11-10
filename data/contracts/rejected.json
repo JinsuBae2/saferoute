@@ -1016,5 +1016,72 @@
     },
     "expected_code": "SCHEMA_VALIDATION_FAILED",
     "context": null
+  },
+  {
+    "name": "display-extra-field",
+    "sample": "building_display",
+    "changes": {
+      "route": [
+        "S",
+        "A",
+        "X"
+      ]
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "display-unsupported-version",
+    "sample": "building_display",
+    "changes": {
+      "schema_version": 2
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "display-invalid-label",
+    "sample": "building_display",
+    "changes": {
+      "node_labels": {
+        "S": " "
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "display-invalid-sign-kind",
+    "sample": "building_display",
+    "changes": {
+      "signs": {
+        "SIGN-S": {
+          "label": "분기점",
+          "kind": "ALWAYS_SAFE"
+        }
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "display-missing-null-installation",
+    "sample": "building_display",
+    "changes": {
+      "sources": {
+        "CAM-A": {
+          "label": "카메라"
+        }
+      }
+    },
+    "expected_code": "SCHEMA_VALIDATION_FAILED",
+    "context": null
+  },
+  {
+    "name": "manual-unregistered-source",
+    "sample": "manual_fire",
+    "changes": {},
+    "expected_code": "UNKNOWN_SOURCE",
+    "context": "event"
   }
 ]
