@@ -9,6 +9,9 @@ import type { Building, BuildingDisplay, Position, SimulationState, StateSnapsho
 
 import { BuildingScene } from "./BuildingScene";
 import { matchesBuilding } from "./geometry";
+import type { JourneyTrack } from "./journey";
+import { advanceTrack, describeJourney, trackContext } from "./journey";
+import { JourneyPanel } from "./JourneyPanel";
 import { useBuildingGeometry } from "./useBuildingGeometry";
 import type { ViewMode } from "./view";
 import { SPREAD_MAX, SPREAD_MIN } from "./view";
@@ -33,6 +36,8 @@ type Props = {
    * 고르기만 해서는 시점을 움직이지 않는다. 보던 화면이 멋대로 돌아가면 더 헷갈린다.
    */
   readonly locateRequest: number;
+  /** 제어 상태 조회가 끊기거나 늦은지. 그동안 선택 경로를 현재 안내로 보여 주지 않는다(M06). */
+  readonly stale?: boolean;
 };
 
 const MISMATCH_LABEL = {
@@ -41,7 +46,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest }: Props) {
+export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
@@ -73,6 +78,39 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
       focus: { position: installation.position, floorId: installation.floor_id },
     }));
   }, [locateRequest, highlightSourceId, display]);
+
+  // M06 출발점. 실행·건물이 바뀌면 이전 선택을 쓰지 않는다(같은 node_id라도 다른 실행의 위치다).
+  const runKey = `${state.run_id}/${state.building_id}/${state.building_version}`;
+  const [start, setStart] = useState<{ runKey: string; nodeId: string } | null>(null);
+  const [selectedSign, setSelectedSign] = useState<string | null>(null);
+  const startId = start !== null && start.runKey === runKey ? start.nodeId : null;
+  const chooseStart = (nodeId: string | null) => {
+    setStart(nodeId === null ? null : { runKey, nodeId });
+    setSelectedSign(null);
+  };
+
+  const journey = useMemo(
+    () => (building === null || startId === null ? null : describeJourney(building, display, state, startId)),
+    [building, display, state, startId],
+  );
+
+  // 같은 실행·건물·출발점에서 경로가 바뀌면 직전 경로를 비교용으로 남긴다.
+  const [track, setTrack] = useState<JourneyTrack | null>(null);
+  useEffect(() => {
+    setTrack((previous) => (journey === null ? null : advanceTrack(previous, state, journey)));
+  }, [journey, state]);
+  const currentTrack = track !== null && startId !== null && track.context === trackContext(state, startId) ? track : null;
+
+  const signNodeId = useMemo(
+    () => building?.signs.find((sign) => sign.sign_id === selectedSign)?.node_id ?? null,
+    [building, selectedSign],
+  );
+  const sceneJourney = useMemo(() => {
+    if (startId === null) return null;
+    // 조회가 늦으면 현재 경로를 그리지 않는다. 출발점 표시만 남긴다.
+    const path = !stale && journey?.kind === "ROUTE" ? journey.path : [];
+    return { startId, path, previousPath: stale ? null : currentTrack?.previous?.path ?? null, signNodeId: stale ? null : signNodeId };
+  }, [startId, journey, stale, currentTrack, signNodeId]);
 
   const smokeByZone = useMemo(() => {
     if (simulation === null) return null;
@@ -188,6 +226,12 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
               <span className="key key--muted" /> 안내 불가
               <span className="key key--sign-exit" /> 출구 위치 표지
               <span className="key key--sign-dir" /> 가변 방향 안내
+              {startId !== null && (
+                <>
+                  <span className="key key--journey" /> 선택 위치 경로
+                  <span className="key key--journey-prev" /> 직전 경로(비교용, 회색)
+                </>
+              )}
             </span>
           </div>
 
@@ -201,6 +245,20 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             spread={spread}
             view={view}
             highlightSourceId={highlightSourceId}
+            journey={sceneJourney}
+            onPickNode={chooseStart}
+          />
+
+          <JourneyPanel
+            building={building}
+            display={display}
+            startId={startId}
+            onStart={chooseStart}
+            journey={journey}
+            track={currentTrack}
+            stale={stale}
+            selectedSignId={selectedSign}
+            onSelectSign={setSelectedSign}
           />
 
           <p className="panel__note">

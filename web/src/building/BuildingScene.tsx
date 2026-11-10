@@ -38,7 +38,13 @@ const COLOR = {
   // 관측 위험은 원인(FIRE·SMOKE·SPRINKLER)과 관계없이 범례대로 빨강이다.
   // 주황은 시험용 연기 정답 전용이라 섞이면 정답을 보고 판단하는 것처럼 보인다.
   hazard: 0xef4444,
+  // M06: 고른 출발점의 경로. 전체 안내(초록)와 섞이지 않게 노랑, 직전 경로는 회색 점선.
+  journey: 0xfacc15,
+  journeyPrevious: 0x94a3b8,
 } as const;
+
+/** 고른 출발점이 있을 때 나머지 안내 표시를 흐리게 하는 정도. */
+const DIMMED = 0.18;
 
 const FOV = 50;
 
@@ -66,6 +72,18 @@ type Props = {
   };
   /** 3D에서 위치를 강조할 관측원. 관제에서 고른 카메라가 건물 어디인지 잇는다(이슈 #74). */
   readonly highlightSourceId: string | null;
+  /**
+   * 고른 출발점의 경로(M06). path는 서버 path_node_ids 그대로이며, 비었으면 안내 불가다.
+   * previousPath는 비교용 직전 경로, signNodeId는 표에서 고른 유도등의 위치다.
+   */
+  readonly journey?: {
+    readonly startId: string;
+    readonly path: readonly string[];
+    readonly previousPath: readonly string[] | null;
+    readonly signNodeId: string | null;
+  } | null;
+  /** 3D에서 지점을 눌렀을 때. 끌어서 돌린 것은 누름으로 보지 않는다. */
+  readonly onPickNode?: (nodeId: string) => void;
 };
 
 type Handles = {
@@ -80,7 +98,20 @@ type Handles = {
   disposables: Set<{ dispose(): void }>;
   /** 현재 보이는 범위. 회전 중심을 이 안으로 묶는다. */
   box: ViewBox | null;
+  /** 눌러서 고를 수 있는 지점 표시와 그 순서의 node_id. */
+  pick: { mesh: THREE.InstancedMesh; ids: readonly string[] } | null;
 };
+
+/** 두 점을 잇는 굵은 막대. 선 굵기는 WebGL에서 1px로 고정돼 경로 강조에 쓸 수 없다. */
+function rod(from: THREE.Vector3, to: THREE.Vector3, radius: number, material: THREE.Material): THREE.Mesh | null {
+  const direction = to.clone().sub(from);
+  const length = direction.length();
+  if (length < 0.001) return null;
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, length, 10), material);
+  mesh.position.copy(from).add(to).multiplyScalar(0.5);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  return mesh;
+}
 
 /**
  * 바닥에 눕힌 평면 화살표. 꼭짓점이 -z(안내도 위쪽)를 향하고 가운데가 원점이다.
@@ -138,7 +169,7 @@ function clearGroup(group: THREE.Group) {
     if (child instanceof THREE.Sprite) {
       child.material.map?.dispose();
       child.material.dispose();
-    } else if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) {
+    } else if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
       child.geometry.dispose();
       const material = child.material;
       if (Array.isArray(material)) material.forEach((item) => item.dispose());
@@ -188,9 +219,14 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, state, smokeByZone, visibleFloors, spread, view, highlightSourceId }: Props) {
+export function BuildingScene({ geometry, building, display, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
+  // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
+  const pickRef = useRef(onPickNode);
+  useEffect(() => {
+    pickRef.current = onPickNode;
+  }, [onPickNode]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
 
   const nodeById = useMemo(
@@ -256,8 +292,33 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       smokeMeshes: new Map(),
       disposables: new Set(),
       box: null,
+      pick: null,
     };
     handlesRef.current = handles;
+
+    // 지점 누르기(M06). 누른 자리에서 거의 움직이지 않고 뗀 것만 선택으로 본다.
+    const raycaster = new THREE.Raycaster();
+    let downAt: { x: number; y: number } | null = null;
+    const onDown = (event: PointerEvent) => {
+      downAt = { x: event.clientX, y: event.clientY };
+    };
+    const onUp = (event: PointerEvent) => {
+      const startedAt = downAt;
+      downAt = null;
+      if (startedAt === null || handles.pick === null || pickRef.current === undefined) return;
+      if (Math.hypot(event.clientX - startedAt.x, event.clientY - startedAt.y) > 5) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      const pointer = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObject(handles.pick.mesh, false)[0];
+      const nodeId = hit?.instanceId === undefined ? undefined : handles.pick.ids[hit.instanceId];
+      if (nodeId !== undefined) pickRef.current(nodeId);
+    };
+    renderer.domElement.addEventListener("pointerdown", onDown);
+    renderer.domElement.addEventListener("pointerup", onUp);
 
     // 화면을 끌어도 회전 중심이 건물 밖으로 멀리 나가지 않게 한다.
     const keepInside = () => {
@@ -313,6 +374,8 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       cancelAnimationFrame(frame);
       observer.disconnect();
       controls.removeEventListener("change", keepInside);
+      renderer.domElement.removeEventListener("pointerdown", onDown);
+      renderer.domElement.removeEventListener("pointerup", onUp);
       controls.dispose();
       clearGroup(staticGroup);
       clearGroup(dynamicGroup);
@@ -473,6 +536,9 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
     if (handles === null) return;
     const { dynamicGroup } = handles;
     clearGroup(dynamicGroup);
+    handles.pick = null;
+    // 출발점을 고르면 전체 안내는 흐리게 두고 그 지점의 경로만 또렷하게 그린다.
+    const focused = journey !== null;
 
     const blockedReason = new Map(state.blocked_nodes.map((node) => [node.node_id, node.reason_codes]));
     const routeByNode = new Map(state.routes.map((route) => [route.node_id, route]));
@@ -507,6 +573,7 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
       dynamicGroup.add(mesh);
+      handles.pick = { mesh, ids: shownNodes.map((node) => node.node_id) };
     }
 
     // 다음 이동 방향. 서버 Route의 next_node_id만 사용한다.
@@ -561,7 +628,7 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       dynamicGroup.add(
         new THREE.LineSegments(
           geometryLines,
-          new THREE.LineBasicMaterial({ color: COLOR.guided, transparent: true, opacity: 0.5 }),
+          new THREE.LineBasicMaterial({ color: COLOR.guided, transparent: true, opacity: focused ? DIMMED : 0.5 }),
         ),
       );
     }
@@ -569,7 +636,7 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
     if (flatArrows.length > 0) {
       const plates = new THREE.InstancedMesh(
         flatArrowGeometry(),
-        new THREE.MeshBasicMaterial({ color: COLOR.guided, side: THREE.DoubleSide }),
+        new THREE.MeshBasicMaterial({ color: COLOR.guided, side: THREE.DoubleSide, transparent: focused, opacity: focused ? DIMMED : 1 }),
         flatArrows.length,
       );
       flatArrows.forEach((matrix, index) => plates.setMatrixAt(index, matrix));
@@ -580,7 +647,7 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
     if (stairArrows.length > 0) {
       const cones = new THREE.InstancedMesh(
         new THREE.ConeGeometry(0.42, 1.1, 10),
-        new THREE.MeshLambertMaterial({ color: COLOR.guided }),
+        new THREE.MeshLambertMaterial({ color: COLOR.guided, transparent: focused, opacity: focused ? DIMMED : 1 }),
         stairArrows.length,
       );
       stairArrows.forEach((matrix, index) => cones.setMatrixAt(index, matrix));
@@ -699,7 +766,84 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.8, 6), paint(0.45));
       mark(beam, 1.4);
     }
-  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, highlightSourceId]);
+
+    // M06: 고른 출발점의 경로. 서버 path_node_ids를 순서대로 잇기만 한다.
+    if (journey !== null) {
+      const pointOf = (nodeId: string, height: number) => {
+        const node = nodeById.get(nodeId);
+        if (node === undefined || !visibleFloors.has(node.floor_id)) return null;
+        return new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, lift) + height, node.position.z);
+      };
+      // 벽·바닥에 가려도 경로가 끊겨 보이지 않게 깊이 검사를 끈다.
+      const overlay = (color: number, opacity: number) =>
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthTest: false });
+
+      // 직전 경로(비교용): 가는 회색 막대. 현재 경로보다 낮게 깔아 겹쳐도 구분된다.
+      // 점선은 WebGL 선 굵기(1px) 때문에 이름표에 가리면 보이지 않아 막대로 그린다.
+      if (journey.previousPath !== null && journey.previousPath.length > 1) {
+        for (let index = 1; index < journey.previousPath.length; index += 1) {
+          const from = pointOf(journey.previousPath[index - 1], 0.6);
+          const to = pointOf(journey.previousPath[index], 0.6);
+          if (from === null || to === null) continue;
+          const piece = rod(from, to, 0.09, overlay(COLOR.journeyPrevious, 0.75));
+          if (piece !== null) {
+            piece.renderOrder = 8;
+            dynamicGroup.add(piece);
+          }
+        }
+      }
+
+      // 현재 경로: 굵은 노란 막대와 진행 방향 화살표.
+      const rodMaterial = overlay(COLOR.journey, 0.95);
+      for (let index = 1; index < journey.path.length; index += 1) {
+        const from = pointOf(journey.path[index - 1], 1.1);
+        const to = pointOf(journey.path[index], 1.1);
+        if (from === null || to === null) continue;
+        const piece = rod(from, to, 0.16, rodMaterial.clone());
+        if (piece !== null) {
+          piece.renderOrder = 9;
+          dynamicGroup.add(piece);
+        }
+        const node = nodeById.get(journey.path[index - 1]);
+        const next = nodeById.get(journey.path[index]);
+        if (node !== undefined && next !== undefined && node.floor_id === next.floor_id) {
+          const arrow = new THREE.Mesh(flatArrowGeometry(), overlay(COLOR.journey, 1));
+          arrow.position.copy(from).lerp(to, 0.55).setY(from.y + 0.02);
+          arrow.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), planYaw(to.x - from.x, to.z - from.z));
+          arrow.scale.setScalar(1.25);
+          arrow.renderOrder = 10;
+          dynamicGroup.add(arrow);
+        }
+      }
+      rodMaterial.dispose();
+
+      // 출발점: 바닥 고리. 경로가 없어도 어디를 골랐는지는 보인다.
+      const startPoint = pointOf(journey.startId, 0.08);
+      if (startPoint !== null) {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(0.9, 1.3, 32),
+          new THREE.MeshBasicMaterial({ color: journey.path.length > 0 ? COLOR.journey : COLOR.noRoute, side: THREE.DoubleSide, depthTest: false }),
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.copy(startPoint);
+        ring.renderOrder = 10;
+        dynamicGroup.add(ring);
+      }
+
+      // 표에서 고른 유도등 위치.
+      const signPoint = journey.signNodeId === null ? null : pointOf(journey.signNodeId, 2.6);
+      if (signPoint !== null) {
+        const halo = new THREE.Mesh(
+          new THREE.TorusGeometry(0.6, 0.08, 8, 24),
+          new THREE.MeshBasicMaterial({ color: COLOR.journey, depthTest: false }),
+        );
+        halo.position.copy(signPoint);
+        halo.rotation.x = -Math.PI / 2;
+        halo.renderOrder = 10;
+        dynamicGroup.add(halo);
+      }
+    }
+  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, highlightSourceId, journey]);
 
   return <div className="scene" ref={mountRef} />;
 }

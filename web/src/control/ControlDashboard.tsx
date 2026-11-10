@@ -244,6 +244,7 @@ export function ControlDashboard() {
           buildingError={space.buildingError}
           highlightSourceId={camera.sourceId}
           locateRequest={camera.locate}
+          stale={health.stale || view.stateError !== null}
         />
       </Suspense>
 

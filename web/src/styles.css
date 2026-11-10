@@ -809,3 +809,101 @@ code {
 .camera__locate {
   margin-left: 8px;
 }
+
+/* ---------- M06 선택 위치 경로 ---------- */
+
+.key--journey { background: #facc15; }
+.key--journey-prev { background: #94a3b8; }
+
+.journey {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.journey__pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.journey__select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.journey__select select {
+  max-width: min(320px, 70vw);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.journey__hint {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.journey__alert {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--warn);
+  background: rgba(245, 158, 11, 0.08);
+  font-size: 13px;
+}
+
+.journey__alert--fire {
+  border-left-color: var(--fire);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.journey__route h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.journey__route h3 small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.journey__exit { color: #facc15; }
+
+.journey__steps {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.journey__step small { color: var(--muted); }
+.journey__step--stairs { color: #fde68a; }
+.journey__step--exit { color: #facc15; }
+
+.journey__note,
+.journey__previous {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.journey__tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border: 1px dashed #94a3b8;
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
+.journey__row { cursor: pointer; }
+.journey__row:hover { background: rgba(250, 204, 21, 0.06); }
+.journey__row--on { background: rgba(250, 204, 21, 0.12); }
