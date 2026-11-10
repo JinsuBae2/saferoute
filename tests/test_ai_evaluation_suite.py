@@ -5,6 +5,7 @@ import json
 import pytest
 
 from test_ai_evaluation import encoded, log_rows, truth
+from tools.evaluate_ai import evaluate
 from tools.evaluate_ai_suite import evaluate_suite, main
 
 
@@ -114,3 +115,21 @@ def test_cli_resolves_paths_from_manifest_and_preserves_existing_output(tmp_path
     failure = tmp_path / "failed.json"
     assert main(["--manifest", str(p), "--output", str(failure)]) == 1
     assert json.loads(failure.read_bytes())["aggregate"] is None
+
+
+@pytest.mark.parametrize("bad_result", [None, [], 7, "EOF"])
+def test_nonobject_finished_result_is_rejected_without_aborting_later_videos(tmp_path, bad_result):
+    entries = [case(tmp_path, key, [(0, [])]) for key in ["a", "b", "c"]]
+    pred = tmp_path / "b.jsonl"
+    rows = [json.loads(line) for line in pred.read_text(encoding="utf-8").splitlines()]
+    rows[-1]["result"] = bad_result
+    data = ("\n".join(json.dumps(row) for row in rows)+"\n").encode()
+    pred.write_bytes(data)
+    with pytest.raises(ValueError, match="finished result must be a JSON object"):
+        evaluate(data, (tmp_path / "b.json").read_bytes())
+    p, output = tmp_path / "manifest.json", tmp_path / "result.json"
+    p.write_bytes(manifest(entries))
+    assert main(["--manifest", str(p), "--output", str(output)]) == 1
+    result = json.loads(output.read_bytes())
+    assert result["aggregate"] is None and result["validated_videos"] == 2
+    assert [c["status"] for c in result["cases"]] == ["VALIDATED", "FAILED", "VALIDATED"]
