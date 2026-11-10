@@ -33,11 +33,11 @@ class Detector:
 
         settings.update({"sync": False})
         self.model, self.config = YOLO(str(path)), config
-        if self.model.names != {0: "smoke", 1: "fire"}:
-            raise ValueError("candidate classes must be smoke=0/fire=1")
+        if self.model.names not in ({0: "smoke", 1: "fire"}, {0: "fire", 1: "smoke"}):
+            raise ValueError("candidate classes must be exactly smoke and fire at indices 0 and 1")
         self.predict(np.zeros((config.imgsz, config.imgsz, 3), dtype=np.uint8))
         torch.set_num_threads(4)
-        self.metadata = dict(device="cpu", python=platform.python_version(), os=platform.platform(),
+        self.metadata = dict(model_classes=dict(self.model.names), device="cpu", python=platform.python_version(), os=platform.platform(),
                              cpu=platform.processor(), logical_cpu_count=os.cpu_count(),
                              torch_threads=torch.get_num_threads(),
                              packages={p: package_version(p) for p in

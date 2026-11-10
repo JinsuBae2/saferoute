@@ -1,0 +1,3 @@
+# Optional checkpoint reader for luminous0219; add to the existing AI lock environment.
+# No default/runtime model selection changes. Used in the isolated A01-4 trial.
+dill==0.4.1

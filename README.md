@@ -26,6 +26,8 @@ Bedrock 설명의 별도 계약·허용 근거는 [A05-1](docs/ai/a05-explanatio
 
 개발 영상 7개에서 confidence 0.10 후보를 비교했으나 미검출 개선 없이 정상 오탐이 늘어 채택하지 않았습니다. [A04-4 비교 기록](docs/ai/a04-confidence-comparison.md)을 참고하며 기본 설정은 0.25를 유지합니다.
 
+[A01-4 대체 모델 비교](docs/ai/a01-alternative-models.md)는 기존 모델과 대체 후보 2개를 같은 개발 7개에 실행합니다. xiazh 후보는 기존 얇은 연기를 검출하고 촛불 중복을 줄였으나 FIRE·SMOKE 중복 사건이 각 1건 남습니다. 별도 개발 설정을 제공하며 최종 채택·독립 성능 합격은 아닙니다.
+
 CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실제 프레임/JPEG 송출·조회·장애 격리와 개발 검증은 [A06 실행 인계](docs/ai/a06-preview-delivery.md)에 있습니다. 관제·3D 화면 연결은 담당 3의 #74 후속 작업입니다.
 
 ## 협업
