@@ -1,4 +1,4 @@
-"""Read-only current simulation state; the clock runs without dashboard clients."""
+"""Current simulation state and an explicit restart; the clock runs without dashboard clients."""
 
 import asyncio
 from contextlib import asynccontextmanager, suppress
@@ -6,6 +6,7 @@ import logging
 
 import httpx
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 from backend.contracts.messages import SimulationState
 from .runner import Runner
@@ -48,5 +49,12 @@ def create_app(building, scenario, *, controller_url, runs_dir, clock=None):
 
     @app.get("/sim/state",response_model=SimulationState)
     def state(): return app.state.runner.state()
+
+    @app.post("/sim/restart",response_model=SimulationState)
+    def restart():
+        try: app.state.runner.restart()
+        except (httpx.HTTPError,ValueError) as error:
+            return JSONResponse(status_code=503,content={"error":{"code":"CONTROLLER_UNAVAILABLE","message":str(error),"field":None}})
+        return app.state.runner.state()
 
     return app
