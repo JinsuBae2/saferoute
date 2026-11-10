@@ -32,7 +32,9 @@ Bedrock 설명의 별도 계약·허용 근거는 [A05-1](docs/ai/a05-explanatio
 
 [#114 후속 검증](docs/ai/a01-readiness-validation.md)과 [모델 추천·평가 동결 제안·담당 5 인계](docs/ai/evaluation-freeze-and-handoff.md)를 제공합니다. xiazh 0.15 후보는 정상 연기 오탐이 늘어 미채택이며 추천 후보는 0.25입니다. 실제 서버 30분20초 반복 입력은 전송·유효기간/EOF 통과지만 **3,641개 중 늦은 샘플 3개를 폐기**해 전체 샘플 처리에는 미달했습니다. 평가 목표는 합의용 제안이고, 실제 설명 7건의 독립 검수 작업지도 준비했습니다.
 
-CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실제 프레임/JPEG 송출·조회·장애 격리와 개발 검증은 [A06 실행 인계](docs/ai/a06-preview-delivery.md)에 있습니다. 관제·3D 화면 연결은 담당 3의 #74 후속 작업입니다.
+CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실제 프레임/JPEG 송출·조회·장애 격리와 개발 검증은 [A06 실행 인계](docs/ai/a06-preview-delivery.md)에 있습니다. 관제·3D 화면 연결은 담당 3의 #74 / PR #115로 반영됐으며 공동 인수 검증과는 구분합니다.
+
+[#118 전체 영상 평가 집계](docs/ai/a04-suite-evaluation.md)는 명시한 원본 로그/정답 목록을 재검증하고 TP·FP·FN·정상 길이·지연을 합산합니다. 입력이 누락되거나 조건이 섞이면 전체 집계를 미완료로 표시하며, 독립 평가 합격을 자동 선언하지 않습니다.
 
 ## 협업
 
