@@ -39,14 +39,14 @@ export function stepPeople(
 ): void {
   for (const person of people) {
     if (person.status === "OUT") continue;
+    if (!evacuating) {
+      person.status = "WAITING";
+      continue;
+    }
     let budget = metres;
     // 한 번에 여러 지점을 지나칠 수 있어 반복한다. 잘못된 자료로 무한히 돌지 않게 횟수를 묶는다.
     for (let hop = 0; hop < 16; hop += 1) {
       if (person.to === null) {
-        if (!evacuating) {
-          person.status = "WAITING";
-          break;
-        }
         const route = routes.get(person.from);
         if (route === undefined || route.reason_codes.length > 0) {
           person.status = "STUCK";
@@ -68,6 +68,7 @@ export function stepPeople(
         person.progress = 1 - person.progress;
         person.returning = true;
       }
+      person.status = "MOVING";
       const length = Math.max(lengthOf(person.from, person.to), 0.01);
       const remaining = (1 - person.progress) * length;
       if (budget < remaining) {
