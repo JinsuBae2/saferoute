@@ -142,9 +142,10 @@ class Video:
         self.timestamps, self.index, self.released = timestamps, -1, False
     def VideoCapture(self, path): return self
     def isOpened(self): return True
-    def read(self):
+    def grab(self):
         self.index += 1
-        return (True, self.index) if self.index < len(self.timestamps) else (False, None)
+        return self.index < len(self.timestamps)
+    def retrieve(self): return True, self.index
     def get(self, key): return self.timestamps[self.index]
     def release(self): self.released = True
 

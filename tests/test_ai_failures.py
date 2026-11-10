@@ -70,9 +70,9 @@ def test_read_ending_before_verified_count_fails_and_keeps_alarm(setup):
 
 def test_clean_file_with_all_frames_late_reports_analysis_gap_not_decode_error(setup):
     class SlowVideo(Video):
-        def read(self):
-            value = super().read()
-            if value[0]: setup.clock.advance(1000)
+        def grab(self):
+            value = super().grab()
+            if value: setup.clock.advance(1000)
             return value
     video = SlowVideo([0])
     with pytest.raises(WorkerError, match="NO_ANALYZED_FRAMES"):
@@ -112,15 +112,53 @@ def test_probe_failure_reports_unavailable_without_opening_video(setup):
 
 def test_read_exception_reports_failure_and_releases_capture(setup):
     class BrokenVideo(Video):
-        def read(self):
+        def grab(self):
             if self.index == 1: raise RuntimeError("decoder stopped")
-            return super().read()
+            return super().grab()
     video = BrokenVideo([0, 500, 1000])
     with pytest.raises(RuntimeError, match="decoder stopped"):
         execute(setup, video, lambda frame: [detection()])
     source, causes = source_state(setup)
     assert source["validity"] == "UNAVAILABLE" and causes[0]["hazard_type"] == "FIRE"
     assert video.released
+
+
+def test_retrieve_failure_is_not_misreported_as_verified_eof(setup):
+    class BrokenPixels(Video):
+        def retrieve(self): return False, None
+    video = BrokenPixels([0])
+    with pytest.raises(WorkerError, match='FRAME_RETRIEVE_FAILED'):
+        execute(setup, video, lambda frame: pytest.fail('unavailable pixels cannot be inferred'))
+    logged = records(setup)
+    assert not any(r['operation'] == 'finished' for r in logged)
+    assert [r['event'] for r in logged if r['operation'] == 'send_attempt'][-1]['reason_code'] == 'DECODE_FAILED'
+    assert video.released
+
+
+def test_retrieve_cost_is_included_in_lateness_before_inference(setup):
+    class SlowPixels(Video):
+        def retrieve(self):
+            setup.clock.advance(1000)
+            return super().retrieve()
+    with pytest.raises(WorkerError, match='NO_ANALYZED_FRAMES'):
+        execute(setup, SlowPixels([0]), lambda frame: pytest.fail('late pixels must be skipped'))
+    assert next(r for r in records(setup) if r['operation'] == 'skip_late_frame')['lateness_ms'] == 1000
+
+
+def test_all_frames_counted_but_only_scheduled_pixels_retrieved(setup):
+    retrieved, predicted = [], []
+    class CountPixels(Video):
+        def retrieve(self):
+            retrieved.append(self.index)
+            return super().retrieve()
+    video = CountPixels([0, 100, 200, 500, 600, 1000])
+    def predict(frame):
+        predicted.append(frame)
+        return []
+    result = execute(setup, video, predict)
+    assert retrieved == predicted == [0, 3, 5]
+    assert result['frames'] == 6 and result['analyzed_frames'] == 3
+    assert result['skipped_late_frames'] == 0 and result['termination'] == 'EOF'
 
 
 def test_unavailable_delivery_failure_preserves_original_inference_error(setup):

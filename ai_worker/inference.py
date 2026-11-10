@@ -35,17 +35,56 @@ class Detector:
         self.model, self.config = YOLO(str(path)), config
         if self.model.names not in ({0: "smoke", 1: "fire"}, {0: "fire", 1: "smoke"}):
             raise ValueError("candidate classes must be exactly smoke and fire at indices 0 and 1")
+        self.clahe = None
+        if config.preprocess == "clahe":
+            import cv2
+            self.clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         self.predict(np.zeros((config.imgsz, config.imgsz, 3), dtype=np.uint8))
-        torch.set_num_threads(4)
+        # Ultralytics sets CPU threads during first predict; apply our bound afterwards.
+        torch.set_num_threads(config.cpu_threads)
+        onnx_runtime = None
+        if path.suffix.lower() == ".onnx":
+            import onnxruntime as ort
+            options = ort.SessionOptions()
+            options.intra_op_num_threads = config.cpu_threads
+            options.add_session_config_entry("session.intra_op.allow_spinning", "0")
+            # The pinned Ultralytics backend owns preprocessing/output metadata. Replace only
+            # its CPU session, using the identical verified file, before any video is read.
+            backend = self.model.predictor.model.backend
+            if backend.use_io_binding:
+                raise ValueError("ONNX CPU worker must not use device IO binding")
+            backend.session = ort.InferenceSession(str(path), options, providers=["CPUExecutionProvider"])
+            backend.session_options = options
+            self.predict(np.zeros((config.imgsz, config.imgsz, 3), dtype=np.uint8))
+            onnx_runtime = dict(version=ort.__version__, providers=backend.session.get_providers(),
+                                intra_op_num_threads=backend.session.get_session_options().intra_op_num_threads,
+                                allow_spinning=backend.session.get_session_options().get_session_config_entry(
+                                    "session.intra_op.allow_spinning"))
         self.metadata = dict(model_classes=dict(self.model.names), device="cpu", python=platform.python_version(), os=platform.platform(),
                              cpu=platform.processor(), logical_cpu_count=os.cpu_count(),
                              torch_threads=torch.get_num_threads(),
+                             preprocessing_version="clahe_input_v1" if self.clahe is not None else "none",
+                             onnx_runtime=onnx_runtime,
                              packages={p: package_version(p) for p in
                                        ("torch", "torchvision", "ultralytics", "opencv-python", "numpy")})
 
     def predict(self, frame):
+        ratio_x = ratio_y = 1
+        if self.clahe is not None:
+            import cv2
+            height, width = frame.shape[:2]
+            scale = min(1.0, self.config.imgsz / max(height, width))
+            if scale < 1:
+                frame = cv2.resize(frame, (max(1, round(width * scale)), max(1, round(height * scale))),
+                                   interpolation=cv2.INTER_LINEAR)
+                ratio_x, ratio_y = width / frame.shape[1], height / frame.shape[0]
+            # Bound color-processing cost, and keep the original preview pixels intact.
+            lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+            lab[:, :, 0] = self.clahe.apply(lab[:, :, 0])
+            frame = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
         result = self.model.predict(frame, device="cpu", imgsz=self.config.imgsz,
                                     conf=self.config.confidence, verbose=False)[0]
-        return [{"class": self.model.names[int(cls)].upper(), "confidence": score, "xyxy": box}
+        return [{"class": self.model.names[int(cls)].upper(), "confidence": score,
+                 "xyxy": [v * (ratio_x if i % 2 == 0 else ratio_y) for i, v in enumerate(box)]}
                 for cls, score, box in zip(result.boxes.cls.tolist(), result.boxes.conf.tolist(),
                                            result.boxes.xyxy.tolist())]
