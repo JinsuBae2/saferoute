@@ -3,11 +3,10 @@
  * 건물 ID·자료 버전이 같을 때만 함께 쓴다(05번 2.3절).
  * 버전이 다르면 3D를 그리지 않고, 경로·유도등 안내는 서버 결과로 계속 표시한다.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
-import type { Building, SimulationState, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, SimulationState, StateSnapshot } from "@contracts";
 
-import { fetchBuilding } from "../api/client";
 import { BuildingScene } from "./BuildingScene";
 import { matchesBuilding } from "./geometry";
 import { useBuildingGeometry } from "./useBuildingGeometry";
@@ -16,6 +15,9 @@ import { SPREAD_MAX, SPREAD_MIN } from "./view";
 
 type Props = {
   readonly state: StateSnapshot;
+  readonly building: Building | null;
+  readonly display: BuildingDisplay | null;
+  readonly buildingError: string | null;
   /** 실행이 일치하는 시나리오 정답만 넘어온다. 없으면 연기를 그리지 않는다. */
   readonly simulation: SimulationState | null;
 };
@@ -26,30 +28,14 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation }: Props) {
+export function BuildingPanel({ state, simulation, building, display, buildingError }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
-  const [building, setBuilding] = useState<Building | null>(null);
-  const [buildingError, setBuildingError] = useState<string | null>(null);
+  const [showNames, setShowNames] = useState(true);
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
   // 층 간격은 처음부터 조금 벌려 위층 바닥이 아래층 복도를 덮지 않게 한다.
   const [spread, setSpread] = useState(6);
   const [view, setView] = useState<{ mode: ViewMode; nonce: number }>({ mode: "ANGLE", nonce: 0 });
   const requestView = (mode: ViewMode) => setView((previous) => ({ mode, nonce: previous.nonce + 1 }));
-
-  // 공간 자료는 실행이나 건물 자료 버전이 바뀔 때만 다시 읽는다.
-  useEffect(() => {
-    const abort = new AbortController();
-    void (async () => {
-      try {
-        setBuilding(await fetchBuilding(abort.signal));
-        setBuildingError(null);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setBuildingError(error instanceof Error ? error.message : "공간 자료를 읽지 못했습니다");
-      }
-    })();
-    return () => abort.abort();
-  }, [state.run_id, state.building_id, state.building_version]);
 
   const smokeByZone = useMemo(() => {
     if (simulation === null) return null;
@@ -81,14 +67,14 @@ export function BuildingPanel({ state, simulation }: Props) {
   };
 
   const floorLabel = useMemo(
-    () => new Map((building?.floors ?? []).map((floor) => [floor.floor_id, floor.label])),
-    [building],
+    () => new Map((building?.floors ?? []).map((floor) => [floor.floor_id, display?.floor_labels[floor.floor_id] ?? floor.label])),
+    [building, display],
   );
 
   const problem =
     geometryError ??
     buildingError ??
-    (loading ? "형상 자료를 읽는 중입니다." : null) ??
+    (loading ? "형상 자료를 읽는 중입니다." : building === null ? "공간 자료를 읽는 중입니다." : null) ??
     (match !== null && !match.matched ? `${MISMATCH_LABEL[match.reason]} (${match.detail})` : null);
 
   return (
@@ -130,6 +116,7 @@ export function BuildingPanel({ state, simulation }: Props) {
               </button>
             </span>
             <span className="scene__tools">
+              <button type="button" className={showNames ? "chip chip--on" : "chip"} aria-pressed={showNames} onClick={() => setShowNames((previous) => !previous)}>공간 이름</button>
               <label className="scene__spread">
                 층 간격
                 <input
@@ -168,6 +155,7 @@ export function BuildingPanel({ state, simulation }: Props) {
           <BuildingScene
             geometry={geometry}
             building={building}
+            display={showNames ? display : null}
             state={state}
             smokeByZone={smokeByZone}
             visibleFloors={visibleFloors}
@@ -179,6 +167,7 @@ export function BuildingPanel({ state, simulation }: Props) {
             공간 {building.building_id} v{building.building_version} · 형상 {geometry.building_id} v
             {geometry.building_version} · 계단 A·B 밀폐, C·D 열림(평상시 안내에 쓰지 않음) · 층 간격은 보기용이며
             실제 층 높이와 경로는 바뀌지 않음
+            {display !== null && " · CAM은 가상 설치 위치, 관측 구역과 별도 · 한 층만 보면 방 입구 이름도 표시 · 겹친 이름은 확대하면 확인 가능"}
             {smokeByZone === null && " · 연기 정답 없음"}
           </p>
         </>

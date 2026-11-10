@@ -658,3 +658,5 @@ code {
   font-size: 12px;
   color: #6b7a8c;
 }
+
+.location-detail { display: block; margin-top: 0.3rem; color: var(--muted); font-size: 0.75rem; }
