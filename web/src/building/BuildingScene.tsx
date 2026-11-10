@@ -13,7 +13,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contracts";
 
 import type { BuildingGeometry } from "./geometry";
-import { visibleWalls, wallBox } from "./geometry";
+import { stairSteps, visibleWalls, wallBox } from "./geometry";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
@@ -23,9 +23,18 @@ import { clampTarget, displayY, fitPose, floorLift, planYaw, pointBox, visibleBo
 // M05: 바닥과 벽의 명암 차이를 키워 어두운 배경에서도 방·복도 윤곽이 보이게 한다.
 const COLOR = {
   slab: 0x2a3442,
-  wall: 0x7d8da3,
+  wall: 0xc9d1dc,
   stairEnclosed: 0x3f6b55,
   stairOpen: 0x55504a,
+  // 바닥 색. 안내(초록)·위험(빨강)·연기(주황)·선택 경로(노랑)와 겹치지 않게 채도를 낮췄다.
+  floorPassage: 0x3f6184,
+  floorRoom: 0x6a6152,
+  floorStair: 0x2f7a5c,
+  concrete: 0xe4e7ea,
+  glass: 0x3b8f99,
+  frame: 0x1c2b33,
+  stepEnclosed: 0x6fbf9a,
+  stepOpen: 0xc2ab80,
   node: 0x6b7a8c,
   guided: 0x22c55e,
   noRoute: 0x9ca3af,
@@ -105,6 +114,8 @@ type Handles = {
   disposables: Set<{ dispose(): void }>;
   /** 설비 아이콘 그림. 종류별로 한 번만 그려 모든 아이콘이 함께 쓴다. */
   icons: Map<IconKind, THREE.Texture>;
+  /** 건물 간판 그림. 층 표시를 바꿔 장면을 다시 만들어도 한 번만 그린다. */
+  signboard?: THREE.Texture | null;
   /** 현재 보이는 범위. 회전 중심을 이 안으로 묶는다. */
   box: ViewBox | null;
   /** 눌러서 고를 수 있는 지점 표시와 그 순서의 node_id. */
@@ -240,6 +251,29 @@ function iconSprite(handles: Handles, kind: IconKind, alwaysOnTop = false): THRE
   sprite.renderOrder = alwaysOnTop ? 21 : 15;
   sizeIcon(sprite, handles.renderer.getSize(new THREE.Vector2()).y);
   return sprite;
+}
+
+/** 건물 간판 그림. 붉은 WFi와 흰 기관명. 그림을 만들 수 없으면 null이고 간판 없이 그린다. */
+function signboardTexture(): THREE.Texture | null {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (context === null) return null;
+  const font = "bold 88px sans-serif";
+  const parts = [["WFi", "#e11d2e"], [" (재)원주미래산업진흥원", "#ffffff"]] as const;
+  context.font = font;
+  canvas.width = Math.ceil(parts.reduce((sum, [text]) => sum + context.measureText(text).width, 0)) + 16;
+  canvas.height = 120;
+  context.font = font;
+  context.textBaseline = "middle";
+  let x = 8;
+  for (const [text, color] of parts) {
+    context.fillStyle = color;
+    context.fillText(text, x, 62);
+    x += context.measureText(text).width;
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
@@ -475,6 +509,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       clearGroup(dynamicGroup);
       for (const item of handles.disposables) item.dispose();
       for (const texture of handles.icons.values()) texture.dispose();
+      handles.signboard?.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
       handlesRef.current = null;
@@ -490,6 +525,10 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     handles.zoneMeshes.clear();
     handles.smokeMeshes.clear();
 
+    const topFloorId = geometry.floors
+      .filter((floor) => visibleFloors.has(floor.floor_id))
+      .reduce<{ floor_id: string; elevation: number } | null>((top, floor) => (top === null || floor.elevation > top.elevation ? floor : top), null)
+      ?.floor_id;
     for (const floor of geometry.floors) {
       if (!visibleFloors.has(floor.floor_id)) continue;
 
@@ -504,8 +543,108 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       layFlat(slab, base);
       staticGroup.add(slab);
 
+      // 외관: 실제 건물처럼 층마다 흰 콘크리트 띠가 튀어나오고 그 사이는 어두운 유리 외벽이다.
+      // 안쪽은 지금처럼 위에서 들여다본다. 지붕은 내부를 가려 그리지 않고 맨 위층에 난간 띠만 두른다.
+      const xs = floor.slab.map((point) => point.x);
+      const zs = floor.slab.map((point) => point.z);
+      const [minX, maxX, minZ, maxZ] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+      const concrete = () => new THREE.MeshLambertMaterial({ color: COLOR.concrete });
+      const rect = (grow: number) => [
+        { x: minX - grow, z: minZ - grow }, { x: maxX + grow, z: minZ - grow },
+        { x: maxX + grow, z: maxZ + grow }, { x: minX - grow, z: maxZ + grow },
+      ];
+      const bandShape = shapeFrom(rect(1));
+      bandShape.holes.push(shapeFrom(rect(0)));
+      const bandTops = floor.floor_id === topFloorId ? [base, base + geometry.wall_height + 0.45] : [base];
+      for (const top of bandTops) {
+        const band = new THREE.Mesh(new THREE.ExtrudeGeometry(bandShape, { depth: 0.45, bevelEnabled: false }), concrete());
+        layFlat(band, top);
+        staticGroup.add(band);
+      }
+      const glass = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshLambertMaterial({ color: COLOR.glass, transparent: true, opacity: 0.32, depthWrite: false }),
+        4,
+      );
+      const place = new THREE.Matrix4();
+      const still = new THREE.Quaternion();
+      const midY = base + geometry.wall_height / 2;
+      [
+        [(minX + maxX) / 2, minZ - 0.08, maxX - minX, 0.1], [(minX + maxX) / 2, maxZ + 0.08, maxX - minX, 0.1],
+        [minX - 0.08, (minZ + maxZ) / 2, 0.1, maxZ - minZ], [maxX + 0.08, (minZ + maxZ) / 2, 0.1, maxZ - minZ],
+      ].forEach(([x, z, sizeX, sizeZ], index) => {
+        place.compose(new THREE.Vector3(x, midY, z), still, new THREE.Vector3(sizeX, geometry.wall_height, sizeZ));
+        glass.setMatrixAt(index, place);
+      });
+      glass.instanceMatrix.needsUpdate = true;
+      staticGroup.add(glass);
+
+      // 통창: 유리를 세로 창틀로 나눠 유리 외벽으로 읽히게 한다.
+      const frames: [number, number][] = [];
+      for (let x = minX; x <= maxX + 0.01; x += (maxX - minX) / Math.round((maxX - minX) / 1.8)) frames.push([x, minZ - 0.08], [x, maxZ + 0.08]);
+      for (let z = minZ; z <= maxZ + 0.01; z += (maxZ - minZ) / Math.round((maxZ - minZ) / 1.8)) frames.push([minX - 0.08, z], [maxX + 0.08, z]);
+      const mullions = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(0.12, geometry.wall_height, 0.12),
+        new THREE.MeshLambertMaterial({ color: COLOR.frame }),
+        frames.length,
+      );
+      frames.forEach(([x, z], index) => {
+        place.makeTranslation(x, midY, z);
+        mullions.setMatrixAt(index, place);
+      });
+      mullions.instanceMatrix.needsUpdate = true;
+      staticGroup.add(mullions);
+
+      // 간판: 맨 위층 유리 상단. 1층이 깊게 들어간 필로티 쪽(안내도 위쪽) 면을 밖에서 볼 때 오른쪽 끝이다.
+      if (floor.floor_id === topFloorId) {
+        handles.signboard ??= signboardTexture();
+        const texture = handles.signboard;
+        if (texture !== null) {
+          const image = texture.image as HTMLCanvasElement;
+          const width = (1.2 * image.width) / image.height;
+          const board = new THREE.Mesh(
+            new THREE.PlaneGeometry(width, 1.2),
+            new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
+          );
+          board.position.set(minX + width / 2 + 1.5, base + geometry.wall_height - 0.8, minZ - 0.2);
+          board.rotation.y = Math.PI;
+          board.renderOrder = 5;
+          staticGroup.add(board);
+        }
+      }
+
+      // 아래층보다 튀어나온 쪽은 기둥으로 받친다(1층 필로티).
+      const below = geometry.floors[geometry.floors.indexOf(floor) - 1];
+      if (below !== undefined && visibleFloors.has(below.floor_id)) {
+        const belowZs = below.slab.map((point) => point.z);
+        const belowBase = displayY(below.elevation, below.floor_id, lift);
+        const height = base - geometry.slab_thickness - belowBase;
+        const rows = [
+          ...(Math.min(...belowZs) - minZ > 0.5 ? [minZ + 0.5] : []),
+          ...(maxZ - Math.max(...belowZs) > 0.5 ? [maxZ - 0.5] : []),
+        ];
+        const perRow = Math.round((maxX - minX) / 6.4) + 1;
+        if (rows.length > 0 && height > 0) {
+          const columns = new THREE.InstancedMesh(new THREE.BoxGeometry(0.6, height, 0.6), concrete(), rows.length * perRow);
+          rows.forEach((z, row) => {
+            for (let index = 0; index < perRow; index += 1) {
+              place.makeTranslation(minX + 0.5 + (index * (maxX - minX - 1)) / (perRow - 1), belowBase + height / 2, z);
+              columns.setMatrixAt(row * perRow + index, place);
+            }
+          });
+          columns.instanceMatrix.needsUpdate = true;
+          staticGroup.add(columns);
+        }
+      }
+
       // 벽. 열린 계단 안의 난간 선은 빼고 하나의 인스턴스 메시로 그린다.
-      const walls = visibleWalls(floor, geometry.stairs);
+      // 건물 둘레의 벽은 불투명하게 세우지 않는다. 그 자리는 위의 유리 외벽이 맡아 안이 들여다보인다.
+      const near = (value: number, edge: number) => Math.abs(value - edge) < 0.4;
+      const walls = visibleWalls(floor, geometry.stairs).filter((wall) => {
+        const box = wallBox(wall);
+        return !(box.sizeZ < 0.5 && (near(box.centerZ, minZ) || near(box.centerZ, maxZ)))
+          && !(box.sizeX < 0.5 && (near(box.centerX, minX) || near(box.centerX, maxX)));
+      });
       if (walls.length > 0) {
         const mesh = new THREE.InstancedMesh(
           new THREE.BoxGeometry(1, 1, 1),
@@ -529,6 +668,19 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       // 구역 판. 관측 위험 표시에 재사용하므로 평소에는 숨겨 둔다.
       for (const zone of building.zones) {
         if (zone.floor_id !== floor.floor_id) continue;
+        // 바닥 색으로 통행 공간·방·계단을 구분한다. 뚫린 공간은 칠하지 않는다.
+        // shortcut: 구역 종류 필드가 없어 WFI zone_id 이름으로 가른다, 다른 건물을 넣으면 표시 자료에 종류를 둔다.
+        const tint = /STAIR/.test(zone.zone_id) ? COLOR.floorStair
+          : /CORR|PASSAGE|LOBBY/.test(zone.zone_id) ? COLOR.floorPassage
+          : /VOID/.test(zone.zone_id) ? null : COLOR.floorRoom;
+        if (tint !== null) {
+          const floorTint = new THREE.Mesh(
+            new THREE.ShapeGeometry(shapeFrom(zone.polygon)),
+            new THREE.MeshLambertMaterial({ color: tint, side: THREE.DoubleSide }),
+          );
+          layFlat(floorTint, base + 0.02);
+          staticGroup.add(floorTint);
+        }
         // 복도 구역은 폭이 2 m 안팎이라 얇은 판으로는 잘 보이지 않는다.
         // 낮은 띠로 두껍게 깔아 위에서도 눈에 들어오게 한다.
         const mesh = new THREE.Mesh(
@@ -584,6 +736,28 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       );
       layFlat(mesh, bottom);
       staticGroup.add(mesh);
+
+      // 층 사이마다 디딤판을 놓아 어느 층끼리 이어지는지 보이게 한다. 구간마다 방향을 뒤집어 꺾인 계단처럼 보인다.
+      const levels = [...elevations].sort((a, b) => a - b);
+      const steps = levels.slice(1).flatMap((upper, index) => stairSteps(stair.footprint, levels[index], upper, index % 2 === 1));
+      if (steps.length > 0) {
+        const treads = new THREE.InstancedMesh(
+          new THREE.BoxGeometry(1, 1, 1),
+          new THREE.MeshLambertMaterial({ color: stair.kind === "ENCLOSED" ? COLOR.stepEnclosed : COLOR.stepOpen }),
+          steps.length,
+        );
+        const matrix = new THREE.Matrix4();
+        steps.forEach((step, index) => {
+          matrix.compose(
+            new THREE.Vector3(step.centerX, step.centerY - 0.1, step.centerZ),
+            new THREE.Quaternion(),
+            new THREE.Vector3(step.sizeX, 0.2, step.sizeZ),
+          );
+          treads.setMatrixAt(index, matrix);
+        });
+        treads.instanceMatrix.needsUpdate = true;
+        staticGroup.add(treads);
+      }
     }
     handles.cameraIcons = [];
     handles.exitLabels = new Map();
