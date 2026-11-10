@@ -22,6 +22,7 @@ import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
 import { ManualFirePanel } from "./ManualFirePanel";
 import { CameraPreviewPanel } from "./CameraPreviewPanel";
+import { AiDemoSummary } from "./AiDemoSummary";
 import { useBuildingData } from "../building/useBuildingData";
 
 // three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
@@ -161,6 +162,7 @@ function Panel({
 export function ControlDashboard() {
   const view = useControlSnapshot();
   const [onlyUnavailable, setOnlyUnavailable] = useState(false);
+  const [presentation, setPresentation] = useState(false);
   // 고른 카메라는 미리보기와 3D 강조가 함께 쓴다.
   const [camera, setCamera] = useState<{ sourceId: string | null; locate: number }>({
     sourceId: null,
@@ -197,7 +199,7 @@ export function ControlDashboard() {
     : state.routes;
 
   return (
-    <main className="control">
+    <main className={presentation ? "control control--presentation" : "control"}>
       <header className="control__header">
         <div>
           <h1>saferoute 관제</h1>
@@ -206,7 +208,13 @@ export function ControlDashboard() {
             <strong>{state.guidance_version}</strong> · 기준 시각 {state.generated_at}
           </p>
         </div>
-        <Badge tone={MODE_TONE[state.controller_mode]}>{MODE_LABEL[state.controller_mode]}</Badge>
+        <div className="control__actions">
+          <button type="button" className={presentation ? "chip chip--on" : "chip"}
+            aria-pressed={presentation} onClick={() => setPresentation((previous) => !previous)}>
+            {presentation ? "기본 관제로 돌아가기" : "AI 시연 보기"}
+          </button>
+          <Badge tone={MODE_TONE[state.controller_mode]}>{MODE_LABEL[state.controller_mode]}</Badge>
+        </div>
       </header>
 
       {(health.stale || view.stateError !== null) && (
@@ -218,7 +226,7 @@ export function ControlDashboard() {
         </p>
       )}
 
-      <div className="tiles">
+      <div className="tiles control__overview">
         <Tile
           label="활성 경보"
           value={`${state.active_causes.length}건`}
@@ -265,39 +273,48 @@ export function ControlDashboard() {
 
       {space.displayError !== null && <p className="panel__note">위치 이름 표시: {space.displayError} · 기본 ID로 표시합니다.</p>}
 
-      <Suspense
-        fallback={
-          <section className="panel">
-            <p className="panel__empty">건물 3D를 불러오는 중입니다.</p>
-          </section>
-        }
-      >
-        <BuildingPanel
-          state={state}
-          simulation={simulation}
-          building={space.building}
-          display={display}
-          buildingError={space.buildingError}
-          highlightSourceId={camera.sourceId}
-          locateRequest={camera.locate}
-          stale={health.stale || view.stateError !== null}
-          demo={(startPicker, hasStart) => space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
-            building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null}
-            startPicker={startPicker} hasStart={hasStart} />}
-        />
-      </Suspense>
+      {presentation && <AiDemoSummary state={state} building={space.building} display={display}
+        sourceId={camera.sourceId} stale={health.stale || view.stateError !== null} />}
 
-      <CameraPreviewPanel
-        key={state.run_id}
-        state={state}
-        building={space.building}
-        display={display}
-        selectedSourceId={camera.sourceId}
-        onSelect={(sourceId) => setCamera({ sourceId, locate: 0 })}
-        onLocate={(sourceId) =>
-          setCamera((previous) => ({ sourceId, locate: previous.locate + 1 }))
-        }
-      />
+      <div className="control__visuals">
+        <div className="control__building">
+          <Suspense
+            fallback={
+              <section className="panel">
+                <p className="panel__empty">건물 3D를 불러오는 중입니다.</p>
+              </section>
+            }
+          >
+            <BuildingPanel
+              state={state}
+              simulation={simulation}
+              building={space.building}
+              display={display}
+              buildingError={space.buildingError}
+              highlightSourceId={camera.sourceId}
+              locateRequest={camera.locate}
+              stale={health.stale || view.stateError !== null}
+              demo={(startPicker, hasStart) => space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
+                building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null}
+                startPicker={startPicker} hasStart={hasStart} />}
+            />
+          </Suspense>
+        </div>
+
+        <div className="control__camera">
+          <CameraPreviewPanel
+            key={`${state.run_id}/${state.building_id}/${state.building_version}/${camera.sourceId}`}
+            state={state}
+            building={space.building}
+            display={display}
+            selectedSourceId={camera.sourceId}
+            onSelect={(sourceId) => setCamera((previous) => ({ ...previous, sourceId }))}
+            onLocate={(sourceId) =>
+              setCamera((previous) => ({ sourceId, locate: previous.locate + 1 }))
+            }
+          />
+        </div>
+      </div>
 
       <Panel
         title="상황 설명"

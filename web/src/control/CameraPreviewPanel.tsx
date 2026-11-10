@@ -45,7 +45,7 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
   const check = checkPreview(view.preview, state, selected === null ? null : selected.source_id);
 
   // 그림과 상자는 훅이 한 덩어리로 들고 있다. 늘 같은 프레임이고, 지워질 때도 함께 사라진다.
-  const shown = view.shown;
+  const shown = check.usable ? view.shown : null;
   const frame = shown?.frame ?? null;
 
   const sourceDisplay = selected === null ? null : display?.sources[selected.source_id] ?? null;
@@ -59,7 +59,7 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
       <header className="panel__head">
         <h2>CCTV 추론 미리보기</h2>
         <span className="panel__note">
-          모델이 본 화면입니다. 상자가 보여도 경보·경로는 제어기 판단을 따릅니다
+          AI 분석 프레임입니다. 검출 신뢰도는 정확도가 아니며 경보·경로는 제어기 판단을 따릅니다
         </span>
       </header>
 
@@ -123,7 +123,7 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
                           }}
                         >
                           <span className="camera__box-label">
-                            {HAZARD_LABEL[detection.hazard_type]} {(detection.confidence * 100).toFixed(0)}%
+                            {HAZARD_LABEL[detection.hazard_type]} · 신뢰도 {(detection.confidence * 100).toFixed(0)}%
                           </span>
                         </span>
                       );
