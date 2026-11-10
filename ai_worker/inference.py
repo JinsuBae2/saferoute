@@ -1,5 +1,6 @@
 import hashlib
 import importlib.metadata
+import json
 import os
 from pathlib import Path
 import platform
@@ -54,13 +55,36 @@ class Detector:
             backend = self.model.predictor.model.backend
             if backend.use_io_binding:
                 raise ValueError("ONNX CPU worker must not use device IO binding")
-            backend.session = ort.InferenceSession(str(path), options, providers=["CPUExecutionProvider"])
+            provider_options = None
+            if config.onnx_provider == "openvino":
+                import onnxruntime_ep_openvino as ep
+                ep_name = ep.get_ep_name()
+                if ep_name not in ort.get_available_providers():
+                    ort.register_execution_provider_library("saferoute_openvino", ep.get_library_path())
+                devices = [d for d in ort.get_ep_devices() if d.ep_name == ep_name
+                           and d.device.type == ort.OrtHardwareDeviceType.CPU]
+                if len(devices) != 1:
+                    raise ValueError("exactly one OpenVINO CPU device is required")
+                options.intra_op_num_threads = 1  # fallback ops; OpenVINO owns the compute pool
+                provider_options = {"load_config": json.dumps({"CPU": {
+                    "INFERENCE_NUM_THREADS": config.cpu_threads, "NUM_STREAMS": 1,
+                    "INFERENCE_PRECISION_HINT": "f32", "PERFORMANCE_HINT": "LATENCY",
+                    "ENABLE_HYPER_THREADING": True}})}
+                options.add_provider_for_devices(devices, provider_options)
+                backend.session = ort.InferenceSession(str(path), options, enable_fallback=0)
+                if ep_name not in backend.session.get_providers():
+                    raise ValueError("OpenVINO CPU provider was not activated")
+            else:
+                backend.session = ort.InferenceSession(str(path), options, providers=["CPUExecutionProvider"])
             backend.session_options = options
             self.predict(np.zeros((config.imgsz, config.imgsz, 3), dtype=np.uint8))
             onnx_runtime = dict(version=ort.__version__, providers=backend.session.get_providers(),
                                 intra_op_num_threads=backend.session.get_session_options().intra_op_num_threads,
                                 allow_spinning=backend.session.get_session_options().get_session_config_entry(
                                     "session.intra_op.allow_spinning"))
+            if provider_options is not None:
+                onnx_runtime.update(openvino_plugin=package_version("onnxruntime-ep-openvino"),
+                                    provider_options_requested=provider_options)
         self.metadata = dict(model_classes=dict(self.model.names), device="cpu", python=platform.python_version(), os=platform.platform(),
                              cpu=platform.processor(), logical_cpu_count=os.cpu_count(),
                              torch_threads=torch.get_num_threads(),
