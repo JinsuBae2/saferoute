@@ -660,3 +660,10 @@ code {
 }
 
 .location-detail { display: block; margin-top: 0.3rem; color: var(--muted); font-size: 0.75rem; }
+
+.manual-fire summary { cursor: pointer; font-weight: 600; }
+.manual-fire__zone { display: grid; gap: 0.5rem; margin: 1rem 0; }
+.manual-fire select { max-width: 100%; padding: 0.6rem; color: inherit; background: #151e28; border: 1px solid #465466; border-radius: 6px; }
+.manual-fire__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.manual-fire__actions button { padding: 0.6rem 0.8rem; color: inherit; background: #263442; border: 1px solid #6d7c8d; border-radius: 6px; cursor: pointer; }
+.manual-fire__actions button:disabled { opacity: 0.45; cursor: not-allowed; }

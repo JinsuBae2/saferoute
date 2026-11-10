@@ -37,13 +37,13 @@
 
 ## 3. 시험 화재 제어 연결
 
-현재 WFI v3에는 MANUAL_TEST가 없다. 따라서 이 버전에서는 임의 구역의 수동 FIRE 주입을 제공할 수 없다. #72에서 시험용 관측원을 건물 설정에 등록하고 새 실행으로 적용하며 공간/형상/표시 자료의 건물 버전을 함께 맞춘다. 현재 VIDEO_AI source_id를 시험 화재에 재사용하지 않는다.
+WFI v4는 기존 감지기 관측 구역 12곳에 선택 입력인 MANUAL_TEST 관측원을 등록한다(#72). 공간/형상/표시 자료와 시나리오 버전을 함께 맞췄다. VIDEO_AI source_id를 시험 화재에 재사용하지 않는다. 자세한 조작·제한은 [B06 시험 조작](b06-manual-fire.md)을 따른다.
 
 | 작업 | 기존 API·입력 | 결과/실패 |
 | --- | --- | --- |
 | 발생 | POST /api/events, 등록된 MANUAL_TEST + 허용 FIRE, event_kind=ALARM | EventReceipt 수락. 경로는 다음 StateSnapshot으로 확인 |
 | 해제 | POST /api/control/clear, 현재 run_id + 해당 source_id + FIRE + reason | 해당 원인만 해제. 다른 관측원의 경보·관측 장애는 유지 |
-| 초기화 | POST /api/control/reset, 의도한 run_id + reason | 새 실행. 선택·비교 경로·순번 상태를 정리하고 관측 준비/arm을 다시 확인 |
+| 전체 실행 초기화(기존 CLI) | POST /api/control/reset, 의도한 run_id + reason | 새 실행. 선택·비교 경로·순번 상태를 정리하고 관측 준비/arm을 다시 확인 |
 
 `manual_fire`는 형식 예제이며 MANUAL-A가 기본 TWO_ROUTE/WFI에 등록됐다는 뜻이 아니다. 미등록 상태로 보내면 UNKNOWN_SOURCE(404), 유형/허용 원인 불일치 INVALID_EVENT_COMBINATION(400), 과거 실행·역순 입력은 RUN_MISMATCH/STALE_SEQUENCE(409), 임의 zone_id 추가는 SCHEMA_VALIDATION_FAILED(422)다. clear의 비활성 원인은 SOURCE_CAUSE_INACTIVE(409)다.
 

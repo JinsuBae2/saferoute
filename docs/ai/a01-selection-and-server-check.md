@@ -88,7 +88,7 @@ Linux x86_64 / manylinux_2_39 / Python 3.12 대상 `uv pip compile`은 기존 39
 
 - 5번/Q01: manifest의 6개 원본과 파생 장면은 모두 development다. 이 자료의 인접 구간을 잘라 독립 평가로 옮기지 않는다. 실제 영상 전체를 검토한 독립 정답은 아직 제공되지 않았으며 [정답 형식 예제](../../data/expected/ai/evaluation.example.json)도 fixture다. 기존 4개 전달 ZIP과 현재 6개 목록을 혼동하지 않는다. 원본은 manifest의 URL·해시로 확보하고 사용 조건을 함께 확인한다.
 - 2번/배포: AI lock과 별도 환경·ffprobe는 [A03-1 실행 조건](a03-input-failures.md)을 따른다. CPU 로컬 측정을 서버 성능으로 옮기지 않는다. 실제 Bedrock 설명은 A05 #41이며 개발 보조용 Claude 로그인과 다르다.
-- 1·3·5번/통합: 현재 `data/space/wfi-v1.json`과 `wfi-geometry-v1.json`은 **WFI v3**다. `configs/ai.example.json`은 **TWO_ROUTE v1 / CAM-A / Z-A** 계약 시험용이므로 WFI 서버에 그대로 사용하지 않는다.
-- WFI 연결 시 `/api/building`과 `/api/session`을 기준으로 로컬 AI 설정의 building_id·building_version·source_id·expected_zone_id를 함께 맞춘다. 현재 예는 `WFI / 3 / CAM-F2-CORR-W / F2-CORR-W`이며 수동 시연 매핑이다. 카메라 설치 위치와 관측 구역이 같다고 가정하지 않는다. 건물 버전 변경 후에는 다시 확인한다.
+- 1·3·5번/통합: 현재 `data/space/wfi-v1.json`과 `wfi-geometry-v1.json`은 **WFI v4**다. `configs/ai.example.json`은 **TWO_ROUTE v1 / CAM-A / Z-A** 계약 시험용이므로 WFI 서버에 그대로 사용하지 않는다.
+- WFI 연결 시 `/api/building`과 `/api/session`을 기준으로 로컬 AI 설정의 building_id·building_version·source_id·expected_zone_id를 함께 맞춘다. 현재 예는 `WFI / 4 / CAM-F2-CORR-W / F2-CORR-W`이며 수동 시연 매핑이다. 카메라 설치 위치와 관측 구역이 같다고 가정하지 않는다. 건물 버전 변경 후에는 다시 확인한다.
 - WFI의 필수 감지기 12개와 arm 조건은 유지한다. AI 카메라 연결 하나만으로 전체 초기 관측이 충족되지 않는다. 운전 중 필수 관측이 끊기면 #65 정책대로 해당 구역을 제외해 경로를 계산한다. AI가 장애를 정상 관측으로 덮어쓰거나 자동 arm·reset·clear하지 않는다.
 - 기존 A05 #41 설명 연결을 우선하고, 추가 A06 #73은 실제 프레임·검출 표시 데이터만 제공한다. 화면은 담당 3의 P06 #74, 위치 표시 기준은 담당 2의 #68과 연결한다. 3D·프론트의 별도 시점/화면 기능을 AI 작업에서 중복 구현하지 않는다.

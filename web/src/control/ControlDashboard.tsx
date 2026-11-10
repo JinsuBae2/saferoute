@@ -19,6 +19,7 @@ import {
 import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
+import { ManualFirePanel } from "./ManualFirePanel";
 import { useBuildingData } from "../building/useBuildingData";
 
 // three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
@@ -225,6 +226,9 @@ export function ControlDashboard() {
       >
         <BuildingPanel state={state} simulation={simulation} building={space.building} display={display} buildingError={space.buildingError} />
       </Suspense>
+
+      {space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
+        building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null} />}
 
       <Panel
         title="상황 설명"
@@ -483,7 +487,7 @@ export function ControlDashboard() {
       </Panel>
 
       <footer className="control__footer">
-        이 화면은 조회만 합니다. 닫아도 제어기와 유도등 단말은 그대로 동작합니다.
+        시험 조작 패널 외에는 조회만 합니다. 화면을 닫아도 활성 경보와 제어기·유도등 단말은 그대로 유지됩니다.
       </footer>
     </main>
   );
