@@ -7,13 +7,17 @@ import { describe, expect, it } from "vitest";
 import type { Building } from "@contracts";
 import { building as buildingSample } from "@samples";
 import rawGeometry from "@space/wfi-geometry-v1.json";
+import rawBuilding from "@space/wfi-v1.json";
 
 import {
   GeometryFormatError,
   insidePolygon,
   isInsideOpenStair,
   matchesBuilding,
+  nearestStair,
   parseGeometry,
+  stairCenterline,
+  stairRun,
   stairSteps,
   visibleWalls,
   wallBox,
@@ -198,5 +202,70 @@ describe("다각형 포함 판정", () => {
     expect(insidePolygon({ x: 5, z: 5 }, square)).toBe(true);
     expect(insidePolygon({ x: 15, z: 5 }, square)).toBe(false);
     expect(insidePolygon({ x: 5, z: -1 }, square)).toBe(false);
+  });
+});
+
+describe("안내도 모양의 계단", () => {
+  const stair = (id: string) => GEOMETRY.stairs.find((item) => item.stair_id === id)!;
+
+  it("밀폐 계단은 들어선 쪽으로 되돌아오는 꺾인 계단이다", () => {
+    const { points } = stairCenterline(stair("A"), null);
+    expect(points).toHaveLength(4);
+    // 올라가는 줄과 되돌아오는 줄이 나란하고, 시작과 끝이 같은 쪽에 있다.
+    expect(points[0].z).toBeCloseTo(points[3].z);
+    expect(points[0].x).not.toBeCloseTo(points[3].x);
+  });
+
+  it("들어서는 지점 쪽에서 시작하도록 방향을 맞춘다", () => {
+    const base = stairCenterline(stair("D"), null).points;
+    const flipped = stairCenterline(stair("D"), base[base.length - 1]).points;
+    expect(flipped[0]).toEqual(base[base.length - 1]);
+  });
+
+  it("밀폐 계단은 두 줄 가운데 들어서는 지점에 가까운 줄에서 시작한다", () => {
+    const base = stairCenterline(stair("A"), null).points;
+    expect(stairCenterline(stair("A"), base[3]).points[0]).toEqual(base[3]);
+  });
+
+  it("계단 지점이 계단 범위 밖(앞 복도)에 있어도 두 층을 잇는 가장 가까운 계단을 고른다", () => {
+    const stairs = [stair("A"), stair("B"), stair("C"), stair("D")];
+    // 실제 자료의 계단 지점 좌표. 대부분 계단 범위 바깥이다.
+    expect(nearestStair(stairs, "F1", "F2", { x: 14.0, z: 16.2 })?.stair_id).toBe("A");
+    expect(nearestStair(stairs, "F1", "F2", { x: 37.2, z: 15.9 })?.stair_id).toBe("B");
+    expect(nearestStair(stairs, "F2", "F3", { x: 34.1, z: 15.2 })?.stair_id).toBe("B");
+    expect(nearestStair(stairs, "F1", "F2", { x: 23.0, z: 16.0 })?.stair_id).toBe("C");
+    // C가 더 가깝더라도 2·3층을 잇지 않으므로 D를 고른다.
+    expect(nearestStair(stairs, "F2", "F3", { x: 27.8, z: 16.5 })?.stair_id).toBe("D");
+    expect(nearestStair(stairs, "F1", "F9", { x: 0, z: 0 })).toBeNull();
+  });
+
+  it("실제 건물의 층간 통로는 모두 계단을 찾고, 계단 길이 그 통로의 양 끝 지점 가까이에서 시작하고 끝난다", () => {
+    const building = rawBuilding as unknown as Building;
+    const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
+    const links = building.edges.flatMap((edge) => {
+      const from = nodes.get(edge.from_node_id)!;
+      const to = nodes.get(edge.to_node_id)!;
+      return from.floor_id !== to.floor_id && from.position.y < to.position.y ? [{ from, to }] : [];
+    });
+    expect(links).toHaveLength(6);
+    for (const { from, to } of links) {
+      const entry = { x: from.position.x, z: from.position.z };
+      const found = nearestStair(GEOMETRY.stairs, from.floor_id, to.floor_id, entry);
+      expect(found, from.node_id).not.toBeNull();
+      const { points } = stairCenterline(found!, entry);
+      const gap = (point: { x: number; z: number }, node: typeof from) => Math.hypot(point.x - node.position.x, point.z - node.position.z);
+      // 계단 앞 복도에서 첫 디딤판까지, 마지막 디딤판에서 위층 지점까지 몇 걸음 이내여야 한다.
+      // 꺾인 계단은 올라간 줄의 옆줄로 내려서므로 위쪽은 계단참 폭만큼 여유를 둔다.
+      expect(gap(points[0], from), `${from.node_id} 시작`).toBeLessThan(2.5);
+      expect(gap(points[points.length - 1], to), `${to.node_id} 끝`).toBeLessThan(3);
+    }
+  });
+
+  it("디딤판은 중심선을 따라 아래층에서 위층 바닥까지 고르게 오른다", () => {
+    const { points, width } = stairCenterline(stair("C"), null);
+    const steps = stairRun(points, width, 0, 4);
+    expect(steps.length).toBeGreaterThanOrEqual(8);
+    expect(steps[steps.length - 1].y).toBeCloseTo(4);
+    for (let index = 1; index < steps.length; index += 1) expect(steps[index].y).toBeGreaterThan(steps[index - 1].y);
   });
 });

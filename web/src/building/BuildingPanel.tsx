@@ -11,6 +11,7 @@ import type { Building, BuildingDisplay, Position, SimulationState, StateSnapsho
 import { BuildingScene } from "./BuildingScene";
 import { matchesBuilding } from "./geometry";
 import type { JourneyTrack } from "./journey";
+import type { PeopleCount } from "./people";
 import { advanceTrack, describeJourney, trackContext } from "./journey";
 import { JourneyPanel, StartPicker } from "./JourneyPanel";
 import { useBuildingGeometry } from "./useBuildingGeometry";
@@ -52,6 +53,14 @@ const MISMATCH_LABEL = {
 export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, demo }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
+  // 전체 안내(초록 화살표·선). 현재 위치를 고르면 그 경로만 보이게 끄고, 버튼으로 다시 켤 수 있다.
+  const [showGuidance, setShowGuidance] = useState(true);
+  // 시연용 대피 인원. 방 입구마다 한 명이 서 있다가 화재 대응이 되면 서버 경로를 따라 걷는다.
+  const [showPeople, setShowPeople] = useState(true);
+  const [people, setPeople] = useState<PeopleCount | null>(null);
+  // 1인칭으로 따라갈 사람. 3D에서 사람을 누르면 들어가고, 그 사람이 빠져나가면 저절로 나온다.
+  const [follow, setFollow] = useState<number | null>(null);
+  const firstPerson = follow !== null && showPeople;
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
   // 층 간격은 처음부터 조금 벌려 위층 바닥이 아래층 복도를 덮지 않게 한다.
   const [spread, setSpread] = useState(6);
@@ -89,6 +98,7 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
   const startId = start !== null && start.runKey === runKey ? start.nodeId : null;
   const chooseStart = (nodeId: string | null) => {
     setStart(nodeId === null ? null : { runKey, nodeId });
+    setShowGuidance(nodeId === null);
     setSelectedSign(null);
   };
 
@@ -125,6 +135,7 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
     [geometry, building],
   );
 
+  const allFloors = useMemo(() => new Set(geometry?.floors.map((floor) => floor.floor_id) ?? []), [geometry]);
   const visibleFloors = useMemo(() => {
     const all = geometry?.floors.map((floor) => floor.floor_id) ?? [];
     return new Set(all.filter((id) => !hiddenFloors.has(id)));
@@ -195,6 +206,17 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             </span>
             <span className="scene__tools">
               <button type="button" className={showNames ? "chip chip--on" : "chip"} aria-pressed={showNames} onClick={() => setShowNames((previous) => !previous)}>공간 이름</button>
+              <button type="button" className={showGuidance ? "chip chip--on" : "chip"} aria-pressed={showGuidance} onClick={() => setShowGuidance((previous) => !previous)}>전체 안내</button>
+              {showPeople && people !== null && people.total > 0 && (
+                // 작은 사람을 정확히 누르기 어려우므로 버튼으로도 들어간다. 누를 때마다 다음 사람으로 넘어간다.
+                <button type="button" className="chip" onClick={() => setFollow((previous) => ((previous ?? -1) + 1) % people.total)}>
+                  {firstPerson ? "다음 사람" : "1인칭 보기"}
+                </button>
+              )}
+              {firstPerson && (
+                <button type="button" className="chip chip--on" onClick={() => { setFollow(null); requestView(view.mode); }}>1인칭 나가기</button>
+              )}
+              <button type="button" className={showPeople ? "chip chip--on" : "chip"} aria-pressed={showPeople} onClick={() => setShowPeople((previous) => !previous)}>대피 인원</button>
               <label className="scene__spread">
                 층 간격
                 <input
@@ -225,11 +247,18 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             <span className="scene__legend">
               <span className="key key--guided" /> 안내 경로
               <span className="key key--fire" /> 관측 위험(바닥 판)
-              <span className="key key--smoke" /> 시험 연기 정답(차오름)
+              <span className="key key--smoke" /> 연기
               <span className="key key--muted" /> 안내 불가
               <span className="key key--sign-exit" /> 출구 유도등
               <span className="key key--sign-dir" /> 방향 유도등(방향은 바닥 화살표)
               <span className="key key--camera" /> CCTV
+              {showPeople && people !== null && (
+                <>
+                  <span className="key key--person" /> 사람 {people.total}명 (이동 {people.moving} · 탈출 {people.out})
+                  <span className="key key--person-stuck" /> 멈춤 {people.stuck}
+                  <small> · 사람을 누르면 1인칭</small>
+                </>
+              )}
               {startId !== null && (
                 <>
                   <span className="key key--journey" /> 선택 위치 경로
@@ -244,10 +273,20 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             building={building}
             display={display}
             showNames={showNames}
+            showGuidance={showGuidance}
+            showPeople={showPeople}
+            stale={stale}
+            onPeople={setPeople}
+            followIndex={firstPerson ? follow : null}
+            onFollow={(index) => {
+              setFollow(index);
+              // 나올 때는 보던 시점 모드로 화면을 다시 맞춘다.
+              if (index === null) requestView(view.mode);
+            }}
             state={state}
             smokeByZone={smokeByZone}
-            visibleFloors={visibleFloors}
-            spread={spread}
+            visibleFloors={firstPerson ? allFloors : visibleFloors}
+            spread={firstPerson ? 0 : spread}
             view={view}
             highlightSourceId={highlightSourceId}
             journey={sceneJourney}
@@ -274,7 +313,7 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             {geometry.building_version} · 계단 A·B 밀폐, C·D 열림(평상시 안내에 쓰지 않음) · 층 간격은 보기용이며
             실제 층 높이와 경로는 바뀌지 않음
             {display !== null && " · CAM은 가상 설치 위치, 관측 구역과 별도 · 한 층만 보면 방 입구 이름도 표시 · 겹친 이름은 확대하면 확인 가능"}
-            {smokeByZone === null && " · 연기 정답 없음"}
+            {smokeByZone === null && " · 연기 정보 없음"}
           </p>
         </>
       )}

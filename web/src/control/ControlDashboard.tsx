@@ -535,8 +535,9 @@ export function ControlDashboard() {
       </Panel>
 
       <Panel
-        title="시나리오 연기 정답"
-        note="시험용 값이며 제어기가 관측한 위험과 다릅니다"
+        title="연기"
+        note="시뮬레이션의 구역별 연기 농도입니다. 제어기는 이 값이 아니라 감지기 관측으로 판단합니다"
+        folding
       >
         {simulation === null ? (
           <p className="panel__empty">
