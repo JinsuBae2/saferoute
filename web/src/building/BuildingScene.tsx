@@ -109,6 +109,8 @@ type Handles = {
   box: ViewBox | null;
   /** 눌러서 고를 수 있는 지점 표시와 그 순서의 node_id. */
   pick: { mesh: THREE.InstancedMesh; ids: readonly string[] } | null;
+  /** CCTV 아이콘과 그 이름표. 이름표는 평소 숨기고 아이콘에 커서를 올렸을 때만 보인다. */
+  cameraIcons: { icon: THREE.Sprite; label: THREE.Sprite | null }[];
 };
 
 /** 두 점을 잇는 굵은 막대. 선 굵기는 WebGL에서 1px로 고정돼 경로 강조에 쓸 수 없다. */
@@ -336,6 +338,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       icons: new Map(),
       box: null,
       pick: null,
+      cameraIcons: [],
     };
     handlesRef.current = handles;
 
@@ -363,6 +366,27 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointerup", onUp);
 
+    // CCTV 이름표: 아이콘에 커서를 올린 동안만 보인다.
+    const showCameraLabel = (target: THREE.Sprite | null) => {
+      for (const { icon, label } of handles.cameraIcons) {
+        if (label !== null) label.visible = icon === target;
+      }
+      renderer.domElement.style.cursor = target === null ? "" : "pointer";
+    };
+    const onMove = (event: PointerEvent) => {
+      if (handles.cameraIcons.length === 0) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      raycaster.setFromCamera(
+        new THREE.Vector2(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1),
+        camera,
+      );
+      const hit = raycaster.intersectObjects(handles.cameraIcons.map((item) => item.icon), false)[0];
+      showCameraLabel(hit?.object instanceof THREE.Sprite ? hit.object : null);
+    };
+    const onLeave = () => showCameraLabel(null);
+    renderer.domElement.addEventListener("pointermove", onMove);
+    renderer.domElement.addEventListener("pointerleave", onLeave);
+
     // 화면을 끌어도 회전 중심이 건물 밖으로 멀리 나가지 않게 한다.
     const keepInside = () => {
       if (handles.box === null) return;
@@ -383,6 +407,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         if (!(child instanceof THREE.Sprite)) return [];
         // 설비 아이콘은 이름표 겹침 정리 대상이 아니다. 늘 보여야 한다.
         if (child.userData.iconKind !== undefined) return [];
+        // CCTV 이름표는 커서를 올렸을 때만 보이므로 겹침 정리에서 뺀다.
+        if (child.userData.cameraLabel === true) return [];
         child.visible = false;
         const point = child.position.clone().project(camera);
         if (point.z < -1 || point.z > 1) return [];
@@ -425,6 +451,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       controls.removeEventListener("change", keepInside);
       renderer.domElement.removeEventListener("pointerdown", onDown);
       renderer.domElement.removeEventListener("pointerup", onUp);
+      renderer.domElement.removeEventListener("pointermove", onMove);
+      renderer.domElement.removeEventListener("pointerleave", onLeave);
       controls.dispose();
       clearGroup(staticGroup);
       clearGroup(dynamicGroup);
@@ -540,15 +568,23 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       layFlat(mesh, bottom);
       staticGroup.add(mesh);
     }
+    handles.cameraIcons = [];
+    const viewportHeight = handles.renderer.getSize(new THREE.Vector2()).y;
     for (const label of sceneLabels(building, display, visibleFloors)) {
       const y = displayY(label.position.y, label.floorId, lift);
-      // 이름표는 "공간 이름"을 켰을 때만. CCTV 아이콘은 이름표와 관계없이 그린다.
-      const sprite = showNames ? nameSprite(label.text, handles.renderer.getSize(new THREE.Vector2()).y) : null;
+      // 공간 이름표는 "공간 이름"을 켰을 때만. CCTV 이름표는 따로, 아이콘에 커서를 올렸을 때만 보인다.
+      const sprite = showNames || label.camera ? nameSprite(label.text, viewportHeight) : null;
       if (sprite !== null) {
         sprite.position.set(label.position.x, y + 0.5, label.position.z);
-        // 카메라 이름표는 카메라 아이콘 바로 위에 띄운다.
-        if (label.camera) sprite.center.set(0.5, -1.15);
         sprite.userData.priority = label.priority;
+        if (label.camera) {
+          // 아이콘(높이 32px) 위로 6px 띄워 아이콘에 가리지 않게 하고, 아이콘보다 나중에 그린다.
+          const labelPixels = (sprite.userData.labelHeight as number) * 0.6;
+          sprite.center.set(0.5, -(ICON_PIXELS.CAMERA.height / 2 + 6) / labelPixels);
+          sprite.userData.cameraLabel = true;
+          sprite.renderOrder = 23;
+          sprite.visible = false;
+        }
         staticGroup.add(sprite);
       }
       if (label.camera) {
@@ -557,6 +593,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         if (icon !== null) {
           icon.position.set(label.position.x, y + 0.5, label.position.z);
           staticGroup.add(icon);
+          handles.cameraIcons.push({ icon, label: sprite });
         } else {
           const camera = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 8), new THREE.MeshBasicMaterial({ color: COLOR.camera }));
           camera.position.set(label.position.x, y, label.position.z);
