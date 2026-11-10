@@ -61,9 +61,13 @@ export function stepPeople(
         person.status = "MOVING";
       }
       // 걷는 중에도 떠나온 지점의 안내를 다시 본다. 다른 쪽을 가리키면 가던 길을 버리고 돌아선다.
-      const behind = routes.get(person.from);
-      if (evacuating && person.returning !== true && behind !== undefined && behind.reason_codes.length === 0
-        && behind.next_node_id !== null && behind.next_node_id !== person.to) {
+      // 돌아가는 동안에는 돌아갈 지점의 안내를 확인한다. 방금 떠난 위험 지점의 안내는 쓰지 않는다.
+      const guidance = routes.get(person.returning === true ? person.to : person.from);
+      if (guidance === undefined || guidance.reason_codes.length > 0) {
+        person.status = "STUCK";
+        break;
+      }
+      if (person.returning !== true && guidance.next_node_id !== null && guidance.next_node_id !== person.to) {
         [person.from, person.to] = [person.to, person.from];
         person.progress = 1 - person.progress;
         person.returning = true;
