@@ -12,12 +12,16 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contracts";
 
-import type { BuildingGeometry } from "./geometry";
-import { stairSteps, visibleWalls, wallBox } from "./geometry";
+import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
+import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
+import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseFigure, signFaceTexture, softDotTexture } from "./assets";
+import { insidePolygon, nearestStair, stairCenterline, stairRun, visibleWalls, wallBox } from "./geometry";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
+import type { PeopleCount, Person } from "./people";
+import { countPeople, spawnPeople, stepPeople } from "./people";
 import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
-import type { ViewBox, ViewMode } from "./view";
+import type { FloorLift, ViewBox, ViewMode } from "./view";
 import { clampTarget, displayY, fitPose, floorLift, planYaw, pointBox, visibleBox } from "./view";
 
 // M05: 바닥과 벽의 명암 차이를 키워 어두운 배경에서도 방·복도 윤곽이 보이게 한다.
@@ -31,6 +35,9 @@ const COLOR = {
   floorRoom: 0x6a6152,
   floorStair: 0x2f7a5c,
   concrete: 0xe4e7ea,
+  wallCap: 0x9aa7b8,
+  slide: 0xfbbf24,
+  door: 0x8a6b4a,
   glass: 0x3b8f99,
   frame: 0x1c2b33,
   stepEnclosed: 0x6fbf9a,
@@ -50,6 +57,9 @@ const COLOR = {
   // 주황은 시험용 연기 정답 전용이라 섞이면 정답을 보고 판단하는 것처럼 보인다.
   hazard: 0xef4444,
   // M06: 고른 출발점의 경로. 전체 안내(초록)와 섞이지 않게 노랑, 직전 경로는 회색 점선.
+  // 시연용 대피 인원. 안내·위험·연기·선택 경로·카메라 색과 겹치지 않게 분홍, 멈춘 사람은 짙은 보라.
+  person: 0xff5fd2,
+  personStuck: 0x7c3aed,
   journey: 0xfacc15,
   journeyPrevious: 0x94a3b8,
 } as const;
@@ -58,6 +68,14 @@ const COLOR = {
 const DIMMED = 0.18;
 
 const FOV = 50;
+
+/** 대피 인원이 걷는 속도(m/s). 보통 걸음에 가깝게 두어 연기가 번지는 동안 경로가 바뀌는 것이 보이게 한다. */
+const PEOPLE_SPEED = 1.2;
+
+/** 출구에서 미끄럼틀을 타고 빠져나가는 시간(초)과 미끄럼틀의 길이·낙차(m). */
+const SLIDE_SECONDS = 1.8;
+const SLIDE_LENGTH = 4.5;
+const SLIDE_DROP = 0.9;
 
 /** 카메라 한 대를 찾을 때 함께 보이는 범위(m). 너무 좁으면 어디인지 알 수 없다. */
 const FOCUS_REACH = 9;
@@ -71,6 +89,18 @@ type Props = {
    * 출구 유도등·CCTV 아이콘은 남긴다.
    */
   readonly showNames?: boolean;
+  /** 시연용 대피 인원을 그릴지. 서버 경로를 따라 걷는 표시일 뿐 실제 인원이 아니다. */
+  readonly showPeople?: boolean;
+  /** 연결이 끊겨 상태가 오래됨. 사람이 옛 경로로 걷지 않게 세운다. */
+  readonly stale?: boolean;
+  /** 이동 중·탈출·멈춤 인원 수가 바뀔 때. */
+  readonly onPeople?: (count: PeopleCount) => void;
+  /** 1인칭으로 따라갈 사람의 순번. null이면 평소 시점이다. */
+  readonly followIndex?: number | null;
+  /** 3D에서 사람을 눌렀거나(순번), 따라가던 사람이 빠져나갔을 때(null). */
+  readonly onFollow?: (index: number | null) => void;
+  /** 전체 안내(지점별 초록 화살표·선)를 그릴지. 꺼도 지점·유도등·위험·선택 경로는 남는다. */
+  readonly showGuidance?: boolean;
   readonly state: StateSnapshot;
   /** 시나리오 실행기의 구역별 연기 정답. 제어 판단과 분리된 시험값이다. */
   readonly smokeByZone: ReadonlyMap<string, number> | null;
@@ -110,7 +140,20 @@ type Handles = {
   staticGroup: THREE.Group;
   dynamicGroup: THREE.Group;
   zoneMeshes: Map<string, THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshBasicMaterial>>;
-  smokeMeshes: Map<string, THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshBasicMaterial>>;
+  /** 연기 입자. 구역마다 천장 아래에 흩어 두고 농도에 따라 보이게 한다. */
+  smokeGroup: THREE.Group;
+  smokePuffs: SmokePuff[];
+  /** 천장 표지판의 면. 서버 표시값이 바뀌면 그림만 바꾼다. */
+  signFaces: Map<string, Map<string, SignFaceMesh>>;
+  /** 화재 경보 구역의 불꽃. */
+  fireGroup: THREE.Group;
+  fires: Fire[];
+  fireKey: string;
+  /** 1인칭에서 연기 속을 뿌옇게 하는 안개. */
+  fog: THREE.FogExp2;
+  /** 위아래 색이 다른 주변광. 1인칭에서는 천장 아랫면이 검게 죽지 않게 아래쪽 색을 밝힌다. */
+  hemisphere: THREE.HemisphereLight;
+  uplight: THREE.DirectionalLight;
   disposables: Set<{ dispose(): void }>;
   /** 설비 아이콘 그림. 종류별로 한 번만 그려 모든 아이콘이 함께 쓴다. */
   icons: Map<IconKind, THREE.Texture>;
@@ -134,6 +177,69 @@ function liftLabelAbove(label: THREE.Sprite, iconPixelsAboveAnchor: number) {
   label.userData.hoverLabel = true;
   label.renderOrder = 23;
   label.visible = false;
+}
+
+/**
+ * 계단 한 구간(아래층→위층)의 디딤판. 그릴 때와 사람이 걸을 때 같은 값을 써서 발이 디딤판 위에 놓이게 한다.
+ */
+function flightSteps(building: Building, geometry: BuildingGeometry, stair: GeometryStair, lowerId: string, upperId: string, lift: FloorLift): readonly StairStepAlong[] {
+  const elevation = (id: string) => geometry.floors.find((floor) => floor.floor_id === id)?.elevation ?? 0;
+  // 들어서는 지점: 두 층을 잇는 통로 가운데 이 계단으로 이어지는 것의 아래쪽 끝.
+  const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
+  let entry: { x: number; z: number } | null = null;
+  for (const edge of building.edges) {
+    const from = nodes.get(edge.from_node_id);
+    const to = nodes.get(edge.to_node_id);
+    if (from === undefined || to === undefined || from.floor_id !== lowerId || to.floor_id !== upperId) continue;
+    const point = { x: from.position.x, z: from.position.z };
+    if (nearestStair(geometry.stairs, lowerId, upperId, point) !== stair) continue;
+    entry = point;
+    break;
+  }
+  const { points, width } = stairCenterline(stair, entry);
+  return stairRun(points, width, displayY(elevation(lowerId), lowerId, lift), displayY(elevation(upperId), upperId, lift));
+}
+
+type PlacedNode = { readonly floor_id: string; readonly position: { readonly x: number; readonly y: number; readonly z: number } };
+
+/**
+ * 층이 다른 두 지점을 잇는 길(a에서 b로). 계단 디딤판을 따라간다. 같은 층이거나 계단을 못 찾으면 null.
+ * 사람이 걷는 길과 화면에 그리는 경로 선이 이 값을 함께 써서, 선이 바닥을 뚫거나 사람이 허공으로 떨어지지 않는다.
+ */
+function stairLink(building: Building, geometry: BuildingGeometry, lift: FloorLift, a: PlacedNode, b: PlacedNode, height = 0): THREE.Vector3[] | null {
+  if (a.floor_id === b.floor_id) return null;
+  const [lower, upper] = a.position.y < b.position.y ? [a, b] : [b, a];
+  const stair = nearestStair(geometry.stairs, lower.floor_id, upper.floor_id, { x: lower.position.x, z: lower.position.z });
+  if (stair === null) return null;
+  const point = (node: PlacedNode) => new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, lift) + height, node.position.z);
+  const path = [
+    point(lower),
+    ...flightSteps(building, geometry, stair, lower.floor_id, upper.floor_id, lift).map((step) => new THREE.Vector3(step.x, step.y + height, step.z)),
+    point(upper),
+  ];
+  return a === lower ? path : path.reverse();
+}
+
+function pathLength(path: readonly THREE.Vector3[]): number {
+  let total = 0;
+  for (let index = 1; index < path.length; index += 1) total += path[index].distanceTo(path[index - 1]);
+  return total;
+}
+
+/** 바닥에 눕히는 흐린 방 이름. 읽을 수는 있지만 경로·위험 표시를 가리지 않게 옅게 그린다. */
+function floorNameTexture(text: string): THREE.CanvasTexture | null {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (context === null) return null;
+  const font = "600 64px sans-serif";
+  context.font = font;
+  canvas.width = Math.ceil(context.measureText(text).width) + 24;
+  canvas.height = 88;
+  context.font = font;
+  context.textBaseline = "middle";
+  context.fillStyle = "#ffffff";
+  context.fillText(text, 12, 46);
+  return new THREE.CanvasTexture(canvas);
 }
 
 /** 두 점을 잇는 굵은 막대. 선 굵기는 WebGL에서 1px로 고정돼 경로 강조에 쓸 수 없다. */
@@ -207,8 +313,13 @@ function clearGroup(group: THREE.Group) {
     } else if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
       child.geometry.dispose();
       const material = child.material;
+      // 방 이름처럼 그 메시만 쓰는 그림은 함께 정리한다.
+      if (child.userData.ownsMap === true && material instanceof THREE.MeshBasicMaterial) material.map?.dispose();
       if (Array.isArray(material)) material.forEach((item) => item.dispose());
       else material.dispose();
+    } else {
+      // 표지판·문처럼 여러 메시를 묶은 그룹.
+      disposeTree(child);
     }
   }
 }
@@ -309,7 +420,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, showNames = true, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
+export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, onFollow, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -318,6 +429,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     pickRef.current = onPickNode;
   }, [onPickNode]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
+  const firstPersonView = followIndex !== null;
+  const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string } | null>(null);
 
   const nodeById = useMemo(
     () => new Map(building.nodes.map((node) => [node.node_id, node])),
@@ -332,6 +445,12 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     [building],
   );
 
+  // 그리기 반복은 한 번만 만들어지므로, 매번 바뀌는 값은 참조로 넘긴다.
+  const liveRef = useRef({ state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
+  useEffect(() => {
+    liveRef.current = { state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
+  });
+
   // 1) 렌더러·카메라·조작. 한 번만 만든다.
   useEffect(() => {
     const mount = mountRef.current;
@@ -345,6 +464,10 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
     mount.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -354,10 +477,22 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     controls.maxPolarAngle = Math.PI / 2 - 0.08;
 
     // 위아래 색이 다른 하늘빛으로 벽 윗면과 옆면을 구분하고, 두 방향 조명으로 그늘진 면도 밝힌다.
-    scene.add(new THREE.HemisphereLight(0xdfe8f5, 0x1a2230, 1.6));
+    const hemisphere = new THREE.HemisphereLight(0xdfe8f5, 0x1a2230, 1.6);
+    scene.add(hemisphere);
+    // 아래에서 위로 비추는 빛. 1인칭에서 천장(위층 바닥 아랫면)이 검게 죽지 않게 그때만 켠다.
+    const uplight = new THREE.DirectionalLight(0xffffff, 0);
+    uplight.position.set(0, -10, 0);
+    scene.add(uplight);
     const key = new THREE.DirectionalLight(0xffffff, 1.5);
     key.position.set(40, 80, 50);
-    scene.add(key);
+    // 그림자. 위층 바닥이 아래층을 덮어 너무 어두워지지 않게 옅게 드리운다.
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    Object.assign(key.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 260 });
+    key.shadow.bias = -0.0005;
+    key.shadow.intensity = 0.55;
+    key.target.position.set(22, 6, 14);
+    scene.add(key, key.target);
     const fill = new THREE.DirectionalLight(0xbcd0ff, 0.6);
     fill.position.set(-30, 40, -40);
     scene.add(fill);
@@ -369,7 +504,15 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
 
     const staticGroup = new THREE.Group();
     const dynamicGroup = new THREE.Group();
-    scene.add(staticGroup, dynamicGroup);
+    const smokeGroup = new THREE.Group();
+    const fireGroup = new THREE.Group();
+    scene.add(staticGroup, dynamicGroup, smokeGroup, fireGroup);
+    // 불빛. 개수가 바뀌면 재질을 다시 엮느라 끊기므로 두 개를 미리 두고 불이 있을 때만 밝힌다.
+    const fireLights = [0, 1].map(() => {
+      const light = new THREE.PointLight(0xff7a2a, 0, 13, 2);
+      scene.add(light);
+      return light;
+    });
 
     const handles: Handles = {
       renderer,
@@ -379,7 +522,15 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       staticGroup,
       dynamicGroup,
       zoneMeshes: new Map(),
-      smokeMeshes: new Map(),
+      smokeGroup,
+      smokePuffs: [],
+      signFaces: new Map(),
+      fireGroup,
+      fires: [],
+      fireKey: "",
+      fog: new THREE.FogExp2(0x2b2f36, 0.012),
+      hemisphere,
+      uplight,
       disposables: new Set(),
       icons: new Map(),
       box: null,
@@ -399,7 +550,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     const onUp = (event: PointerEvent) => {
       const startedAt = downAt;
       downAt = null;
-      if (startedAt === null || handles.pick === null || pickRef.current === undefined) return;
+      if (startedAt === null) return;
       if (Math.hypot(event.clientX - startedAt.x, event.clientY - startedAt.y) > 5) return;
       const rect = renderer.domElement.getBoundingClientRect();
       const pointer = new THREE.Vector2(
@@ -407,6 +558,18 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         -((event.clientY - rect.top) / rect.height) * 2 + 1,
       );
       raycaster.setFromCamera(pointer, camera);
+      // 사람을 누르면 그 사람의 1인칭 시점으로 들어간다. 지점보다 먼저 본다.
+      const people = peopleRef.current;
+      if (people !== null && liveRef.current.follow === null) {
+        const targets = [...people.markers, ...people.figures.map((figure) => figure.group)].filter((item) => item.visible);
+        let picked: THREE.Object3D | null = raycaster.intersectObjects(targets, true)[0]?.object ?? null;
+        while (picked !== null && picked.userData.personIndex === undefined) picked = picked.parent;
+        if (picked !== null) {
+          liveRef.current.onFollow?.(picked.userData.personIndex as number);
+          return;
+        }
+      }
+      if (handles.pick === null || pickRef.current === undefined) return;
       const hit = raycaster.intersectObject(handles.pick.mesh, false)[0];
       const nodeId = hit?.instanceId === undefined ? undefined : handles.pick.ids[hit.instanceId];
       if (nodeId !== undefined) pickRef.current(nodeId);
@@ -448,14 +611,177 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     };
     controls.addEventListener("change", keepInside);
 
+    // 대피 인원: 매 프레임 서버의 최신 경로를 읽어 한 걸음씩 옮긴다.
+    let lastFrame = performance.now();
+    let viewYaw = 0;
+    let viewPitch = 0;
+    let lastFollow: number | null = null;
+    const stairCache: { lift: unknown; geometry: unknown; paths: Map<string, THREE.Vector3[] | null> } = { lift: null, geometry: null, paths: new Map() };
+    const movePeople = (seconds: number, time: number) => {
+      const people = peopleRef.current;
+      if (people === null) return;
+      const live = liveRef.current;
+      const at = (nodeId: string) => {
+        const node = live.nodeById.get(nodeId);
+        return node === undefined ? null : new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, live.lift), node.position.z);
+      };
+      // 층을 오르내리는 구간은 계단 디딤판을 따라 걷는다. 두 지점을 곧게 이으면 허공으로 떨어지는 것처럼 보인다.
+      if (stairCache.lift !== live.lift || stairCache.geometry !== live.geometry) {
+        stairCache.lift = live.lift;
+        stairCache.geometry = live.geometry;
+        stairCache.paths.clear();
+      }
+      const stairPath = (fromId: string, toId: string): THREE.Vector3[] | null => {
+        const key = `${fromId}>${toId}`;
+        const cached = stairCache.paths.get(key);
+        if (cached !== undefined) return cached;
+        const a = live.nodeById.get(fromId);
+        const b = live.nodeById.get(toId);
+        const path = a === undefined || b === undefined ? null : stairLink(live.building, live.geometry, live.lift, a, b);
+        stairCache.paths.set(key, path);
+        return path;
+      };
+      const routes = new Map(live.state.routes.map((route) => [route.node_id, route]));
+      stepPeople(
+        people.list,
+        routes,
+        // 연결이 끊겨 상태가 오래됐으면 옛 경로로 걷지 않고 선다.
+        live.state.controller_mode === "EMERGENCY" && !live.stale,
+        (from, to) => {
+          // 계단은 실제로 걷는 꺾은선 길이로 잰다. 곧은 거리로 재면 계단에서만 몇 배 빨라진다.
+          const stair = stairPath(from, to);
+          if (stair !== null) return pathLength(stair);
+          const a = live.nodeById.get(from)?.position;
+          const b = live.nodeById.get(to)?.position;
+          return a === undefined || b === undefined ? 1 : Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+        },
+        seconds * PEOPLE_SPEED,
+      );
+      /** 꺾은선 위에서 비율만큼 간 점과 그 자리의 진행 방향. */
+      const along = (path: THREE.Vector3[], ratio: number) => {
+        const lengths = path.slice(1).map((point, index) => point.distanceTo(path[index]));
+        let left = lengths.reduce((sum, value) => sum + value, 0) * Math.min(Math.max(ratio, 0), 1);
+        for (let index = 0; index < lengths.length; index += 1) {
+          if (left <= lengths[index] || index === lengths.length - 1) {
+            const share = lengths[index] === 0 ? 0 : Math.min(left / lengths[index], 1);
+            return { point: path[index].clone().lerp(path[index + 1], share), heading: path[index + 1].clone().sub(path[index]) };
+          }
+          left -= lengths[index];
+        }
+        return { point: path[0].clone(), heading: new THREE.Vector3() };
+      };
+      let sliding = false;
+      people.list.forEach((person, index) => {
+        const figure = people.figures[index];
+        const marker = people.markers[index];
+        const from = at(person.from);
+        const floorId = live.nodeById.get(person.from)?.floor_id;
+        // 출구에 닿으면 바로 사라지지 않고 미끄럼틀을 타고 밖으로 빠져나간다.
+        const exiting = person.status === "OUT" && people.slide[index] < SLIDE_SECONDS;
+        if (exiting) people.slide[index] += seconds;
+        const shown = live.showPeople && from !== null && floorId !== undefined && live.visibleFloors.has(floorId) && (person.status !== "OUT" || exiting);
+        // 따라가는 사람 자신은 그리지 않는다. 눈앞에 자기 몸이 걸린다.
+        figure.group.visible = shown && index !== live.follow;
+        marker.visible = shown && live.follow === null;
+        if (!shown || from === null) return;
+        let point = from;
+        let heading = new THREE.Vector3();
+        if (exiting) {
+          const ratio = Math.min(people.slide[index] / SLIDE_SECONDS, 1);
+          // 처음엔 천천히, 갈수록 빨리. 앞으로 간 만큼만 내려가야 기울어진 판 위에 붙어 있다.
+          const slid = ratio * (0.4 + 0.6 * ratio);
+          heading = new THREE.Vector3(Math.sin(people.yaw[index]), 0, Math.cos(people.yaw[index]));
+          point = from.clone().addScaledVector(heading, slid * SLIDE_LENGTH);
+          // 판 높이에서 앉은 만큼 더 낮춘다.
+          point.y -= slid * SLIDE_DROP + 0.45 * Math.min(ratio * 4, 1);
+          if (index === live.follow) sliding = true;
+        } else if (person.to !== null) {
+          const path = stairPath(person.from, person.to);
+          const to = at(person.to);
+          if (path !== null) ({ point, heading } = along(path, person.progress));
+          else if (to !== null) {
+            heading = to.clone().sub(from);
+            point = from.clone().lerp(to, person.progress);
+          }
+        }
+        // 같은 길을 걷는 사람이 한 점에 겹치지 않게 조금씩 비켜 세운다. 계단과 미끄럼틀에서는 한 줄로 간다.
+        if (!exiting && heading.y === 0) {
+          point.x += ((index % 3) - 1) * 0.35;
+          point.z += ((index % 2) - 0.5) * 0.5;
+        }
+        figure.group.position.copy(point);
+        if (heading.x * heading.x + heading.z * heading.z > 0.0001) people.yaw[index] = Math.atan2(heading.x, heading.z);
+        // 걷는 길의 기울기. 계단에서는 내려가는 쪽(또는 올라가는 쪽)을 보게 하는 데 쓴다.
+        people.slope[index] = person.to === null ? 0 : Math.atan2(heading.y, Math.hypot(heading.x, heading.z));
+        figure.group.rotation.set(exiting ? -0.5 : 0, people.yaw[index], 0, "YXZ");
+        poseFigure(figure, time * 6 + index, person.status === "MOVING");
+        if (exiting) {
+          // 앉아서 다리를 앞으로 뻗고 팔을 든다.
+          figure.limbs[0].rotation.x = figure.limbs[1].rotation.x = -2.4;
+          figure.limbs[2].rotation.x = figure.limbs[3].rotation.x = -1.3;
+        }
+        marker.position.set(point.x, point.y + 2.4, point.z);
+        marker.material.color.setHex(person.status === "STUCK" ? COLOR.personStuck : COLOR.person);
+      });
+      const count = countPeople(people.list);
+      const key = `${count.moving}/${count.out}/${count.stuck}`;
+      if (key !== people.key) {
+        people.key = key;
+        live.onPeople?.(count);
+      }
+      // 1인칭: 고른 사람의 눈높이에서 걷는 방향을 본다.
+      const justPicked = live.follow !== lastFollow;
+      lastFollow = live.follow;
+      if (live.follow === null) return;
+      const followed = people.list[live.follow];
+      const figure = people.figures[live.follow];
+      if (followed === undefined || figure === undefined || (followed.status === "OUT" && !sliding)) {
+        // 이미 탈출한 사람을 골랐으면 아직 안에 있는 다음 사람으로 넘어간다.
+        // 따라가던 사람이 미끄럼틀을 다 내려가 빠져나간 경우에는 1인칭에서 나온다.
+        const start = live.follow;
+        const next = justPicked
+          ? people.list.findIndex((_, offset) => people.list[(start + 1 + offset) % people.list.length].status !== "OUT")
+          : -1;
+        live.onFollow?.(next === -1 ? null : (start + 1 + next) % people.list.length);
+        // 화면이 새 선택을 반영하기 전에 다음 프레임이 먼저 올 수 있다. 그때도 '방금 고름'으로 보도록 기록을 지운다.
+        if (next !== -1) lastFollow = null;
+        return;
+      }
+      // 처음 들어갈 때는 그 사람이 보는 쪽에서 바로 시작한다. 천천히 돌면 벽을 보며 시작한다.
+      if (justPicked) viewYaw = people.yaw[live.follow];
+      camera.position.set(figure.group.position.x, figure.group.position.y + (sliding ? 1.1 : 1.6), figure.group.position.z);
+      // 계단처럼 한 줄로 걷는 곳에서는 바로 앞사람 몸통이 화면을 덮는다. 팔 닿을 거리 안의 사람은 그리지 않는다.
+      for (const other of people.figures) {
+        if (other !== figure && other.group.visible && other.group.position.distanceTo(figure.group.position) < 1.1) other.group.visible = false;
+      }
+      // 가까운 쪽으로 천천히 돌아 갈림길에서 화면이 홱 꺾이지 않게 한다.
+      const turn = Math.atan2(Math.sin(people.yaw[live.follow] - viewYaw), Math.cos(people.yaw[live.follow] - viewYaw));
+      viewYaw += turn * Math.min(1, seconds * 4);
+      // 계단에서는 발 디딜 쪽을 본다. 내려갈 때는 아래를, 올라갈 때는 위를 향하고, 미끄럼틀에서는 내려다본다.
+      const slope = Math.max(-0.75, Math.min(0.5, people.slope[live.follow]));
+      const pitch = sliding ? -0.35 : -0.05 + slope * 0.9;
+      viewPitch += (pitch - viewPitch) * Math.min(1, seconds * 4);
+      camera.rotation.set(viewPitch, viewYaw + Math.PI, 0, "YXZ");
+      const zoneId = live.nodeById.get(followed.from)?.zone_id;
+      handles.fog.density = 0.012 + 0.11 * (zoneId === undefined ? 0 : live.smokeByZone?.get(zoneId) ?? 0);
+    };
+
     let frame = 0;
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      controls.update();
+      const following = liveRef.current.follow !== null;
+      // 1인칭에서는 궤도 조작이 카메라를 되돌리지 않게 건너뛴다.
+      if (!following) controls.update();
       camera.updateMatrixWorld();
       const size = renderer.getSize(new THREE.Vector2());
       const labels = staticGroup.children.flatMap((child) => {
         if (!(child instanceof THREE.Sprite)) return [];
+        // 1인칭에서는 이름표와 떠 있는 아이콘을 모두 감춘다. 실제 표지판만 보인다.
+        if (following) {
+          child.visible = false;
+          return [];
+        }
+        if (child.userData.iconKind !== undefined) child.visible = true;
         // 설비 아이콘은 이름표 겹침 정리 대상이 아니다. 늘 보여야 한다.
         if (child.userData.iconKind !== undefined) return [];
         // CCTV·출구 이름표는 커서를 올렸을 때만 보이므로 겹침 정리에서 뺀다.
@@ -475,6 +801,26 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       });
       const visible = visibleLabelIndexes(labels.map((label) => label.box));
       labels.forEach((label, index) => { label.sprite.visible = visible.has(index); });
+      const now = performance.now();
+      // 탭이 숨었다 돌아오면 한 번에 멀리 뛰지 않게 한 프레임의 시간을 묶는다.
+      const seconds = Math.min((now - lastFrame) / 1000, 0.2);
+      const time = now / 1000;
+      lastFrame = now;
+      movePeople(seconds, time);
+      // 불꽃과 불빛, 연기.
+      for (const fire of handles.fires) fire.update(time, seconds);
+      fireLights.forEach((light, index) => {
+        const fire = handles.fires[index];
+        if (fire === undefined) {
+          light.intensity = 0;
+          return;
+        }
+        light.position.copy(fire.object.position);
+        light.position.y += 1.2;
+        light.intensity = 26 + Math.sin(time * 13 + index) * 5 + Math.sin(time * 29) * 3;
+      });
+      const live = liveRef.current;
+      for (const puff of handles.smokePuffs) placeSmoke(puff, live.smokeByZone?.get(puff.zoneId) ?? 0, live.wallHeight, time);
       renderer.render(scene, camera);
     };
     animate();
@@ -507,6 +853,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       controls.dispose();
       clearGroup(staticGroup);
       clearGroup(dynamicGroup);
+      clearGroup(smokeGroup);
+      clearGroup(fireGroup);
       for (const item of handles.disposables) item.dispose();
       for (const texture of handles.icons.values()) texture.dispose();
       handles.signboard?.dispose();
@@ -516,6 +864,59 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     };
   }, []);
 
+  // 1-1) 대피 인원. 실행이 바뀌면 방 입구에 다시 세운다. 표시를 껐다 켜는 것은 보이기만 바꾸고 사람의 상태는 그대로 둔다.
+  useEffect(() => {
+    const handles = handlesRef.current;
+    if (handles === null) return;
+    const list = spawnPeople(building);
+    if (list.length === 0) return;
+    const group = new THREE.Group();
+    const figures = list.map((_, index) => {
+      const figure = createFigure(index);
+      figure.group.userData.personIndex = index;
+      group.add(figure.group);
+      return figure;
+    });
+    // 위에서 내려다볼 때 사람을 찾기 쉽게 머리 위에 점을 띄운다. 1인칭에서는 감춘다.
+    const markers = list.map((_, index) => {
+      const marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: softDotTexture(), color: COLOR.person, depthTest: false, depthWrite: false, sizeAttenuation: false }));
+      marker.scale.set(0.028, 0.028, 1);
+      marker.renderOrder = 12;
+      marker.userData.personIndex = index;
+      group.add(marker);
+      return marker;
+    });
+    handles.scene.add(group);
+    // 처음에는 문에서 나갈 쪽을 본다. 모두 같은 쪽을 보면 1인칭이 벽이나 문을 보며 시작한다.
+    const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
+    const facing = list.map((person) => {
+      const here = nodes.get(person.from);
+      const ahead = nodes.get(building.edges.find((edge) => edge.from_node_id === person.from)?.to_node_id ?? "");
+      return here === undefined || ahead === undefined ? 0 : Math.atan2(ahead.position.x - here.position.x, ahead.position.z - here.position.z);
+    });
+    peopleRef.current = { list, group, figures, markers, yaw: facing, slope: list.map(() => 0), slide: list.map(() => 0), key: "" };
+    return () => {
+      handles.scene.remove(group);
+      disposeTree(group);
+      for (const marker of markers) marker.material.dispose();
+      peopleRef.current = null;
+    };
+  }, [building, state.run_id]);
+
+  // 1-2) 1인칭 전환. 시야를 넓히고 궤도 조작을 끈다. 나오면 2-1의 화면 맞춤이 시점을 되돌린다.
+  useEffect(() => {
+    const handles = handlesRef.current;
+    if (handles === null) return;
+    const firstPerson = followIndex !== null;
+    handles.controls.enabled = !firstPerson;
+    handles.camera.fov = firstPerson ? 72 : FOV;
+    handles.camera.near = firstPerson ? 0.1 : 0.5;
+    handles.camera.updateProjectionMatrix();
+    handles.scene.fog = firstPerson ? handles.fog : null;
+    handles.hemisphere.groundColor.setHex(firstPerson ? 0xb9c2cf : 0x1a2230);
+    handles.uplight.intensity = firstPerson ? 1.4 : 0;
+  }, [followIndex]);
+
   // 2) 정적 형상: 바닥·벽·계단·구역 판. 형상이나 층 표시가 바뀔 때만 다시 만든다.
   useEffect(() => {
     const handles = handlesRef.current;
@@ -523,8 +924,16 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     const { staticGroup } = handles;
     clearGroup(staticGroup);
     handles.zoneMeshes.clear();
-    handles.smokeMeshes.clear();
+    clearGroup(handles.smokeGroup);
+    handles.smokePuffs = [];
+    handles.signFaces = new Map();
+    const edgeByDoor = new Map(building.edges.filter((edge) => edge.kind === "DOOR").map((edge) => [edge.from_node_id, edge.to_node_id]));
 
+    // 1인칭에서는 벽을 천장까지 올려 옆방이 넘겨다보이지 않게 한다. 평소에는 위에서 들여다보도록 낮게 둔다.
+    const wallHeight = firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height;
+    const elevationById = new Map(geometry.floors.map((floor) => [floor.floor_id, floor.elevation]));
+    const lowestFloorOf = (stair: GeometryStair) => [...stair.floors].sort((a, b) => (elevationById.get(a) ?? 0) - (elevationById.get(b) ?? 0))[0];
+    const groundElevation = Math.min(...geometry.floors.map((floor) => floor.elevation));
     const topFloorId = geometry.floors
       .filter((floor) => visibleFloors.has(floor.floor_id))
       .reduce<{ floor_id: string; elevation: number } | null>((top, floor) => (top === null || floor.elevation > top.elevation ? floor : top), null)
@@ -535,13 +944,65 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       // 바닥. 뚫린 공간은 구멍으로 판다.
       const slabShape = shapeFrom(floor.slab);
       for (const hole of floor.slab_holes) slabShape.holes.push(shapeFrom(hole.polygon));
+      // 계단이 올라오는 자리는 바닥을 뚫는다. 막혀 있으면 계단을 걷는 사람이 바닥을 뚫고 지나간다.
+      // 이미 뚫린 공간 안에 있는 계단은 겹쳐 뚫지 않는다.
+      for (const stair of geometry.stairs) {
+        if (!stair.floors.includes(floor.floor_id) || floor.floor_id === lowestFloorOf(stair)) continue;
+        const center = {
+          x: stair.footprint.reduce((sum, point) => sum + point.x, 0) / stair.footprint.length,
+          z: stair.footprint.reduce((sum, point) => sum + point.z, 0) / stair.footprint.length,
+        };
+        if (floor.slab_holes.some((hole) => insidePolygon(center, hole.polygon))) continue;
+        slabShape.holes.push(shapeFrom(stair.footprint));
+      }
       const slab = new THREE.Mesh(
         new THREE.ExtrudeGeometry(slabShape, { depth: geometry.slab_thickness, bevelEnabled: false }),
         new THREE.MeshLambertMaterial({ color: COLOR.slab }),
       );
       const base = displayY(floor.elevation, floor.floor_id, lift);
       layFlat(slab, base);
+      slab.receiveShadow = true;
+      slab.castShadow = true;
       staticGroup.add(slab);
+      // 뚫린 공간 둘레의 유리 난간. 계단이 올라오는 자리는 비워 둔다.
+      for (const hole of floor.slab_holes) {
+        const rail = new THREE.Group();
+        const pane = new THREE.MeshLambertMaterial({ color: COLOR.glass, transparent: true, opacity: 0.35, depthWrite: false });
+        const bar = new THREE.MeshLambertMaterial({ color: COLOR.frame });
+        hole.polygon.forEach((from, index) => {
+          const to = hole.polygon[(index + 1) % hole.polygon.length];
+          const length = Math.hypot(to.x - from.x, to.z - from.z);
+          const pieces = Math.max(1, Math.round(length / 0.9));
+          for (let piece = 0; piece < pieces; piece += 1) {
+            const x = from.x + ((to.x - from.x) * (piece + 0.5)) / pieces;
+            const z = from.z + ((to.z - from.z) * (piece + 0.5)) / pieces;
+            const onStair = geometry.stairs.some((stair) => {
+              if (!stair.floors.includes(floor.floor_id)) return false;
+              const sx = stair.footprint.map((point) => point.x);
+              const sz = stair.footprint.map((point) => point.z);
+              return x > Math.min(...sx) - 0.4 && x < Math.max(...sx) + 0.4 && z > Math.min(...sz) - 0.4 && z < Math.max(...sz) + 0.4;
+            });
+            if (onStair) continue;
+            for (const [material, height, y, thick] of [[pane, 1.05, 0.55, 0.03], [bar, 0.05, 1.1, 0.06]] as const) {
+              const part = new THREE.Mesh(new THREE.BoxGeometry(thick, height, length / pieces), material);
+              part.position.set(x, base + y, z);
+              part.rotation.y = Math.atan2(to.x - from.x, to.z - from.z);
+              rail.add(part);
+            }
+          }
+        });
+        staticGroup.add(rail);
+      }
+
+      // 맨 위층은 위에 바닥이 없으므로 1인칭일 때만 천장을 덮는다.
+      if (firstPersonView && floor.floor_id === topFloorId) {
+        const ceiling = new THREE.Mesh(
+          new THREE.ExtrudeGeometry(shapeFrom(floor.slab), { depth: geometry.slab_thickness, bevelEnabled: false }),
+          new THREE.MeshLambertMaterial({ color: COLOR.concrete }),
+        );
+        layFlat(ceiling, base + geometry.floor_height);
+        staticGroup.add(ceiling);
+      }
 
       // 외관: 실제 건물처럼 층마다 흰 콘크리트 띠가 튀어나오고 그 사이는 어두운 유리 외벽이다.
       // 안쪽은 지금처럼 위에서 들여다본다. 지붕은 내부를 가려 그리지 않고 맨 위층에 난간 띠만 두른다.
@@ -555,7 +1016,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       ];
       const bandShape = shapeFrom(rect(1));
       bandShape.holes.push(shapeFrom(rect(0)));
-      const bandTops = floor.floor_id === topFloorId ? [base, base + geometry.wall_height + 0.45] : [base];
+      const bandTops = floor.floor_id === topFloorId ? [base, base + wallHeight + 0.45] : [base];
       for (const top of bandTops) {
         const band = new THREE.Mesh(new THREE.ExtrudeGeometry(bandShape, { depth: 0.45, bevelEnabled: false }), concrete());
         layFlat(band, top);
@@ -568,12 +1029,12 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       );
       const place = new THREE.Matrix4();
       const still = new THREE.Quaternion();
-      const midY = base + geometry.wall_height / 2;
+      const midY = base + wallHeight / 2;
       [
         [(minX + maxX) / 2, minZ - 0.08, maxX - minX, 0.1], [(minX + maxX) / 2, maxZ + 0.08, maxX - minX, 0.1],
         [minX - 0.08, (minZ + maxZ) / 2, 0.1, maxZ - minZ], [maxX + 0.08, (minZ + maxZ) / 2, 0.1, maxZ - minZ],
       ].forEach(([x, z, sizeX, sizeZ], index) => {
-        place.compose(new THREE.Vector3(x, midY, z), still, new THREE.Vector3(sizeX, geometry.wall_height, sizeZ));
+        place.compose(new THREE.Vector3(x, midY, z), still, new THREE.Vector3(sizeX, wallHeight, sizeZ));
         glass.setMatrixAt(index, place);
       });
       glass.instanceMatrix.needsUpdate = true;
@@ -584,7 +1045,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       for (let x = minX; x <= maxX + 0.01; x += (maxX - minX) / Math.round((maxX - minX) / 1.8)) frames.push([x, minZ - 0.08], [x, maxZ + 0.08]);
       for (let z = minZ; z <= maxZ + 0.01; z += (maxZ - minZ) / Math.round((maxZ - minZ) / 1.8)) frames.push([minX - 0.08, z], [maxX + 0.08, z]);
       const mullions = new THREE.InstancedMesh(
-        new THREE.BoxGeometry(0.12, geometry.wall_height, 0.12),
+        new THREE.BoxGeometry(0.12, wallHeight, 0.12),
         new THREE.MeshLambertMaterial({ color: COLOR.frame }),
         frames.length,
       );
@@ -606,7 +1067,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
             new THREE.PlaneGeometry(width, 1.2),
             new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
           );
-          board.position.set(minX + width / 2 + 1.5, base + geometry.wall_height - 0.8, minZ - 0.2);
+          board.position.set(minX + width / 2 + 1.5, base + wallHeight - 0.8, minZ - 0.2);
           board.rotation.y = Math.PI;
           board.renderOrder = 5;
           staticGroup.add(board);
@@ -655,14 +1116,87 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         walls.forEach((wall, index) => {
           const box = wallBox(wall);
           matrix.compose(
-            new THREE.Vector3(box.centerX, base + geometry.wall_height / 2, box.centerZ),
+            new THREE.Vector3(box.centerX, base + wallHeight / 2, box.centerZ),
             new THREE.Quaternion(),
-            new THREE.Vector3(box.sizeX, geometry.wall_height, box.sizeZ),
+            new THREE.Vector3(box.sizeX, wallHeight, box.sizeZ),
           );
           mesh.setMatrixAt(index, matrix);
         });
         mesh.instanceMatrix.needsUpdate = true;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
         staticGroup.add(mesh);
+
+        // 벽 윗면 마감 띠. 잘린 단면처럼 보이지 않게 조금 넓고 어두운 띠를 얹는다.
+        const caps = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: COLOR.wallCap }), walls.length);
+        walls.forEach((wall, index) => {
+          const box = wallBox(wall);
+          matrix.compose(
+            new THREE.Vector3(box.centerX, base + wallHeight + 0.04, box.centerZ),
+            new THREE.Quaternion(),
+            new THREE.Vector3(box.sizeX + 0.06, 0.08, box.sizeZ + 0.06),
+          );
+          caps.setMatrixAt(index, matrix);
+        });
+        caps.instanceMatrix.needsUpdate = true;
+        staticGroup.add(caps);
+      }
+
+      // 문. 방 입구 지점에 문틀과 열린 문짝을 세운다. 문이 향하는 쪽은 그 입구에서 이어진 통로 방향이다.
+      for (const node of building.nodes) {
+        if (node.kind !== "DOOR" || node.floor_id !== floor.floor_id) continue;
+        const toward = nodeById.get(edgeByDoor.get(node.node_id) ?? "");
+        if (toward === undefined) continue;
+        const door = new THREE.Group();
+        const frame = new THREE.MeshLambertMaterial({ color: COLOR.frame });
+        for (const [w, h, x, y] of [[0.1, 2.2, -0.55, 1.1], [0.1, 2.2, 0.55, 1.1], [1.2, 0.1, 0, 2.25]]) {
+          const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.2), frame);
+          piece.position.set(x, y, 0);
+          piece.castShadow = true;
+          door.add(piece);
+        }
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(1, 2.1, 0.05), new THREE.MeshLambertMaterial({ color: COLOR.door }));
+        // 활짝 열어 방 안쪽으로 젖혀 둔다. 반쯤 열면 나오는 사람이 문짝을 뚫고 지나간다.
+        leaf.position.set(-0.52, 1.05, -0.5);
+        leaf.rotation.y = Math.PI / 2;
+        leaf.castShadow = true;
+        door.add(leaf);
+        door.position.set(node.position.x, base, node.position.z);
+        door.rotation.y = Math.atan2(toward.position.x - node.position.x, toward.position.z - node.position.z);
+        staticGroup.add(door);
+      }
+
+      // 출구 미끄럼틀. 켜진 출구마다 밖으로 내려가는 미끄럼판과 옆 난간을 놓는다. 사람이 이 위로 빠져나간다.
+      for (const exit of building.exits) {
+        const node = nodeById.get(exit.node_id);
+        if (!exit.enabled || node === undefined || node.floor_id !== floor.floor_id) continue;
+        const inner = nodeById.get(building.edges.find((edge) => edge.to_node_id === exit.node_id)?.from_node_id ?? "");
+        if (inner === undefined) continue;
+        const slide = new THREE.Group();
+        const paint = new THREE.MeshLambertMaterial({ color: COLOR.slide });
+        const length = Math.hypot(SLIDE_LENGTH, SLIDE_DROP);
+        const pitch = Math.atan2(SLIDE_DROP, SLIDE_LENGTH);
+        for (const [width, height, x] of [[1.2, 0.08, 0], [0.08, 0.35, -0.6], [0.08, 0.35, 0.6]]) {
+          const piece = new THREE.Mesh(new THREE.BoxGeometry(width, height, length), paint);
+          piece.position.set(x, -SLIDE_DROP / 2 + height / 2, SLIDE_LENGTH / 2);
+          piece.rotation.x = pitch;
+          piece.castShadow = true;
+          slide.add(piece);
+        }
+        slide.position.set(node.position.x, base, node.position.z);
+        slide.rotation.y = Math.atan2(node.position.x - inner.position.x, node.position.z - inner.position.z);
+        staticGroup.add(slide);
+      }
+
+      // 천장 표지판. 면마다 바라보는 쪽이 자료에 있으므로 그대로 세운다. 그림은 서버 표시값이 올 때 채운다.
+      for (const sign of building.signs) {
+        const node = nodeById.get(sign.node_id);
+        if (node === undefined || node.floor_id !== floor.floor_id) continue;
+        // view_direction은 그 면을 보는 사람의 시선이다. 면은 그 반대쪽을 향한다.
+        const hung = buildHangingSign(sign.faces.map((face) => ({ faceId: face.face_id, normalX: -face.view_direction.x, normalZ: -face.view_direction.z })));
+        hung.group.position.set(node.position.x, base + wallHeight - 0.56, node.position.z);
+        staticGroup.add(hung.group);
+        handles.signFaces.set(sign.sign_id, hung.faces);
       }
 
       // 구역 판. 관측 위험 표시에 재사용하므로 평소에는 숨겨 둔다.
@@ -670,7 +1204,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         if (zone.floor_id !== floor.floor_id) continue;
         // 바닥 색으로 통행 공간·방·계단을 구분한다. 뚫린 공간은 칠하지 않는다.
         // shortcut: 구역 종류 필드가 없어 WFI zone_id 이름으로 가른다, 다른 건물을 넣으면 표시 자료에 종류를 둔다.
-        const tint = /STAIR/.test(zone.zone_id) ? COLOR.floorStair
+        const tint = /STAIR/.test(zone.zone_id) ? (floor.elevation > groundElevation ? null : COLOR.floorStair)
           : /CORR|PASSAGE|LOBBY/.test(zone.zone_id) ? COLOR.floorPassage
           : /VOID/.test(zone.zone_id) ? null : COLOR.floorRoom;
         if (tint !== null) {
@@ -679,7 +1213,27 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
             new THREE.MeshLambertMaterial({ color: tint, side: THREE.DoubleSide }),
           );
           layFlat(floorTint, base + 0.02);
+          floorTint.receiveShadow = true;
           staticGroup.add(floorTint);
+        }
+        // 방과 로비 바닥에 이름을 흐리게 눕혀 적는다. 복도·계단은 좁아서 적지 않는다.
+        const named = tint === COLOR.floorRoom || /LOBBY/.test(zone.zone_id);
+        const nameMap = named ? floorNameTexture(zone.label) : null;
+        if (nameMap !== null) {
+          const px = zone.polygon.map((point) => point.x);
+          const pz = zone.polygon.map((point) => point.z);
+          const [roomW, roomD] = [Math.max(...px) - Math.min(...px), Math.max(...pz) - Math.min(...pz)];
+          const aspect = nameMap.image.width / nameMap.image.height;
+          const height = Math.min(roomD * 0.3, 1.5, (roomW * 0.8) / aspect);
+          const name = new THREE.Mesh(
+            new THREE.PlaneGeometry(height * aspect, height),
+            new THREE.MeshBasicMaterial({ map: nameMap, transparent: true, opacity: 0.32, depthWrite: false }),
+          );
+          // 안내도 위쪽이 글자 위쪽이 되게 눕힌다.
+          name.rotation.x = -Math.PI / 2;
+          name.position.set((Math.min(...px) + Math.max(...px)) / 2, base + 0.04, (Math.min(...pz) + Math.max(...pz)) / 2);
+          name.userData.ownsMap = true;
+          staticGroup.add(name);
         }
         // 복도 구역은 폭이 2 m 안팎이라 얇은 판으로는 잘 보이지 않는다.
         // 낮은 띠로 두껍게 깔아 위에서도 눈에 들어오게 한다.
@@ -692,22 +1246,22 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         staticGroup.add(mesh);
         handles.zoneMeshes.set(zone.zone_id, mesh);
 
-        // 시험용 연기는 차오르는 부피로 그려 관측 위험(바닥 판)과 모양부터 구분한다.
-        const smoke = new THREE.Mesh(
-          new THREE.ExtrudeGeometry(shapeFrom(zone.polygon), { depth: 1, bevelEnabled: false }),
-          new THREE.MeshBasicMaterial({
-            color: COLOR.smoke,
-            transparent: true,
-            opacity: 0.18,
-            depthWrite: false,
-          }),
-        );
-        // 압출이 -y로 가므로 두께만큼 올려야 바닥에서 위로 자란다.
-        layFlat(smoke, base + 1);
-        smoke.userData.baseY = base;
-        smoke.visible = false;
-        staticGroup.add(smoke);
-        handles.smokeMeshes.set(zone.zone_id, smoke);
+        // 연기 입자. 구역 안 여기저기에 미리 흩어 두고, 농도에 따라 천장부터 내려오게 한다.
+        const zoneXs = zone.polygon.map((point) => point.x);
+        const zoneZs = zone.polygon.map((point) => point.z);
+        const [zx, zz] = [Math.min(...zoneXs), Math.min(...zoneZs)];
+        const [zw, zd] = [Math.max(...zoneXs) - zx, Math.max(...zoneZs) - zz];
+        const wanted = Math.max(3, Math.min(14, Math.round((zw * zd) / 5)));
+        // 다시 그려도 같은 자리에 놓이게 순번으로 자리를 정한다.
+        for (let index = 0, placed = 0; index < wanted * 4 && placed < wanted; index += 1) {
+          const x = zx + ((index * 0.618 + 0.13) % 1) * zw;
+          const z = zz + ((index * 0.7548 + 0.37) % 1) * zd;
+          if (!insidePolygon({ x, z }, zone.polygon)) continue;
+          const sprite = createSmokeSprite();
+          handles.smokeGroup.add(sprite);
+          handles.smokePuffs.push({ sprite, zoneId: zone.zone_id, baseY: base, seed: ((index * 0.3819 + 0.2) % 1), x, z });
+          placed += 1;
+        }
       }
     }
 
@@ -725,7 +1279,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         .filter((value): value is number => value !== undefined);
       if (elevations.length === 0) continue;
       const bottom = Math.min(...elevations);
-      const top = Math.max(...elevations) + geometry.wall_height;
+      const top = Math.max(...elevations) + wallHeight;
       const mesh = new THREE.Mesh(
         new THREE.ExtrudeGeometry(shapeFrom(stair.footprint), { depth: top - bottom, bevelEnabled: false }),
         new THREE.MeshLambertMaterial({
@@ -734,30 +1288,56 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
           opacity: stair.kind === "ENCLOSED" ? 0.35 : 0.2,
         }),
       );
-      layFlat(mesh, bottom);
-      staticGroup.add(mesh);
+      // layFlat은 준 높이에서 아래로 내려 깐다. 윗면 높이를 줘야 바닥부터 위로 선다.
+      layFlat(mesh, top);
+      // 1인칭에서는 계단실 안이 뿌옇게 물들어 보이므로 그리지 않는다.
+      if (!firstPersonView) staticGroup.add(mesh);
+      else disposeTree(mesh);
 
-      // 층 사이마다 디딤판을 놓아 어느 층끼리 이어지는지 보이게 한다. 구간마다 방향을 뒤집어 꺾인 계단처럼 보인다.
-      const levels = [...elevations].sort((a, b) => a - b);
-      const steps = levels.slice(1).flatMap((upper, index) => stairSteps(stair.footprint, levels[index], upper, index % 2 === 1));
-      if (steps.length > 0) {
+      // 층 사이 계단. 안내도 모양(꺾인 계단·둥글게 꺾이는 계단·곧은 계단)대로 디딤판과 난간을 놓는다.
+      const elevationOf = (id: string) => geometry.floors.find((floor) => floor.floor_id === id)?.elevation ?? 0;
+      const ordered = [...shown].sort((a, b) => elevationOf(a) - elevationOf(b));
+      const up = new THREE.Vector3(0, 1, 0);
+      const rail = new THREE.MeshLambertMaterial({ color: COLOR.frame });
+      for (let level = 1; level < ordered.length; level += 1) {
+        const steps = flightSteps(building, geometry, stair, ordered[level - 1], ordered[level], lift);
         const treads = new THREE.InstancedMesh(
           new THREE.BoxGeometry(1, 1, 1),
           new THREE.MeshLambertMaterial({ color: stair.kind === "ENCLOSED" ? COLOR.stepEnclosed : COLOR.stepOpen }),
           steps.length,
         );
         const matrix = new THREE.Matrix4();
+        const turn = new THREE.Quaternion();
         steps.forEach((step, index) => {
           matrix.compose(
-            new THREE.Vector3(step.centerX, step.centerY - 0.1, step.centerZ),
-            new THREE.Quaternion(),
-            new THREE.Vector3(step.sizeX, 0.2, step.sizeZ),
+            new THREE.Vector3(step.x, step.y - 0.09, step.z),
+            turn.setFromAxisAngle(up, step.yaw),
+            new THREE.Vector3(step.width, 0.18, step.run * 1.1),
           );
           treads.setMatrixAt(index, matrix);
         });
         treads.instanceMatrix.needsUpdate = true;
+        treads.castShadow = true;
+        treads.receiveShadow = true;
         staticGroup.add(treads);
+
+        // 난간. 진행 방향의 오른쪽 가장자리에 손잡이와 기둥을 세운다.
+        const edge = (step: StairStepAlong, height: number) => new THREE.Vector3(
+          step.x + Math.cos(step.yaw) * (step.width / 2 - 0.05),
+          step.y + height,
+          step.z - Math.sin(step.yaw) * (step.width / 2 - 0.05),
+        );
+        steps.forEach((step, index) => {
+          const next = steps[index + 1];
+          const handrail = next === undefined ? null : rod(edge(step, 0.95), edge(next, 0.95), 0.03, rail.clone());
+          if (handrail !== null) staticGroup.add(handrail);
+          if (index % 3 === 0) {
+            const post = rod(edge(step, 0), edge(step, 0.95), 0.022, rail.clone());
+            if (post !== null) staticGroup.add(post);
+          }
+        });
       }
+      rail.dispose();
     }
     handles.cameraIcons = [];
     handles.exitLabels = new Map();
@@ -780,7 +1360,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
           liftLabelAbove(sprite, ICON_PIXELS.CAMERA.height / 2);
         } else if (exitHover && label.nodeId !== null) {
           // 출구 아이콘은 기둥 끝에 아래쪽을 맞춰 서므로 같은 높이에서 아이콘 높이만큼 위로 띄운다.
-          sprite.position.y = y + geometry.wall_height + 0.3;
+          sprite.position.y = y + wallHeight + 0.3;
           liftLabelAbove(sprite, ICON_PIXELS.EXIT_ON.height);
           handles.exitLabels.set(label.nodeId, sprite);
         }
@@ -800,7 +1380,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         }
       }
     }
-  }, [geometry, building, display, showNames, visibleFloors, lift]);
+  }, [geometry, building, display, showNames, visibleFloors, lift, nodeById, firstPersonView]);
 
   // 2-1) 화면 맞춤. 보이는 층이나 간격이 바뀌면 그 범위가 다 보이게 마지막 시점 모드로 맞추고,
   //      시점 버튼(view.nonce)을 누르면 같은 모드라도 다시 맞춘다.
@@ -835,6 +1415,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     handles.pick = null;
     // 출발점을 고르면 전체 안내는 흐리게 두고 그 지점의 경로만 또렷하게 그린다.
     const focused = journey !== null;
+    // 1인칭에서는 지점 구·바닥 화살표·기둥 아이콘·선택 경로를 그리지 않는다. 걷는 사람 눈에는 실제 표지판만 보인다.
+    const firstPerson = followIndex !== null;
 
     const blockedReason = new Map(state.blocked_nodes.map((node) => [node.node_id, node.reason_codes]));
     const routeByNode = new Map(state.routes.map((route) => [route.node_id, route]));
@@ -844,7 +1426,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     const shownNodes = building.nodes.filter((node) => visibleFloors.has(node.floor_id));
 
     // 지점 표시. 차단·안내 가능·안내 불가를 색으로 나눈다.
-    if (shownNodes.length > 0) {
+    if (shownNodes.length > 0 && !firstPerson) {
       const mesh = new THREE.InstancedMesh(
         new THREE.SphereGeometry(0.45, 12, 10),
         new THREE.MeshLambertMaterial(),
@@ -879,7 +1461,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     const flatArrows: THREE.Matrix4[] = [];
     const stairArrows: THREE.Matrix4[] = [];
     const up = new THREE.Vector3(0, 1, 0);
-    for (const route of state.routes) {
+    for (const route of showGuidance && !firstPerson ? state.routes : []) {
       if (route.next_node_id === null || route.reason_codes.length > 0) continue;
       const from = nodeById.get(route.node_id);
       const to = nodeById.get(route.next_node_id);
@@ -892,6 +1474,19 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         from.position.z,
       );
       const end = new THREE.Vector3(to.position.x, displayY(to.position.y, to.floor_id, lift) + 1.1, to.position.z);
+      // 층을 오르내리는 안내는 계단을 따라 그린다. 곧게 이으면 선이 바닥을 뚫는다.
+      const stairs = stairLink(building, geometry, lift, from, to, 1.1);
+      if (stairs !== null) {
+        for (let index = 1; index < stairs.length; index += 1) {
+          segments.push(stairs[index - 1].x, stairs[index - 1].y, stairs[index - 1].z, stairs[index].x, stairs[index].y, stairs[index].z);
+        }
+        const middle = Math.floor(stairs.length / 2);
+        const slope = stairs[middle].clone().sub(stairs[middle - 1]);
+        if (slope.length() > 0.001) {
+          stairArrows.push(new THREE.Matrix4().compose(stairs[middle], new THREE.Quaternion().setFromUnitVectors(up, slope.normalize()), new THREE.Vector3(1, 1, 1)));
+        }
+        continue;
+      }
       segments.push(start.x, start.y, start.z, end.x, end.y, end.z);
 
       const direction = end.clone().sub(start);
@@ -1000,9 +1595,9 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
 
     // 기둥은 바닥에서 벽 높이 조금 위까지. 아이콘은 그 끝에 얹어 벽 너머에서도 보이게 한다.
     const poleTop = geometry.wall_height + 0.3;
-    placeSigns(shownSigns, () => new THREE.CylinderGeometry(0.06, 0.06, poleTop, 6), poleTop / 2);
+    if (!firstPerson) placeSigns(shownSigns, () => new THREE.CylinderGeometry(0.06, 0.06, poleTop, 6), poleTop / 2);
     handles.exitIcons = [];
-    for (const [signs, exitLocation] of [[directionalSigns, false], [exitSigns, true]] as const) {
+    for (const [signs, exitLocation] of firstPerson ? [] : ([[directionalSigns, false], [exitSigns, true]] as const)) {
       for (const sign of signs) {
         const node = nodeById.get(sign.node_id);
         if (node === undefined) continue;
@@ -1026,24 +1621,43 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       const zone = zoneById.get(source.zone_id);
       if (mesh === undefined || zone === undefined || !visibleFloors.has(zone.floor_id)) continue;
       mesh.material.color.setHex(COLOR.hazard);
-      mesh.visible = true;
+      // 1인칭에서는 바닥의 위험 판 대신 불과 연기가 보인다.
+      mesh.visible = !firstPerson;
     }
 
-    // 시험용 연기 정답: 차오르는 부피. 관측 위험과 다른 모양이라 섞이지 않는다.
-    for (const [zoneId, mesh] of handles.smokeMeshes) {
-      const smoke = smokeByZone?.get(zoneId) ?? 0;
-      if (smoke <= 0.01) {
-        mesh.visible = false;
-        continue;
+    // 천장 표지판의 면. 서버가 준 표시값 그대로 그림을 바꾼다. 안내 불가면 꺼진 면이다.
+    for (const sign of state.signs) {
+      const meshes = handles.signFaces.get(sign.sign_id);
+      if (meshes === undefined) continue;
+      for (const face of sign.faces) {
+        const mesh = meshes.get(face.face_id);
+        if (mesh === undefined) continue;
+        mesh.material.map = signFaceTexture(face.display);
+        mesh.material.needsUpdate = true;
       }
-      mesh.visible = true;
-      // 평면을 눕혀 압출 방향이 -y이므로, 높이를 키우면서 그만큼 위로 올려야
-      // 바닥에서 위로 차오르는 것처럼 보인다.
-      const height = Math.max(0.1, smoke * geometry.wall_height);
-      const baseY = typeof mesh.userData.baseY === "number" ? mesh.userData.baseY : 0;
-      mesh.scale.z = height;
-      mesh.position.y = baseY + height;
-      mesh.material.opacity = 0.14 + smoke * 0.32;
+    }
+
+    // 불꽃. 활성 FIRE 원인이 있는 구역 가운데에 세운다. 구역이 바뀔 때만 다시 만든다.
+    const burning = [...new Set(state.active_causes.filter((cause) => cause.hazard_type === "FIRE").map((cause) => sourceById.get(cause.source_id)?.zone_id))]
+      .flatMap((zoneId) => {
+        const zone = zoneId === undefined ? undefined : zoneById.get(zoneId);
+        return zone !== undefined && visibleFloors.has(zone.floor_id) ? [zone] : [];
+      });
+    const fireKey = `${burning.map((zone) => zone.zone_id).join(",")}@${spread}`;
+    if (fireKey !== handles.fireKey) {
+      handles.fireKey = fireKey;
+      clearGroup(handles.fireGroup);
+      handles.fires = burning.map((zone) => {
+        const fire = createFire();
+        const elevation = geometry.floors.find((floor) => floor.floor_id === zone.floor_id)?.elevation ?? 0;
+        fire.object.position.set(
+          zone.polygon.reduce((sum, point) => sum + point.x, 0) / zone.polygon.length,
+          displayY(elevation, zone.floor_id, lift),
+          zone.polygon.reduce((sum, point) => sum + point.z, 0) / zone.polygon.length,
+        );
+        handles.fireGroup.add(fire.object);
+        return fire;
+      });
     }
 
     // 고른 카메라의 설치 위치 강조(이슈 #74). 관측 구역(바닥 판)과 달리 설치 지점만 가리킨다.
@@ -1088,11 +1702,22 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     }
 
     // M06: 고른 출발점의 경로. 서버 path_node_ids를 순서대로 잇기만 한다.
-    if (journey !== null) {
+    if (journey !== null && !firstPerson) {
       const pointOf = (nodeId: string, height: number) => {
         const node = nodeById.get(nodeId);
         if (node === undefined || !visibleFloors.has(node.floor_id)) return null;
         return new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, lift) + height, node.position.z);
+      };
+      /** 두 지점 사이를 그릴 조각들. 층이 바뀌면 계단을 따라 여러 조각으로 나눈다. 한쪽 층이 숨겨져 있으면 그리지 않는다. */
+      const piecesOf = (fromId: string, toId: string, height: number): [THREE.Vector3, THREE.Vector3][] => {
+        const from = pointOf(fromId, height);
+        const to = pointOf(toId, height);
+        if (from === null || to === null) return [];
+        const a = nodeById.get(fromId);
+        const b = nodeById.get(toId);
+        const stairs = a === undefined || b === undefined ? null : stairLink(building, geometry, lift, a, b, height);
+        if (stairs === null) return [[from, to]];
+        return stairs.slice(1).map((point, index) => [stairs[index], point]);
       };
       // 벽·바닥에 가려도 경로가 끊겨 보이지 않게 깊이 검사를 끈다.
       const overlay = (color: number, opacity: number) =>
@@ -1102,13 +1727,12 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       // 점선은 WebGL 선 굵기(1px) 때문에 이름표에 가리면 보이지 않아 막대로 그린다.
       if (journey.previousPath !== null && journey.previousPath.length > 1) {
         for (let index = 1; index < journey.previousPath.length; index += 1) {
-          const from = pointOf(journey.previousPath[index - 1], 0.6);
-          const to = pointOf(journey.previousPath[index], 0.6);
-          if (from === null || to === null) continue;
-          const piece = rod(from, to, 0.09, overlay(COLOR.journeyPrevious, 0.75));
-          if (piece !== null) {
-            piece.renderOrder = 8;
-            dynamicGroup.add(piece);
+          for (const [from, to] of piecesOf(journey.previousPath[index - 1], journey.previousPath[index], 0.6)) {
+            const piece = rod(from, to, 0.09, overlay(COLOR.journeyPrevious, 0.75));
+            if (piece !== null) {
+              piece.renderOrder = 8;
+              dynamicGroup.add(piece);
+            }
           }
         }
       }
@@ -1119,10 +1743,12 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         const from = pointOf(journey.path[index - 1], 1.1);
         const to = pointOf(journey.path[index], 1.1);
         if (from === null || to === null) continue;
-        const piece = rod(from, to, 0.16, rodMaterial.clone());
-        if (piece !== null) {
-          piece.renderOrder = 9;
-          dynamicGroup.add(piece);
+        for (const [a, b] of piecesOf(journey.path[index - 1], journey.path[index], 1.1)) {
+          const piece = rod(a, b, 0.16, rodMaterial.clone());
+          if (piece !== null) {
+            piece.renderOrder = 9;
+            dynamicGroup.add(piece);
+          }
         }
         const node = nodeById.get(journey.path[index - 1]);
         const next = nodeById.get(journey.path[index]);
@@ -1163,7 +1789,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         dynamicGroup.add(halo);
       }
     }
-  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, highlightSourceId, journey]);
+  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, spread, highlightSourceId, journey, showGuidance, followIndex]);
 
   return <div className="scene" ref={mountRef} />;
 }

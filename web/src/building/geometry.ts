@@ -296,3 +296,102 @@ export function stairSteps(
     };
   });
 }
+
+export type StairStepAlong = {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** 디딤판이 향하는 쪽(진행 방향)의 각도. */
+  readonly yaw: number;
+  readonly run: number;
+  readonly width: number;
+};
+
+/**
+ * 계단의 평면 중심선(아래에서 위로)과 디딤판 폭. 안내도의 모양을 따른다.
+ * - 밀폐 계단: 가운데 벽을 끼고 올라갔다가 되돌아오는 꺾인 계단
+ * - 열린 계단 중 넓적한 것: 대각선으로 오르다 둥글게 꺾여 직선으로 이어지는 계단
+ * - 열린 계단 중 길쭉한 것: 곧은 계단
+ * entry는 아래층에서 계단에 들어서는 지점이다. 그쪽에서 시작하도록 방향을 맞춘다.
+ * shortcut: 형상 자료에 계단 모양·방향이 없어 종류와 가로세로 비로 추정한다, 자료에 모양이 생기면 그 값을 쓴다.
+ */
+export function stairCenterline(stair: GeometryStair, entry: PlanPoint | null): { points: readonly PlanPoint[]; width: number } {
+  const xs = stair.footprint.map((point) => point.x);
+  const zs = stair.footprint.map((point) => point.z);
+  const [minX, maxX, minZ, maxZ] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+  const [sizeX, sizeZ] = [maxX - minX, maxZ - minZ];
+  const alongZ = sizeZ >= sizeX;
+  // 긴 변을 u, 짧은 변을 v로 놓고 만든 뒤 평면 좌표로 되돌린다.
+  const [long, short] = alongZ ? [sizeZ, sizeX] : [sizeX, sizeZ];
+  const at = (u: number, v: number): PlanPoint => (alongZ ? { x: minX + v, z: minZ + u } : { x: minX + u, z: minZ + v });
+  let points: PlanPoint[];
+  let width: number;
+  if (stair.kind === "ENCLOSED") {
+    width = short / 2 - 0.25;
+    points = [at(0.5, short / 4), at(long - 0.7, short / 4), at(long - 0.7, (short * 3) / 4), at(0.5, (short * 3) / 4)];
+  } else if (long / short < 2) {
+    width = 1.3;
+    points = [at(long * 0.62, 0.5), at(long * 0.24, short * 0.42), at(long * 0.1, short * 0.66), at(long * 0.2, short - 0.7), at(long - 0.5, short - 0.7)];
+  } else {
+    width = short - 0.3;
+    points = [at(0.4, short / 2), at(long - 0.4, short / 2)];
+  }
+  if (entry !== null) {
+    const far = (point: PlanPoint) => Math.hypot(point.x - entry.x, point.z - entry.z);
+    if (stair.kind === "ENCLOSED") {
+      // 꺾인 계단은 들어선 쪽으로 되돌아온다. 들어서는 쪽이 반대편이면 긴 변을 따라 뒤집는다.
+      if (far(points[1]) < far(points[0])) points = points.map((point) => (alongZ ? { x: point.x, z: minZ + maxZ - point.z } : { x: minX + maxX - point.x, z: point.z }));
+      // 두 줄 가운데 들어서는 지점에 가까운 줄로 올라간다. 먼 줄에서 시작하면 가운데 벽을 가로질러 걷게 된다.
+      if (far(points[3]) < far(points[0])) points = [...points].reverse();
+    } else if (far(points[points.length - 1]) < far(points[0])) {
+      points = [...points].reverse();
+    }
+  }
+  return { points, width };
+}
+
+/**
+ * 두 층을 잇는 계단 가운데 point에 가장 가까운 것. 계단 지점(STAIR)은 계단 앞 복도에 찍혀 있어
+ * 계단 범위 안에 있지 않은 경우가 많으므로, 포함 여부가 아니라 범위까지의 거리로 고른다.
+ */
+export function nearestStair(stairs: readonly GeometryStair[], floorA: string, floorB: string, point: PlanPoint): GeometryStair | null {
+  let best: GeometryStair | null = null;
+  let bestDistance = Infinity;
+  for (const stair of stairs) {
+    if (!stair.floors.includes(floorA) || !stair.floors.includes(floorB)) continue;
+    const xs = stair.footprint.map((corner) => corner.x);
+    const zs = stair.footprint.map((corner) => corner.z);
+    const dx = Math.max(Math.min(...xs) - point.x, 0, point.x - Math.max(...xs));
+    const dz = Math.max(Math.min(...zs) - point.z, 0, point.z - Math.max(...zs));
+    const distance = Math.hypot(dx, dz);
+    if (distance < bestDistance) [best, bestDistance] = [stair, distance];
+  }
+  return best;
+}
+
+/** 중심선을 따라 아래층 바닥(bottomY)에서 위층 바닥(topY)까지 디딤판을 고르게 놓는다. */
+export function stairRun(points: readonly PlanPoint[], width: number, bottomY: number, topY: number): readonly StairStepAlong[] {
+  const lengths = points.slice(1).map((point, index) => Math.hypot(point.x - points[index].x, point.z - points[index].z));
+  const total = lengths.reduce((sum, value) => sum + value, 0);
+  const count = Math.max(8, Math.min(40, Math.round(total / 0.3)));
+  const run = total / count;
+  return Array.from({ length: count }, (_, step) => {
+    let left = (step + 0.5) * run;
+    let segment = 0;
+    while (segment < lengths.length - 1 && left > lengths[segment]) {
+      left -= lengths[segment];
+      segment += 1;
+    }
+    const from = points[segment];
+    const to = points[segment + 1];
+    const share = lengths[segment] === 0 ? 0 : left / lengths[segment];
+    return {
+      x: from.x + (to.x - from.x) * share,
+      y: bottomY + ((step + 1) * (topY - bottomY)) / count,
+      z: from.z + (to.z - from.z) * share,
+      yaw: Math.atan2(to.x - from.x, to.z - from.z),
+      run,
+      width,
+    };
+  });
+}

@@ -963,3 +963,7 @@ code {
 .manual-fire__steps { margin: 0; padding-left: 1.4rem; display: grid; gap: 10px; }
 .manual-fire__steps .manual-fire__zone { margin: 0; }
 .manual-fire__actions .manual-fire__start { background: #7f1d1d; border-color: #ef4444; font-weight: 600; }
+
+/* 시연용 대피 인원 범례 */
+.key--person { background: #ff5fd2; border-radius: 50%; }
+.key--person-stuck { background: #7c3aed; border-radius: 50%; }
