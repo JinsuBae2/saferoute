@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import heapq
 import json
+import math
 import os
 from pathlib import Path
 from threading import RLock
@@ -27,6 +28,8 @@ class Runner:
         self.client, self.runs_dir, self.clock = client, Path(runs_dir), clock or Clock()
         self.lock = RLock()
         self.sources = {s.source_id: s for s in building.sources}
+        self.centers = {z.zone_id: (sum(p.x for p in z.polygon)/len(z.polygon), sum(p.z for p in z.polygon)/len(z.polygon), z.floor_id)
+                        for z in building.zones}
         self._fresh()
 
     def _fresh(self):
@@ -38,6 +41,25 @@ class Runner:
         self.queue, self.queue_order = [], 0
         self.log_path = None
         self.auto_arm = False
+        self.fires, self.next_fire_poll = {}, 0
+
+    def _smoke(self, time_ms):
+        """시간표 연기에, 화재 경보 구역에서 번지는 연기를 더한다. 가까운 곳이 먼저, 다른 층은 늦게·옅게 찬다."""
+        smoke = self.scenario.smoke_at(time_ms)
+        spread = self.scenario.spread
+        if spread is None: return smoke
+        # shortcut: 구역 중심 사이 직선거리라 벽·계단 종류를 보지 않는다, 확산 경로가 필요하면 통로 그래프 거리로 바꾼다.
+        for zone_id, (x, z, floor) in self.centers.items():
+            value = smoke.get(zone_id, 0)
+            for fire_zone, started_ms in self.fires.items():
+                fx, fz, fire_floor = self.centers[fire_zone]
+                metres = math.hypot(x-fx, z-fz)
+                begins = metres*spread.ms_per_m + (0 if floor == fire_floor else spread.floor_delay_ms)
+                ceiling = 1 if floor == fire_floor else spread.other_floor_cap
+                progress = (time_ms-started_ms-begins) / (spread.rise_ms*(1+metres/25))
+                value = max(value, min(ceiling, max(0, progress)*ceiling))
+            smoke[zone_id] = round(value, 2)
+        return smoke
 
     def restart(self):
         """Explicit request only: reset the controller, rebind to the new run, then arm once observations are valid."""
@@ -122,7 +144,7 @@ class Runner:
 
     def _schedule(self, rule, sample_ms):
         source = self.sources[rule.source_id]
-        alarm = self.scenario.smoke_at(sample_ms)[source.zone_id] >= rule.threshold
+        alarm = self._smoke(sample_ms)[source.zone_id] >= rule.threshold
         hazard = "SMOKE" if source.source_type == "SIM_SMOKE_DETECTOR" else "SPRINKLER"
         kind, hazard = ("ALARM",hazard) if alarm else ("OBSERVATION",None)
         fault = next((f for f in self.scenario.faults if f.source_id == rule.source_id and
@@ -169,6 +191,12 @@ class Runner:
                     self._log("armed")
                 self.time_ms = min(int(now-self.epoch_ms),self.scenario.duration_ms)
                 self.sequence += 1
+                if self.scenario.spread is not None and now >= self.next_fire_poll:
+                    # 제어기가 확정한 FIRE 원인만 불로 본다. 실행기 자신의 연기 경보를 불로 세면 스스로 번진다.
+                    burning = {self.sources[c.source_id].zone_id for c in self._get("/api/state","StateSnapshot").active_causes
+                               if c.hazard_type == "FIRE"}
+                    self.fires = {zone: self.fires.get(zone, self.time_ms) for zone in burning}
+                    self.next_fire_poll = now + 1000
                 for rule in self.scenario.observation_rules:
                     while self.next_sample[rule.source_id] <= self.time_ms and self.next_sample[rule.source_id] < self.scenario.duration_ms:
                         self._schedule(rule,self.next_sample[rule.source_id])
@@ -193,7 +221,7 @@ class Runner:
                 building_version=self.building.building_version,scenario_id=self.scenario.scenario_id,
                 run_id=self.run_id,simulation_time_ms=self.time_ms,simulation_sequence=self.sequence,
                 status=self.status,zones=[dict(zone_id=zone,smoke=value) for zone,value in
-                    sorted(self.scenario.smoke_at(self.time_ms).items())],error_code=self.error_code)
+                    sorted(self._smoke(self.time_ms).items())],error_code=self.error_code)
 
     def close(self):
         with self.lock:
