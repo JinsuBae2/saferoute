@@ -62,8 +62,7 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
             epoch = clock.monotonic()
             while True:
                 failure_reason = "DECODE_FAILED"
-                ok, frame = cap.read()
-                acquired_at, acquired_mono = clock.utcnow(), clock.monotonic()
+                ok = cap.grab()
                 if not ok:
                     if frames != inspection["decoded_frames"]:
                         raise WorkerError(f"DECODE_FRAME_COUNT_MISMATCH: {frames}/{inspection['decoded_frames']}")
@@ -88,6 +87,11 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                 if media_ms < next_due:
                     continue
                 next_due = (media_ms // config.interval_ms + 1) * config.interval_ms
+                # Materialize pixels only for scheduled samples; still grab/count every frame.
+                ok, frame = cap.retrieve()
+                acquired_at, acquired_mono = clock.utcnow(), clock.monotonic()
+                if not ok:
+                    raise WorkerError("FRAME_RETRIEVE_FAILED")
                 lateness_ms = (acquired_mono - epoch) * 1000 - timestamp
                 if lateness_ms > config.interval_ms:
                     skipped += 1
