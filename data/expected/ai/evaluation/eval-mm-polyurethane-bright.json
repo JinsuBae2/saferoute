@@ -6,31 +6,30 @@
   "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
   "split": "evaluation",
   "annotator": "준영",
-  "reviewer": null,
-    "annotation_complete": false,
-    "training_overlap": "unknown",
-    "development_used": false,
-    "duration_ms": 360000,
-    "normal_video": false,  
-    "events": [
-  {
+  "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": false,
+  "duration_ms": 360000,
+  "normal_video": false,
+  "events": [
+    {
       "event_id": "ev1",
       "hazard_type": "FIRE",
-      "start_ms": 26000,  
+      "start_ms": 26000,
       "end_ms": 27000
     },
-  {
+    {
       "event_id": "ev2",
       "hazard_type": "FIRE",
       "start_ms": 28000,
       "end_ms": 360000
     },
-  {
+    {
       "event_id": "ev3",
       "hazard_type": "SMOKE",
       "start_ms": 122300,
       "end_ms": 360000
     }
   ]
-
 }
