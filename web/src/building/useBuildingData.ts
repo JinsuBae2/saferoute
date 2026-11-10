@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay } from "@contracts";
 import displayUrl from "@space/wfi-display-v1.json?url";
 import { fetchBuilding } from "../api/client";
 import { parseDisplay } from "./display";
@@ -13,7 +13,17 @@ type Load = {
 };
 const EMPTY: Load = { key: null, building: null, display: null, buildingError: null, displayError: null };
 
-export function useBuildingData(state: StateSnapshot | null): Load {
+/**
+ * 실행과 건물 자료 버전만 있으면 된다. 관제는 StateSnapshot, 단말은 Session을 넘긴다.
+ * 둘 다 같은 식별 필드를 가지므로 더 좁은 형식으로 받는다.
+ */
+export type RunIdentity = {
+  readonly run_id: string;
+  readonly building_id: string;
+  readonly building_version: number;
+};
+
+export function useBuildingData(state: RunIdentity | null): Load {
   const buildingId = state?.building_id;
   const version = state?.building_version;
   const key = state === null ? null : `${state.run_id}/${buildingId}/${version}`;

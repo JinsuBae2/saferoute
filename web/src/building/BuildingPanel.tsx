@@ -149,6 +149,8 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
               <span className="key key--fire" /> 관측 위험(바닥 판)
               <span className="key key--smoke" /> 시험 연기 정답(차오름)
               <span className="key key--muted" /> 안내 불가
+              <span className="key key--sign-exit" /> 출구 위치 표지
+              <span className="key key--sign-dir" /> 가변 방향 안내
             </span>
           </div>
 
