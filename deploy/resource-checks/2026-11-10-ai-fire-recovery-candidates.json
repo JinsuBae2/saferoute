@@ -1342,7 +1342,8 @@
           "normal_duration_ms": 137320
         }
       },
-      "unsupported_class": "SMOKE; diagnostic output has no smoke detections by design, not a two-class candidate"
+      "unsupported_class": "SMOKE; diagnostic output has no smoke detections by design, not a two-class candidate",
+      "runtime_recording_limit": "Standalone fire-only diagnostic did not record Python/OS/CPU/device/package versions in its original runtime metadata. Shared-environment assumptions do not reconstruct execution-time evidence; reproducibility is incomplete."
     }
   ],
   "model_sources": [
