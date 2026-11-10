@@ -956,3 +956,10 @@ code {
 .panel--folding > summary:focus-visible h2 {
   color: var(--route);
 }
+
+/* 시연 패널: 화재 위치 → 내 위치 → 시작을 번호 순서로 보여 준다. */
+.manual-fire { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+.manual-fire h3 { margin: 0 0 8px; font-size: 14px; }
+.manual-fire__steps { margin: 0; padding-left: 1.4rem; display: grid; gap: 10px; }
+.manual-fire__steps .manual-fire__zone { margin: 0; }
+.manual-fire__actions .manual-fire__start { background: #7f1d1d; border-color: #ef4444; font-weight: 600; }
