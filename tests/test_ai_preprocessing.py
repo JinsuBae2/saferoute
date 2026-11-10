@@ -54,7 +54,7 @@ def test_clahe_changes_only_new_luminance_buffer_and_keeps_box_coordinates(monke
         cvtColor=convert, resize=resize, INTER_LINEAR='linear',
         COLOR_BGR2LAB='to-lab', COLOR_LAB2BGR='to-bgr'))
     detector = Detector.__new__(Detector)
-    detector.config = SimpleNamespace(imgsz=640, confidence=.25)
+    detector.config = SimpleNamespace(imgsz=640, confidence=.25, native_input_size=False)
     detector.clahe = SimpleNamespace(apply=equalize)
     detector.model = SimpleNamespace(predict=predict, names={0: 'fire', 1: 'smoke'})
     assert detector.predict(original) == [{'class': 'FIRE', 'confidence': .8, 'xyxy': [v / scale for v in box]}]
@@ -71,7 +71,25 @@ def test_none_passes_original_frame_directly_without_importing_cv2(monkeypatch):
 
     monkeypatch.setitem(sys.modules, 'cv2', None)
     detector = Detector.__new__(Detector)
-    detector.config = SimpleNamespace(imgsz=640, confidence=.25)
+    detector.config = SimpleNamespace(imgsz=640, confidence=.25, native_input_size=False)
     detector.clahe = None
     detector.model = SimpleNamespace(predict=predict, names={0: 'fire', 1: 'smoke'})
+    assert detector.predict(original) == []
+
+
+@pytest.mark.parametrize('shape,expected', [((288,384,3),384), ((300,500,3),512),
+                                          ((1080,1920,3),640), ((1,1,3),32)])
+@pytest.mark.parametrize('native', [False, True])
+def test_native_input_size_is_stride_aligned_and_capped_without_changing_pixels(shape, expected, native):
+    original = SimpleNamespace(shape=shape)
+    tensor = lambda values: SimpleNamespace(tolist=lambda: values)
+
+    def predict(frame, **kwargs):
+        assert frame is original and kwargs['imgsz'] == (expected if native else 640)
+        return [SimpleNamespace(boxes=SimpleNamespace(cls=tensor([]), conf=tensor([]), xyxy=tensor([])))]
+
+    detector = Detector.__new__(Detector)
+    detector.config = SimpleNamespace(imgsz=640, confidence=.25, native_input_size=native)
+    detector.clahe = None
+    detector.model = SimpleNamespace(predict=predict, names={0:'fire',1:'smoke'})
     assert detector.predict(original) == []

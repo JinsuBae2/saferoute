@@ -1,6 +1,7 @@
 import hashlib
 import importlib.metadata
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -107,7 +108,11 @@ class Detector:
             lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
             lab[:, :, 0] = self.clahe.apply(lab[:, :, 0])
             frame = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-        result = self.model.predict(frame, device="cpu", imgsz=self.config.imgsz,
+        imgsz = self.config.imgsz
+        if self.config.native_input_size:
+            # Cap low-resolution upscaling at the model's 32-pixel stride alignment.
+            imgsz = min(imgsz, max(32, math.ceil(max(frame.shape[:2]) / 32) * 32))
+        result = self.model.predict(frame, device="cpu", imgsz=imgsz,
                                     conf=self.config.confidence, verbose=False)[0]
         return [{"class": self.model.names[int(cls)].upper(), "confidence": score,
                  "xyxy": [v * (ratio_x if i % 2 == 0 else ratio_y) for i, v in enumerate(box)]}

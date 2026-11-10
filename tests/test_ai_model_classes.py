@@ -26,7 +26,7 @@ def test_actual_model_names_map_boxes_without_swapping(monkeypatch, tmp_path, na
     path = tmp_path/'weights.pt'
     path.write_bytes(b'fixture only')
     config = SimpleNamespace(model_path=str(path), model_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
-                             imgsz=640, confidence=.25, cpu_threads=4, preprocess="none")
+                             imgsz=640, confidence=.25, cpu_threads=4, preprocess="none", native_input_size=False)
     detector = Detector(config)
     boxes = detector.predict(None)
     assert [b['class'] for b in boxes] == expected
@@ -55,7 +55,7 @@ def test_selected_threads_applied_after_library_warmup(monkeypatch, tmp_path):
     path = tmp_path / 'weights.pt'
     path.write_bytes(b'fixture only')
     config = SimpleNamespace(model_path=str(path), model_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
-                             imgsz=640, confidence=.25, cpu_threads=2, preprocess='none')
+                             imgsz=640, confidence=.25, cpu_threads=2, preprocess='none', native_input_size=False)
     detector = Detector(config)
     assert state['threads'] == detector.metadata['torch_threads'] == 2
     detector.predict(None)
@@ -77,6 +77,7 @@ def test_legacy_config_retains_untransformed_four_thread_behavior():
     from pathlib import Path
     config = AIConfig.model_validate_json(Path('configs/ai.xiazh.development.json').read_bytes())
     assert config.cpu_threads == 4 and config.preprocess == 'none' and config.onnx_provider == 'cpu'
+    assert config.native_input_size is False
 
 
 @pytest.mark.parametrize('io_binding', [False, True])
@@ -142,7 +143,7 @@ def test_onnx_uses_bounded_cpu_session_before_video_inference(monkeypatch, tmp_p
         get_ep_name=lambda: 'OpenVINOExecutionProvider', get_library_path=lambda: 'fixture-library'))
     monkeypatch.setattr('ai_worker.inference.package_version', lambda name: 'fixture')
     config = SimpleNamespace(model_path=str(path), model_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
-                             imgsz=640, confidence=.25, cpu_threads=2, preprocess='none',
+                             imgsz=640, confidence=.25, cpu_threads=2, preprocess='none', native_input_size=False,
                              onnx_provider='cpu' if provider == 'cpu' else 'openvino')
     if io_binding:
         with pytest.raises(ValueError, match='IO binding'):

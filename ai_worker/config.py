@@ -17,6 +17,7 @@ class AIConfig(WireModel):
     confidence: Annotated[float, Field(gt=0, le=1)] = .25
     cpu_threads: Annotated[int, Field(ge=1, le=4)] = 4
     preprocess: Literal["none", "clahe"] = "none"
+    native_input_size: bool = False
     onnx_provider: Literal["cpu", "openvino"] = "cpu"
     window_ms: Annotated[int, Field(ge=50, le=10000)] = 1500
     min_detections: Annotated[int, Field(ge=1, le=100)] = 2
