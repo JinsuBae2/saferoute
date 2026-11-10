@@ -1,0 +1,1658 @@
+{
+  "scope": "DEVELOPMENT_CANDIDATE_COMPARISON_NOT_INDEPENDENT_EVALUATION",
+  "source_commit": "76cbe69949a03014696deb1dcfda23b6e460c281",
+  "manifest_sha256": "654488f4ccde5fe497b7470c2d5147493bfde22a353e4ec3739289205a4db716",
+  "matching": {
+    "merge_gap_ms": 1000,
+    "boundary_tolerance_ms": 0
+  },
+  "adoption": "NONE",
+  "trials": [
+    {
+      "name": "a01-125-native-size-screen",
+      "scope": "HISTORICAL_OFFLINE_BASELINE",
+      "plan_sha256": "63c36c6eb45544086c7ce8e15c9a159e401333e4eb3c9a65d5c115d2da84ebb9",
+      "script_sha256": "d72bb37c218f0b91b77eea116ad9690cab1c84bb46095fae48fce0a2f59f4f14",
+      "summary_sha256": "ac80fd938fe697a0f0a1f300b3ad7dce0b9ae02c0b49803235bc30f29cce7f0d",
+      "config": {
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "source_id": "CAM-A",
+        "expected_zone_id": "Z-A",
+        "model_path": "models/xiazh-fire-smoke-yolo26m.onnx",
+        "model_sha256": "4163c96eef1ebab77c7f073d0d4001feffda64fbc544f441abf4ca8f4fd69929",
+        "imgsz": 640,
+        "interval_ms": 500,
+        "confidence": 0.25,
+        "cpu_threads": 4,
+        "preprocess": "clahe",
+        "onnx_provider": "openvino",
+        "window_ms": 1500,
+        "min_detections": 2,
+        "request_timeout_ms": 750,
+        "max_attempts": 2,
+        "retry_delay_ms": 100
+      },
+      "runtime": {
+        "model_classes": {
+          "0": "fire",
+          "1": "smoke"
+        },
+        "device": "cpu",
+        "python": "3.12.16",
+        "os": "Windows-10-10.0.19045-SP0",
+        "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+        "logical_cpu_count": 16,
+        "torch_threads": 1,
+        "preprocessing_version": "clahe_input_v1",
+        "onnx_runtime": {
+          "version": "1.31.1",
+          "providers": [
+            "OpenVINOExecutionProvider",
+            "CPUExecutionProvider"
+          ],
+          "intra_op_num_threads": 1,
+          "allow_spinning": "0",
+          "openvino_plugin": "1.8.1",
+          "provider_options_requested": {
+            "load_config": "{\"CPU\": {\"INFERENCE_NUM_THREADS\": 4, \"NUM_STREAMS\": 1, \"INFERENCE_PRECISION_HINT\": \"f32\", \"PERFORMANCE_HINT\": \"LATENCY\", \"ENABLE_HYPER_THREADING\": true}}"
+          }
+        },
+        "packages": {
+          "torch": "2.15.0+cpu",
+          "torchvision": "0.29.2+cpu",
+          "ultralytics": "8.4.208",
+          "opencv-python": "5.0.0.93",
+          "numpy": "2.5.4"
+        },
+        "native_size_probe": "min(config.imgsz, ceil(max(frame_shape)/32)*32), minimum32; no asset-specific branches"
+      },
+      "cases": [
+        {
+          "asset_id": "dev-candle-match",
+          "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+          "ground_truth_sha256": "29d690191e15bde93a500c116eb47ebf496ac54c725ee325e070e723a761fc7d",
+          "predictions_sha256": "bda2bdbd372453452204fc9aef8fc7a4d5dad000711cccd0edc4c508b1340fd1",
+          "samples": 51,
+          "normal_video": false,
+          "duration_ms": 25470,
+          "classes": {
+            "FIRE": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  501
+                ],
+                "mean": 501.0,
+                "maximum": 501
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 134.92374706045524
+        },
+        {
+          "asset_id": "dev-caviar-browse-whilewaiting2",
+          "video_sha256": "938c219f8b43efc2c0d8ab1d44f7d66768189487cf8b2d7d54410eb596c63147",
+          "ground_truth_sha256": "a6ab9925ff60ec4f9d338f6a4e854374a256e140845827c9645d4372e74a5341",
+          "predictions_sha256": "3b32bf4ce39c2a459763d84adbc70e51a335f45b1909702a5260c75d549e28f6",
+          "samples": 152,
+          "normal_video": true,
+          "duration_ms": 75840,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 49.66889605336627
+        },
+        {
+          "asset_id": "dev-caviar-meet-walktogether1",
+          "video_sha256": "8fb18d0c4c6bb7a895480e53e08e7b02bfd7f0e6876dc05bdd049b8805176e82",
+          "ground_truth_sha256": "171fb8908e68ac3f7478cffdc80f3fbac7bd4bbb089d194085b915cc2f858aef",
+          "predictions_sha256": "5a6f37e9fd9882b3550bc8e4f0090e193cb8e5a6b51c05a550a341279e7447f5",
+          "samples": 57,
+          "normal_video": true,
+          "duration_ms": 28320,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 50.893591222631045
+        },
+        {
+          "asset_id": "dev-caviar-walk1",
+          "video_sha256": "025ac73f433aac90256481c2c7972e3caa90fc857cdefa80cd8262ed821b1391",
+          "ground_truth_sha256": "17beeb6c2fab87edab449003c8c43e333b355188b417ae659ddf9294e132ad6c",
+          "predictions_sha256": "670f634a7a0b02355ad36491df16c9fcc3dfb35ab192db4378eeccb2a820ef7a",
+          "samples": 49,
+          "normal_video": true,
+          "duration_ms": 24480,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 50.16632449376036
+        },
+        {
+          "asset_id": "dev-flameless-candle",
+          "video_sha256": "a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a",
+          "ground_truth_sha256": "0eb5e8fe40cf98815e49f0f1a61cb21d890daa061566607baef86f561a3b233d",
+          "predictions_sha256": "8b3bac0d2893f223989bd7060b454b31e2d71394ce2edda28d8b0448d8930c47",
+          "samples": 18,
+          "normal_video": true,
+          "duration_ms": 8680,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 111.44533889212956
+        },
+        {
+          "asset_id": "dev-joss-smoke",
+          "video_sha256": "dce80b81f2ba1aed314a867145a07621b33344447d3582754e6f7989b1fb5407",
+          "ground_truth_sha256": "82fd288ab1d6081e42aa16ac2b214170e5826c25a5ee5b720c932ad77abc765e",
+          "predictions_sha256": "2fa8304a2b904f09afe5805867e47c9b9caac0b614a8fa638ed3b2c59c56054e",
+          "samples": 11,
+          "normal_video": false,
+          "duration_ms": 5170,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  2000
+                ],
+                "mean": 2000.0,
+                "maximum": 2000
+              }
+            }
+          },
+          "offline_mean_predict_ms": 120.47712727111171
+        },
+        {
+          "asset_id": "dev-smoke-0009",
+          "video_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+          "ground_truth_sha256": "ddad78fc279bb4746065a0a49d39ba116beed2ca551ab964fea0344b3b37cb69",
+          "predictions_sha256": "b8b6ea39a005a246e18558d41b5a7873a8a72a9cf16e6f897bd5afa7845a5cf0",
+          "samples": 20,
+          "normal_video": false,
+          "duration_ms": 9730,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  500
+                ],
+                "mean": 500.0,
+                "maximum": 500
+              }
+            }
+          },
+          "offline_mean_predict_ms": 178.64969498477876
+        }
+      ],
+      "samples": 358,
+      "aggregate": {
+        "FIRE": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "precision": {
+            "value": 0.5,
+            "numerator": 1,
+            "denominator": 2
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "matched_latency_ms_max": 501,
+          "normal_fp": 0,
+          "normal_duration_ms": 137320
+        },
+        "SMOKE": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": 1.0,
+            "numerator": 2,
+            "denominator": 2
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 2,
+            "denominator": 2
+          },
+          "matched_latency_ms_max": 2000,
+          "normal_fp": 0,
+          "normal_duration_ms": 137320
+        }
+      }
+    },
+    {
+      "name": "a01-135-interval250-screen",
+      "scope": "NEW_OFFLINE_INFERENCE_NOT_DELIVERY",
+      "plan_sha256": "04cf496caae370864dbe09f52a101a97335fc2651a53407debb9f5927a56f383",
+      "script_sha256": "4503ba1d2e4240424b1be0eb94780938fc156ad010062e701e9e0fa583e0b0cd",
+      "summary_sha256": "06dcb11ed5afac25a1a9ec8f97be7f3ca4f63456a9facfcbe320d9b36213b56b",
+      "config": {
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "source_id": "CAM-A",
+        "expected_zone_id": "Z-A",
+        "model_path": "models/xiazh-fire-smoke-yolo26m.onnx",
+        "model_sha256": "4163c96eef1ebab77c7f073d0d4001feffda64fbc544f441abf4ca8f4fd69929",
+        "imgsz": 640,
+        "interval_ms": 250,
+        "confidence": 0.25,
+        "cpu_threads": 4,
+        "preprocess": "clahe",
+        "native_input_size": true,
+        "onnx_provider": "openvino",
+        "window_ms": 1500,
+        "min_detections": 2,
+        "request_timeout_ms": 750,
+        "max_attempts": 2,
+        "retry_delay_ms": 100
+      },
+      "runtime": {
+        "model_classes": {
+          "0": "fire",
+          "1": "smoke"
+        },
+        "device": "cpu",
+        "python": "3.12.16",
+        "os": "Windows-10-10.0.19045-SP0",
+        "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+        "logical_cpu_count": 16,
+        "torch_threads": 1,
+        "preprocessing_version": "clahe_input_v1",
+        "onnx_runtime": {
+          "version": "1.31.1",
+          "providers": [
+            "OpenVINOExecutionProvider",
+            "CPUExecutionProvider"
+          ],
+          "intra_op_num_threads": 1,
+          "allow_spinning": "0",
+          "openvino_plugin": "1.8.1",
+          "provider_options_requested": {
+            "load_config": "{\"CPU\": {\"INFERENCE_NUM_THREADS\": 4, \"NUM_STREAMS\": 1, \"INFERENCE_PRECISION_HINT\": \"f32\", \"PERFORMANCE_HINT\": \"LATENCY\", \"ENABLE_HYPER_THREADING\": true}}"
+          }
+        },
+        "packages": {
+          "torch": "2.15.0+cpu",
+          "torchvision": "0.29.2+cpu",
+          "ultralytics": "8.4.208",
+          "opencv-python": "5.0.0.93",
+          "numpy": "2.5.4"
+        }
+      },
+      "cases": [
+        {
+          "asset_id": "dev-candle-match",
+          "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+          "ground_truth_sha256": "29d690191e15bde93a500c116eb47ebf496ac54c725ee325e070e723a761fc7d",
+          "predictions_sha256": "b0370ea7c2cb9fd660d6f34c41bbc18362e11c646374ef3a7f6854136c59b418",
+          "samples": 102,
+          "normal_video": false,
+          "duration_ms": 25470,
+          "classes": {
+            "FIRE": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  267
+                ],
+                "mean": 267.0,
+                "maximum": 267
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 131.70056275146848
+        },
+        {
+          "asset_id": "dev-caviar-browse-whilewaiting2",
+          "video_sha256": "938c219f8b43efc2c0d8ab1d44f7d66768189487cf8b2d7d54410eb596c63147",
+          "ground_truth_sha256": "a6ab9925ff60ec4f9d338f6a4e854374a256e140845827c9645d4372e74a5341",
+          "predictions_sha256": "96afde5923ba34a1da5e10c2163609e76a195a9257e3422af53e5c095c49c513",
+          "samples": 304,
+          "normal_video": true,
+          "duration_ms": 75840,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 49.996589811359485
+        },
+        {
+          "asset_id": "dev-caviar-meet-walktogether1",
+          "video_sha256": "8fb18d0c4c6bb7a895480e53e08e7b02bfd7f0e6876dc05bdd049b8805176e82",
+          "ground_truth_sha256": "171fb8908e68ac3f7478cffdc80f3fbac7bd4bbb089d194085b915cc2f858aef",
+          "predictions_sha256": "e9ca0d40cb1c8acfc995eaa58509cc17dd5f3ec9b03f3f6b2b443cb595ed8f66",
+          "samples": 114,
+          "normal_video": true,
+          "duration_ms": 28320,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 49.1684052558093
+        },
+        {
+          "asset_id": "dev-caviar-walk1",
+          "video_sha256": "025ac73f433aac90256481c2c7972e3caa90fc857cdefa80cd8262ed821b1391",
+          "ground_truth_sha256": "17beeb6c2fab87edab449003c8c43e333b355188b417ae659ddf9294e132ad6c",
+          "predictions_sha256": "8ba526f1e45dbc1b86ca133c8786012ef6fc759308cf83e3ca9c0897737f4024",
+          "samples": 98,
+          "normal_video": true,
+          "duration_ms": 24480,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 50.246566334473236
+        },
+        {
+          "asset_id": "dev-flameless-candle",
+          "video_sha256": "a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a",
+          "ground_truth_sha256": "0eb5e8fe40cf98815e49f0f1a61cb21d890daa061566607baef86f561a3b233d",
+          "predictions_sha256": "f9d50b6c8cb886be51c7373966063bf96dd965a0994b37ea9c1d0cc1ac2d374d",
+          "samples": 35,
+          "normal_video": true,
+          "duration_ms": 8680,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 108.13902572595647
+        },
+        {
+          "asset_id": "dev-joss-smoke",
+          "video_sha256": "dce80b81f2ba1aed314a867145a07621b33344447d3582754e6f7989b1fb5407",
+          "ground_truth_sha256": "82fd288ab1d6081e42aa16ac2b214170e5826c25a5ee5b720c932ad77abc765e",
+          "predictions_sha256": "c6b9fd1ce434f102996395646e7843c0261b1c1c61c7b0edf93b76fa71785b92",
+          "samples": 21,
+          "normal_video": false,
+          "duration_ms": 5170,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  2000
+                ],
+                "mean": 2000.0,
+                "maximum": 2000
+              }
+            }
+          },
+          "offline_mean_predict_ms": 119.5200619043871
+        },
+        {
+          "asset_id": "dev-smoke-0009",
+          "video_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+          "ground_truth_sha256": "ddad78fc279bb4746065a0a49d39ba116beed2ca551ab964fea0344b3b37cb69",
+          "predictions_sha256": "b2c03967938d327c3582539aead963e2e0d9200ecd831197268033f56373267a",
+          "samples": 39,
+          "normal_video": false,
+          "duration_ms": 9730,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  267
+                ],
+                "mean": 267.0,
+                "maximum": 267
+              }
+            }
+          },
+          "offline_mean_predict_ms": 181.60529743330792
+        }
+      ],
+      "samples": 713,
+      "aggregate": {
+        "FIRE": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "precision": {
+            "value": 0.5,
+            "numerator": 1,
+            "denominator": 2
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "matched_latency_ms_max": 267,
+          "normal_fp": 0,
+          "normal_duration_ms": 137320
+        },
+        "SMOKE": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "precision": {
+            "value": 0.6666666666666666,
+            "numerator": 2,
+            "denominator": 3
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 2,
+            "denominator": 2
+          },
+          "matched_latency_ms_max": 2000,
+          "normal_fp": 0,
+          "normal_duration_ms": 137320
+        }
+      }
+    },
+    {
+      "name": "a01-135-mfranzon-screen",
+      "scope": "NEW_OFFLINE_INFERENCE_NOT_DELIVERY",
+      "plan_sha256": "96ad78c405957e36bb49331a3d64c89b664ce92524a7f781dc909a0918e4c313",
+      "script_sha256": "001f683b6c4c6324fc96fcbca5d80f3bf7b3a80c4fc34e040514314c0d4573fd",
+      "summary_sha256": "c006ccacb4896a4423e4144cdc4136c21dafa575783ca70283d7c4859da5b718",
+      "config": {
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "source_id": "CAM-A",
+        "expected_zone_id": "Z-A",
+        "model_path": "models/mfranzon-fire-smoke-yolov8.pt",
+        "model_sha256": "ac0a10257b2bc1f20c9d957f8adeeb61dd6140322fc19d0b4a116cb491776d16",
+        "imgsz": 640,
+        "interval_ms": 500,
+        "confidence": 0.25,
+        "cpu_threads": 4,
+        "preprocess": "none",
+        "native_input_size": false,
+        "onnx_provider": "cpu",
+        "window_ms": 1500,
+        "min_detections": 2,
+        "request_timeout_ms": 750,
+        "max_attempts": 2,
+        "retry_delay_ms": 100
+      },
+      "runtime": {
+        "model_classes": {
+          "0": "fire",
+          "1": "smoke"
+        },
+        "device": "cpu",
+        "python": "3.12.16",
+        "os": "Windows-10-10.0.19045-SP0",
+        "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+        "logical_cpu_count": 16,
+        "torch_threads": 4,
+        "preprocessing_version": "none",
+        "onnx_runtime": null,
+        "packages": {
+          "torch": "2.15.0+cpu",
+          "torchvision": "0.29.2+cpu",
+          "ultralytics": "8.4.208",
+          "opencv-python": "5.0.0.93",
+          "numpy": "2.5.4"
+        }
+      },
+      "cases": [
+        {
+          "asset_id": "dev-candle-match",
+          "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+          "ground_truth_sha256": "29d690191e15bde93a500c116eb47ebf496ac54c725ee325e070e723a761fc7d",
+          "predictions_sha256": "28fd554a67d276789c2d0134512fc3d60eec59d4bc195ec0dad1df22bbfae3fe",
+          "samples": 51,
+          "normal_video": false,
+          "duration_ms": 25470,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 25.133600001972095
+        },
+        {
+          "asset_id": "dev-caviar-browse-whilewaiting2",
+          "video_sha256": "938c219f8b43efc2c0d8ab1d44f7d66768189487cf8b2d7d54410eb596c63147",
+          "ground_truth_sha256": "a6ab9925ff60ec4f9d338f6a4e854374a256e140845827c9645d4372e74a5341",
+          "predictions_sha256": "9e08c390a85910454a2b932bd17747bab50ebe9873d21912a9ead5815478d003",
+          "samples": 152,
+          "normal_video": true,
+          "duration_ms": 75840,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 9,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 22.771456582153117
+        },
+        {
+          "asset_id": "dev-caviar-meet-walktogether1",
+          "video_sha256": "8fb18d0c4c6bb7a895480e53e08e7b02bfd7f0e6876dc05bdd049b8805176e82",
+          "ground_truth_sha256": "171fb8908e68ac3f7478cffdc80f3fbac7bd4bbb089d194085b915cc2f858aef",
+          "predictions_sha256": "efa58fdd686e5e354e9d30c58c7d3df20ea3fe43036467c46e9deb01a454d6d3",
+          "samples": 57,
+          "normal_video": true,
+          "duration_ms": 28320,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 22.741103516238038
+        },
+        {
+          "asset_id": "dev-caviar-walk1",
+          "video_sha256": "025ac73f433aac90256481c2c7972e3caa90fc857cdefa80cd8262ed821b1391",
+          "ground_truth_sha256": "17beeb6c2fab87edab449003c8c43e333b355188b417ae659ddf9294e132ad6c",
+          "predictions_sha256": "3114c0d8b70ff62b12ded72877ae2ff4053dccbac66a867efca7842aa4c8c2bd",
+          "samples": 49,
+          "normal_video": true,
+          "duration_ms": 24480,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 3,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 23.19462040952426
+        },
+        {
+          "asset_id": "dev-flameless-candle",
+          "video_sha256": "a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a",
+          "ground_truth_sha256": "0eb5e8fe40cf98815e49f0f1a61cb21d890daa061566607baef86f561a3b233d",
+          "predictions_sha256": "a397370365a1906e13b2a80b6f527061c3c772fae3e1bd72fd2846839fb7a125",
+          "samples": 18,
+          "normal_video": true,
+          "duration_ms": 8680,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 1,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 22.605722188018262
+        },
+        {
+          "asset_id": "dev-joss-smoke",
+          "video_sha256": "dce80b81f2ba1aed314a867145a07621b33344447d3582754e6f7989b1fb5407",
+          "ground_truth_sha256": "82fd288ab1d6081e42aa16ac2b214170e5826c25a5ee5b720c932ad77abc765e",
+          "predictions_sha256": "c5a1053c9a1d44c5c1e5676b02ae6b6e9427b859262c443363a7443176ea4494",
+          "samples": 11,
+          "normal_video": false,
+          "duration_ms": 5170,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 24.24296362071552
+        },
+        {
+          "asset_id": "dev-smoke-0009",
+          "video_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+          "ground_truth_sha256": "ddad78fc279bb4746065a0a49d39ba116beed2ca551ab964fea0344b3b37cb69",
+          "predictions_sha256": "a7837a74cd7ac5e3ba94da9ed34a86901e1c05b044037d5ac581f475e284be57",
+          "samples": 20,
+          "normal_video": false,
+          "duration_ms": 9730,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  500
+                ],
+                "mean": 500.0,
+                "maximum": 500
+              }
+            }
+          },
+          "offline_mean_predict_ms": 28.29208498587832
+        }
+      ],
+      "samples": 358,
+      "aggregate": {
+        "FIRE": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 1,
+          "precision": {
+            "value": 0.0,
+            "numerator": 0,
+            "denominator": 1
+          },
+          "recall": {
+            "value": 0.0,
+            "numerator": 0,
+            "denominator": 1
+          },
+          "matched_latency_ms_max": null,
+          "normal_fp": 1,
+          "normal_duration_ms": 137320
+        },
+        "SMOKE": {
+          "tp": 1,
+          "fp": 14,
+          "fn": 1,
+          "precision": {
+            "value": 0.06666666666666667,
+            "numerator": 1,
+            "denominator": 15
+          },
+          "recall": {
+            "value": 0.5,
+            "numerator": 1,
+            "denominator": 2
+          },
+          "matched_latency_ms_max": 500,
+          "normal_fp": 14,
+          "normal_duration_ms": 137320
+        }
+      }
+    },
+    {
+      "name": "a01-135-fire-only-screen",
+      "scope": "NEW_OFFLINE_INFERENCE_NOT_DELIVERY",
+      "plan_sha256": "65f34c5a0fedaf009fd6944d36522ae9532164d73628e46aae1f8b194e4dc440",
+      "script_sha256": "f374116620156a2676e7257076247e79fc5ba44e7812c81532343ef987064e3a",
+      "summary_sha256": "bfca2db547fd2aad6a20571d0b87f4ae293868e557eabb5c32d780d24c2250a9",
+      "config": {
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "source_id": "CAM-A",
+        "expected_zone_id": "Z-A",
+        "model_path": "models/priyanshu-fire-specialist.pt",
+        "model_sha256": "1c96dec2ee950ae2019a4e6e5c5059e2a700b0e05439a129df6ab04fbf9f1fcd",
+        "imgsz": 640,
+        "interval_ms": 500,
+        "confidence": 0.25,
+        "cpu_threads": 4,
+        "preprocess": "none",
+        "native_input_size": false,
+        "onnx_provider": "cpu",
+        "window_ms": 1500,
+        "min_detections": 2,
+        "request_timeout_ms": 750,
+        "max_attempts": 2,
+        "retry_delay_ms": 100
+      },
+      "runtime": {
+        "model_classes": {
+          "0": "fire"
+        },
+        "parameters": 3011043,
+        "scope": "FIRE_ONLY_DIAGNOSTIC_SMOKE_UNSUPPORTED",
+        "torch_threads": 4
+      },
+      "cases": [
+        {
+          "asset_id": "dev-candle-match",
+          "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+          "ground_truth_sha256": "29d690191e15bde93a500c116eb47ebf496ac54c725ee325e070e723a761fc7d",
+          "predictions_sha256": "d0dd8cc64b8dab1cdb292d9dd8c179ae211e6e000c17eaf46c0089f6b49554c8",
+          "samples": 51,
+          "normal_video": false,
+          "duration_ms": 25470,
+          "classes": {
+            "FIRE": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "latency_ms": {
+                "count": 1,
+                "values": [
+                  501
+                ],
+                "mean": 501.0,
+                "maximum": 501
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 23.907062743662618
+        },
+        {
+          "asset_id": "dev-caviar-browse-whilewaiting2",
+          "video_sha256": "938c219f8b43efc2c0d8ab1d44f7d66768189487cf8b2d7d54410eb596c63147",
+          "ground_truth_sha256": "a6ab9925ff60ec4f9d338f6a4e854374a256e140845827c9645d4372e74a5341",
+          "predictions_sha256": "22a21509b8a004ea3f61cbf246916fd8448a0ae9c6bc49002e233fbfb39d1e6f",
+          "samples": 152,
+          "normal_video": true,
+          "duration_ms": 75840,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 4,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 22.395499344719084
+        },
+        {
+          "asset_id": "dev-caviar-meet-walktogether1",
+          "video_sha256": "8fb18d0c4c6bb7a895480e53e08e7b02bfd7f0e6876dc05bdd049b8805176e82",
+          "ground_truth_sha256": "171fb8908e68ac3f7478cffdc80f3fbac7bd4bbb089d194085b915cc2f858aef",
+          "predictions_sha256": "ebda700d671acacde46c25ab0881d76d1f6be694d85bc598c41ea760d8869a1b",
+          "samples": 57,
+          "normal_video": true,
+          "duration_ms": 28320,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 22.207403494241206
+        },
+        {
+          "asset_id": "dev-caviar-walk1",
+          "video_sha256": "025ac73f433aac90256481c2c7972e3caa90fc857cdefa80cd8262ed821b1391",
+          "ground_truth_sha256": "17beeb6c2fab87edab449003c8c43e333b355188b417ae659ddf9294e132ad6c",
+          "predictions_sha256": "11022b18ec4920ab4983bc2399b433658a59031dec72627f105d257a9eb6e2ce",
+          "samples": 49,
+          "normal_video": true,
+          "duration_ms": 24480,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 22.24347757042519
+        },
+        {
+          "asset_id": "dev-flameless-candle",
+          "video_sha256": "a1d02d0ffbcbe4973586d0a2a11efdef544ba0cd678b7640daa8eaaa6a284f3a",
+          "ground_truth_sha256": "0eb5e8fe40cf98815e49f0f1a61cb21d890daa061566607baef86f561a3b233d",
+          "predictions_sha256": "7f5f438f4d4098b71af6d3aa1c40ad7885fa8ab95ac7a2d2e5c4b3da68c6a051",
+          "samples": 18,
+          "normal_video": true,
+          "duration_ms": 8680,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 22.180777832141352
+        },
+        {
+          "asset_id": "dev-joss-smoke",
+          "video_sha256": "dce80b81f2ba1aed314a867145a07621b33344447d3582754e6f7989b1fb5407",
+          "ground_truth_sha256": "82fd288ab1d6081e42aa16ac2b214170e5826c25a5ee5b720c932ad77abc765e",
+          "predictions_sha256": "7808de27172ccbb16955537e4d841b81ed54ce20e74cf6d55bc79199c8d46daf",
+          "samples": 11,
+          "normal_video": false,
+          "duration_ms": 5170,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 23.45708181912249
+        },
+        {
+          "asset_id": "dev-smoke-0009",
+          "video_sha256": "ff900050f8c79f4bf163f3536526de0e25a7fb617bee8d2d02fc6a074c638ce6",
+          "ground_truth_sha256": "ddad78fc279bb4746065a0a49d39ba116beed2ca551ab964fea0344b3b37cb69",
+          "predictions_sha256": "0fa10195282a5eb1def3214dfa7f916c7d17fe2d2a43e3a0494e95beff543cc5",
+          "samples": 20,
+          "normal_video": false,
+          "duration_ms": 9730,
+          "classes": {
+            "FIRE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 0,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            },
+            "SMOKE": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "latency_ms": {
+                "count": 0,
+                "values": [],
+                "mean": null,
+                "maximum": null
+              }
+            }
+          },
+          "offline_mean_predict_ms": 25.331745017319918
+        }
+      ],
+      "samples": 358,
+      "aggregate": {
+        "FIRE": {
+          "tp": 1,
+          "fp": 5,
+          "fn": 0,
+          "precision": {
+            "value": 0.16666666666666666,
+            "numerator": 1,
+            "denominator": 6
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "matched_latency_ms_max": 501,
+          "normal_fp": 4,
+          "normal_duration_ms": 137320
+        },
+        "SMOKE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 2,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": 0.0,
+            "numerator": 0,
+            "denominator": 2
+          },
+          "matched_latency_ms_max": null,
+          "normal_fp": 0,
+          "normal_duration_ms": 137320
+        }
+      },
+      "unsupported_class": "SMOKE; diagnostic output has no smoke detections by design, not a two-class candidate"
+    }
+  ],
+  "model_sources": [
+    {
+      "repository": "mfranzon/fire-smoke-yolov8",
+      "revision": "f1c6426b069c1849cbf13b1ef5d2a260289286db",
+      "file": "fire_smoke_yolov8.pt",
+      "sha256": "ac0a10257b2bc1f20c9d957f8adeeb61dd6140322fc19d0b4a116cb491776d16",
+      "size": 6262051,
+      "api_snapshot_sha256": "89216a0d320d8f7f60fe3288161a591ef81bc4b73b9b80c216afb39600102604",
+      "model_card_sha256": "55076926308e70201f1e8dfbec438bc8edf89fb585c2bdbb31c96c5a59fd21da",
+      "model_card_url": "https://huggingface.co/mfranzon/fire-smoke-yolov8/blob/f1c6426b069c1849cbf13b1ef5d2a260289286db/README.md",
+      "publisher_license": "agpl-3.0",
+      "training_overlap": "unknown",
+      "adoption": "REJECTED"
+    },
+    {
+      "repository": "Priyanshu-68/yolov8-cctv-tracking-models",
+      "revision": "634642fdc902a03788233f8eda0557248514545c",
+      "file": "fire_specialist_best.pt",
+      "sha256": "1c96dec2ee950ae2019a4e6e5c5059e2a700b0e05439a129df6ab04fbf9f1fcd",
+      "size": 6243171,
+      "api_snapshot_sha256": "ed2bb98436c5535de2517b1af9c261165e97d5bd4ed9baf30d544bdb000a9d04",
+      "model_card_sha256": "8c28fae3e4adb09f32ff8503c3d405a743baf59ffdfe9db58bc30faaf9535a3f",
+      "model_card_url": "https://huggingface.co/Priyanshu-68/yolov8-cctv-tracking-models/blob/634642fdc902a03788233f8eda0557248514545c/README.md",
+      "publisher_license": "agpl-3.0",
+      "training_overlap": "unknown",
+      "adoption": "REJECTED"
+    }
+  ],
+  "roi_diagnostic": {
+    "scope": "DEVELOPMENT_ROI_DIAGNOSTIC_NOT_FULL_EVALUATION",
+    "source_commit": "76cbe69949a03014696deb1dcfda23b6e460c281",
+    "script_sha256": "e35deed9e6e3f41dd4516f999b742a37b5d37e7236d58c52c7f2e8ee09a3199b",
+    "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+    "seed_media_ms": 11512,
+    "seed_box": [
+      327.6393737792969,
+      171.60714721679688,
+      393.0483703613281,
+      318.52374267578125
+    ],
+    "config": {
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "source_id": "CAM-A",
+      "expected_zone_id": "Z-A",
+      "model_path": "models/xiazh-fire-smoke-yolo26m.onnx",
+      "model_sha256": "4163c96eef1ebab77c7f073d0d4001feffda64fbc544f441abf4ca8f4fd69929",
+      "imgsz": 640,
+      "interval_ms": 500,
+      "confidence": 0.25,
+      "cpu_threads": 4,
+      "preprocess": "clahe",
+      "native_input_size": true,
+      "onnx_provider": "openvino",
+      "window_ms": 1500,
+      "min_detections": 2,
+      "request_timeout_ms": 750,
+      "max_attempts": 2,
+      "retry_delay_ms": 100
+    },
+    "runtime": {
+      "model_classes": {
+        "0": "fire",
+        "1": "smoke"
+      },
+      "device": "cpu",
+      "python": "3.12.16",
+      "os": "Windows-10-10.0.19045-SP0",
+      "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+      "logical_cpu_count": 16,
+      "torch_threads": 1,
+      "preprocessing_version": "clahe_input_v1",
+      "onnx_runtime": {
+        "version": "1.31.1",
+        "providers": [
+          "OpenVINOExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "intra_op_num_threads": 1,
+        "allow_spinning": "0",
+        "openvino_plugin": "1.8.1",
+        "provider_options_requested": {
+          "load_config": "{\"CPU\": {\"INFERENCE_NUM_THREADS\": 4, \"NUM_STREAMS\": 1, \"INFERENCE_PRECISION_HINT\": \"f32\", \"PERFORMANCE_HINT\": \"LATENCY\", \"ENABLE_HYPER_THREADING\": true}}"
+        }
+      },
+      "packages": {
+        "torch": "2.15.0+cpu",
+        "torchvision": "0.29.2+cpu",
+        "ultralytics": "8.4.208",
+        "opencv-python": "5.0.0.93",
+        "numpy": "2.5.4"
+      }
+    },
+    "rows": [
+      {
+        "media_time_ms": 11512,
+        "factor": 2,
+        "crop_xyxy": [
+          213,
+          98,
+          507,
+          391
+        ],
+        "detections": [
+          {
+            "class": "FIRE",
+            "confidence": 0.787674069404602,
+            "xyxy": [
+              328.90316009521484,
+              175.77593994140625,
+              390.8419494628906,
+              306.58238220214844
+            ]
+          }
+        ],
+        "predict_ms": 74.61550016887486
+      },
+      {
+        "media_time_ms": 11512,
+        "factor": 4,
+        "crop_xyxy": [
+          66,
+          0,
+          640,
+          480
+        ],
+        "detections": [
+          {
+            "class": "FIRE",
+            "confidence": 0.8687224984169006,
+            "xyxy": [
+              327.3929138183594,
+              172.62387084960938,
+              392.07525634765625,
+              320.639892578125
+            ]
+          }
+        ],
+        "predict_ms": 151.47689986042678
+      },
+      {
+        "media_time_ms": 12012,
+        "factor": 2,
+        "crop_xyxy": [
+          213,
+          98,
+          507,
+          391
+        ],
+        "detections": [],
+        "predict_ms": 50.12879986315966
+      },
+      {
+        "media_time_ms": 12012,
+        "factor": 4,
+        "crop_xyxy": [
+          66,
+          0,
+          640,
+          480
+        ],
+        "detections": [],
+        "predict_ms": 135.97049983218312
+      },
+      {
+        "media_time_ms": 12513,
+        "factor": 2,
+        "crop_xyxy": [
+          213,
+          98,
+          507,
+          391
+        ],
+        "detections": [],
+        "predict_ms": 51.10609997063875
+      },
+      {
+        "media_time_ms": 12513,
+        "factor": 4,
+        "crop_xyxy": [
+          66,
+          0,
+          640,
+          480
+        ],
+        "detections": [],
+        "predict_ms": 135.2601998951286
+      },
+      {
+        "media_time_ms": 13013,
+        "factor": 2,
+        "crop_xyxy": [
+          213,
+          98,
+          507,
+          391
+        ],
+        "detections": [],
+        "predict_ms": 47.23720019683242
+      },
+      {
+        "media_time_ms": 13013,
+        "factor": 4,
+        "crop_xyxy": [
+          66,
+          0,
+          640,
+          480
+        ],
+        "detections": [
+          {
+            "class": "FIRE",
+            "confidence": 0.7274414300918579,
+            "xyxy": [
+              305.2962951660156,
+              163.5243682861328,
+              384.3868713378906,
+              312.4855651855469
+            ]
+          }
+        ],
+        "predict_ms": 123.94379987381399
+      },
+      {
+        "media_time_ms": 13514,
+        "factor": 2,
+        "crop_xyxy": [
+          213,
+          98,
+          507,
+          391
+        ],
+        "detections": [],
+        "predict_ms": 50.75819999910891
+      },
+      {
+        "media_time_ms": 13514,
+        "factor": 4,
+        "crop_xyxy": [
+          66,
+          0,
+          640,
+          480
+        ],
+        "detections": [
+          {
+            "class": "FIRE",
+            "confidence": 0.8368157148361206,
+            "xyxy": [
+              323.3334655761719,
+              178.36158752441406,
+              387.8870849609375,
+              309.8642272949219
+            ]
+          }
+        ],
+        "predict_ms": 124.84579998999834
+      },
+      {
+        "media_time_ms": 14014,
+        "factor": 2,
+        "crop_xyxy": [
+          213,
+          98,
+          507,
+          391
+        ],
+        "detections": [],
+        "predict_ms": 46.71690007671714
+      },
+      {
+        "media_time_ms": 14014,
+        "factor": 4,
+        "crop_xyxy": [
+          66,
+          0,
+          640,
+          480
+        ],
+        "detections": [
+          {
+            "class": "FIRE",
+            "confidence": 0.847674548625946,
+            "xyxy": [
+              326.66717529296875,
+              173.67120361328125,
+              390.06610107421875,
+              310.7002868652344
+            ]
+          }
+        ],
+        "predict_ms": 123.55460016988218
+      }
+    ],
+    "raw_sha256": "ce45fdd7da5dfc121df73b4000e6aef42df72b91b7088ac7857a5f6aa67f3a6c",
+    "adoption": "REJECTED_KEY_GAP_NOT_RECOVERED"
+  },
+  "preflight_failure": {
+    "plan_sha256": "232b98451853f7d9ed8857bcfa5803576ef8c0adad6a226cbbf91569354e3e12",
+    "console_sha256": "8558e9dc6e44847ab33c27a15d40e63791e5014620af17d43f4dad3bb36e2cf3",
+    "script_sha256": "1e8bafb6d12664face926113adf6916a1cf79d25d42c97abd105388ee7d35fb0",
+    "reason": "Expected two classes, checkpoint has only {0: fire}; rejected before video inference",
+    "subsequent_diagnostic": "a01-135-fire-only-screen; separate diagnostic only, product class gate unchanged"
+  },
+  "limitations": [
+    "All inputs and labels are development material, repeatedly used for candidate selection; no independent/generalization claim.",
+    "Offline sampling is not paced transport: no server skip/expiry/throughput success is inferred.",
+    "No new candidate qualified for adoption. Existing settings, GT, event matching and final freeze remain unchanged.",
+    "Fire-only checkpoint declares 3011043 parameters and one fire class. Publisher card description of YOLOv8s is not adopted as measured architecture."
+  ]
+}
