@@ -58,12 +58,21 @@ def select_assets(manifest, requested):
     return assets
 
 
+def worker_timeout(value):
+    seconds = int(value)
+    if not 1 <= seconds <= 3600:
+        raise argparse.ArgumentTypeError("worker timeout must be between 1 and 3600 seconds")
+    return seconds
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="New evidence directory")
     parser.add_argument("--manifest", type=Path, default=ROOT / "data/manifests/assets.json")
     parser.add_argument("--asset-id", action="append", help="Development asset to run; repeat for each selected clip")
     parser.add_argument("--config", type=Path, default=ROOT / "configs/ai.example.json")
+    parser.add_argument("--worker-timeout-seconds", type=worker_timeout, default=240,
+                        help="Per-video worker time limit, 1..3600 seconds (default: 240)")
     args = parser.parse_args(argv)
     manifest_bytes = args.manifest.read_bytes()
     manifest = json.loads(manifest_bytes)
@@ -88,6 +97,7 @@ def main(argv=None):
     report = dict(scope="DEVELOPMENT_LOOPBACK_DELIVERY", building_id="TWO_ROUTE", building_version=1,
                   freshness_ms=freshness_ms, videos=results, status="FAILED",
                   performance_verdict="NOT_ASSESSED", selected_assets=[a["asset_id"] for a in assets],
+                  worker_timeout_seconds=args.worker_timeout_seconds,
                   config_sha256=hashlib.sha256(config_bytes).hexdigest(),
                   manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest())
     try:
@@ -109,7 +119,7 @@ def main(argv=None):
                            "--video", str(ROOT / asset["path"]), "--controller", str(client.base_url),
                            "--runs-dir", str(out / "ai")]
                 completed = subprocess.run(command, cwd=ROOT, env=os.environ | {"PYTHONUTF8": "1"},
-                                           capture_output=True, encoding="utf-8", timeout=240)
+                                           capture_output=True, encoding="utf-8", timeout=args.worker_timeout_seconds)
                 (out / (name + ".console.txt")).write_text(completed.stdout + completed.stderr, encoding="utf-8")
                 result["exit_code"] = completed.returncode
                 state_response = client.get("/api/state")
