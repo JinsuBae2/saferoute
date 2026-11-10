@@ -15,13 +15,14 @@ import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contra
 import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
 import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseFigure, signFaceTexture, softDotTexture } from "./assets";
-import { insidePolygon, nearestStair, stairCenterline, stairRun, visibleWalls, wallBox } from "./geometry";
+import { insidePolygon, visibleWalls, wallBox } from "./geometry";
+import { flightSteps, pathLength, stairLanding, stairLink } from "./stairs";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
 import { countPeople, spawnPeople, stepPeople } from "./people";
 import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
-import type { FloorLift, ViewBox, ViewMode } from "./view";
+import type { ViewBox, ViewMode } from "./view";
 import { clampTarget, displayY, fitPose, floorLift, planYaw, pointBox, visibleBox } from "./view";
 
 // M05: 바닥과 벽의 명암 차이를 키워 어두운 배경에서도 방·복도 윤곽이 보이게 한다.
@@ -177,53 +178,6 @@ function liftLabelAbove(label: THREE.Sprite, iconPixelsAboveAnchor: number) {
   label.userData.hoverLabel = true;
   label.renderOrder = 23;
   label.visible = false;
-}
-
-/**
- * 계단 한 구간(아래층→위층)의 디딤판. 그릴 때와 사람이 걸을 때 같은 값을 써서 발이 디딤판 위에 놓이게 한다.
- */
-function flightSteps(building: Building, geometry: BuildingGeometry, stair: GeometryStair, lowerId: string, upperId: string, lift: FloorLift): readonly StairStepAlong[] {
-  const elevation = (id: string) => geometry.floors.find((floor) => floor.floor_id === id)?.elevation ?? 0;
-  // 들어서는 지점: 두 층을 잇는 통로 가운데 이 계단으로 이어지는 것의 아래쪽 끝.
-  const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
-  let entry: { x: number; z: number } | null = null;
-  for (const edge of building.edges) {
-    const from = nodes.get(edge.from_node_id);
-    const to = nodes.get(edge.to_node_id);
-    if (from === undefined || to === undefined || from.floor_id !== lowerId || to.floor_id !== upperId) continue;
-    const point = { x: from.position.x, z: from.position.z };
-    if (nearestStair(geometry.stairs, lowerId, upperId, point) !== stair) continue;
-    entry = point;
-    break;
-  }
-  const { points, width } = stairCenterline(stair, entry);
-  return stairRun(points, width, displayY(elevation(lowerId), lowerId, lift), displayY(elevation(upperId), upperId, lift));
-}
-
-type PlacedNode = { readonly floor_id: string; readonly position: { readonly x: number; readonly y: number; readonly z: number } };
-
-/**
- * 층이 다른 두 지점을 잇는 길(a에서 b로). 계단 디딤판을 따라간다. 같은 층이거나 계단을 못 찾으면 null.
- * 사람이 걷는 길과 화면에 그리는 경로 선이 이 값을 함께 써서, 선이 바닥을 뚫거나 사람이 허공으로 떨어지지 않는다.
- */
-function stairLink(building: Building, geometry: BuildingGeometry, lift: FloorLift, a: PlacedNode, b: PlacedNode, height = 0): THREE.Vector3[] | null {
-  if (a.floor_id === b.floor_id) return null;
-  const [lower, upper] = a.position.y < b.position.y ? [a, b] : [b, a];
-  const stair = nearestStair(geometry.stairs, lower.floor_id, upper.floor_id, { x: lower.position.x, z: lower.position.z });
-  if (stair === null) return null;
-  const point = (node: PlacedNode) => new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, lift) + height, node.position.z);
-  const path = [
-    point(lower),
-    ...flightSteps(building, geometry, stair, lower.floor_id, upper.floor_id, lift).map((step) => new THREE.Vector3(step.x, step.y + height, step.z)),
-    point(upper),
-  ];
-  return a === lower ? path : path.reverse();
-}
-
-function pathLength(path: readonly THREE.Vector3[]): number {
-  let total = 0;
-  for (let index = 1; index < path.length; index += 1) total += path[index].distanceTo(path[index - 1]);
-  return total;
 }
 
 /** 바닥에 눕히는 흐린 방 이름. 읽을 수는 있지만 경로·위험 표시를 가리지 않게 옅게 그린다. */
@@ -1320,6 +1274,19 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         treads.castShadow = true;
         treads.receiveShadow = true;
         staticGroup.add(treads);
+
+        const landing = stairLanding(building, geometry, stair, ordered[level - 1], ordered[level], lift);
+        if (landing !== null) {
+          const platform = new THREE.Mesh(
+            new THREE.BoxGeometry(landing.width, 0.18, landing.run),
+            new THREE.MeshLambertMaterial({ color: stair.kind === "ENCLOSED" ? COLOR.stepEnclosed : COLOR.stepOpen }),
+          );
+          platform.position.set(landing.x, landing.y - 0.09, landing.z);
+          platform.rotation.y = landing.yaw;
+          platform.castShadow = true;
+          platform.receiveShadow = true;
+          staticGroup.add(platform);
+        }
 
         // 난간. 진행 방향의 오른쪽 가장자리에 손잡이와 기둥을 세운다.
         const edge = (step: StairStepAlong, height: number) => new THREE.Vector3(
