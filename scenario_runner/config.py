@@ -74,6 +74,11 @@ class Scenario(BuildingIdentity):
             if point.zone_id not in zones or point.time_ms > self.duration_ms or point.zone_id not in initial:
                 raise ValueError("smoke needs known zones, a time-zero value, and bounded times")
         sources = {s.source_id: s for s in building.sources}
+        # 필수 모의 감지기를 실행기가 소유하지 않으면 arm 조건을 채울 주체가 없다.
+        missing = sorted(s.source_id for s in building.sources if s.required and s.source_id not in rules
+                         and s.source_type in {"SIM_SMOKE_DETECTOR", "SIM_SPRINKLER"})
+        if missing:
+            raise ValueError(f"scenario must own every required simulated sensor; missing {missing}")
         for observation in self.initial_observations:
             source = sources.get(observation.source_id)
             if source is None or source.source_type not in {"SIM_SMOKE_DETECTOR", "SIM_SPRINKLER"}:
