@@ -1,0 +1,169 @@
+{
+  "scope": "DEVELOPMENT_LOG_REAGGREGATION_NOT_NEW_INFERENCE",
+  "source_base": "23287bcdb6d3f75b2cd8539d0c24c90c5057161a",
+  "source_normalized_sha256": {
+    "tools/evaluate_ai.py": "2a0b9d8d0d62500453c3efb5e90e0eeccde707b5753409551f42be1443918e30",
+    "tools/evaluate_ai_suite.py": "a59550fac86fa31d0c80dfee5daca860884fce7663c4c0c3cfcbe4cee8e31828"
+  },
+  "manifest_sha256": "755f78ca5b93fc56bb0070b50da472a76856fab2e6f20cd51a110103bda317eb",
+  "output_sha256": "15bf7115944624594cf6b646e3ff014e7d057d3679f1b5b0a7d6ee4359e6e62a",
+  "previous_evidence_sha256": "c2c5c5896bdac18a859df937f07e387a6eef2a47f01949d02e54c2661cdb5615",
+  "status": "COMPLETE",
+  "performance_verdict": "NOT_ASSESSED",
+  "model_sha256": "a06febf257bff40cf5f3814e77f5120e2a80ab91d3ff3a84370caf6fdf832740",
+  "inputs": [
+    {
+      "asset_id": "dev-candle-match",
+      "inputs": {
+        "predictions_sha256": "3e17c61a8af4d61ed24d35fbb80fcd1ceb5480ae6d0d4d493820f944d51e4c7d",
+        "ground_truth_sha256": "29d690191e15bde93a500c116eb47ebf496ac54c725ee325e070e723a761fc7d"
+      },
+      "scene_id": "commons-candle-match-20110719"
+    },
+    {
+      "asset_id": "dev-caviar-browse-whilewaiting2",
+      "inputs": {
+        "predictions_sha256": "4c0c6508645d4a21a424cf8d73e58be809bb28a4826d261e6938a5ee3a5900af",
+        "ground_truth_sha256": "a6ab9925ff60ec4f9d338f6a4e854374a256e140845827c9645d4372e74a5341"
+      },
+      "scene_id": "caviar-inria-grenoble-lobby"
+    },
+    {
+      "asset_id": "dev-caviar-meet-walktogether1",
+      "inputs": {
+        "predictions_sha256": "b33f72ccd17c7daf8b2605db1d001daf923bdc890dd780324ae4f2b63e877fe0",
+        "ground_truth_sha256": "171fb8908e68ac3f7478cffdc80f3fbac7bd4bbb089d194085b915cc2f858aef"
+      },
+      "scene_id": "caviar-inria-grenoble-lobby"
+    },
+    {
+      "asset_id": "dev-caviar-walk1",
+      "inputs": {
+        "predictions_sha256": "b289e9d549aa98bef996d2b0127bfd36768d4c93f3eec49179d147a4b03e5dbd",
+        "ground_truth_sha256": "17beeb6c2fab87edab449003c8c43e333b355188b417ae659ddf9294e132ad6c"
+      },
+      "scene_id": "caviar-inria-grenoble-lobby"
+    },
+    {
+      "asset_id": "dev-flameless-candle",
+      "inputs": {
+        "predictions_sha256": "230ae1858c93cd49f4e1701dcf92026cae23c6ced634115d9eadf429989c7c2c",
+        "ground_truth_sha256": "0eb5e8fe40cf98815e49f0f1a61cb21d890daa061566607baef86f561a3b233d"
+      },
+      "scene_id": "commons-flameless-candle-20221203"
+    },
+    {
+      "asset_id": "dev-joss-smoke",
+      "inputs": {
+        "predictions_sha256": "eee006acbb5103f319ae322886e4f189b8320f2fb223afbd76893de41fd8f3e5",
+        "ground_truth_sha256": "82fd288ab1d6081e42aa16ac2b214170e5826c25a5ee5b720c932ad77abc765e"
+      },
+      "scene_id": "commons-tai-wo-estate-20260330"
+    },
+    {
+      "asset_id": "dev-smoke-0009",
+      "inputs": {
+        "predictions_sha256": "08e7097ef0f6191198aea7de9ab317255f09ab91343c8005daec43b3d5a1ded3",
+        "ground_truth_sha256": "ddad78fc279bb4746065a0a49d39ba116beed2ca551ab964fea0344b3b37cb69"
+      },
+      "scene_id": "commons-ghana-amuzujoe-20230417"
+    }
+  ],
+  "aggregate": {
+    "video_count": 7,
+    "scene_groups": {
+      "commons-candle-match-20110719": [
+        "dev-candle-match"
+      ],
+      "caviar-inria-grenoble-lobby": [
+        "dev-caviar-browse-whilewaiting2",
+        "dev-caviar-meet-walktogether1",
+        "dev-caviar-walk1"
+      ],
+      "commons-flameless-candle-20221203": [
+        "dev-flameless-candle"
+      ],
+      "commons-tai-wo-estate-20260330": [
+        "dev-joss-smoke"
+      ],
+      "commons-ghana-amuzujoe-20230417": [
+        "dev-smoke-0009"
+      ]
+    },
+    "scene_group_count": 5,
+    "duration_ms": 177690,
+    "classes": {
+      "FIRE": {
+        "tp": 1,
+        "fp": 1,
+        "fn": 0,
+        "precision": {
+          "value": 0.5,
+          "numerator": 1,
+          "denominator": 2
+        },
+        "recall": {
+          "value": 1.0,
+          "numerator": 1,
+          "denominator": 1
+        },
+        "latency_ms": {
+          "count": 1,
+          "values": [
+            501
+          ],
+          "mean": 501.0,
+          "maximum": 501
+        },
+        "normal_video_false_alarms": {
+          "fp": 0,
+          "duration_ms": 137320,
+          "per_hour": 0.0
+        }
+      },
+      "SMOKE": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 0,
+        "precision": {
+          "value": 0.6666666666666666,
+          "numerator": 2,
+          "denominator": 3
+        },
+        "recall": {
+          "value": 1.0,
+          "numerator": 2,
+          "denominator": 2
+        },
+        "latency_ms": {
+          "count": 2,
+          "values": [
+            2000,
+            500
+          ],
+          "mean": 1250.0,
+          "maximum": 2000
+        },
+        "normal_video_false_alarms": {
+          "fp": 0,
+          "duration_ms": 137320,
+          "per_hour": 0.0
+        }
+      }
+    },
+    "processing": {
+      "analyzed_frames": 358,
+      "skipped_late_frames": 0,
+      "video_loop_elapsed_ms": 176796.99999978766,
+      "elapsed_recorded_videos": 7,
+      "video_loop_frames_per_second": 2.0249212373537446,
+      "max_read_to_completion_ms": 547.0000000204891
+    }
+  },
+  "same_as_previous_counts": true,
+  "limitations": [
+    "Existing Windows xiazh0.25 development7 logs reused, no new inference or independent evaluation.",
+    "Only metadata of evaluation assets has been inspected elsewhere; no evaluation annotations/events read by this proof.",
+    "Counts/ratios agree with previous event metrics; no new model/target decision or performance pass inferred."
+  ]
+}
