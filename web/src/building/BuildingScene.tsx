@@ -111,7 +111,19 @@ type Handles = {
   pick: { mesh: THREE.InstancedMesh; ids: readonly string[] } | null;
   /** CCTV 아이콘과 그 이름표. 이름표는 평소 숨기고 아이콘에 커서를 올렸을 때만 보인다. */
   cameraIcons: { icon: THREE.Sprite; label: THREE.Sprite | null }[];
+  /** 출구 유도등 아이콘(안내 상태에 따라 다시 그림)과 출구 이름표. CCTV와 같은 방식으로 커서를 올렸을 때만 보인다. */
+  exitIcons: { icon: THREE.Sprite; nodeId: string }[];
+  exitLabels: Map<string, THREE.Sprite>;
 };
+
+/** 아이콘 위로 이름표를 띄우는 기준점. 아이콘 위쪽 끝에서 6px 위에 이름표 아래쪽이 오게 한다. */
+function liftLabelAbove(label: THREE.Sprite, iconPixelsAboveAnchor: number) {
+  const labelPixels = (label.userData.labelHeight as number) * 0.6;
+  label.center.set(0.5, -(iconPixelsAboveAnchor + 6) / labelPixels);
+  label.userData.hoverLabel = true;
+  label.renderOrder = 23;
+  label.visible = false;
+}
 
 /** 두 점을 잇는 굵은 막대. 선 굵기는 WebGL에서 1px로 고정돼 경로 강조에 쓸 수 없다. */
 function rod(from: THREE.Vector3, to: THREE.Vector3, radius: number, material: THREE.Material): THREE.Mesh | null {
@@ -339,6 +351,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       box: null,
       pick: null,
       cameraIcons: [],
+      exitIcons: [],
+      exitLabels: new Map(),
     };
     handlesRef.current = handles;
 
@@ -366,24 +380,27 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointerup", onUp);
 
-    // CCTV 이름표: 아이콘에 커서를 올린 동안만 보인다.
-    const showCameraLabel = (target: THREE.Sprite | null) => {
+    // CCTV·출구 이름표: 아이콘에 커서를 올린 동안만 보인다.
+    const showHoverLabel = (target: THREE.Sprite | null) => {
       for (const { icon, label } of handles.cameraIcons) {
         if (label !== null) label.visible = icon === target;
       }
+      const exitNode = handles.exitIcons.find((item) => item.icon === target)?.nodeId;
+      for (const [nodeId, label] of handles.exitLabels) label.visible = nodeId === exitNode;
       renderer.domElement.style.cursor = target === null ? "" : "pointer";
     };
     const onMove = (event: PointerEvent) => {
-      if (handles.cameraIcons.length === 0) return;
+      const targets = [...handles.cameraIcons.map((item) => item.icon), ...handles.exitIcons.map((item) => item.icon)];
+      if (targets.length === 0) return;
       const rect = renderer.domElement.getBoundingClientRect();
       raycaster.setFromCamera(
         new THREE.Vector2(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1),
         camera,
       );
-      const hit = raycaster.intersectObjects(handles.cameraIcons.map((item) => item.icon), false)[0];
-      showCameraLabel(hit?.object instanceof THREE.Sprite ? hit.object : null);
+      const hit = raycaster.intersectObjects(targets, false)[0];
+      showHoverLabel(hit?.object instanceof THREE.Sprite ? hit.object : null);
     };
-    const onLeave = () => showCameraLabel(null);
+    const onLeave = () => showHoverLabel(null);
     renderer.domElement.addEventListener("pointermove", onMove);
     renderer.domElement.addEventListener("pointerleave", onLeave);
 
@@ -407,8 +424,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         if (!(child instanceof THREE.Sprite)) return [];
         // 설비 아이콘은 이름표 겹침 정리 대상이 아니다. 늘 보여야 한다.
         if (child.userData.iconKind !== undefined) return [];
-        // CCTV 이름표는 커서를 올렸을 때만 보이므로 겹침 정리에서 뺀다.
-        if (child.userData.cameraLabel === true) return [];
+        // CCTV·출구 이름표는 커서를 올렸을 때만 보이므로 겹침 정리에서 뺀다.
+        if (child.userData.hoverLabel === true) return [];
         child.visible = false;
         const point = child.position.clone().project(camera);
         if (point.z < -1 || point.z > 1) return [];
@@ -569,21 +586,29 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       staticGroup.add(mesh);
     }
     handles.cameraIcons = [];
+    handles.exitLabels = new Map();
+    // 출구 유도등 아이콘이 서는 출구. 이 출구의 이름표는 아이콘에 커서를 올렸을 때만 보인다.
+    // 유도등이 없는 출구 후보(비활성)는 올릴 아이콘이 없으므로 이름표를 그대로 둔다.
+    const exitSignNodes = new Set(
+      building.signs.filter((sign) => display?.signs[sign.sign_id]?.kind === "EXIT_LOCATION").map((sign) => sign.node_id),
+    );
     const viewportHeight = handles.renderer.getSize(new THREE.Vector2()).y;
     for (const label of sceneLabels(building, display, visibleFloors)) {
       const y = displayY(label.position.y, label.floorId, lift);
-      // 공간 이름표는 "공간 이름"을 켰을 때만. CCTV 이름표는 따로, 아이콘에 커서를 올렸을 때만 보인다.
-      const sprite = showNames || label.camera ? nameSprite(label.text, viewportHeight) : null;
+      const exitHover = label.nodeId !== null && exitSignNodes.has(label.nodeId);
+      // 공간 이름표는 "공간 이름"을 켰을 때만. CCTV·출구 이름표는 따로, 아이콘에 커서를 올렸을 때만 보인다.
+      const sprite = showNames || label.camera || exitHover ? nameSprite(label.text, viewportHeight) : null;
       if (sprite !== null) {
         sprite.position.set(label.position.x, y + 0.5, label.position.z);
         sprite.userData.priority = label.priority;
         if (label.camera) {
-          // 아이콘(높이 32px) 위로 6px 띄워 아이콘에 가리지 않게 하고, 아이콘보다 나중에 그린다.
-          const labelPixels = (sprite.userData.labelHeight as number) * 0.6;
-          sprite.center.set(0.5, -(ICON_PIXELS.CAMERA.height / 2 + 6) / labelPixels);
-          sprite.userData.cameraLabel = true;
-          sprite.renderOrder = 23;
-          sprite.visible = false;
+          // CCTV 아이콘은 기준점이 가운데라 아이콘 높이의 절반 위로 띄운다.
+          liftLabelAbove(sprite, ICON_PIXELS.CAMERA.height / 2);
+        } else if (exitHover && label.nodeId !== null) {
+          // 출구 아이콘은 기둥 끝에 아래쪽을 맞춰 서므로 같은 높이에서 아이콘 높이만큼 위로 띄운다.
+          sprite.position.y = y + geometry.wall_height + 0.3;
+          liftLabelAbove(sprite, ICON_PIXELS.EXIT_ON.height);
+          handles.exitLabels.set(label.nodeId, sprite);
         }
         staticGroup.add(sprite);
       }
@@ -802,6 +827,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     // 기둥은 바닥에서 벽 높이 조금 위까지. 아이콘은 그 끝에 얹어 벽 너머에서도 보이게 한다.
     const poleTop = geometry.wall_height + 0.3;
     placeSigns(shownSigns, () => new THREE.CylinderGeometry(0.06, 0.06, poleTop, 6), poleTop / 2);
+    handles.exitIcons = [];
     for (const [signs, exitLocation] of [[directionalSigns, false], [exitSigns, true]] as const) {
       for (const sign of signs) {
         const node = nodeById.get(sign.node_id);
@@ -813,6 +839,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         icon.center.set(0.5, 0);
         icon.position.set(node.position.x, displayY(node.position.y, node.floor_id, lift) + poleTop, node.position.z);
         dynamicGroup.add(icon);
+        if (exitLocation) handles.exitIcons.push({ icon, nodeId: node.node_id });
       }
     }
 
