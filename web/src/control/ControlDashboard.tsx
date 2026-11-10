@@ -303,7 +303,7 @@ export function ControlDashboard() {
 
         <div className="control__camera">
           <CameraPreviewPanel
-            key={`${state.run_id}/${state.building_id}/${state.building_version}/${camera.sourceId}`}
+            key={`${state.run_id}/${state.building_id}/${state.building_version}`}
             state={state}
             building={space.building}
             display={display}
