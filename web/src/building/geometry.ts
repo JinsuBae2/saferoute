@@ -263,3 +263,36 @@ export function visibleWalls(
 ): readonly WallRect[] {
   return floor.walls.filter((wall) => !isInsideOpenStair(wall, floor.floor_id, stairs));
 }
+
+export type StepBox = Box2 & { readonly centerY: number };
+
+/**
+ * 아래층 바닥(bottomY)에서 위층 바닥(topY)까지 오르는 디딤판들. footprint의 긴 변을 따라 오른다.
+ * shortcut: 형상 자료에 오르는 방향이 없어 직선 한 구간으로 그린다, 방향·참 자료가 생기면 그 값을 쓴다.
+ */
+export function stairSteps(
+  footprint: readonly PlanPoint[],
+  bottomY: number,
+  topY: number,
+  reversed = false,
+  count = 12,
+): readonly StepBox[] {
+  const xs = footprint.map((point) => point.x);
+  const zs = footprint.map((point) => point.z);
+  const minX = Math.min(...xs);
+  const minZ = Math.min(...zs);
+  const lengthX = Math.max(...xs) - minX;
+  const lengthZ = Math.max(...zs) - minZ;
+  const alongX = lengthX > lengthZ;
+  const run = (alongX ? lengthX : lengthZ) / count;
+  return Array.from({ length: count }, (_, index) => {
+    const along = (reversed ? count - 1 - index : index) * run + run / 2;
+    return {
+      centerX: alongX ? minX + along : minX + lengthX / 2,
+      centerZ: alongX ? minZ + lengthZ / 2 : minZ + along,
+      centerY: bottomY + ((index + 1) * (topY - bottomY)) / count,
+      sizeX: alongX ? run : lengthX,
+      sizeZ: alongX ? lengthZ : run,
+    };
+  });
+}

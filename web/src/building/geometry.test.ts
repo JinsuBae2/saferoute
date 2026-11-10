@@ -14,9 +14,21 @@ import {
   isInsideOpenStair,
   matchesBuilding,
   parseGeometry,
+  stairSteps,
   visibleWalls,
   wallBox,
 } from "./geometry";
+
+describe("계단 디딤판", () => {
+  it("긴 변을 따라 아래층에서 위층 바닥까지 오르고, 뒤집으면 반대쪽에서 시작한다", () => {
+    const footprint = [{ x: 0, z: 0 }, { x: 2, z: 0 }, { x: 2, z: 6 }, { x: 0, z: 6 }];
+    const steps = stairSteps(footprint, 0, 4, false, 4);
+    expect(steps.map((step) => step.centerZ)).toEqual([0.75, 2.25, 3.75, 5.25]);
+    expect(steps.map((step) => step.centerY)).toEqual([1, 2, 3, 4]);
+    expect(steps[0]).toMatchObject({ centerX: 1, sizeX: 2, sizeZ: 1.5 });
+    expect(stairSteps(footprint, 0, 4, true, 4).map((step) => step.centerZ)).toEqual([5.25, 3.75, 2.25, 0.75]);
+  });
+});
 
 const GEOMETRY = parseGeometry(rawGeometry);
 
