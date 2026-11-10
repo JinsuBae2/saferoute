@@ -4,6 +4,7 @@
  */
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
+import { SourceNotice } from "../SourceNotice";
 
 import type { StateSnapshot } from "@contracts";
 
@@ -155,6 +156,7 @@ export function ControlDashboard() {
             제어 백엔드가 떠 있는지 확인하세요.
           </p>
         </Panel>
+        <footer className="control__footer"><SourceNotice /></footer>
       </main>
     );
   }
@@ -528,6 +530,7 @@ export function ControlDashboard() {
 
       <footer className="control__footer">
         시험 조작 패널 외에는 조회만 합니다. 화면을 닫아도 활성 경보와 제어기·유도등 단말은 그대로 유지됩니다.
+        <SourceNotice />
       </footer>
     </main>
   );

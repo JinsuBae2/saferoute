@@ -915,3 +915,6 @@ code {
 .journey__row { cursor: pointer; }
 .journey__row:hover { background: rgba(250, 204, 21, 0.06); }
 .journey__row--on { background: rgba(250, 204, 21, 0.12); }
+
+.source-notice { padding: 8px 16px; font-size: 12px; text-align: center; }
+.source-notice a { color: #94a3b8; }
