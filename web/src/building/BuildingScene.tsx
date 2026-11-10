@@ -16,7 +16,8 @@ import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
 import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseFigure, signFaceTexture, softDotTexture } from "./assets";
 import { insidePolygon, visibleWalls, wallBox } from "./geometry";
-import { flightSteps, pathLength, stairLanding, stairLink } from "./stairs";
+import type { StairTravel } from "./stairs";
+import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
@@ -570,7 +571,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     let viewYaw = 0;
     let viewPitch = 0;
     let lastFollow: number | null = null;
-    const stairCache: { lift: unknown; geometry: unknown; paths: Map<string, THREE.Vector3[] | null> } = { lift: null, geometry: null, paths: new Map() };
+    const stairCache: { lift: unknown; geometry: unknown; building: unknown; paths: Map<string, StairTravel | null> } = { lift: null, geometry: null, building: null, paths: new Map() };
     const movePeople = (seconds: number, time: number) => {
       const people = peopleRef.current;
       if (people === null) return;
@@ -580,18 +581,19 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         return node === undefined ? null : new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, live.lift), node.position.z);
       };
       // 층을 오르내리는 구간은 계단 디딤판을 따라 걷는다. 두 지점을 곧게 이으면 허공으로 떨어지는 것처럼 보인다.
-      if (stairCache.lift !== live.lift || stairCache.geometry !== live.geometry) {
+      if (stairCache.lift !== live.lift || stairCache.geometry !== live.geometry || stairCache.building !== live.building) {
         stairCache.lift = live.lift;
         stairCache.geometry = live.geometry;
+        stairCache.building = live.building;
         stairCache.paths.clear();
       }
-      const stairPath = (fromId: string, toId: string): THREE.Vector3[] | null => {
+      const stairPath = (fromId: string, toId: string): StairTravel | null => {
         const key = `${fromId}>${toId}`;
         const cached = stairCache.paths.get(key);
         if (cached !== undefined) return cached;
         const a = live.nodeById.get(fromId);
         const b = live.nodeById.get(toId);
-        const path = a === undefined || b === undefined ? null : stairLink(live.building, live.geometry, live.lift, a, b);
+        const path = a === undefined || b === undefined ? null : stairTravel(live.building, live.geometry, live.lift, a, b);
         stairCache.paths.set(key, path);
         return path;
       };
@@ -604,26 +606,13 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         (from, to) => {
           // 계단은 실제로 걷는 꺾은선 길이로 잰다. 곧은 거리로 재면 계단에서만 몇 배 빨라진다.
           const stair = stairPath(from, to);
-          if (stair !== null) return pathLength(stair);
+          if (stair !== null) return stair.length;
           const a = live.nodeById.get(from)?.position;
           const b = live.nodeById.get(to)?.position;
           return a === undefined || b === undefined ? 1 : Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
         },
         seconds * PEOPLE_SPEED,
       );
-      /** 꺾은선 위에서 비율만큼 간 점과 그 자리의 진행 방향. */
-      const along = (path: THREE.Vector3[], ratio: number) => {
-        const lengths = path.slice(1).map((point, index) => point.distanceTo(path[index]));
-        let left = lengths.reduce((sum, value) => sum + value, 0) * Math.min(Math.max(ratio, 0), 1);
-        for (let index = 0; index < lengths.length; index += 1) {
-          if (left <= lengths[index] || index === lengths.length - 1) {
-            const share = lengths[index] === 0 ? 0 : Math.min(left / lengths[index], 1);
-            return { point: path[index].clone().lerp(path[index + 1], share), heading: path[index + 1].clone().sub(path[index]) };
-          }
-          left -= lengths[index];
-        }
-        return { point: path[0].clone(), heading: new THREE.Vector3() };
-      };
       let sliding = false;
       people.list.forEach((person, index) => {
         const figure = people.figures[index];
@@ -652,7 +641,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         } else if (person.to !== null) {
           const path = stairPath(person.from, person.to);
           const to = at(person.to);
-          if (path !== null) ({ point, heading } = along(path, person.progress));
+          if (path !== null) ({ point, heading } = alongStair(path, person.progress));
           else if (to !== null) {
             heading = to.clone().sub(from);
             point = from.clone().lerp(to, person.progress);
