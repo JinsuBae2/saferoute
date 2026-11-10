@@ -2,6 +2,8 @@
 
 관련 이슈: [#9](https://github.com/JinsuBae2/saferoute/issues/9). 2026-11-09, 조대성 / Rinhaze.
 
+후속 2026-11-10 [A01-4](a01-alternative-models.md)에서 기존 모델과 대체 후보 2개를 개발 7개로 실제 비교했다. 아래 내용은 당시 선택·서버 검증의 기록이며, 새 xiazh 개발 후보의 검출 개선·한계와 별도 CPU 측정은 후속 기록을 참고한다.
+
 **개발 기준 후보는 rabahdev/fire-smoke-yolov8n의 640 / 500ms / confidence 0.25를 유지한다. 서버 실측은 [A01-2 기록](a01-server-validation.md)에 추가했고, 입력 호환성·샘플 누락을 반영한 최종 채택과 팀 라이선스 결정은 남아 있다.** 기존 자료·환경은 [실행 기록](a01-model-validation.md), 원본 해시는 [manifest](../../data/manifests/assets.json)에 있다. 이 문서는 A01 판단 근거이며 A02 이벤트 전송이나 A04 독립 평가를 구현하지 않는다.
 
 ## 1. 같은 개발 영상에서 입력 크기 비교
