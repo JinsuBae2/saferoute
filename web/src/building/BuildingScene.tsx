@@ -678,7 +678,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         const floorId = live.nodeById.get(person.from)?.floor_id;
         // 출구에 닿으면 바로 사라지지 않고 미끄럼틀을 타고 밖으로 빠져나간다.
         const exiting = person.status === "OUT" && people.slide[index] < SLIDE_SECONDS;
-        if (exiting) people.slide[index] += seconds;
+        if (exiting && !live.stale) people.slide[index] += seconds;
         const shown = live.showPeople && from !== null && floorId !== undefined && live.visibleFloors.has(floorId) && (person.status !== "OUT" || exiting);
         // 따라가는 사람 자신은 그리지 않는다. 눈앞에 자기 몸이 걸린다.
         figure.group.visible = shown && index !== live.follow;

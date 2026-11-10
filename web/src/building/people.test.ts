@@ -26,6 +26,16 @@ describe("대피 인원 이동", () => {
     expect(people[0]).toMatchObject({ from: "A", to: null, status: "WAITING" });
   });
 
+  it("이동 중에도 대피를 중단하면 즉시 멈추고 같은 위치에서 재개한다", () => {
+    const people = [person("A")];
+    const map = routes(route("A", "B"), route("B", null));
+    stepPeople(people, map, true, TEN_METRES, 5);
+    stepPeople(people, map, false, TEN_METRES, 20);
+    expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.5, status: "WAITING" });
+    stepPeople(people, map, true, TEN_METRES, 2);
+    expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.7, status: "MOVING" });
+  });
+
   it("서버가 준 다음 지점으로만 걷고 출구에 닿으면 빠져나간다", () => {
     const people = [person("A")];
     const map = routes(route("A", "B"), route("B", "X"), route("X", null));
