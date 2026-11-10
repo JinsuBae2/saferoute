@@ -4,7 +4,7 @@
 
 [2026 동북권 개발자 대상 오픈소스 아이디어 경진대회](https://hackathon.tbitcloud.com/northeast-oss)의 지정 주제 **AI 기반 재난 대응 행동요령 안내 서비스**를 건물 화재의 대피 방향 안내로 구체화합니다. 감지는 오픈소스 불꽃·연기 모델, 경로·유도등 판단은 제어 알고리즘, 상황 설명은 Amazon Bedrock이 담당합니다. 설명이 실패해도 제어는 계속 동작하도록 설계합니다. 공식 기준과 주제 대응은 [기획서 0절](docs/01-project-proposal.md#0-공식-대회-기준과-주제-대응)을 참고하세요.
 
-현재 develop에는 공통 계약·제어 API·경로·명령/ACK·시험 도구, 관제·단말·3D 화면, 실제 영상 AI 이벤트·장애 처리·영상별 평가 집계 도구와 별도 Bedrock 설명 API가 반영되어 있습니다. 독립 설명/영상 평가, WFI 전체 통합·지원 서버 배포는 남은 작업입니다. 감지 모델은 개발 후보를 사용하며 최종 채택·프로젝트 라이선스 결정은 A01 #9에서 이어갑니다. 서버 CPU 실측·자체 API 전송 결과와 AV1 실패·샘플 누락·연기 EOF 전 STALE 한계는 [A01-2 기록](docs/ai/a01-server-validation.md)에 있습니다.
+현재 develop에는 공통 계약·제어 API·경로·명령/ACK·시험 도구, 관제·단말·3D 화면, 실제 영상 AI 이벤트·장애 처리·영상별 평가 집계 도구와 별도 Bedrock 설명 API가 반영되어 있습니다. 독립 설명/영상 평가, WFI 전체 통합·지원 서버 배포는 남은 작업입니다. A01 #9에서 xiazh 0.25를 평가·향후 통합 시연 대상으로 선정하고 자체 코드 AGPL-3.0-only를 결정했습니다. 정확도·장시간 누락 미달은 남아 있으며 성능 합격·운영 배포 승인은 아닙니다. 서버 CPU 실측·자체 API 전송 결과와 AV1 실패·샘플 누락·연기 EOF 전 STALE 한계는 [A01-2 기록](docs/ai/a01-server-validation.md)에 있습니다.
 
 ## 개발 문서
 
@@ -26,11 +26,11 @@ Bedrock 설명의 별도 계약·허용 근거는 [A05-1](docs/ai/a05-explanatio
 
 개발 영상 7개에서 confidence 0.10 후보를 비교했으나 미검출 개선 없이 정상 오탐이 늘어 채택하지 않았습니다. [A04-4 비교 기록](docs/ai/a04-confidence-comparison.md)을 참고하며 기본 설정은 0.25를 유지합니다.
 
-[A01-4 대체 모델 비교](docs/ai/a01-alternative-models.md)는 기존 모델과 대체 후보 2개를 같은 개발 7개에 실행합니다. xiazh 후보는 기존 얇은 연기를 검출하고 촛불 중복을 줄였으나 FIRE·SMOKE 중복 사건이 각 1건 남습니다. 별도 개발 설정을 제공하며 최종 채택·독립 성능 합격은 아닙니다.
+[A01-4 대체 모델 비교](docs/ai/a01-alternative-models.md)는 기존 모델과 대체 후보 2개를 같은 개발 7개에 실행합니다. xiazh 후보는 기존 얇은 연기를 검출하고 촛불 중복을 줄였으나 FIRE·SMOKE 중복 사건이 각 1건 남습니다. 별도 설정을 제공하며 이후 #9에서 평가·시연 대상으로 선정했습니다. 독립 성능 합격은 아닙니다.
 
 [A01-5 실제 서버 비교](docs/ai/a01-alternative-server.md)에서 기존/xiazh 모두 개발 7개·358샘플을 누락·관측 만료 없이 처리했습니다. xiazh 서버 평균 predict 297.32ms·샘플 RSS 최대717.67MiB이며, 공용 배포·독립 성능 합격과 구분합니다.
 
-[#114 후속 검증](docs/ai/a01-readiness-validation.md)과 [모델 추천·평가 동결 제안·담당 5 인계](docs/ai/evaluation-freeze-and-handoff.md)를 제공합니다. xiazh 0.15 후보는 정상 연기 오탐이 늘어 미채택이며 추천 후보는 0.25입니다. 실제 서버 30분20초 반복 입력은 전송·유효기간/EOF 통과지만 **3,641개 중 늦은 샘플 3개를 폐기**해 전체 샘플 처리에는 미달했습니다. 평가 목표는 합의용 제안이고, 실제 설명 7건의 독립 검수 작업지도 준비했습니다.
+[#114 후속 검증](docs/ai/a01-readiness-validation.md)과 [모델 추천·평가 동결 제안·담당 5 인계](docs/ai/evaluation-freeze-and-handoff.md)를 제공합니다. xiazh 0.15 후보는 정상 연기 오탐이 늘어 미채택이며 추천 후보는 0.25입니다. 실제 서버 30분20초 반복 입력은 전송·유효기간/EOF 통과지만 **3,641개 중 늦은 샘플 3개를 폐기**해 전체 샘플 처리에는 미달했습니다. 평가 목표는 이후 #12 결정 댓글에서 승인됐으며 실행 자료 동결은 남아 있고, 실제 설명 7건의 독립 검수 작업지도 준비했습니다.
 
 CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실제 프레임/JPEG 송출·조회·장애 격리와 개발 검증은 [A06 실행 인계](docs/ai/a06-preview-delivery.md)에 있습니다. 관제·3D 화면 연결은 담당 3의 #74 / PR #115로 반영됐으며 공동 인수 검증과는 구분합니다.
 
@@ -65,7 +65,7 @@ npm run test:contracts
 
 Windows에서는 설치된 Python 3.12로 가상환경을 만들고 `.venv\Scripts\Activate.ps1`로 활성화합니다. AI 환경은 별도로 관리합니다.
 
-담당 1번의 실제 영상→VIDEO_AI 이벤트 실행·설정·로컬 수신 검증은 [A02 연결 기록](docs/ai/a02-video-events.md)을 참고하세요. 서버의 격리된 TWO_ROUTE 전송은 [A01-2](docs/ai/a01-server-validation.md)에서 확인했으며, 최종 모델 선정·WFI 전체 통합·독립 평가는 남아 있습니다.
+담당 1번의 실제 영상→VIDEO_AI 이벤트 실행·설정·로컬 수신 검증은 [A02 연결 기록](docs/ai/a02-video-events.md)을 참고하세요. 서버의 격리된 TWO_ROUTE 전송은 [A01-2](docs/ai/a01-server-validation.md)에서 확인했으며, 모델 선정은 #9에서 완료했고 WFI 전체 통합·독립 평가는 남아 있습니다.
 
 개발 영상 6개의 출처·파일 해시·사용 조건은 [manifest](data/manifests/assets.json), 실제 CPU 검증·확보/재실행 방법은 [A01 기록](docs/ai/a01-model-validation.md)에 있습니다. 영상·가중치 원본은 Git에 포함하지 않으며 6개 모두 개발용입니다. 5번의 독립 평가 정답과 혼용하지 않습니다.
 

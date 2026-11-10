@@ -3,6 +3,7 @@
  * 표시 내용은 전부 서버 명령의 faces에서 온다.
  */
 import { useSearchParams } from "react-router-dom";
+import { SourceNotice } from "../SourceNotice";
 
 import type { FaceResult } from "@contracts";
 
@@ -256,6 +257,7 @@ export function SignTerminal({ signId }: { signId: string }) {
             </p>
           </div>
         )}
+        <SourceNotice />
       </footer>
     </main>
   );
