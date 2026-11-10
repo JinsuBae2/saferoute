@@ -189,6 +189,7 @@ def read_run(rows, truth):
     require(all(sent.get(key) == event for key, event in predicted.items()) and receipts == set(sent),
             "missing, altered or unacknowledged prediction events")
     result = finish.get("result", {})
+    require(isinstance(result, dict), "finished result must be a JSON object")
     require(result.get("run_id") == start["run_id"] and result.get("termination") == "EOF", "run did not finish at EOF")
     require(len(preflights) == 1, "expected one preflight")
     for field, expected in (("frames", preflights[0]), ("analyzed_frames", len(predictions)),
