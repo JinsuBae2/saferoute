@@ -26,14 +26,29 @@ class Runner:
         self.building, self.scenario = building, scenario.validate_for(building)
         self.client, self.runs_dir, self.clock = client, Path(runs_dir), clock or Clock()
         self.lock = RLock()
+        self.sources = {s.source_id: s for s in building.sources}
+        self._fresh()
+
+    def _fresh(self):
         self.run_id = None
         self.status, self.error_code = "WAITING_FOR_ARM", None
         self.time_ms, self.sequence = 0, 0
-        self.sources = {s.source_id: s for s in building.sources}
-        self.source_sequences = {r.source_id: 0 for r in scenario.observation_rules}
+        self.source_sequences = {r.source_id: 0 for r in self.scenario.observation_rules}
         self.next_sample = dict.fromkeys(self.source_sequences, 0)
         self.queue, self.queue_order = [], 0
         self.log_path = None
+        self.auto_arm = False
+
+    def restart(self):
+        """Explicit request only: reset the controller, rebind to the new run, then arm once observations are valid."""
+        with self.lock:
+            session = self._get("/api/session", "Session")
+            self.client.post("/api/control/reset", json=dict(schema_version=1, run_id=session.run_id,
+                                                             reason="simulation restart")).raise_for_status()
+            self.close()
+            self._fresh()
+            self.auto_arm = True
+            self._bind()
 
     def _get(self, path, model):
         response = self.client.get(path)
@@ -144,6 +159,10 @@ class Runner:
                                 self._send(self._event(rule.source_id,self.clock.utcnow(),item.event_kind,item.hazard_type))
                                 if self.status == "FAILED": return
                                 self.initial_due[rule.source_id] = now + rule.interval_ms
+                        if self.auto_arm:
+                            # 필수 관측이 아직 유효하지 않으면 제어기가 거부한다. 다음 틱에 다시 요청한다.
+                            self.client.post("/api/control/arm", json=dict(schema_version=1, run_id=self.run_id,
+                                                                           reason="simulation restart"))
                         return
                     self.status = "RUNNING"
                     self.epoch_ms, self.epoch_utc = now, self.clock.utcnow()

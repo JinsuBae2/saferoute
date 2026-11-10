@@ -132,6 +132,32 @@ def test_wfi_scenario_alone_satisfies_arm_and_rejects_unowned_required_sensor(cl
         Scenario.model_validate(data).validate_for(wfi)
 
 
+def test_restart_resets_controller_rebinds_and_arms_from_running_or_failed(setup, clock):
+    client, runner = setup
+    arm(client)
+    advance(runner, clock, 30000)
+    assert client.get("/api/state").json()["active_causes"]
+
+    def restarted():
+        previous = client.get("/api/session").json()["run_id"]
+        runner.restart()
+        for _ in range(3):
+            clock.advance(100)
+            runner.tick()
+        state = client.get("/api/state").json()
+        assert runner.run_id == state["run_id"] != previous
+        assert state["controller_mode"] == "NORMAL" and state["active_causes"] == []
+        assert runner.state().status == "RUNNING" and runner.state().simulation_time_ms < 1000
+
+    restarted()
+    # 밖에서 리셋되면 실행기는 멈춘다. 명시적 재실행만 다시 붙는다.
+    run_id = client.get("/api/session").json()["run_id"]
+    assert client.post("/api/control/reset", json=dict(schema_version=1,run_id=run_id,reason="external")).status_code == 200
+    runner.tick()
+    assert runner.state().status == "FAILED"
+    restarted()
+
+
 def test_large_clock_jump_does_not_refresh_stale_samples(setup, clock):
     client, runner = setup
     arm(client)
