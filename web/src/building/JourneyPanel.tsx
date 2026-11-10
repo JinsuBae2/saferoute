@@ -20,6 +20,8 @@ type Props = {
   readonly stale: boolean;
   readonly selectedSignId: string | null;
   readonly onSelectSign: (signId: string | null) => void;
+  /** 출발점 고르기를 여기서 그릴지. 시연 패널이 대신 그리면 끈다. */
+  readonly picker?: boolean;
 };
 
 const FACE_NAME: Record<string, string> = { FRONT: "정면", REAR: "후면" };
@@ -42,9 +44,10 @@ function faceText(face: SignOnPath["faces"][number]) {
   return face.mode === "UNKNOWN" ? "확인 불가" : "안내 불가";
 }
 
-export function JourneyPanel({ building, display, startId, onStart, journey, track, stale, selectedSignId, onSelectSign }: Props) {
-  const nodeLabel = (nodeId: string) => display?.node_labels[nodeId] ?? nodeId;
+type PickerProps = Pick<Props, "building" | "display" | "startId" | "onStart">;
 
+/** 출발점 고르기. 시연 패널이 두 번째 단계로 가져다 쓸 수 있게 따로 뺐다. */
+export function StartPicker({ building, display, startId, onStart }: PickerProps) {
   // 층별로 묶고 이름순으로 정렬한다. 문·갈림길·계단·출구 모두 출발점으로 고를 수 있다.
   const groups = useMemo(
     () =>
@@ -59,10 +62,7 @@ export function JourneyPanel({ building, display, startId, onStart, journey, tra
     [building, display],
   );
 
-  const previous = track?.previous ?? null;
-
   return (
-    <div className="journey">
       <div className="journey__pick">
         <label className="journey__select">
           현재 위치 선택
@@ -88,6 +88,16 @@ export function JourneyPanel({ building, display, startId, onStart, journey, tra
           실제 위치 추적이 아니라 화면에서 고른 지점입니다. 3D에서 지점을 눌러도 고를 수 있고, 선택해도 유도등 명령은 바뀌지 않습니다.
         </small>
       </div>
+  );
+}
+
+export function JourneyPanel({ building, display, startId, onStart, journey, track, stale, selectedSignId, onSelectSign, picker = true }: Props) {
+  const nodeLabel = (nodeId: string) => display?.node_labels[nodeId] ?? nodeId;
+  const previous = track?.previous ?? null;
+
+  return (
+    <div className="journey">
+      {picker && <StartPicker building={building} display={display} startId={startId} onStart={onStart} />}
 
       {startId !== null && stale && (
         <p className="journey__alert">제어 상태 조회가 끊기거나 늦어 경로를 현재 안내로 표시하지 않습니다.</p>
@@ -103,6 +113,11 @@ export function JourneyPanel({ building, display, startId, onStart, journey, tra
             <p className="journey__alert journey__alert--fire">
               <strong>{nodeLabel(journey.startId)}</strong>: 안내 불가 ·{" "}
               {journey.reasons.map((code) => ROUTE_REASON_LABEL[code]).join(" · ") || "사유 없음"}
+              <br />
+              출구까지 안전한 경로가 없습니다. 연기가 없는 쪽으로 피해 문을 닫고, 119에 위치를 알린 뒤 구조를 기다리세요.
+              이 위치는 관제에 안내 불가로 표시됩니다. 사람이 있는지는 시스템이 알 수 없습니다.
+              <br />
+              <small>일반 행동요령이며 서버가 계산한 대피 경로가 아닙니다. 대피 공간 안내는 아직 지원하지 않습니다.</small>
             </p>
           )}
 
