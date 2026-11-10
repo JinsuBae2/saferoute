@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "building_id": "WFI",
-  "building_version": 3,
+  "building_version": 4,
   "floor_labels": {
     "F1": "1층",
     "F2": "2층",
@@ -282,6 +282,54 @@
     },
     "SPK-F3-CORR-E2": {
       "label": "3층 우측 호실 앞 복도 가상 스프링클러",
+      "installation": null
+    },
+    "MANUAL-F1-LOBBY": {
+      "label": "1층 중앙 로비 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-PASSAGE-N": {
+      "label": "1층 블록 사이 위쪽 통로 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-PASSAGE-S": {
+      "label": "1층 블록 사이 아래쪽 통로 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-VOID": {
+      "label": "2층 중앙 개방 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-N": {
+      "label": "2층 위쪽 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-W": {
+      "label": "2층 좌측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-E": {
+      "label": "2층 중앙 우측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-E2": {
+      "label": "2층 우측 호실 앞 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-N": {
+      "label": "3층 위쪽 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-W": {
+      "label": "3층 좌측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-E": {
+      "label": "3층 중앙 우측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-E2": {
+      "label": "3층 우측 호실 앞 복도 시험 화재 입력",
       "installation": null
     }
   },

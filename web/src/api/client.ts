@@ -4,6 +4,10 @@
  */
 import type {
   Building,
+  ClearReceipt,
+  ClearRequest,
+  EventReceipt,
+  ObservationEvent,
   ErrorResponse,
   Session,
   SignAck,
@@ -120,4 +124,13 @@ export async function fetchExplanation(signal?: AbortSignal): Promise<{
  */
 export function fetchSimulationState(signal?: AbortSignal): Promise<SimulationState> {
   return requestAt<SimulationState>("/sim/state", { method: "GET", signal });
+}
+
+/** Registered manual test inputs use the same boundary as other observations. */
+export function postObservation(event: ObservationEvent, signal?: AbortSignal): Promise<EventReceipt> {
+  return request<EventReceipt>("/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(event), signal });
+}
+
+export function clearCause(requestBody: ClearRequest, signal?: AbortSignal): Promise<ClearReceipt> {
+  return request<ClearReceipt>("/control/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody), signal });
 }
