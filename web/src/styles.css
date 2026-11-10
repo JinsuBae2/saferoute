@@ -918,3 +918,41 @@ code {
 
 .source-notice { padding: 8px 16px; font-size: 12px; text-align: center; }
 .source-notice a { color: #94a3b8; }
+
+/* 접히는 관제 패널 (이슈 #21).
+   평소에는 제목만 보이고 눌러야 펼쳐진다. 숫자 요약은 위쪽 타일에 그대로 남는다. */
+.panel--folding > summary {
+  cursor: pointer;
+  user-select: none;
+  /* .panel__head가 flex라 기본 삼각형이 사라진다. 직접 그린다. */
+  list-style: none;
+  margin-bottom: 0;
+}
+
+.panel--folding > summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel--folding > summary::before {
+  content: "";
+  align-self: center;
+  width: 0;
+  height: 0;
+  border-left: 6px solid var(--muted);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform 120ms ease;
+}
+
+.panel--folding[open] > summary {
+  margin-bottom: 10px;
+}
+
+.panel--folding[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.panel--folding > summary:hover h2,
+.panel--folding > summary:focus-visible h2 {
+  color: var(--route);
+}
