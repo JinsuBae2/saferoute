@@ -36,6 +36,8 @@ Bedrock 설명의 별도 계약·허용 근거는 [A05-1](docs/ai/a05-explanatio
 
 CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실제 프레임/JPEG 송출·조회·장애 격리와 개발 검증은 [A06 실행 인계](docs/ai/a06-preview-delivery.md)에 있습니다. 관제·3D 화면 연결은 담당 3의 #74 / PR #115로 반영됐으며 공동 인수 검증과는 구분합니다.
 
+발표용 **AI 시연 보기**는 기존 관제 상단에서 전환합니다. 영상·검출 상자와 3D를 함께 보고 선택 카메라의 경보·차단, 건물 전체 경로·단말 상태를 구분합니다. [WFI 실행 방법과 실제 확인 범위](docs/ai/presentation-view.md)를 참고하세요. 미리보기 API와 AI 명령의 `--preview-url`이 모두 필요하며, 모델 신뢰도는 평가 정확도가 아닙니다.
+
 최신 [#125 개선 결과](docs/ai/a01-performance-improvement.md)는 별도 [OpenVINO/CLAHE/native 설정](configs/ai.xiazh.clahe.native.development.json)에서 개발 SMOKE 정밀도 2/3→2/2, FIRE 1/2 유지, 서버의 저해상도 정상 반복 30분20초에서 3,641/3,641 분석·폐기0·관측 만료0을 확인했습니다. 기존 선정 PT 설정과 평가 동결 제안서는 자동 교체하지 않았습니다. 개발 표본의 개선이며 고해상도 위험 영상 장시간 처리·다중 카메라·독립 평가 통과를 뜻하지 않습니다. [현재 인계·담당별 다음 작업](docs/ai/role1-handoff.md)을 기준으로 진행합니다.
 
 [#118 전체 영상 평가 집계](docs/ai/a04-suite-evaluation.md)는 명시한 원본 로그/정답 목록을 재검증하고 TP·FP·FN·정상 길이·지연을 합산합니다. 입력이 누락되거나 조건이 섞이면 전체 집계를 미완료로 표시하며, 독립 평가 합격을 자동 선언하지 않습니다.

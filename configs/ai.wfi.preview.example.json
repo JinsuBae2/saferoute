@@ -1,0 +1,16 @@
+{
+  "building_id": "WFI",
+  "building_version": 4,
+  "source_id": "CAM-F2-CORR-W",
+  "expected_zone_id": "F2-CORR-W",
+  "model_path": "models/fire-smoke-yolov8n.pt",
+  "model_sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+  "imgsz": 640,
+  "interval_ms": 500,
+  "confidence": 0.25,
+  "window_ms": 1500,
+  "min_detections": 2,
+  "request_timeout_ms": 750,
+  "max_attempts": 2,
+  "retry_delay_ms": 100
+}
