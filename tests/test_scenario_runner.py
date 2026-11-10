@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
-from scenario_runner.config import Scenario, load_scenario
+from scenario_runner.config import Scenario, load_building, load_scenario
 from scenario_runner.runner import Runner
 from test_observation_state import ROOT, building, clock
 
@@ -111,6 +111,25 @@ def test_refuses_existing_producer_and_armed_session(setup, building, scenario, 
     arm(client)
     with pytest.raises(ValueError, match="INITIALIZING"):
         Runner(building,scenario,client,tmp_path / "third",clock=clock).tick()
+
+
+def test_wfi_scenario_alone_satisfies_arm_and_rejects_unowned_required_sensor(clock, tmp_path):
+    path = ROOT / "data/scenarios/wfi-passage-smoke.json"
+    wfi = load_building(ROOT / "data/space/wfi-v1.json")
+    with TestClient(create_app(building=wfi, clock=clock, runs_dir=tmp_path / "controller")) as client:
+        runner = Runner(wfi, load_scenario(path, wfi), client, tmp_path / "sim", clock=clock)
+        runner.tick()
+        arm(client)
+        advance(runner, clock, 30000)
+        state = client.get("/api/state").json()
+        assert {c["source_id"] for c in state["active_causes"]} == {"SMK-F1-PASSAGE-N", "SMK-F1-PASSAGE-S"}
+        assert all(s["validity"] == "VALID" for s in state["sources"] if s["source_id"].startswith("SMK-"))
+        runner.close()
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("initial_observations", "observation_rules"):
+        data[key] = [item for item in data[key] if item["source_id"] != "SMK-F1-LOBBY"]
+    with pytest.raises(ValueError, match="SMK-F1-LOBBY"):
+        Scenario.model_validate(data).validate_for(wfi)
 
 
 def test_large_clock_jump_does_not_refresh_stale_samples(setup, clock):
