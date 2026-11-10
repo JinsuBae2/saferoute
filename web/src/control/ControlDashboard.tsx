@@ -70,6 +70,12 @@ const HAZARD_TONE: Record<Hazard, string> = {
   SPRINKLER: "warn",
 };
 
+const BLOCK_REASON_LABEL: Record<StateSnapshot["blocked_edges"][number]["reason_codes"][number], string> = {
+  ACTIVE_ALARM: "경보로 차단",
+  REQUIRED_OBSERVATION_UNKNOWN: "필수 관측 확인 불가",
+  NOT_TRAVERSABLE: "설정상 통행 불가",
+};
+
 const APPLICATION_LABEL: Record<ApplicationStatus, string> = {
   NOT_ISSUED: "미발행",
   PENDING: "확인 대기",
@@ -311,7 +317,7 @@ export function ControlDashboard() {
 
       <Panel
         title="차단 구간"
-        note="관측된 위험과 통행 불가만 포함합니다"
+        note="경보·필수 관측 미확인·설정상 통행 제한을 표시합니다"
       >
         {state.blocked_nodes.length === 0 && state.blocked_edges.length === 0 ? (
           <p className="panel__empty">차단된 지점·통로가 없습니다.</p>
@@ -322,8 +328,8 @@ export function ControlDashboard() {
               <ul>
                 {state.blocked_nodes.map((node) => (
                   <li key={node.node_id}>
-                    <span title={node.node_id}>{display?.node_labels[node.node_id] ?? node.node_id}</span> <span className="grid__dim">{node.reason_codes.join(", ")}</span>
-                    {node.source_ids.length > 0 && <span className="grid__dim"> · {node.source_ids.map((id) => display?.sources[id]?.label ?? id).join(", ")}</span>}
+                    <span title={node.node_id}>{display?.node_labels[node.node_id] ?? node.node_id}</span> · <span className="grid__dim" title={node.reason_codes.join(", ")}>{node.reason_codes.map((code) => BLOCK_REASON_LABEL[code]).join(" · ")}</span>
+                    {node.source_ids.length > 0 && <small className="location-detail">원인: {node.source_ids.map((id) => display?.sources[id]?.label ?? id).join(", ")}</small>}
                   </li>
                 ))}
               </ul>
@@ -331,11 +337,18 @@ export function ControlDashboard() {
             <div>
               <h3>통로 {state.blocked_edges.length}</h3>
               <ul>
-                {state.blocked_edges.map((edge) => (
-                  <li key={edge.edge_id}>
-                    <code>{edge.edge_id}</code> <span className="grid__dim">{edge.reason_codes.join(", ")}</span>
-                  </li>
-                ))}
+                {state.blocked_edges.map((edge) => {
+                  const path = space.building?.edges.find((item) => item.edge_id === edge.edge_id);
+                  const label = path === undefined ? edge.edge_id
+                    : `${display?.node_labels[path.from_node_id] ?? path.from_node_id} → ${display?.node_labels[path.to_node_id] ?? path.to_node_id}`;
+                  return (
+                    <li key={edge.edge_id}>
+                      <span title={edge.edge_id}>{label}</span>{" · "}
+                      <span className="grid__dim" title={edge.reason_codes.join(", ")}>{edge.reason_codes.map((code) => BLOCK_REASON_LABEL[code]).join(" · ")}</span>
+                      {edge.source_ids.length > 0 && <small className="location-detail">원인: {edge.source_ids.map((id) => display?.sources[id]?.label ?? id).join(", ")}</small>}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>
