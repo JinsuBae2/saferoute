@@ -66,8 +66,33 @@ export function stairLink(building: Building, geometry: BuildingGeometry, lift: 
   return a === lower ? path : path.reverse();
 }
 
-export function pathLength(path: readonly THREE.Vector3[]): number {
-  let total = 0;
-  for (let index = 1; index < path.length; index += 1) total += path[index].distanceTo(path[index - 1]);
-  return total;
+export type StairTravel = {
+  readonly points: readonly THREE.Vector3[];
+  readonly lengths: readonly number[];
+  readonly length: number;
+};
+
+/** 화면 높이와 별개로 실제 계단 길이를 보관한다. 층을 펼쳐도 대피 시간·평면 위치는 바뀌지 않는다. */
+export function stairTravel(building: Building, geometry: BuildingGeometry, lift: FloorLift, a: PlacedNode, b: PlacedNode): StairTravel | null {
+  const actual = stairLink(building, geometry, () => 0, a, b);
+  const points = stairLink(building, geometry, lift, a, b);
+  if (actual === null || points === null) return null;
+  const lengths = actual.slice(1).map((point, index) => point.distanceTo(actual[index]));
+  return { points, lengths, length: lengths.reduce((sum, value) => sum + value, 0) };
+}
+
+/** 실제 거리로 정한 진행률을 표시 경로의 같은 구간에 옮긴다. */
+export function alongStair(path: StairTravel, ratio: number): { point: THREE.Vector3; heading: THREE.Vector3 } {
+  let left = path.length * Math.min(Math.max(ratio, 0), 1);
+  for (let index = 0; index < path.lengths.length; index += 1) {
+    if (left <= path.lengths[index] || index === path.lengths.length - 1) {
+      const share = path.lengths[index] === 0 ? 0 : Math.min(left / path.lengths[index], 1);
+      return {
+        point: path.points[index].clone().lerp(path.points[index + 1], share),
+        heading: path.points[index + 1].clone().sub(path.points[index]),
+      };
+    }
+    left -= path.lengths[index];
+  }
+  return { point: path.points[0].clone(), heading: new THREE.Vector3() };
 }

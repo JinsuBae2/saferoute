@@ -4,7 +4,7 @@ import type { Building } from "@contracts";
 import rawBuilding from "@space/wfi-v1.json";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 import { nearestStair, parseGeometry } from "./geometry";
-import { flightSteps, stairLanding, stairLink } from "./stairs";
+import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
 import { floorLift } from "./view";
 
 const building = rawBuilding as Building;
@@ -44,6 +44,27 @@ describe("실제 건물 계단참", () => {
       mesh.geometry.dispose();
       material.dispose();
       expect(stairLink(building, geometry, lift, to, from)).toEqual([...path].reverse());
+    }
+  });
+});
+
+describe("계단 이동과 층 펼침 분리", () => {
+  it.each([6, 12])("층 간격 %s에서도 거리·진행률별 평면 위치가 실제 높이일 때와 같다", (spread) => {
+    for (const { from, to } of links) {
+      for (const [a, b] of [[from, to], [to, from]]) {
+        const actual = stairTravel(building, geometry, floorLift(geometry, 0), a, b)!;
+        const displayed = stairTravel(building, geometry, floorLift(geometry, spread), a, b)!;
+        expect(displayed.length).toBeCloseTo(actual.length);
+        expect(displayed.lengths).toEqual(actual.lengths);
+        // 같은 속도로 5초 이동한 위치도, 시점 전환 후의 모든 진행률도 같아야 한다.
+        for (const ratio of [1.2 * 5 / actual.length, 0, 0.1, 0.25, 0.5, 0.75, 0.9, 1]) {
+          const original = alongStair(actual, ratio).point;
+          const expanded = alongStair(displayed, ratio).point;
+          expect(expanded.x).toBeCloseTo(original.x);
+          expect(expanded.z).toBeCloseTo(original.z);
+        }
+        expect(displayed.points.at(-1)?.y).toBeCloseTo(b.position.y + floorLift(geometry, spread)(b.floor_id));
+      }
     }
   });
 });
