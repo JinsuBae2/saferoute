@@ -19,6 +19,15 @@
 
 ## 승인한 기준과 남은 실행 동결 — #12
 
+후속 #125 / [PR #131](https://github.com/JinsuBae2/saferoute/pull/131)의
+[OpenVINO/CLAHE/native 개발 프로필](../../configs/ai.xiazh.clahe.native.development.json)은 위 선정 PT 설정과 별도다.
+[개선 기록](a01-performance-improvement.md)에서 개발 SMOKE 정밀도2/2, FIRE1/2와
+저해상도 정상 반복30분20초3641/3641·폐기0·관측 만료0을 확인했다.
+위 표의 중복·기존 설정 결과를 새 프로필의 현재 결과로 혼동하지 않는다.
+이 문서와 기계 판독 제안서는 기존 PT 설정을 유지한다. 최종 평가에 개선 프로필을 채택하려면
+실행 전에 ONNX 해시·전처리·입력 크기 정책·provider/환경을 포함해 설정을 갱신하고 동결해야 한다.
+코드 머지만으로 평가 설정이 변경되거나 성능 합격으로 바뀌지 않는다.
+
 [기계 판독 제안서](evaluation-freeze-proposal.json)는 `CRITERIA_APPROVED_INPUTS_NOT_FROZEN`이다. 모델/설정, 매칭, 아래 수치 제안, 평가 자산 5개의 메타데이터·Git blob SHA-256을 담았다. Git blob 해시는 기준 커밋의 원본 바이트 기준이고 설정 해시는 키 정렬·공백 없는 JSON의 UTF-8 SHA-256이다. 미완료 정답의 해시는 **준비 상태 스냅샷**이며 최종 평가 정답 동결이 아니다. 파일명과 proposed_targets 키는 기존 준비안과의 연결을 위해 유지하며 실제 승인 근거는 approvals에 있다.
 
 | 항목 | 승인한 기준 v1 | 판정 시 함께 제시할 것 |
