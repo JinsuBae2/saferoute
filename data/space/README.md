@@ -408,3 +408,15 @@ V07(건물·그래프)과 V06 중 표시면 대응을 4번이 먼저 수행한 �
 - 검사: `python -m pytest tests/test_wfi_routing.py tests/test_wfi_space.py -q`.
 
 건물 통로·cost를 바꿀 때는 C·D 각각의 비용이 나머지 모든 통로 비용 합계보다 큰지 다시 확인한다. 새로운 건물에 이 숫자를 그대로 복사하지 않는다. 실제 3D 눈높이·운영 서버 검수는 별도다.
+
+## 13. 한글 위치 이름·표지 분류 (이슈 #68)
+
+`wfi-display-v1.json`은 건물 버전 3의 표시 전용 자료다. 기존 공간·형상 파일과 노드·관측원 ID, 통로 비용은 바꾸지 않는다. 3개 층, 43개 구역, 79개 지점, 4개 출구 후보, 28개 관측원, 37개 표지의 이름을 모두 담는다. 계약과 참조 검사는 [B05 연동 규칙](../../docs/implementation/b05-display-integration.md)을 따른다.
+
+- 좌측·우측·위쪽·아래쪽은 원본 안내도의 고정 방향이다. 카메라를 회전해도 이름은 바뀌지 않는다. 실측 방위는 뜻하지 않는다.
+- CAM 4개의 설치 위치는 각각 해당 층 계단 A/B에서 복도 쪽 1 m, 높이 2.5 m로 잡은 **가상 배치**다. 실제 설치 조사 결과가 아니며 `basis: SIMULATED`로 표시한다. 설치 지점과 관측 `zone_id`는 별개이고, 기존 관측 구역은 변경하지 않았다. 감지기·스프링클러의 설치 좌표는 미확인(`null`)이다.
+- `SIGN-F1-X-N/S`는 `EXIT_LOCATION`, 나머지 35개 표지는 `DIRECTIONAL`이다. 기존 표시면·제어 명령은 그대로 유지한다. 표지 그림과 평상시/비상시 렌더링 개선은 #70에서 다룬다.
+- 관제 목록과 3D는 같은 자료를 사용한다. 전체 층에서는 계단·출구·CAM을, 단일 층에서는 방 입구도 표시한다. 글자 크기는 화면 기준으로 유지하며 겹치는 이름은 CAM·계단·출구를 우선하고 확대·회전하면 다시 표시한다. `공간 이름`으로 끌 수 있다.
+- 자료의 버전·참조가 맞지 않거나 읽기 실패 시 이유를 표시하고 기존 ID로 되돌린다. 표시 오류가 제어·경로 결과를 막지 않는다. 실행이 바뀌면 이전 실행의 이름 자료를 즉시 숨기고 다시 읽는다.
+
+검사: `python -m tools.validate_config --building data/space/wfi-v1.json --display data/space/wfi-display-v1.json`, `python -m pytest tests/test_wfi_display.py tests/test_display_contract.py -q`, `npm --prefix web test -- --run src/building/display.test.ts`.

@@ -10,10 +10,11 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import type { Building, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 
 import type { BuildingGeometry } from "./geometry";
 import { visibleWalls, wallBox } from "./geometry";
+import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { ViewBox, ViewMode } from "./view";
 import { clampTarget, displayY, fitPose, floorLift, planYaw, visibleBox } from "./view";
 
@@ -40,6 +41,7 @@ const FOV = 50;
 type Props = {
   readonly geometry: BuildingGeometry;
   readonly building: Building;
+  readonly display: BuildingDisplay | null;
   readonly state: StateSnapshot;
   /** 시나리오 실행기의 구역별 연기 정답. 제어 판단과 분리된 시험값이다. */
   readonly smokeByZone: ReadonlyMap<string, number> | null;
@@ -117,7 +119,10 @@ function layFlat(mesh: THREE.Mesh, topY: number) {
 function clearGroup(group: THREE.Group) {
   for (const child of [...group.children]) {
     group.remove(child);
-    if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) {
+    if (child instanceof THREE.Sprite) {
+      child.material.map?.dispose();
+      child.material.dispose();
+    } else if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) {
       child.geometry.dispose();
       const material = child.material;
       if (Array.isArray(material)) material.forEach((item) => item.dispose());
@@ -126,7 +131,48 @@ function clearGroup(group: THREE.Group) {
   }
 }
 
-export function BuildingScene({ geometry, building, state, smokeByZone, visibleFloors, spread, view }: Props) {
+function sizeName(sprite: THREE.Sprite, viewportHeight: number) {
+  const width: unknown = sprite.userData.labelWidth;
+  const height: unknown = sprite.userData.labelHeight;
+  if (typeof width !== "number" || typeof height !== "number") return;
+  const scale = 2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)) / Math.max(1, viewportHeight);
+  sprite.scale.set(width * 0.6 * scale, height * 0.6 * scale, 1);
+}
+
+function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (context === null) return null;
+  context.font = "22px sans-serif";
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(" ")) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && context.measureText(next).width > 210) {
+      lines.push(line);
+      line = word;
+    } else line = next;
+  }
+  lines.push(line);
+  canvas.width = Math.ceil(Math.max(...lines.map((value) => context.measureText(value).width))) + 20;
+  canvas.height = lines.length * 28 + 12;
+  context.font = "22px sans-serif";
+  context.fillStyle = "rgba(12, 20, 30, 0.88)";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#edf5ff";
+  context.textBaseline = "middle";
+  lines.forEach((value, index) => context.fillText(value, 10, 20 + index * 28));
+  const texture = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false, sizeAttenuation: false }));
+  sprite.userData.labelWidth = canvas.width;
+  sprite.userData.labelHeight = canvas.height;
+  sizeName(sprite, viewportHeight);
+  sprite.center.set(0.5, 0);
+  sprite.renderOrder = 20;
+  return sprite;
+}
+
+export function BuildingScene({ geometry, building, display, state, smokeByZone, visibleFloors, spread, view }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
@@ -211,6 +257,25 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
     const animate = () => {
       frame = requestAnimationFrame(animate);
       controls.update();
+      camera.updateMatrixWorld();
+      const size = renderer.getSize(new THREE.Vector2());
+      const labels = staticGroup.children.flatMap((child) => {
+        if (!(child instanceof THREE.Sprite)) return [];
+        child.visible = false;
+        const point = child.position.clone().project(camera);
+        if (point.z < -1 || point.z > 1) return [];
+        const width: unknown = child.userData.labelWidth;
+        const height: unknown = child.userData.labelHeight;
+        const priority: unknown = child.userData.priority;
+        if (typeof width !== "number" || typeof height !== "number" || typeof priority !== "number") return [];
+        return [{ sprite: child, box: {
+          left: (point.x + 1) * size.x / 2 - width * 0.6 * child.center.x,
+          top: (1 - point.y) * size.y / 2 - height * 0.6 * (1 - child.center.y),
+          width: width * 0.6, height: height * 0.6, priority,
+        } }];
+      });
+      const visible = visibleLabelIndexes(labels.map((label) => label.box));
+      labels.forEach((label, index) => { label.sprite.visible = visible.has(index); });
       renderer.render(scene, camera);
     };
     animate();
@@ -222,6 +287,7 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
+      for (const child of staticGroup.children) if (child instanceof THREE.Sprite) sizeName(child, height);
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -345,7 +411,21 @@ export function BuildingScene({ geometry, building, state, smokeByZone, visibleF
       layFlat(mesh, bottom);
       staticGroup.add(mesh);
     }
-  }, [geometry, building, visibleFloors, lift]);
+    for (const label of sceneLabels(building, display, visibleFloors)) {
+      const sprite = nameSprite(label.text, handles.renderer.getSize(new THREE.Vector2()).y);
+      if (sprite === null) continue;
+      const y = displayY(label.position.y, label.floorId, lift);
+      sprite.position.set(label.position.x, y + 0.5, label.position.z);
+      if (label.camera) sprite.center.set(0.5, -0.8);
+      sprite.userData.priority = label.priority;
+      staticGroup.add(sprite);
+      if (label.camera) {
+        const camera = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 8), new THREE.MeshBasicMaterial({ color: 0x7dd3fc }));
+        camera.position.set(label.position.x, y, label.position.z);
+        staticGroup.add(camera);
+      }
+    }
+  }, [geometry, building, display, visibleFloors, lift]);
 
   // 2-1) 화면 맞춤. 보이는 층이나 간격이 바뀌면 그 범위가 다 보이게 마지막 시점 모드로 맞추고,
   //      시점 버튼(view.nonce)을 누르면 같은 모드라도 다시 맞춘다.

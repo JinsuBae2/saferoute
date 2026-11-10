@@ -19,6 +19,7 @@ import {
 import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
+import { useBuildingData } from "../building/useBuildingData";
 
 // three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
 const BuildingPanel = lazy(() => import("../building/BuildingPanel"));
@@ -126,6 +127,8 @@ export function ControlDashboard() {
   const view = useControlSnapshot();
   const [onlyUnavailable, setOnlyUnavailable] = useState(false);
   const state = view.state;
+  const space = useBuildingData(state);
+  const display = space.display;
 
   const health = connectionHealth(view.lastStateSuccessAtMs, view.nowMs, view.pollIntervalMs * 3);
 
@@ -211,6 +214,8 @@ export function ControlDashboard() {
         </p>
       )}
 
+      {space.displayError !== null && <p className="panel__note">위치 이름 표시: {space.displayError} · 기본 ID로 표시합니다.</p>}
+
       <Suspense
         fallback={
           <section className="panel">
@@ -218,7 +223,7 @@ export function ControlDashboard() {
           </section>
         }
       >
-        <BuildingPanel state={state} simulation={simulation} />
+        <BuildingPanel state={state} simulation={simulation} building={space.building} display={display} buildingError={space.buildingError} />
       </Suspense>
 
       <Panel
@@ -266,7 +271,11 @@ export function ControlDashboard() {
               {state.sources.map((source) => (
                 <tr key={source.source_id}>
                   <td>
-                    <code>{source.source_id}</code>
+                    <span title={source.source_id}>{display?.sources[source.source_id]?.label ?? source.source_id}</span>
+                    {display !== null && <small className="location-detail">
+                      관측: {display.zone_labels[space.building?.sources.find((item) => item.source_id === source.source_id)?.zone_id ?? ""] ?? "미확인"}
+                      {display.sources[source.source_id]?.installation?.basis === "SIMULATED" ? " · 가상 설치 위치" : display.sources[source.source_id]?.installation === null ? " · 설치 위치 미확인" : " · 실측 설치 위치"}
+                    </small>}
                   </td>
                   <td>
                     <Badge tone={VALIDITY_TONE[source.validity]}>{VALIDITY_LABEL[source.validity]}</Badge>
@@ -287,7 +296,7 @@ export function ControlDashboard() {
               {state.active_causes.map((cause) => (
                 <li key={`${cause.source_id}:${cause.hazard_type}`}>
                   <Badge tone={HAZARD_TONE[cause.hazard_type]}>{HAZARD_LABEL[cause.hazard_type]}</Badge>
-                  <code>{cause.source_id}</code>
+                  <span title={cause.source_id}>{display?.sources[cause.source_id]?.label ?? cause.source_id}</span>
                   <span className="grid__dim">{cause.activated_at}</span>
                 </li>
               ))}
@@ -309,8 +318,8 @@ export function ControlDashboard() {
               <ul>
                 {state.blocked_nodes.map((node) => (
                   <li key={node.node_id}>
-                    <code>{node.node_id}</code> <span className="grid__dim">{node.reason_codes.join(", ")}</span>
-                    {node.source_ids.length > 0 && <span className="grid__dim"> · {node.source_ids.join(", ")}</span>}
+                    <span title={node.node_id}>{display?.node_labels[node.node_id] ?? node.node_id}</span> <span className="grid__dim">{node.reason_codes.join(", ")}</span>
+                    {node.source_ids.length > 0 && <span className="grid__dim"> · {node.source_ids.map((id) => display?.sources[id]?.label ?? id).join(", ")}</span>}
                   </li>
                 ))}
               </ul>
@@ -351,7 +360,8 @@ export function ControlDashboard() {
               return (
                 <tr key={sign.sign_id}>
                   <td>
-                    <code>{sign.sign_id}</code>
+                    <span title={sign.sign_id}>{display?.signs[sign.sign_id]?.label ?? sign.sign_id}</span>
+                    {display !== null && <small className="location-detail">{display.signs[sign.sign_id]?.kind === "EXIT_LOCATION" ? "출구 위치 표지" : "가변 방향 안내"}</small>}
                   </td>
                   <td>
                     {sign.faces.map((face) => (
@@ -428,10 +438,10 @@ export function ControlDashboard() {
               {visibleRoutes.map((route) => (
                 <tr key={route.node_id}>
                   <td>
-                    <code>{route.node_id}</code>
+                    <span title={route.node_id}>{display?.node_labels[route.node_id] ?? route.node_id}</span>
                   </td>
-                  <td>{route.next_node_id ?? "—"}</td>
-                  <td>{route.exit_id ?? "—"}</td>
+                  <td>{route.next_node_id === null ? "—" : display?.node_labels[route.next_node_id] ?? route.next_node_id}</td>
+                  <td>{route.exit_id === null ? "—" : display?.exit_labels[route.exit_id] ?? route.exit_id}</td>
                   <td className="grid__dim">{route.cost ?? "—"}</td>
                   <td className="grid__reason">{route.reason_codes.join(", ") || "—"}</td>
                 </tr>
@@ -460,7 +470,7 @@ export function ControlDashboard() {
             <ul className="smoke">
               {simulation.zones.map((zone) => (
                 <li key={zone.zone_id}>
-                  <code>{zone.zone_id}</code>
+                  <span title={zone.zone_id}>{display?.zone_labels[zone.zone_id] ?? zone.zone_id}</span>
                   <span className="smoke__bar" aria-hidden>
                     <span style={{ width: `${Math.round(zone.smoke * 100)}%` }} />
                   </span>
