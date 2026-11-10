@@ -18,6 +18,7 @@ import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeT
 import { insidePolygon, visibleWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
+import { EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
@@ -76,7 +77,7 @@ const PEOPLE_SPEED = 1.2;
 
 /** 출구에서 미끄럼틀을 타고 빠져나가는 시간(초)과 미끄럼틀의 길이·낙차(m). */
 const SLIDE_SECONDS = 1.8;
-const SLIDE_LENGTH = 4.5;
+const SLIDE_LENGTH = EXIT_RUN_LENGTH;
 const SLIDE_DROP = 0.9;
 
 /** 카메라 한 대를 찾을 때 함께 보이는 범위(m). 너무 좁으면 어디인지 알 수 없다. */
@@ -957,47 +958,29 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         { x: minX - grow, z: minZ - grow }, { x: maxX + grow, z: minZ - grow },
         { x: maxX + grow, z: maxZ + grow }, { x: minX - grow, z: maxZ + grow },
       ];
-      const bandShape = shapeFrom(rect(1));
-      bandShape.holes.push(shapeFrom(rect(0)));
-      const bandTops = floor.floor_id === topFloorId ? [base, base + wallHeight + 0.45] : [base];
-      for (const top of bandTops) {
+      if (floor.floor_id === topFloorId) {
+        const bandShape = shapeFrom(rect(1));
+        bandShape.holes.push(shapeFrom(rect(0)));
         const band = new THREE.Mesh(new THREE.ExtrudeGeometry(bandShape, { depth: 0.45, bevelEnabled: false }), concrete());
-        layFlat(band, top);
+        layFlat(band, base + wallHeight + 0.45);
         staticGroup.add(band);
       }
-      const glass = new THREE.InstancedMesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshLambertMaterial({ color: COLOR.glass, transparent: true, opacity: 0.32, depthWrite: false }),
-        4,
-      );
+      const facade = facadeParts(building, floor, wallHeight);
       const place = new THREE.Matrix4();
       const still = new THREE.Quaternion();
-      const midY = base + wallHeight / 2;
-      [
-        [(minX + maxX) / 2, minZ - 0.08, maxX - minX, 0.1], [(minX + maxX) / 2, maxZ + 0.08, maxX - minX, 0.1],
-        [minX - 0.08, (minZ + maxZ) / 2, 0.1, maxZ - minZ], [maxX + 0.08, (minZ + maxZ) / 2, 0.1, maxZ - minZ],
-      ].forEach(([x, z, sizeX, sizeZ], index) => {
-        place.compose(new THREE.Vector3(x, midY, z), still, new THREE.Vector3(sizeX, wallHeight, sizeZ));
-        glass.setMatrixAt(index, place);
-      });
-      glass.instanceMatrix.needsUpdate = true;
-      staticGroup.add(glass);
-
-      // 통창: 유리를 세로 창틀로 나눠 유리 외벽으로 읽히게 한다.
-      const frames: [number, number][] = [];
-      for (let x = minX; x <= maxX + 0.01; x += (maxX - minX) / Math.round((maxX - minX) / 1.8)) frames.push([x, minZ - 0.08], [x, maxZ + 0.08]);
-      for (let z = minZ; z <= maxZ + 0.01; z += (maxZ - minZ) / Math.round((maxZ - minZ) / 1.8)) frames.push([minX - 0.08, z], [maxX + 0.08, z]);
-      const mullions = new THREE.InstancedMesh(
-        new THREE.BoxGeometry(0.12, wallHeight, 0.12),
-        new THREE.MeshLambertMaterial({ color: COLOR.frame }),
-        frames.length,
-      );
-      frames.forEach(([x, z], index) => {
-        place.makeTranslation(x, midY, z);
-        mullions.setMatrixAt(index, place);
-      });
-      mullions.instanceMatrix.needsUpdate = true;
-      staticGroup.add(mullions);
+      for (const [parts, material] of [
+        [facade.glass, new THREE.MeshLambertMaterial({ color: COLOR.glass, transparent: true, opacity: 0.32, depthWrite: false })],
+        [facade.frames, new THREE.MeshLambertMaterial({ color: COLOR.frame })],
+        [facade.band, concrete()],
+      ] as const) {
+        const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, parts.length);
+        parts.forEach((part, index) => {
+          place.compose(new THREE.Vector3(part.x, base + part.y, part.z), still, new THREE.Vector3(part.width, part.height, part.depth));
+          mesh.setMatrixAt(index, place);
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        staticGroup.add(mesh);
+      }
 
       // 간판: 맨 위층 유리 상단. 1층이 깊게 들어간 필로티 쪽(안내도 위쪽) 면을 밖에서 볼 때 오른쪽 끝이다.
       if (floor.floor_id === topFloorId) {
@@ -1020,21 +1003,13 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       // 아래층보다 튀어나온 쪽은 기둥으로 받친다(1층 필로티).
       const below = geometry.floors[geometry.floors.indexOf(floor) - 1];
       if (below !== undefined && visibleFloors.has(below.floor_id)) {
-        const belowZs = below.slab.map((point) => point.z);
         const belowBase = displayY(below.elevation, below.floor_id, lift);
-        const height = base - geometry.slab_thickness - belowBase;
-        const rows = [
-          ...(Math.min(...belowZs) - minZ > 0.5 ? [minZ + 0.5] : []),
-          ...(maxZ - Math.max(...belowZs) > 0.5 ? [maxZ - 0.5] : []),
-        ];
-        const perRow = Math.round((maxX - minX) / 6.4) + 1;
-        if (rows.length > 0 && height > 0) {
-          const columns = new THREE.InstancedMesh(new THREE.BoxGeometry(0.6, height, 0.6), concrete(), rows.length * perRow);
-          rows.forEach((z, row) => {
-            for (let index = 0; index < perRow; index += 1) {
-              place.makeTranslation(minX + 0.5 + (index * (maxX - minX - 1)) / (perRow - 1), belowBase + height / 2, z);
-              columns.setMatrixAt(row * perRow + index, place);
-            }
+        const parts = facadeColumns(building, floor, below, base - geometry.slab_thickness - belowBase);
+        if (parts.length > 0) {
+          const columns = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), concrete(), parts.length);
+          parts.forEach((part, index) => {
+            place.compose(new THREE.Vector3(part.x, belowBase + part.y, part.z), still, new THREE.Vector3(part.width, part.height, part.depth));
+            columns.setMatrixAt(index, place);
           });
           columns.instanceMatrix.needsUpdate = true;
           staticGroup.add(columns);
