@@ -7,11 +7,12 @@ from ai_worker.inference import Detector
 
 
 @pytest.mark.parametrize('width,height', [(200, 100), (1920, 1080)])
-def test_clahe_changes_only_new_luminance_buffer_and_keeps_box_coordinates(monkeypatch, width, height):
+@pytest.mark.parametrize('native', [False, True])
+def test_clahe_changes_only_new_luminance_buffer_and_keeps_box_coordinates(monkeypatch, width, height, native):
     original = SimpleNamespace(shape=(height, width, 3))
     scale = min(1, 640 / max(width, height))
     small = SimpleNamespace(shape=(round(height * scale), round(width * scale), 3)) if scale < 1 else original
-    transformed = object()
+    transformed = SimpleNamespace(shape=small.shape)
 
     class Lab:
         channels = ['luminance', 'chroma-a', 'chroma-b']
@@ -43,6 +44,7 @@ def test_clahe_changes_only_new_luminance_buffer_and_keeps_box_coordinates(monke
 
     def predict(frame, **kwargs):
         assert frame is transformed
+        assert kwargs['imgsz'] == (224 if native and width == 200 else 640)
         return [SimpleNamespace(boxes=SimpleNamespace(
             cls=tensor([0]), conf=tensor([.8]), xyxy=tensor([box])))]
 
@@ -54,7 +56,7 @@ def test_clahe_changes_only_new_luminance_buffer_and_keeps_box_coordinates(monke
         cvtColor=convert, resize=resize, INTER_LINEAR='linear',
         COLOR_BGR2LAB='to-lab', COLOR_LAB2BGR='to-bgr'))
     detector = Detector.__new__(Detector)
-    detector.config = SimpleNamespace(imgsz=640, confidence=.25, native_input_size=False)
+    detector.config = SimpleNamespace(imgsz=640, confidence=.25, native_input_size=native)
     detector.clahe = SimpleNamespace(apply=equalize)
     detector.model = SimpleNamespace(predict=predict, names={0: 'fire', 1: 'smoke'})
     assert detector.predict(original) == [{'class': 'FIRE', 'confidence': .8, 'xyxy': [v / scale for v in box]}]
