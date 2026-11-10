@@ -10,13 +10,13 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contracts";
 
 import type { BuildingGeometry } from "./geometry";
 import { visibleWalls, wallBox } from "./geometry";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { ViewBox, ViewMode } from "./view";
-import { clampTarget, displayY, fitPose, floorLift, planYaw, visibleBox } from "./view";
+import { clampTarget, displayY, fitPose, floorLift, planYaw, pointBox, visibleBox } from "./view";
 
 // M05: 바닥과 벽의 명암 차이를 키워 어두운 배경에서도 방·복도 윤곽이 보이게 한다.
 const COLOR = {
@@ -30,6 +30,10 @@ const COLOR = {
   blockedAlarm: 0xef4444,
   blockedUnknown: 0xf59e0b,
   sign: 0xe7edf4,
+  // 카메라 표시는 3D 안의 하늘색 구와 같은 색이라 고른 카메라를 바로 찾는다.
+  camera: 0x7dd3fc,
+  // 고른 카메라는 더 밝게. 표시용 하늘색 구와 구분된다.
+  cameraPick: 0x22d3ee,
   smoke: 0xf59e0b,
   // 관측 위험은 원인(FIRE·SMOKE·SPRINKLER)과 관계없이 범례대로 빨강이다.
   // 주황은 시험용 연기 정답 전용이라 섞이면 정답을 보고 판단하는 것처럼 보인다.
@@ -37,6 +41,9 @@ const COLOR = {
 } as const;
 
 const FOV = 50;
+
+/** 카메라 한 대를 찾을 때 함께 보이는 범위(m). 너무 좁으면 어디인지 알 수 없다. */
+const FOCUS_REACH = 9;
 
 type Props = {
   readonly geometry: BuildingGeometry;
@@ -48,8 +55,17 @@ type Props = {
   readonly visibleFloors: ReadonlySet<string>;
   /** 층 사이를 더 벌리는 간격(m). 실제 좌표는 바꾸지 않고 그리는 높이만 바꾼다. */
   readonly spread: number;
-  /** 시점 요청. nonce가 바뀔 때마다 해당 모드로 화면을 맞춘다. */
-  readonly view: { readonly mode: ViewMode; readonly nonce: number };
+  /**
+   * 시점 요청. nonce가 바뀔 때마다 해당 모드로 화면을 맞춘다.
+   * focus가 있으면 전체 대신 그 지점을 가깝게 비춘다(이슈 #74의 카메라 위치 찾기).
+   */
+  readonly view: {
+    readonly mode: ViewMode;
+    readonly nonce: number;
+    readonly focus?: { readonly position: Position; readonly floorId: string } | null;
+  };
+  /** 3D에서 위치를 강조할 관측원. 관제에서 고른 카메라가 건물 어디인지 잇는다(이슈 #74). */
+  readonly highlightSourceId: string | null;
 };
 
 type Handles = {
@@ -172,7 +188,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, state, smokeByZone, visibleFloors, spread, view }: Props) {
+export function BuildingScene({ geometry, building, display, state, smokeByZone, visibleFloors, spread, view, highlightSourceId }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
@@ -434,7 +450,21 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
     if (handles === null) return;
     const box = visibleBox(geometry, visibleFloors, lift);
     handles.box = box;
-    if (box !== null) applyPose(handles, box, view.mode);
+    if (box === null) return;
+    const focus = view.focus ?? null;
+    if (focus === undefined || focus === null) {
+      applyPose(handles, box, view.mode);
+      return;
+    }
+    // 같은 fitPose로 작은 상자를 비춘다. 시점 제어를 따로 만들지 않는다(M05 공용 연결부).
+    applyPose(
+      handles,
+      pointBox(
+        { x: focus.position.x, y: displayY(focus.position.y, focus.floorId, lift), z: focus.position.z },
+        FOCUS_REACH,
+      ),
+      view.mode,
+    );
   }, [geometry, visibleFloors, lift, view]);
 
   // 3) 서버 결과: 지점 상태·다음 이동 방향·유도등·관측 위험·연기 정답.
@@ -635,7 +665,41 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       mesh.position.y = baseY + height;
       mesh.material.opacity = 0.14 + smoke * 0.32;
     }
-  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift]);
+
+    // 고른 카메라의 설치 위치 강조(이슈 #74). 관측 구역(바닥 판)과 달리 설치 지점만 가리킨다.
+    const installation = highlightSourceId === null
+      ? null
+      : display?.sources[highlightSourceId]?.installation ?? null;
+    if (installation !== null && visibleFloors.has(installation.floor_id)) {
+      const y = displayY(installation.position.y, installation.floor_id, lift);
+      const { x, z } = installation.position;
+      const mark = (mesh: THREE.Mesh, height: number) => {
+        mesh.position.set(x, y + height, z);
+        dynamicGroup.add(mesh);
+      };
+      const paint = (opacity: number) =>
+        new THREE.MeshBasicMaterial({
+          color: COLOR.cameraPick,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity,
+          // 벽이나 바닥에 가려도 어디인지 보여야 찾는 기능이 된다.
+          depthTest: false,
+        });
+      // 바닥 고리 두 겹: 위에서 봐도 옆에서 봐도 눈에 띈다.
+      for (const [inner, outer, opacity] of [[1.0, 1.35, 0.95] as const, [1.9, 2.1, 0.5] as const]) {
+        const ring = new THREE.Mesh(new THREE.RingGeometry(inner, outer, 36), paint(opacity));
+        ring.rotation.x = -Math.PI / 2;
+        mark(ring, 0.06);
+      }
+      // 아래를 가리키는 깔때기. 주변 유도등 기둥과 모양이 달라 혼동되지 않는다.
+      const pointer = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.1, 14), paint(0.95));
+      pointer.rotation.x = Math.PI;
+      mark(pointer, 3.4);
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.8, 6), paint(0.45));
+      mark(beam, 1.4);
+    }
+  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, highlightSourceId]);
 
   return <div className="scene" ref={mountRef} />;
 }

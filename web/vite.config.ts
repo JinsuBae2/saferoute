@@ -8,6 +8,8 @@ import { defineConfig } from "vitest/config";
 const CONTROL_API = process.env.SAFEROUTE_API ?? "http://127.0.0.1:8000";
 // 시나리오 실행기는 별도 프로세스(8001)다. 꺼져 있어도 관제는 동작해야 한다.
 const SCENARIO_API = process.env.SAFEROUTE_SIM_API ?? "http://127.0.0.1:8001";
+// CCTV 미리보기는 또 다른 프로세스다. 꺼져 있어도 관제는 동작해야 한다.
+const PREVIEW_API = process.env.SAFEROUTE_PREVIEW_API ?? "http://127.0.0.1:8003";
 const EXPLANATION_API = process.env.SAFEROUTE_EXPLANATION_API ?? "http://127.0.0.1:8002";
 
 export default defineConfig({
@@ -26,6 +28,10 @@ export default defineConfig({
     fs: { allow: [".."] },
     proxy: {
       "/api/explanations/": { target: EXPLANATION_API, changeOrigin: false },
+      // 더 구체적인 경로를 먼저 둔다. /api 규칙이 먼저 걸리면 제어기로 가 버린다.
+      // /internal/preview 는 로컬 생산자 전용이라 화면에 연결하지 않는다.
+      "/api/previews": { target: PREVIEW_API, changeOrigin: false },
+      "/api/preview-frames": { target: PREVIEW_API, changeOrigin: false },
       "/api": { target: CONTROL_API, changeOrigin: false },
       "/sim": { target: SCENARIO_API, changeOrigin: false },
     },

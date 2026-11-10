@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 
 import { parseGeometry } from "./geometry";
-import { clampTarget, displayY, fitPose, floorLift, planYaw, SPREAD_MAX, visibleBox } from "./view";
+import { clampTarget, displayY, fitPose, floorLift, planYaw, pointBox, SPREAD_MAX, visibleBox } from "./view";
 
 const GEOMETRY = parseGeometry(rawGeometry);
 const ALL = new Set(["F1", "F2", "F3"]);
@@ -100,5 +100,28 @@ describe("화면 맞춤", () => {
     expect(clamped.x).toBeLessThanOrEqual(box.maxX + 4);
     expect(clamped.y).toBeGreaterThanOrEqual(box.minY);
     expect(clamped.z).toBeGreaterThanOrEqual(box.minZ - 4);
+  });
+});
+
+describe("한 지점 비추기", () => {
+  const point = { x: 10, y: 3, z: -4 };
+
+  it("지점을 가운데 둔 상자를 만든다", () => {
+    const box = pointBox(point, 5);
+    expect((box.minX + box.maxX) / 2).toBe(point.x);
+    expect((box.minY + box.maxY) / 2).toBe(point.y);
+    expect((box.minZ + box.maxZ) / 2).toBe(point.z);
+  });
+
+  it("전체 보기보다 가깝게 선다", () => {
+    const wide = { minX: -50, maxX: 50, minY: 0, maxY: 12, minZ: -50, maxZ: 50 };
+    const near = fitPose(pointBox(point, 5), "ANGLE", 50, 1.6);
+    expect(near.distance).toBeLessThan(fitPose(wide, "ANGLE", 50, 1.6).distance);
+    expect(near.target).toEqual(point);
+  });
+
+  it("너비가 0이어도 상자가 찌그러지지 않는다", () => {
+    const box = pointBox(point, 0);
+    expect(box.maxX - box.minX).toBeGreaterThan(0);
   });
 });

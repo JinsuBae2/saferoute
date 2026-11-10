@@ -55,6 +55,22 @@ export function visibleBox(
   };
 }
 
+/**
+ * 한 지점 둘레의 작은 상자 (이슈 #74). 이 상자를 fitPose에 넘기면
+ * 전체 보기와 같은 계산으로 그 지점만 가깝게 비춘다. 시점 제어를 따로 만들지 않기 위한 것이다.
+ */
+export function pointBox(
+  point: { readonly x: number; readonly y: number; readonly z: number },
+  radius: number,
+): ViewBox {
+  const reach = Math.max(1, radius);
+  return {
+    minX: point.x - reach, maxX: point.x + reach,
+    minY: point.y - reach, maxY: point.y + reach,
+    minZ: point.z - reach, maxZ: point.z + reach,
+  };
+}
+
 export type ViewMode = "ANGLE" | "TOP";
 
 export type CameraPose = {
