@@ -67,20 +67,21 @@ export function parseDisplay(value: unknown, building: Building): BuildingDispla
   return data as BuildingDisplay;
 }
 
-export type SceneLabel = { text: string; floorId: string; position: Position; camera: boolean; priority: number };
+/** nodeId는 지점 이름표의 지점 ID, 카메라 이름표면 null. 출구 이름표를 출구 아이콘과 잇는 데 쓴다. */
+export type SceneLabel = { text: string; floorId: string; position: Position; camera: boolean; priority: number; nodeId: string | null };
 
 /** All floors show landmarks; one floor also shows room entrances. */
 export function sceneLabels(building: Building, display: BuildingDisplay | null, visibleFloors: ReadonlySet<string>): SceneLabel[] {
   if (display === null) return [];
-  const labels = building.nodes
+  const labels: SceneLabel[] = building.nodes
     .filter((node) => visibleFloors.has(node.floor_id) && (node.kind === "STAIR" || node.kind === "EXIT" || (visibleFloors.size === 1 && node.kind === "DOOR")))
-    .map((node) => ({ text: display.node_labels[node.node_id], floorId: node.floor_id, position: node.position, camera: false, priority: node.kind === "DOOR" ? 2 : 1 }));
+    .map((node) => ({ text: display.node_labels[node.node_id], floorId: node.floor_id, position: node.position, camera: false, priority: node.kind === "DOOR" ? 2 : 1, nodeId: node.node_id }));
   for (const registered of building.sources) {
     if (registered.source_type !== "VIDEO_AI") continue;
     const source = display.sources[registered.source_id];
     const installation = source.installation;
     if (installation === null || !visibleFloors.has(installation.floor_id)) continue;
-    labels.push({ text: source.label + (installation.basis === "SIMULATED" ? " (가상)" : ""), floorId: installation.floor_id, position: installation.position, camera: true, priority: 0 });
+    labels.push({ text: source.label + (installation.basis === "SIMULATED" ? " (가상)" : ""), floorId: installation.floor_id, position: installation.position, camera: true, priority: 0, nodeId: null });
   }
   return labels;
 }

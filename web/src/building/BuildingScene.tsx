@@ -15,6 +15,8 @@ import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contra
 import type { BuildingGeometry } from "./geometry";
 import { visibleWalls, wallBox } from "./geometry";
 import { sceneLabels, visibleLabelIndexes } from "./display";
+import type { IconKind } from "./icons";
+import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
 import type { ViewBox, ViewMode } from "./view";
 import { clampTarget, displayY, fitPose, floorLift, planYaw, pointBox, visibleBox } from "./view";
 
@@ -55,6 +57,11 @@ type Props = {
   readonly geometry: BuildingGeometry;
   readonly building: Building;
   readonly display: BuildingDisplay | null;
+  /**
+   * 공간 이름표를 띄울지. 끄더라도 표시 자료(표지 종류·카메라 설치 위치)는 그대로 써서
+   * 출구 유도등·CCTV 아이콘은 남긴다.
+   */
+  readonly showNames?: boolean;
   readonly state: StateSnapshot;
   /** 시나리오 실행기의 구역별 연기 정답. 제어 판단과 분리된 시험값이다. */
   readonly smokeByZone: ReadonlyMap<string, number> | null;
@@ -96,11 +103,27 @@ type Handles = {
   zoneMeshes: Map<string, THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshBasicMaterial>>;
   smokeMeshes: Map<string, THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshBasicMaterial>>;
   disposables: Set<{ dispose(): void }>;
+  /** 설비 아이콘 그림. 종류별로 한 번만 그려 모든 아이콘이 함께 쓴다. */
+  icons: Map<IconKind, THREE.Texture>;
   /** 현재 보이는 범위. 회전 중심을 이 안으로 묶는다. */
   box: ViewBox | null;
   /** 눌러서 고를 수 있는 지점 표시와 그 순서의 node_id. */
   pick: { mesh: THREE.InstancedMesh; ids: readonly string[] } | null;
+  /** CCTV 아이콘과 그 이름표. 이름표는 평소 숨기고 아이콘에 커서를 올렸을 때만 보인다. */
+  cameraIcons: { icon: THREE.Sprite; label: THREE.Sprite | null }[];
+  /** 출구 유도등 아이콘(안내 상태에 따라 다시 그림)과 출구 이름표. CCTV와 같은 방식으로 커서를 올렸을 때만 보인다. */
+  exitIcons: { icon: THREE.Sprite; nodeId: string }[];
+  exitLabels: Map<string, THREE.Sprite>;
 };
+
+/** 아이콘 위로 이름표를 띄우는 기준점. 아이콘 위쪽 끝에서 6px 위에 이름표 아래쪽이 오게 한다. */
+function liftLabelAbove(label: THREE.Sprite, iconPixelsAboveAnchor: number) {
+  const labelPixels = (label.userData.labelHeight as number) * 0.6;
+  label.center.set(0.5, -(iconPixelsAboveAnchor + 6) / labelPixels);
+  label.userData.hoverLabel = true;
+  label.renderOrder = 23;
+  label.visible = false;
+}
 
 /** 두 점을 잇는 굵은 막대. 선 굵기는 WebGL에서 1px로 고정돼 경로 강조에 쓸 수 없다. */
 function rod(from: THREE.Vector3, to: THREE.Vector3, radius: number, material: THREE.Material): THREE.Mesh | null {
@@ -167,7 +190,8 @@ function clearGroup(group: THREE.Group) {
   for (const child of [...group.children]) {
     group.remove(child);
     if (child instanceof THREE.Sprite) {
-      child.material.map?.dispose();
+      // 설비 아이콘 그림은 여러 아이콘이 같이 쓰므로 장면을 닫을 때만 정리한다.
+      if (child.userData.iconKind === undefined) child.material.map?.dispose();
       child.material.dispose();
     } else if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
       child.geometry.dispose();
@@ -184,6 +208,38 @@ function sizeName(sprite: THREE.Sprite, viewportHeight: number) {
   if (typeof width !== "number" || typeof height !== "number") return;
   const scale = 2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)) / Math.max(1, viewportHeight);
   sprite.scale.set(width * 0.6 * scale, height * 0.6 * scale, 1);
+}
+
+/** 아이콘을 화면에서 늘 같은 크기(px)로 보이게 한다. */
+function sizeIcon(sprite: THREE.Sprite, viewportHeight: number) {
+  const kind = sprite.userData.iconKind as IconKind | undefined;
+  if (kind === undefined) return;
+  const scale = 2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)) / Math.max(1, viewportHeight);
+  sprite.scale.set(ICON_PIXELS[kind].width * scale, ICON_PIXELS[kind].height * scale, 1);
+}
+
+/**
+ * 설비 아이콘. 그림을 만들 수 없으면 null이며, 그때는 아이콘 없이 기존 표시만 남는다.
+ * alwaysOnTop이면 벽·바닥에 가려도 보인다(수가 적은 CCTV). 유도등은 37개라 모두 띄우면
+ * 층이 겹쳐 어수선하므로 깊이 검사를 켜 위층 바닥에 가려지게 하고, 벽보다 높이 띄운다.
+ */
+function iconSprite(handles: Handles, kind: IconKind, alwaysOnTop = false): THREE.Sprite | null {
+  let texture = handles.icons.get(kind);
+  if (texture === undefined) {
+    const canvas = drawIcon(kind);
+    if (canvas === null) return null;
+    texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    handles.icons.set(kind, texture);
+  }
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: texture, depthTest: !alwaysOnTop, depthWrite: false, sizeAttenuation: false }),
+  );
+  sprite.userData.iconKind = kind;
+  // CCTV는 이름표(20)에 가리지 않게 그 위에 그린다.
+  sprite.renderOrder = alwaysOnTop ? 21 : 15;
+  sizeIcon(sprite, handles.renderer.getSize(new THREE.Vector2()).y);
+  return sprite;
 }
 
 function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
@@ -219,7 +275,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
+export function BuildingScene({ geometry, building, display, showNames = true, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -291,8 +347,12 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       zoneMeshes: new Map(),
       smokeMeshes: new Map(),
       disposables: new Set(),
+      icons: new Map(),
       box: null,
       pick: null,
+      cameraIcons: [],
+      exitIcons: [],
+      exitLabels: new Map(),
     };
     handlesRef.current = handles;
 
@@ -320,6 +380,30 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointerup", onUp);
 
+    // CCTV·출구 이름표: 아이콘에 커서를 올린 동안만 보인다.
+    const showHoverLabel = (target: THREE.Sprite | null) => {
+      for (const { icon, label } of handles.cameraIcons) {
+        if (label !== null) label.visible = icon === target;
+      }
+      const exitNode = handles.exitIcons.find((item) => item.icon === target)?.nodeId;
+      for (const [nodeId, label] of handles.exitLabels) label.visible = nodeId === exitNode;
+      renderer.domElement.style.cursor = target === null ? "" : "pointer";
+    };
+    const onMove = (event: PointerEvent) => {
+      const targets = [...handles.cameraIcons.map((item) => item.icon), ...handles.exitIcons.map((item) => item.icon)];
+      if (targets.length === 0) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      raycaster.setFromCamera(
+        new THREE.Vector2(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1),
+        camera,
+      );
+      const hit = raycaster.intersectObjects(targets, false)[0];
+      showHoverLabel(hit?.object instanceof THREE.Sprite ? hit.object : null);
+    };
+    const onLeave = () => showHoverLabel(null);
+    renderer.domElement.addEventListener("pointermove", onMove);
+    renderer.domElement.addEventListener("pointerleave", onLeave);
+
     // 화면을 끌어도 회전 중심이 건물 밖으로 멀리 나가지 않게 한다.
     const keepInside = () => {
       if (handles.box === null) return;
@@ -338,6 +422,10 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       const size = renderer.getSize(new THREE.Vector2());
       const labels = staticGroup.children.flatMap((child) => {
         if (!(child instanceof THREE.Sprite)) return [];
+        // 설비 아이콘은 이름표 겹침 정리 대상이 아니다. 늘 보여야 한다.
+        if (child.userData.iconKind !== undefined) return [];
+        // CCTV·출구 이름표는 커서를 올렸을 때만 보이므로 겹침 정리에서 뺀다.
+        if (child.userData.hoverLabel === true) return [];
         child.visible = false;
         const point = child.position.clone().project(camera);
         if (point.z < -1 || point.z > 1) return [];
@@ -364,7 +452,11 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
-      for (const child of staticGroup.children) if (child instanceof THREE.Sprite) sizeName(child, height);
+      for (const child of [...staticGroup.children, ...dynamicGroup.children]) {
+        if (!(child instanceof THREE.Sprite)) continue;
+        sizeName(child, height);
+        sizeIcon(child, height);
+      }
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -376,10 +468,13 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       controls.removeEventListener("change", keepInside);
       renderer.domElement.removeEventListener("pointerdown", onDown);
       renderer.domElement.removeEventListener("pointerup", onUp);
+      renderer.domElement.removeEventListener("pointermove", onMove);
+      renderer.domElement.removeEventListener("pointerleave", onLeave);
       controls.dispose();
       clearGroup(staticGroup);
       clearGroup(dynamicGroup);
       for (const item of handles.disposables) item.dispose();
+      for (const texture of handles.icons.values()) texture.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
       handlesRef.current = null;
@@ -490,21 +585,48 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       layFlat(mesh, bottom);
       staticGroup.add(mesh);
     }
+    handles.cameraIcons = [];
+    handles.exitLabels = new Map();
+    // 출구 유도등 아이콘이 서는 출구. 이 출구의 이름표는 아이콘에 커서를 올렸을 때만 보인다.
+    // 유도등이 없는 출구 후보(비활성)는 올릴 아이콘이 없으므로 이름표를 그대로 둔다.
+    const exitSignNodes = new Set(
+      building.signs.filter((sign) => display?.signs[sign.sign_id]?.kind === "EXIT_LOCATION").map((sign) => sign.node_id),
+    );
+    const viewportHeight = handles.renderer.getSize(new THREE.Vector2()).y;
     for (const label of sceneLabels(building, display, visibleFloors)) {
-      const sprite = nameSprite(label.text, handles.renderer.getSize(new THREE.Vector2()).y);
-      if (sprite === null) continue;
       const y = displayY(label.position.y, label.floorId, lift);
-      sprite.position.set(label.position.x, y + 0.5, label.position.z);
-      if (label.camera) sprite.center.set(0.5, -0.8);
-      sprite.userData.priority = label.priority;
-      staticGroup.add(sprite);
+      const exitHover = label.nodeId !== null && exitSignNodes.has(label.nodeId);
+      // 공간 이름표는 "공간 이름"을 켰을 때만. CCTV·출구 이름표는 따로, 아이콘에 커서를 올렸을 때만 보인다.
+      const sprite = showNames || label.camera || exitHover ? nameSprite(label.text, viewportHeight) : null;
+      if (sprite !== null) {
+        sprite.position.set(label.position.x, y + 0.5, label.position.z);
+        sprite.userData.priority = label.priority;
+        if (label.camera) {
+          // CCTV 아이콘은 기준점이 가운데라 아이콘 높이의 절반 위로 띄운다.
+          liftLabelAbove(sprite, ICON_PIXELS.CAMERA.height / 2);
+        } else if (exitHover && label.nodeId !== null) {
+          // 출구 아이콘은 기둥 끝에 아래쪽을 맞춰 서므로 같은 높이에서 아이콘 높이만큼 위로 띄운다.
+          sprite.position.y = y + geometry.wall_height + 0.3;
+          liftLabelAbove(sprite, ICON_PIXELS.EXIT_ON.height);
+          handles.exitLabels.set(label.nodeId, sprite);
+        }
+        staticGroup.add(sprite);
+      }
       if (label.camera) {
-        const camera = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 8), new THREE.MeshBasicMaterial({ color: 0x7dd3fc }));
-        camera.position.set(label.position.x, y, label.position.z);
-        staticGroup.add(camera);
+        // CCTV 아이콘. 고른 카메라는 아래 동적 표시에서 더 큰 아이콘으로 덮는다.
+        const icon = iconSprite(handles, "CAMERA", true);
+        if (icon !== null) {
+          icon.position.set(label.position.x, y + 0.5, label.position.z);
+          staticGroup.add(icon);
+          handles.cameraIcons.push({ icon, label: sprite });
+        } else {
+          const camera = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 8), new THREE.MeshBasicMaterial({ color: COLOR.camera }));
+          camera.position.set(label.position.x, y, label.position.z);
+          staticGroup.add(camera);
+        }
       }
     }
-  }, [geometry, building, display, visibleFloors, lift]);
+  }, [geometry, building, display, showNames, visibleFloors, lift]);
 
   // 2-1) 화면 맞춤. 보이는 층이나 간격이 바뀌면 그 범위가 다 보이게 마지막 시점 모드로 맞추고,
   //      시점 버튼(view.nonce)을 누르면 같은 모드라도 다시 맞춘다.
@@ -656,7 +778,8 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
     }
 
     // 유도등. 표지 종류를 모양으로 구분한다(이슈 #70).
-    // 출구 위치 표지는 고정된 위치를 알리는 납작한 표지판, 가변 방향 안내는 기둥이다.
+    // 가는 기둥으로 설치 지점을 잡고, 그 위에 국내 유도등 모양 아이콘을 띄운다.
+    // 출구 위치 표지는 초록 바탕 피난구 유도등 그림, 가변 방향 안내는 작은 네모 표시등이다(icons.ts).
     // 같은 모양으로 그리면 화재 때 모든 표지가 방향을 바꾸는 것처럼 보인다.
     const shownSigns = building.signs.filter((sign) => {
       const node = nodeById.get(sign.node_id);
@@ -701,8 +824,24 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       dynamicGroup.add(mesh);
     };
 
-    placeSigns(directionalSigns, () => new THREE.CylinderGeometry(0.16, 0.16, 2.4, 8), 1.2);
-    placeSigns(exitSigns, () => new THREE.BoxGeometry(1.5, 0.75, 0.16), 2.3);
+    // 기둥은 바닥에서 벽 높이 조금 위까지. 아이콘은 그 끝에 얹어 벽 너머에서도 보이게 한다.
+    const poleTop = geometry.wall_height + 0.3;
+    placeSigns(shownSigns, () => new THREE.CylinderGeometry(0.06, 0.06, poleTop, 6), poleTop / 2);
+    handles.exitIcons = [];
+    for (const [signs, exitLocation] of [[directionalSigns, false], [exitSigns, true]] as const) {
+      for (const sign of signs) {
+        const node = nodeById.get(sign.node_id);
+        if (node === undefined) continue;
+        const guiding = signState.get(sign.sign_id)?.faces.some((face) => face.display !== null) ?? false;
+        // 출구 위치 표지는 수가 적고 출구 이름표와 같은 자리에 서므로 이름표 위로 늘 보이게 한다.
+        const icon = iconSprite(handles, signIcon(exitLocation, guiding), exitLocation);
+        if (icon === null) continue;
+        icon.center.set(0.5, 0);
+        icon.position.set(node.position.x, displayY(node.position.y, node.floor_id, lift) + poleTop, node.position.z);
+        dynamicGroup.add(icon);
+        if (exitLocation) handles.exitIcons.push({ icon, nodeId: node.node_id });
+      }
+    }
 
     // 관측 위험 구역: 활성 경보 원인의 담당 구역을 바닥 판으로 칠한다.
     for (const mesh of handles.zoneMeshes.values()) mesh.visible = false;
@@ -765,6 +904,13 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       mark(pointer, 3.4);
       const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.8, 6), paint(0.45));
       mark(beam, 1.4);
+      // 고른 카메라 아이콘은 더 크고 밝게 덮어 그린다.
+      const picked = iconSprite(handles, "CAMERA_PICKED", true);
+      if (picked !== null) {
+        picked.position.set(x, y + 0.5, z);
+        picked.renderOrder = 22;
+        dynamicGroup.add(picked);
+      }
     }
 
     // M06: 고른 출발점의 경로. 서버 path_node_ids를 순서대로 잇기만 한다.
