@@ -56,6 +56,18 @@ export type Building = {
   "provenance": Provenance;
 };
 
+export type BuildingDisplay = {
+  "schema_version": 1;
+  "building_id": string;
+  "building_version": number;
+  "floor_labels": Record<string, string>;
+  "zone_labels": Record<string, string>;
+  "node_labels": Record<string, string>;
+  "exit_labels": Record<string, string>;
+  "sources": Record<string, SourceDisplay>;
+  "signs": Record<string, SignDisplay>;
+};
+
 export type ClearReceipt = {
   "run_id": string;
   "source_id": string;
@@ -293,6 +305,11 @@ export type SignCommand = {
   "faces": Array<FaceResult>;
 };
 
+export type SignDisplay = {
+  "label": string;
+  "kind": "EXIT_LOCATION" | "DIRECTIONAL";
+};
+
 export type SignFace = {
   "face_id": string;
   "view_direction": Position;
@@ -328,6 +345,17 @@ export type Source = {
   "required": boolean;
   "freshness_ms": number;
   "allowed_hazard_types": Array<"FIRE" | "SMOKE" | "SPRINKLER">;
+};
+
+export type SourceDisplay = {
+  "label": string;
+  "installation": SourceInstallation | null;
+};
+
+export type SourceInstallation = {
+  "floor_id": string;
+  "position": Position;
+  "basis": "SIMULATED" | "MEASURED";
 };
 
 export type SourceState = {
