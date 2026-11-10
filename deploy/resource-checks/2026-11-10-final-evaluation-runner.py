@@ -61,7 +61,7 @@ def main():
                   runner_sha256=sha(__file__), config_sha256=sha(config_path),
                   python=platform.python_version(), platform=platform.platform(), cpu_count=os.cpu_count(),
                   packages={p: importlib.metadata.version(p) for p in
-                            ['numpy', 'opencv-python', 'torch', 'ultralytics', 'openvino', 'onnxruntime', 'fastapi']},
+                            ['numpy', 'opencv-python', 'torch', 'ultralytics', 'onnxruntime-ep-openvino', 'onnxruntime', 'fastapi']},
                   source_sha256={p.as_posix(): sha(p) for d in ['ai_worker', 'backend', 'tools']
                                  for p in sorted(Path(d).rglob('*.py'))},
                   load_before=os.getloadavg(), videos=[])

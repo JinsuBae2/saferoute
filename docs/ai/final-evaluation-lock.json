@@ -101,9 +101,10 @@
   "frozen_at_utc": "2026-11-10T13:58:24.147915+00:00",
   "annotation_review_sha256": "3f36644fc1084b14ed626ff598e4ee13d8a7574f40260e41b74410cbd3b6fb4b",
   "runner_path": "deploy/resource-checks/2026-11-10-final-evaluation-runner.py",
-  "runner_sha256": "90e25bda77a568a21ee31898829200e4890e4af38c0055f2b280f140263526aa",
+  "runner_sha256": "b92f5abfdac35ea591760802bfc2d81ee806ab166810714a8d7e4962238cb2ce",
   "environment": "Existing supported-server CPU4 AI venv + pinned OpenVINO/ONNX dependency directories; exact runtime recorded before first worker launch",
   "qa5_human_approval": null,
   "approval_scope": "User authorized remaining work and deadline closeout. AI annotation/text review does not claim the original role5 human check.",
-  "config_file_sha256": "84bbd4ba8e70730a12fdf971c234c56397a174ad421d93008a05a8a6e486481f"
+  "config_file_sha256": "84bbd4ba8e70730a12fdf971c234c56397a174ad421d93008a05a8a6e486481f",
+  "preflight_note": "First server shell preflight stopped before any AI worker: queried distribution openvino, but installed provider distribution is onnxruntime-ep-openvino. Metadata query corrected only; no model/config/GT/matching change."
 }
