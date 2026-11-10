@@ -11,16 +11,18 @@
  * 서로 어긋난 화면이 나온다.
  */
 
-/** 한 구역이 0에서 최대치까지 차오르는 데 걸리는 시간. */
+/** 불난 구역이 0에서 가득 차는 데 걸리는 시간. 먼 구역은 이보다 느리게 찬다. */
 export const RISE_MS = 9000;
-/** 1m 번지는 데 걸리는 시간. 작을수록 빨리 퍼진다. */
+/** 1m 번지는 데 걸리는 시간. 연기가 그 구역에 "닿기까지" 걸리는 시간이다. */
 export const SPREAD_MS_PER_M = 450;
 /** 위·아래층으로 넘어가는 데 더 걸리는 시간. 계단을 타고 넘어간다고 본다. */
 export const FLOOR_DELAY_MS = 12000;
-/** 이 거리를 넘으면 거의 닿지 않는다(m). */
-export const REACH_M = 45;
-/** 다른 층에서는 이만큼만 옅게 찬다. */
-export const OTHER_FLOOR_RATIO = 0.45;
+/** 이 거리를 넘으면 닿지 않는다(m). 건물을 다 덮을 만큼 넉넉히 둔다. */
+export const REACH_M = 80;
+/** 멀수록 느리게 찬다. 이 거리마다 차는 데 걸리는 시간이 한 배씩 늘어난다(m). */
+export const SLOWDOWN_M = 25;
+/** 다른 층은 끝까지 차도 여기까지만. 불난 층보다는 늘 옅다. */
+export const OTHER_FLOOR_CAP = 0.85;
 
 export function centroid(zone) {
   const points = zone.polygon;
@@ -51,7 +53,12 @@ export function fireZones(state, building) {
 
 /**
  * 한 구역의 지금 연기 농도(0~1).
- * 불난 구역에서 멀수록 늦게 시작하고 옅게 찬다. 불이 없으면 0이다.
+ *
+ * 거리는 "언제 닿는지"와 "얼마나 느리게 차는지"만 정한다. 최대치는 깎지 않는다.
+ * 멀다고 최대치를 깎으면 시간이 지나도 영영 옅은 채로 멈춰, 연기가 번졌는데도
+ * 그 구역 카메라가 낮은 값만 말하게 된다. 연기는 시간이 지나면 쌓인다.
+ *
+ * 불이 없으면 0이다.
  */
 export function smokeAt(building, started, zoneId, nowMs) {
   const byId = new Map(building.zones.map((zone) => [zone.zone_id, zone]));
@@ -67,10 +74,12 @@ export function smokeAt(building, started, zoneId, nowMs) {
     const metres = Math.hypot(here.x - there.x, here.z - there.z);
     if (metres > REACH_M) continue;
     const sameFloor = zone.floor_id === fire.floor_id;
+    // 연기가 그 구역에 닿기까지. 멀수록, 다른 층일수록 늦게 시작한다.
     const begins = metres * SPREAD_MS_PER_M + (sameFloor ? 0 : FLOOR_DELAY_MS);
-    // 멀수록 옅게. 불난 구역이 가장 짙다.
-    const ceiling = (1 - metres / REACH_M) * (sameFloor ? 1 : OTHER_FLOOR_RATIO);
-    const progress = Math.max(0, (nowMs - firedAt - begins) / RISE_MS);
+    // 닿은 뒤 차오르는 속도. 멀수록 천천히 차지만 끝내는 가득 찬다.
+    const rise = RISE_MS * (1 + metres / SLOWDOWN_M);
+    const ceiling = sameFloor ? 1 : OTHER_FLOOR_CAP;
+    const progress = Math.max(0, (nowMs - firedAt - begins) / rise);
     smoke = Math.max(smoke, Math.min(ceiling, progress * ceiling));
   }
   return smoke;

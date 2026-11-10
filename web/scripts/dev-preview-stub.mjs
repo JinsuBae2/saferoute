@@ -109,7 +109,8 @@ function detections(camera, building, started, nowMs, step) {
   if (burning) {
     // 불난 구역을 보는 카메라. 시간이 지날수록 또렷해진다.
     const age = (nowMs - started.get(camera.zone_id)) / 20_000;
-    const confidence = 0.55 + Math.min(0.35, Math.max(0, age) * 0.35) + Math.sin(step / 9) * 0.04;
+    // 흔들림은 아주 작게 둔다. 크게 흔들면 값이 떨어지는 것처럼 읽힌다.
+    const confidence = 0.55 + Math.min(0.35, Math.max(0, age) * 0.35) + Math.sin(step / 9) * 0.015;
     found.push({
       hazard_type: "FIRE",
       confidence: round(confidence),
@@ -119,7 +120,8 @@ function detections(camera, building, started, nowMs, step) {
 
   if (smoke >= 0.05) {
     // 연기가 짙을수록 신뢰도가 오르고 상자가 위로 커진다.
-    const confidence = 0.25 + smoke * 0.6 + Math.cos(step / 7) * 0.03;
+    // 흔들림을 섞지 않는다. 연기가 쌓이는 중에 값이 오르내리면 줄어드는 것처럼 보인다.
+    const confidence = 0.3 + smoke * 0.65;
     const top = 0.62 - smoke * 0.38;
     found.push({
       hazard_type: "SMOKE",
