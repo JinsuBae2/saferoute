@@ -3,15 +3,21 @@
  * 건물 ID·자료 버전이 같을 때만 함께 쓴다(05번 2.3절).
  * 버전이 다르면 3D를 그리지 않고, 경로·유도등 안내는 서버 결과로 계속 표시한다.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { Building, BuildingDisplay, SimulationState, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, Position, SimulationState, StateSnapshot } from "@contracts";
 
 import { BuildingScene } from "./BuildingScene";
 import { matchesBuilding } from "./geometry";
 import { useBuildingGeometry } from "./useBuildingGeometry";
 import type { ViewMode } from "./view";
 import { SPREAD_MAX, SPREAD_MIN } from "./view";
+
+type SceneView = {
+  mode: ViewMode;
+  nonce: number;
+  focus: { position: Position; floorId: string } | null;
+};
 
 type Props = {
   readonly state: StateSnapshot;
@@ -20,6 +26,13 @@ type Props = {
   readonly buildingError: string | null;
   /** 실행이 일치하는 시나리오 정답만 넘어온다. 없으면 연기를 그리지 않는다. */
   readonly simulation: SimulationState | null;
+  /** 관제에서 고른 카메라. 3D에서 설치 위치를 강조한다(이슈 #74). */
+  readonly highlightSourceId: string | null;
+  /**
+   * 그 카메라를 찾아 달라는 요청. 값이 바뀔 때마다 숨긴 층을 열고 설치 위치를 비춘다.
+   * 고르기만 해서는 시점을 움직이지 않는다. 보던 화면이 멋대로 돌아가면 더 헷갈린다.
+   */
+  readonly locateRequest: number;
 };
 
 const MISMATCH_LABEL = {
@@ -28,14 +41,38 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation, building, display, buildingError }: Props) {
+export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
   // 층 간격은 처음부터 조금 벌려 위층 바닥이 아래층 복도를 덮지 않게 한다.
   const [spread, setSpread] = useState(6);
-  const [view, setView] = useState<{ mode: ViewMode; nonce: number }>({ mode: "ANGLE", nonce: 0 });
-  const requestView = (mode: ViewMode) => setView((previous) => ({ mode, nonce: previous.nonce + 1 }));
+  const [view, setView] = useState<SceneView>({ mode: "ANGLE", nonce: 0, focus: null });
+  const requestView = (mode: ViewMode) =>
+    setView((previous) => ({ mode, nonce: previous.nonce + 1, focus: null }));
+
+  // "3D에서 찾기"를 누르면 그 층을 열고 설치 위치를 비춘다.
+  // 요청 번호를 기억해 두어, 표시 자료가 늦게 와도 같은 요청으로 두 번 움직이지 않는다.
+  const handledLocate = useRef(0);
+  useEffect(() => {
+    if (locateRequest === 0 || locateRequest === handledLocate.current) return;
+    const installation = highlightSourceId === null
+      ? null
+      : display?.sources[highlightSourceId]?.installation ?? null;
+    if (installation === null) return;
+    handledLocate.current = locateRequest;
+    setHiddenFloors((previous) => {
+      if (!previous.has(installation.floor_id)) return previous;
+      const next = new Set(previous);
+      next.delete(installation.floor_id);
+      return next;
+    });
+    setView((previous) => ({
+      mode: previous.mode,
+      nonce: previous.nonce + 1,
+      focus: { position: installation.position, floorId: installation.floor_id },
+    }));
+  }, [locateRequest, highlightSourceId, display]);
 
   const smokeByZone = useMemo(() => {
     if (simulation === null) return null;
@@ -163,6 +200,7 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             visibleFloors={visibleFloors}
             spread={spread}
             view={view}
+            highlightSourceId={highlightSourceId}
           />
 
           <p className="panel__note">

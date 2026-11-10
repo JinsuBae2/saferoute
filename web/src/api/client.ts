@@ -8,6 +8,7 @@ import type {
   ClearRequest,
   EventReceipt,
   ObservationEvent,
+  Preview,
   ErrorResponse,
   Session,
   SignAck,
@@ -133,4 +134,50 @@ export function postObservation(event: ObservationEvent, signal?: AbortSignal): 
 
 export function clearCause(requestBody: ClearRequest, signal?: AbortSignal): Promise<ClearReceipt> {
   return request<ClearReceipt>("/control/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody), signal });
+}
+
+/**
+ * CCTV 미리보기 (A06). 별도 프로세스(8003)가 제공하며 꺼져 있을 수 있다.
+ * 실패해도 관제의 제어 결과 표시는 그대로 유지한다.
+ */
+export function fetchPreview(
+  sourceId: string,
+  runId: string,
+  signal?: AbortSignal,
+): Promise<Preview> {
+  const query = new URLSearchParams({ run_id: runId });
+  return request<Preview>(`/previews/${encodeURIComponent(sourceId)}?${query.toString()}`, {
+    method: "GET",
+    signal,
+  });
+}
+
+export type PreviewImage = {
+  /** 화면에 쓸 임시 주소. 다 쓰면 URL.revokeObjectURL로 돌려줘야 한다. */
+  readonly objectUrl: string;
+  /** 응답 헤더가 알려준 프레임 ID. 요청한 것과 같아야 쓴다. */
+  readonly frameId: string | null;
+};
+
+/**
+ * 프레임 JPEG를 받는다. img src로 바로 걸지 않고 직접 받는 이유는
+ * X-Preview-Frame-Id 헤더를 대조해야 하기 때문이다(A06 인계 문서 2번).
+ * 다음 프레임으로 교체된 예전 frame_id의 404는 정상이다.
+ */
+export async function fetchPreviewFrame(
+  frameId: string,
+  runId: string,
+  sourceId: string,
+  signal?: AbortSignal,
+): Promise<PreviewImage> {
+  const query = new URLSearchParams({ run_id: runId, source_id: sourceId });
+  const response = await fetch(
+    `${BASE}/preview-frames/${encodeURIComponent(frameId)}.jpg?${query.toString()}`,
+    { method: "GET", cache: "no-store", signal },
+  );
+  if (!response.ok) throw await toApiError(response);
+  return {
+    objectUrl: URL.createObjectURL(await response.blob()),
+    frameId: response.headers.get("X-Preview-Frame-Id"),
+  };
 }

@@ -20,6 +20,7 @@ import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
 import { ManualFirePanel } from "./ManualFirePanel";
+import { CameraPreviewPanel } from "./CameraPreviewPanel";
 import { useBuildingData } from "../building/useBuildingData";
 
 // three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
@@ -133,6 +134,11 @@ function Panel({ title, note, children }: { title: string; note?: string; childr
 export function ControlDashboard() {
   const view = useControlSnapshot();
   const [onlyUnavailable, setOnlyUnavailable] = useState(false);
+  // 고른 카메라는 미리보기와 3D 강조가 함께 쓴다.
+  const [camera, setCamera] = useState<{ sourceId: string | null; locate: number }>({
+    sourceId: null,
+    locate: 0,
+  });
   const state = view.state;
   const space = useBuildingData(state);
   const display = space.display;
@@ -230,11 +236,31 @@ export function ControlDashboard() {
           </section>
         }
       >
-        <BuildingPanel state={state} simulation={simulation} building={space.building} display={display} buildingError={space.buildingError} />
+        <BuildingPanel
+          state={state}
+          simulation={simulation}
+          building={space.building}
+          display={display}
+          buildingError={space.buildingError}
+          highlightSourceId={camera.sourceId}
+          locateRequest={camera.locate}
+        />
       </Suspense>
 
       {space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
         building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null} />}
+
+      <CameraPreviewPanel
+        key={state.run_id}
+        state={state}
+        building={space.building}
+        display={display}
+        selectedSourceId={camera.sourceId}
+        onSelect={(sourceId) => setCamera({ sourceId, locate: 0 })}
+        onLocate={(sourceId) =>
+          setCamera((previous) => ({ sourceId, locate: previous.locate + 1 }))
+        }
+      />
 
       <Panel
         title="상황 설명"
