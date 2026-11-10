@@ -1,0 +1,1485 @@
+{
+  "schema_version": 1,
+  "scope": "FIRST_FROZEN_EVALUATION_AI_REVIEW_NOT_QA5",
+  "performance_verdict": "FAIL",
+  "targets": {
+    "FIRE": {
+      "precision_min": 0.8,
+      "recall_min": 0.9
+    },
+    "SMOKE": {
+      "precision_min": 0.8,
+      "recall_min": 0.9
+    },
+    "normal_false_alarms_per_hour_max_per_class": 1,
+    "matched_event_latency_ms_max": 3000,
+    "skipped_late_frames_max": 0,
+    "source_expirations_before_eof_max": 0,
+    "payload_match_required": true,
+    "all_eof_and_log_integrity_required": true
+  },
+  "target_checks": [
+    {
+      "name": "FIRE_precision",
+      "actual": 0.045454545454545456,
+      "target": 0.8,
+      "status": "FAIL"
+    },
+    {
+      "name": "FIRE_recall",
+      "actual": 0.6666666666666666,
+      "target": 0.9,
+      "status": "FAIL"
+    },
+    {
+      "name": "FIRE_normal_fp_per_hour",
+      "actual": 0.0,
+      "target": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "FIRE_max_matched_delay_ms",
+      "actual": 23520,
+      "target": 3000,
+      "status": "FAIL"
+    },
+    {
+      "name": "SMOKE_precision",
+      "actual": 0.058823529411764705,
+      "target": 0.8,
+      "status": "FAIL"
+    },
+    {
+      "name": "SMOKE_recall",
+      "actual": 1.0,
+      "target": 0.9,
+      "status": "PASS"
+    },
+    {
+      "name": "SMOKE_normal_fp_per_hour",
+      "actual": 139.66006352593166,
+      "target": 1,
+      "status": "FAIL"
+    },
+    {
+      "name": "SMOKE_max_matched_delay_ms",
+      "actual": 66220,
+      "target": 3000,
+      "status": "FAIL"
+    },
+    {
+      "name": "skipped_late_frames",
+      "actual": 0,
+      "target": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "source_expirations",
+      "actual": 0,
+      "target": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "payload_match",
+      "actual": true,
+      "target": true,
+      "status": "PASS"
+    },
+    {
+      "name": "log_integrity",
+      "actual": true,
+      "target": true,
+      "status": "PASS"
+    },
+    {
+      "name": "freshness_pass",
+      "actual": true,
+      "target": true,
+      "status": "PASS"
+    },
+    {
+      "name": "retained_alarm_causes",
+      "actual": true,
+      "target": true,
+      "status": "PASS"
+    },
+    {
+      "name": "eof_unavailable",
+      "actual": true,
+      "target": true,
+      "status": "PASS"
+    },
+    {
+      "name": "controller_stopped",
+      "actual": true,
+      "target": true,
+      "status": "PASS"
+    }
+  ],
+  "source_commit": "e191256272b94fdc6107405c5dcf0f2bc42ab486",
+  "freeze_sha256": "76b5e998b3a0dc053ac0c94a32476553bbad93aa75051affd111cac3cff35e30",
+  "source_archive_sha256": "fe9cf925c6fe4dc17e599ad3be8d625a9a40837c6a04626f60baa5d4601dc214",
+  "source_lf_sha256": {
+    "ai_worker/__init__.py": "6499b77a6695831a1697d458642dfc857c1f91bad3c0f25ec2fb5a95b1e773cc",
+    "ai_worker/__main__.py": "7bfd4943969c6effcaf529432195ddb5a1bb5bc3cea468c7f5348873efd46090",
+    "ai_worker/config.py": "ea0162a7db1e623fff54cff22651150c4eaa10454d6a58265e17d1f9263d6d65",
+    "ai_worker/events.py": "e4b6618d66faff61fc71856cf998a0bbe8dcb98b3a8997971f6bc78cbffb0474",
+    "ai_worker/inference.py": "4c8b3e3717a634991b2e233ca7a1ec5ecc31312c929e3cbeb40aa5f5fafb4cb3",
+    "ai_worker/preview.py": "f9d408a75b0be96557902e873a7898666aa50d3f3d3b965f22f8488c84df13c1",
+    "ai_worker/video.py": "eb8943d09c9e5033c4a9429cb748e6f55eac8a2f863f7d3bd4fc13d8fbc933fb",
+    "ai_worker/worker.py": "c4cd5bf750035048f8b0f4e01c53db56c810a1cb7e3479cbe127712a551dfa7a",
+    "backend/__init__.py": "465574724d08f76dd4bf655a5fc4b90e6ef85a220fd3159baa839b798702aa87",
+    "backend/app.py": "039906583383fac8cda8a03e4d128eaf92a9721b674cc4506ef3dc05aca44bb1",
+    "backend/audit.py": "6513e13862fb47e697f574251a70bda0164f02f54d5a08a51dee6a81159b3d5b",
+    "backend/contracts/__init__.py": "b2875a78e6bcc9b8686e990e95568fc9d7d9625f98a43024a984e190c1ce6a0e",
+    "backend/contracts/building.py": "54f5b086740f27842467ae9fcbe26c39dd477e920aab3d2be8869b9242cdc6e4",
+    "backend/contracts/common.py": "d11cd34a7d38d057bd15b5fe323594861c35aa4dc0fed909e483e52c4641296b",
+    "backend/contracts/display.py": "b8245b6c6efdf6374b889c0875e641f31b11120f30bd57c4da1db29c4bf5f759",
+    "backend/contracts/explanations.py": "fc58fcf1c3ca5f06549478d8d0272ec9de28bfc338bc2056a83e7b49cafe3be3",
+    "backend/contracts/messages.py": "7f792dff11c324c28a80ed9c7ce27985bcaca3027ee81cae77be2669952478fe",
+    "backend/contracts/previews.py": "7202d8049bb03f6cb4b62e10a3abd02cab19ac28637808881ca485e756384e96",
+    "backend/contracts/validation.py": "bd1a857e51820e905fec4e54a6060d1291013f2cf03a60002184dd8bd5dd7790",
+    "backend/controller.py": "5299d53bc9be532001af5eadff5d887b0fd53478fe8dc2167a8fb78d769c9ad4",
+    "backend/guidance.py": "6d589e55ae8eca2d2629efe956adc65389e945c9fd8b7ac882d2cf16d8684305",
+    "backend/routing.py": "eb6c37a73538894ad49c0ced636d1099d2e930acf0f227a6106b30ec80fef6f3",
+    "tools/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tools/check_repository.py": "6e672cdac66949668e720f7ed51daab1332f225ab1cc030c127e0c3e58c73bc9",
+    "tools/control.py": "58f10938936831db67046f26e3da634f8b461a5a708df97da45733670fd24a6a",
+    "tools/evaluate_ai.py": "2a0b9d8d0d62500453c3efb5e90e0eeccde707b5753409551f42be1443918e30",
+    "tools/evaluate_ai_suite.py": "a59550fac86fa31d0c80dfee5daca860884fce7663c4c0c3cfcbe4cee8e31828",
+    "tools/export_contracts.py": "dc0e56beeddf17ae3d0fab8988b66d9da97135bf102ddeca071dcd88de97919c",
+    "tools/validate_ai_delivery.py": "3720de19c227e9f0fb40f3ad8f754519468dbfb462020604fbd5590ad1bd9dda",
+    "tools/validate_ai_model.py": "3eb4f0df784a35830b1cb8577fa7ca0ac5cf637589f6d612c59b5e9428867bf6",
+    "tools/validate_config.py": "290959b71072f1df909595bf26f0027174418d2bee4228765ab2962cdbb78b1c",
+    "tools/validate_explanation.py": "19912bc6aebf3b097a5f115234c616c36facc36c35a2a5da993dffb088537d5d",
+    "tools/validate_preview.py": "9f94ee2ed57546620bf1f8fc240ccada620f240a72d3af03e092bc4a096142ee",
+    "tools/verify_run.py": "e646e485516e99929d045785e1bed8c26fb23d3c26180ff5ad0c2dc112fb2e0e"
+  },
+  "source_byte_note": "Windows git archive emitted CRLF. Every server raw source hash matches archived bytes; LF-normalized bytes equal the stated Git commit. Raw and normalized hashes are distinct.",
+  "summary_sha256": "915c92d8f04ad3b5b04d1a09c58a619d05ea019c23c2a3c360dfd2b91a4196a1",
+  "raw_archive_sha256": "978448576daedb648d525a09dd890e3817183818a50c6fbc5c68f412f0be9824",
+  "execution": {
+    "status": "COMPLETE",
+    "scope": "FROZEN_EVALUATION_AI_REVIEW_NOT_QA5",
+    "started_at_utc": "2026-11-10T14:00:38.408471+00:00",
+    "source_commit": "e191256272b94fdc6107405c5dcf0f2bc42ab486",
+    "lock_sha256": "76b5e998b3a0dc053ac0c94a32476553bbad93aa75051affd111cac3cff35e30",
+    "runner_sha256": "b92f5abfdac35ea591760802bfc2d81ee806ab166810714a8d7e4962238cb2ce",
+    "config_sha256": "84bbd4ba8e70730a12fdf971c234c56397a174ad421d93008a05a8a6e486481f",
+    "python": "3.12.3",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "cpu_count": 4,
+    "packages": {
+      "numpy": "2.5.4",
+      "opencv-python": "5.0.0.93",
+      "torch": "2.15.0+cpu",
+      "ultralytics": "8.4.208",
+      "onnxruntime-ep-openvino": "1.8.1",
+      "onnxruntime": "1.31.1",
+      "fastapi": "0.162.2"
+    },
+    "source_sha256": {
+      "ai_worker/__init__.py": "e1c0bfead8b4189308547edb4470232b130c371cd8346770bb6353a713e5c68e",
+      "ai_worker/__main__.py": "d08908f3aff8c6da0e4d736327518cdbde878575c0071cd73076cdc38f35d19d",
+      "ai_worker/config.py": "566ace8aaa66191546ca5b6830a649857f1099183b39664e60a19ec752a80833",
+      "ai_worker/events.py": "c1433fbd6a65cb159700ec65be837b8326267f508bc1092e1d4df883ae2740e6",
+      "ai_worker/inference.py": "a66e057f2ad12271f0eb8610aefa7a560a4bb587d501810917c4917e9a6987ee",
+      "ai_worker/preview.py": "21f848e51bdc7dbfa7a75a56ac59450b0b044c8d4a443eecc203c64651c64ebd",
+      "ai_worker/video.py": "6c91c4ddf6e294762b7036c8f9cc1cddd9c275bc7f6e0095a4b78c8ae2f2e0da",
+      "ai_worker/worker.py": "52606714f03f2f295ebf77fa9bedabc265009cca905d57e77c0270486c816ae5",
+      "backend/__init__.py": "f667168861d054fb25ef69080dce23bc3c1459fc9bfa5f9e0cffeb9bc57b6927",
+      "backend/app.py": "7b2480a12c7aefe6e3aa69a444b9861453efd3f02dd31a926f9382d1772eb1a8",
+      "backend/audit.py": "387352c338a170be2220639b6ae5d29108f85a0d84ca7ca73bde202314215d7c",
+      "backend/contracts/__init__.py": "3dcc1360d28e5eb43b4b0337f3111b703d6013f3d3023eb4e412baaac4f8fb00",
+      "backend/contracts/building.py": "e17725cb141ee0593fcf11a5c98da6ad0bce457696899f419063ac17612ff804",
+      "backend/contracts/common.py": "04395dd8afd094d92005d0672dc42da24ffae8e922b7b08b5de25e1a476d8655",
+      "backend/contracts/display.py": "06bda99f85ebebb39f9f0980729c1be92b6fefd9035ad27ec4a3862ba0c65669",
+      "backend/contracts/explanations.py": "9d892c9269ad3db7c3ae0a6fc75ab40548b27c0fb7ea2b02c07d59f7f92a520b",
+      "backend/contracts/messages.py": "b5c18f21c056ce7b7ab741d873ceba1179728941d9c9750f681d2fde053a745c",
+      "backend/contracts/previews.py": "9042d07a45bbd2001e42d035fcdc47d0daac89c1e3e266da3de372d57f90edd4",
+      "backend/contracts/validation.py": "4c6114d331da9975954fd09015573eaf77d8f913e1bc0ddcb355aeb5dfc26d2c",
+      "backend/controller.py": "0cbe367021693961361d9608771f066c862290dcf03423d5b6e30d369d5a2d8c",
+      "backend/guidance.py": "d716378f190a5b78bc29486219dea26667fdfcc15d822c97f49b8edac044a22c",
+      "backend/routing.py": "1484ae79552bb6e3c09bccb5b82c78521d2e4fcf760841ba6778fd89734ef9e1",
+      "tools/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tools/check_repository.py": "459c301611554c43af6882b89e6a35a192a628e1eda6747fab7960c7652efc7d",
+      "tools/control.py": "138c5db814314f70fd890071427f89ac9915a576f3b6c77f67e1fda62ce5c124",
+      "tools/evaluate_ai.py": "c3f5f291934e10aca725a44f543cbee234e8a9c56f9dec50edf69db901ca76dd",
+      "tools/evaluate_ai_suite.py": "6a8340bbde59cef877a595894368598534422659a5a3d9d0f12e98ab1bf8ba5e",
+      "tools/export_contracts.py": "c6ca4cc476bf1db971b2dd0c140ff3251418868169e98455264ab0e3cfc03314",
+      "tools/validate_ai_delivery.py": "606102e2d958e6ed7467211456cb2ee27953aaae303394a991d385066b8e9e5b",
+      "tools/validate_ai_model.py": "3e7030b14c26235c9614179a300adbf4a350d9a6d634f85595b7e9e1456983f4",
+      "tools/validate_config.py": "cfa96d588c1f112c2b6d867477f1c1d346cc2e2bcaa083dcad6d2414bba13788",
+      "tools/validate_explanation.py": "31fda01bf0cf033696fe0c1033f9bc473b24d073f049a5291305e973f81896fa",
+      "tools/validate_preview.py": "ae57844add12710edde2bf43973650abc47f036d1f96921fe65eae6f07bfe2b6",
+      "tools/verify_run.py": "908433576b72beadf5099915a6e1290e737b28a9d90c1a9cffd361b457f49f52"
+    },
+    "load_before": [
+      0.09912109375,
+      0.02587890625,
+      0.00537109375
+    ],
+    "videos": [
+      {
+        "asset_id": "eval-caviar-walkbyshop1cor",
+        "run_id": "0b8d2b17-6473-43fd-b11d-d9af292a0c6f",
+        "status": "PASS",
+        "video_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+        "ground_truth_sha256": "65a6ebb2a3d8f7ea944b7ca6812eeb6e0edd7f28a4c9f94ea94d22011034579b",
+        "exit_code": 0,
+        "elapsed_seconds": 100.91274389100727,
+        "analyzed_frames": 189,
+        "accepted_events": 190,
+        "alarms": {},
+        "source_expirations": 0,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "0b8d2b17-6473-43fd-b11d-d9af292a0c6f",
+          "frames": 2360,
+          "analyzed_frames": 189,
+          "skipped_late_frames": 0,
+          "accepted_events": 190,
+          "processing_elapsed_ms": 94263.97474401165,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "27479c3fbad4671c11ab25251d3dae719e66b472f00d3b91d969dbfc4c21638a",
+        "max_acquisition_to_audit_ms": 517.3370000000001,
+        "max_observation_gap_ms": 572.8101439476013,
+        "source_validity": "UNAVAILABLE",
+        "retained_alarm_causes": true,
+        "max_age_plus_following_gap_ms": 1000.5221439476013,
+        "freshness_pass": true,
+        "log_integrity": true,
+        "evaluation_exit_code": 0,
+        "metrics_sha256": "234dde6476c44abd799bd4c0062cd4e2286d386fb6a1c689816a61d8131a018d"
+      },
+      {
+        "asset_id": "eval-fs-reflections",
+        "run_id": "a231ffea-731a-401c-ba9b-ddcc7d3c6e65",
+        "status": "PASS",
+        "video_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+        "ground_truth_sha256": "9dcbb584a4b4e319937a5312e794f9ad944cbd92d5cf40c6f507b9d0e593d91b",
+        "exit_code": 0,
+        "elapsed_seconds": 25.31068460410461,
+        "analyzed_frames": 37,
+        "accepted_events": 38,
+        "alarms": {},
+        "source_expirations": 0,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "a231ffea-731a-401c-ba9b-ddcc7d3c6e65",
+          "frames": 541,
+          "analyzed_frames": 37,
+          "skipped_late_frames": 0,
+          "accepted_events": 38,
+          "processing_elapsed_ms": 18375.72683696635,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "003db1eb8c270464368d3ff15278a1a658073771032623ed5279e18487e2496b",
+        "max_acquisition_to_audit_ms": 515.3720000000001,
+        "max_observation_gap_ms": 581.3575090169907,
+        "source_validity": "UNAVAILABLE",
+        "retained_alarm_causes": true,
+        "max_age_plus_following_gap_ms": 1069.241714140892,
+        "freshness_pass": true,
+        "log_integrity": true,
+        "evaluation_exit_code": 0,
+        "metrics_sha256": "f0c12080a4b441353bd511729b99a0ca787c2d339abfa1b169b265dff4814a2f"
+      },
+      {
+        "asset_id": "eval-mm-heptane-bright",
+        "run_id": "86c11446-bbd6-4ef5-8bed-d8be39655c73",
+        "status": "PASS",
+        "video_sha256": "e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7",
+        "ground_truth_sha256": "7ede2b9d797dbbe55a3cdc1c375f4c3ea4cbe886bff0cd846f022c858b7999eb",
+        "exit_code": 0,
+        "elapsed_seconds": 404.7560656128917,
+        "analyzed_frames": 720,
+        "accepted_events": 721,
+        "alarms": {
+          "FIRE": 17
+        },
+        "source_expirations": 0,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "86c11446-bbd6-4ef5-8bed-d8be39655c73",
+          "frames": 9000,
+          "analyzed_frames": 720,
+          "skipped_late_frames": 0,
+          "accepted_events": 721,
+          "processing_elapsed_ms": 359910.8482770389,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "14e0a81b7b68f2e4332d57b0594bad65254eda5cc24d17ff32e21b8e134744e3",
+        "max_acquisition_to_audit_ms": 582.463,
+        "max_observation_gap_ms": 659.8157279491425,
+        "source_validity": "UNAVAILABLE",
+        "retained_alarm_causes": true,
+        "max_age_plus_following_gap_ms": 1096.4587279491425,
+        "freshness_pass": true,
+        "log_integrity": true,
+        "evaluation_exit_code": 0,
+        "metrics_sha256": "ce1d14b3f1489ea7e02c9c9953cf2527b292506b09cb92394e7e55d76c1df3cc"
+      },
+      {
+        "asset_id": "eval-mm-mist-bright",
+        "run_id": "c2412ba2-95be-4f3b-83b7-32b76ed29747",
+        "status": "PASS",
+        "video_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+        "ground_truth_sha256": "34d490d08c0dba7fa2e69d23a5a9c3fc3005babe4edd0947badd72ef360dd21e",
+        "exit_code": 0,
+        "elapsed_seconds": 336.4491281060036,
+        "analyzed_frames": 600,
+        "accepted_events": 601,
+        "alarms": {
+          "SMOKE": 397
+        },
+        "source_expirations": 0,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "c2412ba2-95be-4f3b-83b7-32b76ed29747",
+          "frames": 7500,
+          "analyzed_frames": 600,
+          "skipped_late_frames": 0,
+          "accepted_events": 601,
+          "processing_elapsed_ms": 299912.90438896976,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "16627aa1f625a7f6348ee8e9d194153b0f8367078e4ff2a1bd9411ea1c7d56d6",
+        "max_acquisition_to_audit_ms": 551.833,
+        "max_observation_gap_ms": 636.2909140586853,
+        "source_validity": "UNAVAILABLE",
+        "retained_alarm_causes": true,
+        "max_age_plus_following_gap_ms": 1078.2369140586852,
+        "freshness_pass": true,
+        "log_integrity": true,
+        "evaluation_exit_code": 0,
+        "metrics_sha256": "bea4942fe93eb24cafc257ab2f4bc9fa5877f0eca187c3abbd179fb33a7a554b"
+      },
+      {
+        "asset_id": "eval-mm-polyurethane-bright",
+        "run_id": "ed68962b-e6ed-4078-a837-f26e895463af",
+        "status": "PASS",
+        "video_sha256": "d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451",
+        "ground_truth_sha256": "26fee68be4ea0d938af74be718517bc8407a639114aa2be69263c4ce66bbcc6a",
+        "exit_code": 0,
+        "elapsed_seconds": 403.52269245299976,
+        "analyzed_frames": 720,
+        "accepted_events": 722,
+        "alarms": {
+          "FIRE": 376,
+          "SMOKE": 1
+        },
+        "source_expirations": 0,
+        "payload_match": true,
+        "termination": [
+          "EOF"
+        ],
+        "worker_result": {
+          "run_id": "ed68962b-e6ed-4078-a837-f26e895463af",
+          "frames": 9000,
+          "analyzed_frames": 720,
+          "skipped_late_frames": 0,
+          "accepted_events": 722,
+          "processing_elapsed_ms": 359915.95272300765,
+          "termination": "EOF"
+        },
+        "predictions_sha256": "c1c2f9012901abf64b4970dac92bc4981b35864a5328552f34c3bac0473640ce",
+        "max_acquisition_to_audit_ms": 584.783,
+        "max_observation_gap_ms": 663.364531993866,
+        "source_validity": "UNAVAILABLE",
+        "retained_alarm_causes": true,
+        "max_age_plus_following_gap_ms": 1092.644531993866,
+        "freshness_pass": true,
+        "log_integrity": true,
+        "evaluation_exit_code": 0,
+        "metrics_sha256": "a89cd8d670babbab0d10645f2b2c71d7410da72a56d78a29e7f0768a74c1ba5d"
+      }
+    ],
+    "controller_stopped": true,
+    "elapsed_seconds": 1276.9985427480424,
+    "finished_at_utc": "2026-11-10T14:21:55.475120+00:00",
+    "load_after": [
+      0.08203125,
+      0.865234375,
+      1.2373046875
+    ]
+  },
+  "aggregate": {
+    "video_count": 5,
+    "scene_groups": {
+      "caviar-lisbon-shopping-corridor": [
+        "eval-caviar-walkbyshop1cor"
+      ],
+      "firesense-reflections": [
+        "eval-fs-reflections"
+      ],
+      "mmodalfire-lab-camera-ch01": [
+        "eval-mm-heptane-bright",
+        "eval-mm-mist-bright",
+        "eval-mm-polyurethane-bright"
+      ]
+    },
+    "scene_group_count": 3,
+    "duration_ms": 1132430,
+    "classes": {
+      "FIRE": {
+        "tp": 2,
+        "fp": 42,
+        "fn": 1,
+        "precision": {
+          "value": 0.045454545454545456,
+          "numerator": 2,
+          "denominator": 44
+        },
+        "recall": {
+          "value": 0.6666666666666666,
+          "numerator": 2,
+          "denominator": 3
+        },
+        "latency_ms": {
+          "count": 2,
+          "values": [
+            9520,
+            23520
+          ],
+          "mean": 16520.0,
+          "maximum": 23520
+        },
+        "normal_video_false_alarms": {
+          "fp": 0,
+          "duration_ms": 412430,
+          "per_hour": 0.0
+        }
+      },
+      "SMOKE": {
+        "tp": 1,
+        "fp": 16,
+        "fn": 0,
+        "precision": {
+          "value": 0.058823529411764705,
+          "numerator": 1,
+          "denominator": 17
+        },
+        "recall": {
+          "value": 1.0,
+          "numerator": 1,
+          "denominator": 1
+        },
+        "latency_ms": {
+          "count": 1,
+          "values": [
+            66220
+          ],
+          "mean": 66220.0,
+          "maximum": 66220
+        },
+        "normal_video_false_alarms": {
+          "fp": 16,
+          "duration_ms": 412430,
+          "per_hour": 139.66006352593166
+        }
+      }
+    },
+    "processing": {
+      "analyzed_frames": 2266,
+      "skipped_late_frames": 0,
+      "video_loop_elapsed_ms": 1132379.4069699943,
+      "elapsed_recorded_videos": 5,
+      "video_loop_frames_per_second": 2.0010960867465193,
+      "max_read_to_completion_ms": 572.8196980198845
+    }
+  },
+  "cases": [
+    {
+      "asset_id": "eval-caviar-walkbyshop1cor",
+      "scene_id": "caviar-lisbon-shopping-corridor",
+      "run_id": "0b8d2b17-6473-43fd-b11d-d9af292a0c6f",
+      "video_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+      "inputs": {
+        "predictions_sha256": "27479c3fbad4671c11ab25251d3dae719e66b472f00d3b91d969dbfc4c21638a",
+        "ground_truth_sha256": "65a6ebb2a3d8f7ea944b7ca6812eeb6e0edd7f28a4c9f94ea94d22011034579b"
+      },
+      "annotation": {
+        "schema_version": 1,
+        "asset_id": "eval-caviar-walkbyshop1cor",
+        "scene_id": "caviar-lisbon-shopping-corridor",
+        "video_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+        "source": "https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 94400,
+        "normal_video": true,
+        "events": []
+      },
+      "processing": {
+        "analyzed_frames": 189,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 94263.97474401165,
+        "video_loop_frames_per_second": 2.0050077509807815,
+        "max_read_to_completion_ms": 501.40537798870355
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 0,
+            "duration_ms": 94400,
+            "per_hour": 0.0
+          }
+        },
+        "SMOKE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 0,
+            "duration_ms": 94400,
+            "per_hour": 0.0
+          }
+        }
+      }
+    },
+    {
+      "asset_id": "eval-fs-reflections",
+      "scene_id": "firesense-reflections",
+      "run_id": "a231ffea-731a-401c-ba9b-ddcc7d3c6e65",
+      "video_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+      "inputs": {
+        "predictions_sha256": "003db1eb8c270464368d3ff15278a1a658073771032623ed5279e18487e2496b",
+        "ground_truth_sha256": "9dcbb584a4b4e319937a5312e794f9ad944cbd92d5cf40c6f507b9d0e593d91b"
+      },
+      "annotation": {
+        "schema_version": 1,
+        "asset_id": "eval-fs-reflections",
+        "scene_id": "firesense-reflections",
+        "video_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+        "source": "https://zenodo.org/records/836749",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 18030,
+        "normal_video": true,
+        "events": []
+      },
+      "processing": {
+        "analyzed_frames": 37,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 18375.72683696635,
+        "video_loop_frames_per_second": 2.013525795647294,
+        "max_read_to_completion_ms": 503.15576500725
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 0,
+            "duration_ms": 18030,
+            "per_hour": 0.0
+          }
+        },
+        "SMOKE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 0,
+            "duration_ms": 18030,
+            "per_hour": 0.0
+          }
+        }
+      }
+    },
+    {
+      "asset_id": "eval-mm-heptane-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "run_id": "86c11446-bbd6-4ef5-8bed-d8be39655c73",
+      "video_sha256": "e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7",
+      "inputs": {
+        "predictions_sha256": "14e0a81b7b68f2e4332d57b0594bad65254eda5cc24d17ff32e21b8e134744e3",
+        "ground_truth_sha256": "7ede2b9d797dbbe55a3cdc1c375f4c3ea4cbe886bff0cd846f022c858b7999eb"
+      },
+      "annotation": {
+        "schema_version": 1,
+        "asset_id": "eval-mm-heptane-bright",
+        "scene_id": "mmodalfire-lab-camera-ch01",
+        "video_sha256": "e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7",
+        "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 360000,
+        "normal_video": false,
+        "events": [
+          {
+            "event_id": "ev1",
+            "hazard_type": "FIRE",
+            "start_ms": 100000,
+            "end_ms": 360000
+          }
+        ]
+      },
+      "processing": {
+        "analyzed_frames": 720,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 359910.8482770389,
+        "video_loop_frames_per_second": 2.0004954100349455,
+        "max_read_to_completion_ms": 571.0116140544415
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 1,
+          "fp": 10,
+          "fn": 0,
+          "precision": {
+            "value": 0.09090909090909091,
+            "numerator": 1,
+            "denominator": 11
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "predicted_events": [
+            {
+              "start_ms": 109520,
+              "last_alarm_ms": 109520,
+              "truth_event_id": "ev1",
+              "latency_ms": 9520,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 127520,
+              "last_alarm_ms": 130000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 5
+            },
+            {
+              "start_ms": 144000,
+              "last_alarm_ms": 144000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 190000,
+              "last_alarm_ms": 190000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 219000,
+              "last_alarm_ms": 219000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 221000,
+              "last_alarm_ms": 221000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 245520,
+              "last_alarm_ms": 245520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 306000,
+              "last_alarm_ms": 307000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 3
+            },
+            {
+              "start_ms": 335000,
+              "last_alarm_ms": 335000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 337000,
+              "last_alarm_ms": 337000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 357000,
+              "last_alarm_ms": 357000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            }
+          ],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 1,
+            "values": [
+              9520
+            ],
+            "mean": 9520.0,
+            "maximum": 9520
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        },
+        "SMOKE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        }
+      }
+    },
+    {
+      "asset_id": "eval-mm-mist-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "run_id": "c2412ba2-95be-4f3b-83b7-32b76ed29747",
+      "video_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+      "inputs": {
+        "predictions_sha256": "16627aa1f625a7f6348ee8e9d194153b0f8367078e4ff2a1bd9411ea1c7d56d6",
+        "ground_truth_sha256": "34d490d08c0dba7fa2e69d23a5a9c3fc3005babe4edd0947badd72ef360dd21e"
+      },
+      "annotation": {
+        "schema_version": 1,
+        "asset_id": "eval-mm-mist-bright",
+        "scene_id": "mmodalfire-lab-camera-ch01",
+        "video_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+        "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 300000,
+        "normal_video": true,
+        "events": []
+      },
+      "processing": {
+        "analyzed_frames": 600,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 299912.90438896976,
+        "video_loop_frames_per_second": 2.0005808060257206,
+        "max_read_to_completion_ms": 539.6142130484805
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 0,
+            "duration_ms": 300000,
+            "per_hour": 0.0
+          }
+        },
+        "SMOKE": {
+          "tp": 0,
+          "fp": 16,
+          "fn": 0,
+          "precision": {
+            "value": 0.0,
+            "numerator": 0,
+            "denominator": 16
+          },
+          "recall": {
+            "value": null,
+            "numerator": 0,
+            "denominator": 0
+          },
+          "predicted_events": [
+            {
+              "start_ms": 64520,
+              "last_alarm_ms": 64520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 66000,
+              "last_alarm_ms": 66520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 68000,
+              "last_alarm_ms": 70520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 5
+            },
+            {
+              "start_ms": 72000,
+              "last_alarm_ms": 73520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 4
+            },
+            {
+              "start_ms": 76520,
+              "last_alarm_ms": 81520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 8
+            },
+            {
+              "start_ms": 83000,
+              "last_alarm_ms": 83000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 85520,
+              "last_alarm_ms": 87000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 3
+            },
+            {
+              "start_ms": 89000,
+              "last_alarm_ms": 126520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 71
+            },
+            {
+              "start_ms": 128000,
+              "last_alarm_ms": 136000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 15
+            },
+            {
+              "start_ms": 138000,
+              "last_alarm_ms": 141520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 8
+            },
+            {
+              "start_ms": 144520,
+              "last_alarm_ms": 174000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 54
+            },
+            {
+              "start_ms": 176000,
+              "last_alarm_ms": 181520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 12
+            },
+            {
+              "start_ms": 184000,
+              "last_alarm_ms": 279520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 185
+            },
+            {
+              "start_ms": 281000,
+              "last_alarm_ms": 281520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 283000,
+              "last_alarm_ms": 284520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 3
+            },
+            {
+              "start_ms": 287520,
+              "last_alarm_ms": 299520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 23
+            }
+          ],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 0,
+            "values": [],
+            "mean": null,
+            "maximum": null
+          },
+          "normal_video_false_alarms": {
+            "fp": 16,
+            "duration_ms": 300000,
+            "per_hour": 192.0
+          }
+        }
+      }
+    },
+    {
+      "asset_id": "eval-mm-polyurethane-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "run_id": "ed68962b-e6ed-4078-a837-f26e895463af",
+      "video_sha256": "d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451",
+      "inputs": {
+        "predictions_sha256": "c1c2f9012901abf64b4970dac92bc4981b35864a5328552f34c3bac0473640ce",
+        "ground_truth_sha256": "26fee68be4ea0d938af74be718517bc8407a639114aa2be69263c4ce66bbcc6a"
+      },
+      "annotation": {
+        "schema_version": 1,
+        "asset_id": "eval-mm-polyurethane-bright",
+        "scene_id": "mmodalfire-lab-camera-ch01",
+        "video_sha256": "d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451",
+        "source": "https://springernature.figshare.com/articles/dataset/MmodalFire_A_Multimodal_Dataset_Comprising_Video_and_Physical_Sensing_Data_for_Detecting_Indoor_Fires/28804448",
+        "split": "evaluation",
+        "annotator": "준영",
+        "reviewer": "Codex sampled visual review, 2026-11-10; not QA5 human approval",
+        "annotation_complete": true,
+        "training_overlap": "unknown",
+        "development_used": false,
+        "duration_ms": 360000,
+        "normal_video": false,
+        "events": [
+          {
+            "event_id": "ev1",
+            "hazard_type": "FIRE",
+            "start_ms": 26000,
+            "end_ms": 27000
+          },
+          {
+            "event_id": "ev2",
+            "hazard_type": "FIRE",
+            "start_ms": 28000,
+            "end_ms": 360000
+          },
+          {
+            "event_id": "ev3",
+            "hazard_type": "SMOKE",
+            "start_ms": 122300,
+            "end_ms": 360000
+          }
+        ]
+      },
+      "processing": {
+        "analyzed_frames": 720,
+        "skipped_late_frames": 0,
+        "video_loop_elapsed_ms": 359915.95272300765,
+        "video_loop_frames_per_second": 2.0004670383535736,
+        "max_read_to_completion_ms": 572.8196980198845
+      },
+      "classes": {
+        "FIRE": {
+          "tp": 1,
+          "fp": 32,
+          "fn": 1,
+          "precision": {
+            "value": 0.030303030303030304,
+            "numerator": 1,
+            "denominator": 33
+          },
+          "recall": {
+            "value": 0.5,
+            "numerator": 1,
+            "denominator": 2
+          },
+          "predicted_events": [
+            {
+              "start_ms": 51520,
+              "last_alarm_ms": 51520,
+              "truth_event_id": "ev2",
+              "latency_ms": 23520,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 54000,
+              "last_alarm_ms": 60000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 11
+            },
+            {
+              "start_ms": 63520,
+              "last_alarm_ms": 64520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 68000,
+              "last_alarm_ms": 71520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 7
+            },
+            {
+              "start_ms": 73000,
+              "last_alarm_ms": 73000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 75520,
+              "last_alarm_ms": 76520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 78000,
+              "last_alarm_ms": 83520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 10
+            },
+            {
+              "start_ms": 85000,
+              "last_alarm_ms": 87520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 5
+            },
+            {
+              "start_ms": 89000,
+              "last_alarm_ms": 91520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 6
+            },
+            {
+              "start_ms": 96000,
+              "last_alarm_ms": 96520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 98000,
+              "last_alarm_ms": 98000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 100520,
+              "last_alarm_ms": 100520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 105000,
+              "last_alarm_ms": 105000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 108000,
+              "last_alarm_ms": 108000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 111520,
+              "last_alarm_ms": 111520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 119000,
+              "last_alarm_ms": 119000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 131520,
+              "last_alarm_ms": 143000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 18
+            },
+            {
+              "start_ms": 146000,
+              "last_alarm_ms": 147000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 3
+            },
+            {
+              "start_ms": 149000,
+              "last_alarm_ms": 165000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 31
+            },
+            {
+              "start_ms": 167000,
+              "last_alarm_ms": 196520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 57
+            },
+            {
+              "start_ms": 198000,
+              "last_alarm_ms": 199000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 204000,
+              "last_alarm_ms": 204520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 206000,
+              "last_alarm_ms": 206000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 208520,
+              "last_alarm_ms": 209520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 2
+            },
+            {
+              "start_ms": 211000,
+              "last_alarm_ms": 212520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 4
+            },
+            {
+              "start_ms": 214000,
+              "last_alarm_ms": 214000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 216000,
+              "last_alarm_ms": 216000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 1
+            },
+            {
+              "start_ms": 218520,
+              "last_alarm_ms": 221000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 5
+            },
+            {
+              "start_ms": 223000,
+              "last_alarm_ms": 229000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 11
+            },
+            {
+              "start_ms": 231000,
+              "last_alarm_ms": 289000,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 115
+            },
+            {
+              "start_ms": 291520,
+              "last_alarm_ms": 321520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 60
+            },
+            {
+              "start_ms": 323000,
+              "last_alarm_ms": 325520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 6
+            },
+            {
+              "start_ms": 327000,
+              "last_alarm_ms": 328520,
+              "truth_event_id": null,
+              "latency_ms": null,
+              "alarm_sample_count": 4
+            }
+          ],
+          "missed_events": [
+            {
+              "event_id": "ev1",
+              "hazard_type": "FIRE",
+              "start_ms": 26000,
+              "end_ms": 27000
+            }
+          ],
+          "latency_ms": {
+            "count": 1,
+            "values": [
+              23520
+            ],
+            "mean": 23520.0,
+            "maximum": 23520
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        },
+        "SMOKE": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "recall": {
+            "value": 1.0,
+            "numerator": 1,
+            "denominator": 1
+          },
+          "predicted_events": [
+            {
+              "start_ms": 188520,
+              "last_alarm_ms": 188520,
+              "truth_event_id": "ev3",
+              "latency_ms": 66220,
+              "alarm_sample_count": 1
+            }
+          ],
+          "missed_events": [],
+          "latency_ms": {
+            "count": 1,
+            "values": [
+              66220
+            ],
+            "mean": 66220.0,
+            "maximum": 66220
+          },
+          "normal_video_false_alarms": {
+            "fp": null,
+            "duration_ms": null,
+            "per_hour": null
+          }
+        }
+      }
+    }
+  ],
+  "runtime": {
+    "model_classes": {
+      "0": "fire",
+      "1": "smoke"
+    },
+    "device": "cpu",
+    "python": "3.12.3",
+    "os": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "cpu": "x86_64",
+    "logical_cpu_count": 4,
+    "torch_threads": 1,
+    "preprocessing_version": "clahe_input_v1",
+    "onnx_runtime": {
+      "version": "1.31.1",
+      "providers": [
+        "OpenVINOExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "intra_op_num_threads": 1,
+      "allow_spinning": "0",
+      "openvino_plugin": "1.8.1",
+      "provider_options_requested": {
+        "load_config": "{\"CPU\": {\"INFERENCE_NUM_THREADS\": 4, \"NUM_STREAMS\": 1, \"INFERENCE_PRECISION_HINT\": \"f32\", \"PERFORMANCE_HINT\": \"LATENCY\", \"ENABLE_HYPER_THREADING\": true}}"
+      }
+    },
+    "packages": {
+      "torch": "2.15.0+cpu",
+      "torchvision": "0.29.2+cpu",
+      "ultralytics": "8.4.208",
+      "opencv-python": "5.0.0.93",
+      "numpy": "2.5.4"
+    }
+  },
+  "ports_before": [
+    "22",
+    "53",
+    "53",
+    "22"
+  ],
+  "ports_after": [
+    "22",
+    "53",
+    "53",
+    "22"
+  ],
+  "limitations": [
+    "Codex sampled visual review, not QA5 human independent acceptance.",
+    "Model/protocol locked before labels; GT frozen before first prediction; no tuning after evaluation.",
+    "Original annotation intervals retained; small ignition and gradual smoke timing uncertain.",
+    "5 clips represent 3 declared scene groups; publisher training overlap unknown.",
+    "Short normal-video denominator is not field reliability; no mAP without box labels.",
+    "TWO_ROUTE isolated CPU single-worker execution, not WFI joint or deployment acceptance."
+  ]
+}
