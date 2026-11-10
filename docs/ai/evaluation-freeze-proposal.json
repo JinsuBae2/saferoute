@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "PROPOSAL_NOT_FROZEN",
+  "status": "CRITERIA_APPROVED_INPUTS_NOT_FROZEN",
   "proposed_on": "2026-11-10",
   "proposed_by": "Rinhaze / role 1 (Codex-assisted)",
   "reference_commit": "9d708d5704f5294ce16cf2a566b8048552e0acf3",
@@ -43,7 +43,7 @@
     "payload_match_required": true,
     "all_eof_and_log_integrity_required": true
   },
-  "target_status": "Discussion proposal only, not previously agreed criteria or a performance verdict; record denominators, FN and insufficient coverage.",
+  "target_status": "Approved by Rinhaze under stated delegated authority before independent evaluation; not a performance verdict. Missing/undefined required metrics => INCOMPLETE, otherwise any missed target => FAIL, otherwise PASS.",
   "evidence_environment": "Supported server CPU, one worker, 640/500ms, original supported codec or separately verified lossless derivative; no shared WFI session.",
   "evaluation_asset_metadata_snapshot": [
     {
@@ -108,20 +108,38 @@
     }
   ],
   "required_before_freeze": [
-    "Team model/license and numeric-target decision with recorded owner and UTC timestamp",
+    "Model/license and numeric-target decisions recorded in approvals; preserve these decisions and complete the remaining freeze requirements",
     "QA5 finishes polyurethane annotation and records real independent reviewers for all five files",
     "Record final source commit, model/config hashes, exact input/GT hashes and matching rules before any evaluation inference",
     "Training overlap is unknown for all five assets; preserve this limitation and investigate rather than claim excluded",
     "Any server codec conversion needs original/derived full pixels and timing equality; final GT hash must refer to executed bytes without changing annotated intervals"
   ],
   "approvals": {
-    "model_and_project_license": null,
-    "targets_and_protocol": null,
+    "model_and_project_license": {
+      "by": "Rinhaze / 조대성",
+      "at_utc": "2026-11-10T05:06:43Z",
+      "record": "https://github.com/JinsuBae2/saferoute/issues/9#issuecomment-6759524021",
+      "scope": "model for evaluation and future demo; own-code AGPL-3.0-only policy; not performance/production/legal certification"
+    },
+    "targets_and_protocol": {
+      "by": "Rinhaze / 조대성",
+      "at_utc": "2026-11-10T05:06:54Z",
+      "record": "https://github.com/JinsuBae2/saferoute/issues/12#issuecomment-6759526465",
+      "scope": "numeric targets and protocol v1; final input/code/GT freeze still pending"
+    },
     "qa5_annotations": null
   },
   "frozen_at_utc": null,
   "frozen_by": null,
   "final_source_commit": null,
   "final_ground_truth_hashes": null,
-  "performance_verdict": "NOT_ASSESSED"
+  "performance_verdict": "NOT_ASSESSED",
+  "protocol_version": 1,
+  "aggregation": "Whole fixed five-file list: integer TP/FP/FN sums before ratios, summed normal FP/duration, max latency; no mean of video ratios",
+  "execution_policy": "First full-list run after freeze determines initial result; preserve failed/unattempted assets and every run; reruns require reason and distinct run ID, never replace initial result",
+  "verdict_precedence": [
+    "INCOMPLETE",
+    "FAIL",
+    "PASS"
+  ]
 }

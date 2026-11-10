@@ -38,6 +38,11 @@ CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실�
 
 ## 협업
 
+프로젝트 자체 코드는 [AGPL-3.0-only](LICENSE)로 제공하며 제3자 출처·조건은 [NOTICE](NOTICE.md)를 따릅니다.
+[A01 선정·승인 기록](docs/ai/a01-selection-acceptance.md)에 xiazh 0.25 선정과 평가 기준 승인,
+통과한 기술 검증 및 아직 미달한 정확도·장시간 누락을 구분했습니다. 기존 문서의
+"최종 모델/팀 합의 대기"는 이 기록으로 갱신하며 독립 평가·WFI 검수 완료를 뜻하지 않습니다.
+
 최신 develop에서 이슈 선택 → `type/번호-작업명` 브랜치 → `type(scope): 변경 내용 (#번호)` 커밋 → push → develop 대상 PR → `ci` 통과 → Squash merge.
 
 예: `feat(ai): 연기 감지 이벤트 추가 (#12)`. 기본 브랜치 develop은 팀 통합용, main은 검증된 시연·배포용입니다. 배포는 `develop → main` PR을 CI 통과 후 Merge commit으로 반영합니다.
