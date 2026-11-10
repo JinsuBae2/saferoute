@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "status": "PROPOSAL_NOT_FROZEN",
+  "proposed_on": "2026-11-10",
+  "proposed_by": "Rinhaze / role 1 (Codex-assisted)",
+  "reference_commit": "9d708d5704f5294ce16cf2a566b8048552e0acf3",
+  "config": {
+    "building_id": "TWO_ROUTE",
+    "building_version": 1,
+    "source_id": "CAM-A",
+    "expected_zone_id": "Z-A",
+    "model_path": "models/xiazh-fire-smoke-yolo26m.pt",
+    "model_sha256": "a06febf257bff40cf5f3814e77f5120e2a80ab91d3ff3a84370caf6fdf832740",
+    "imgsz": 640,
+    "interval_ms": 500,
+    "confidence": 0.25,
+    "window_ms": 1500,
+    "min_detections": 2,
+    "request_timeout_ms": 750,
+    "max_attempts": 2,
+    "retry_delay_ms": 100
+  },
+  "config_canonical_sha256": "e25083efecbdd6f903a13a772675cc3bf23186fb3488316b04432e13f22945ca",
+  "matching": {
+    "merge_gap_ms": 1000,
+    "boundary_tolerance_ms": 0,
+    "truth_interval": "[start_ms,end_ms)",
+    "rule": "prediction_start_one_to_one"
+  },
+  "proposed_targets": {
+    "FIRE": {
+      "precision_min": 0.8,
+      "recall_min": 0.9
+    },
+    "SMOKE": {
+      "precision_min": 0.8,
+      "recall_min": 0.9
+    },
+    "normal_false_alarms_per_hour_max_per_class": 1,
+    "matched_event_latency_ms_max": 3000,
+    "skipped_late_frames_max": 0,
+    "source_expirations_before_eof_max": 0,
+    "payload_match_required": true,
+    "all_eof_and_log_integrity_required": true
+  },
+  "target_status": "Discussion proposal only, not previously agreed criteria or a performance verdict; record denominators, FN and insufficient coverage.",
+  "evidence_environment": "Supported server CPU, one worker, 640/500ms, original supported codec or separately verified lossless derivative; no shared WFI session.",
+  "evaluation_asset_metadata_snapshot": [
+    {
+      "path": "data/expected/ai/evaluation/eval-caviar-walkbyshop1cor.json",
+      "git_blob_sha256": "7037b4afed8e8e2fba4d6933fb995562217726d20b76d46f5c997bfa4aeb6d42",
+      "asset_id": "eval-caviar-walkbyshop1cor",
+      "scene_id": "caviar-lisbon-shopping-corridor",
+      "video_sha256": "44ddb5fb89320c315f8543a0a2ef0b7e004df393b70772deb8b07ef4cefe195c",
+      "split": "evaluation",
+      "reviewer": null,
+      "annotation_complete": true,
+      "training_overlap": "unknown",
+      "development_used": false
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-fs-reflections.json",
+      "git_blob_sha256": "51d901f6bc66b27b8d377f3fef74d2ed5a6059fd5134fdd49f0d12af7a6202ff",
+      "asset_id": "eval-fs-reflections",
+      "scene_id": "firesense-reflections",
+      "video_sha256": "753a08606ae1af5ac59e3e50aa17291964aa2e1ebd0e2c799b922c44b9705b6e",
+      "split": "evaluation",
+      "reviewer": null,
+      "annotation_complete": true,
+      "training_overlap": "unknown",
+      "development_used": false
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-mm-heptane-bright.json",
+      "git_blob_sha256": "57c65224630067de1fa55448db2f2d509090c9b1a5628871ab699b68a7413ca3",
+      "asset_id": "eval-mm-heptane-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "video_sha256": "e08d2a19464fb9d2b4066f140432205f08efeecd462c6f2cfa83851865c3abe7",
+      "split": "evaluation",
+      "reviewer": null,
+      "annotation_complete": true,
+      "training_overlap": "unknown",
+      "development_used": false
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-mm-mist-bright.json",
+      "git_blob_sha256": "ff63982aeb62941c04f32ed06318fd22a7ded266523f5eb9da27a2a68edcef58",
+      "asset_id": "eval-mm-mist-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "video_sha256": "fe841ffb2b760b7b8f4166bf9d5c33c699f752df68f6e36c2d0acce1f970c59e",
+      "split": "evaluation",
+      "reviewer": null,
+      "annotation_complete": true,
+      "training_overlap": "unknown",
+      "development_used": false
+    },
+    {
+      "path": "data/expected/ai/evaluation/eval-mm-polyurethane-bright.json",
+      "git_blob_sha256": "9ab9dda60762b0823026216aa0727b7384a0175c49d0dc84fb84e9c774aa568d",
+      "asset_id": "eval-mm-polyurethane-bright",
+      "scene_id": "mmodalfire-lab-camera-ch01",
+      "video_sha256": "d3dcf1a4f58c20d0af006ec5951e3f56c73ed1cbac5a047d46bc04a71f57e451",
+      "split": "evaluation",
+      "reviewer": null,
+      "annotation_complete": false,
+      "training_overlap": "unknown",
+      "development_used": false
+    }
+  ],
+  "required_before_freeze": [
+    "Team model/license and numeric-target decision with recorded owner and UTC timestamp",
+    "QA5 finishes polyurethane annotation and records real independent reviewers for all five files",
+    "Record final source commit, model/config hashes, exact input/GT hashes and matching rules before any evaluation inference",
+    "Training overlap is unknown for all five assets; preserve this limitation and investigate rather than claim excluded",
+    "Any server codec conversion needs original/derived full pixels and timing equality; final GT hash must refer to executed bytes without changing annotated intervals"
+  ],
+  "approvals": {
+    "model_and_project_license": null,
+    "targets_and_protocol": null,
+    "qa5_annotations": null
+  },
+  "frozen_at_utc": null,
+  "frozen_by": null,
+  "final_source_commit": null,
+  "final_ground_truth_hashes": null,
+  "performance_verdict": "NOT_ASSESSED"
+}

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import subprocess
 
 import pytest
 
@@ -76,3 +77,40 @@ def test_invalid_config_is_rejected_before_starting_controller(tmp_path, monkeyp
     with pytest.raises((OSError, ValueError)):
         main(["--manifest", str(manifest), "--asset-id", "dev", "--config", str(config), "--output", str(out)])
     assert not out.exists()
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "3601", "nan", "inf", "1.5"])
+def test_invalid_worker_timeout_fails_before_input_access(tmp_path, value):
+    out = tmp_path / "run"
+    with pytest.raises(SystemExit) as error:
+        main(["--output", str(out), "--manifest", str(tmp_path / "missing.json"),
+              "--worker-timeout-seconds", value])
+    assert error.value.code == 2
+    assert not out.exists()
+
+
+@pytest.mark.parametrize("override,expected", [(None, 240), ("2100", 2100)])
+def test_worker_timeout_is_forwarded_and_failure_stops_controller(tmp_path, monkeypatch, override, expected):
+    video = tmp_path / "input.bin"
+    video.write_bytes(b"fixture")
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps(dict(videos=[dict(asset_id="dev", split="development",
+                        path=str(video), sha256=hashlib.sha256(video.read_bytes()).hexdigest())])), encoding="utf-8")
+    calls = []
+    real_run = subprocess.run
+    def timed_out(command, **kwargs):
+        if not isinstance(command, list) or command[1:3] != ["-m", "ai_worker"]:
+            return real_run(command, **kwargs)
+        calls.append(kwargs["timeout"])
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+    monkeypatch.setattr("tools.validate_ai_delivery.subprocess.run", timed_out)
+    out = tmp_path / "run"
+    args = ["--output", str(out), "--manifest", str(manifest), "--asset-id", "dev"]
+    if override is not None:
+        args += ["--worker-timeout-seconds", override]
+    assert main(args) == 1
+    report = json.loads((out / "summary.json").read_bytes())
+    assert calls == [expected]
+    assert report["worker_timeout_seconds"] == expected
+    assert report["status"] == "FAILED" and report["controller_stopped"]
+    assert report["error"].startswith("TimeoutExpired:")
