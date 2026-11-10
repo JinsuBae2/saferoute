@@ -120,15 +120,41 @@ function Tile({ label, value, note, tone }: { label: string; value: string; note
   );
 }
 
-function Panel({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
+/**
+ * folding을 주면 평소에는 제목만 보이고 눌러야 펼쳐진다 (이슈 #21).
+ * 한 화면에 표가 네 개나 펼쳐져 있으면 지금 중요한 것이 무엇인지 묻히기 때문이다.
+ * 숫자 요약은 위쪽 타일에 그대로 남아 있어, 접어도 현황을 놓치지 않는다.
+ */
+function Panel({
+  title,
+  note,
+  folding = false,
+  children,
+}: {
+  title: string;
+  note?: string;
+  folding?: boolean;
+  children: React.ReactNode;
+}) {
+  const head = (
+    <>
+      <h2>{title}</h2>
+      {note !== undefined && <span className="panel__note">{note}</span>}
+    </>
+  );
+  if (!folding) {
+    return (
+      <section className="panel">
+        <header className="panel__head">{head}</header>
+        {children}
+      </section>
+    );
+  }
   return (
-    <section className="panel">
-      <header className="panel__head">
-        <h2>{title}</h2>
-        {note !== undefined && <span className="panel__note">{note}</span>}
-      </header>
+    <details className="panel panel--folding">
+      <summary className="panel__head">{head}</summary>
       {children}
-    </section>
+    </details>
   );
 }
 
@@ -296,7 +322,7 @@ export function ControlDashboard() {
       </Panel>
 
       <div className="columns">
-        <Panel title="관측원" note="경보 상태와 관측 유효성은 별개입니다">
+        <Panel title="관측원" note="경보 상태와 관측 유효성은 별개입니다" folding>
           <table className="grid">
             <thead>
               <tr>
@@ -347,6 +373,7 @@ export function ControlDashboard() {
       <Panel
         title="차단 구간"
         note="경보·필수 관측 미확인·설정상 통행 제한을 표시합니다"
+        folding
       >
         {state.blocked_nodes.length === 0 && state.blocked_edges.length === 0 ? (
           <p className="panel__empty">차단된 지점·통로가 없습니다.</p>
@@ -387,6 +414,7 @@ export function ControlDashboard() {
       <Panel
         title="유도등 단말 적용 현황"
         note="적용 확인은 단말이 화면에 반영하고 응답한 것만 셉니다"
+        folding
       >
         <table className="grid">
           <thead>
@@ -453,6 +481,7 @@ export function ControlDashboard() {
       <Panel
         title="경로"
         note="cost는 경로 선택용 모델 비용입니다. 거리나 피난 시간이 아닙니다"
+        folding
       >
         <label className="filter">
           <input
