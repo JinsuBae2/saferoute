@@ -234,7 +234,15 @@ export function ControlDashboard() {
           label="안내"
           value={`${routes.guided} / ${routes.total} 지점`}
           tone={routes.unavailable > 0 ? "warn" : "route"}
-          note={`안내 불가 ${routes.unavailable}곳`}
+          note={(() => {
+            // 그 자리가 차단된 곳과, 자리는 멀쩡하지만 출구에 닿지 못하는 곳은 성격이 다르다. 사람이 있는지는 알 수 없다.
+            const count = Object.fromEntries(routes.reasons);
+            const inside = count.ORIGIN_BLOCKED ?? 0;
+            const cutOff = count.NO_REACHABLE_EXIT ?? 0;
+            return inside + cutOff > 0
+              ? `안내 불가 ${routes.unavailable}곳 (차단 구역 안 ${inside} · 고립 가능 ${cutOff})`
+              : `안내 불가 ${routes.unavailable}곳`;
+          })()}
         />
         <Tile
           label="관측원"
@@ -273,11 +281,11 @@ export function ControlDashboard() {
           highlightSourceId={camera.sourceId}
           locateRequest={camera.locate}
           stale={health.stale || view.stateError !== null}
+          demo={(startPicker, hasStart) => space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
+            building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null}
+            startPicker={startPicker} hasStart={hasStart} />}
         />
       </Suspense>
-
-      {space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
-        building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null} />}
 
       <CameraPreviewPanel
         key={state.run_id}

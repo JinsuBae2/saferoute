@@ -4,6 +4,7 @@
  * 버전이 다르면 3D를 그리지 않고, 경로·유도등 안내는 서버 결과로 계속 표시한다.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import type { Building, BuildingDisplay, Position, SimulationState, StateSnapshot } from "@contracts";
 
@@ -11,7 +12,7 @@ import { BuildingScene } from "./BuildingScene";
 import { matchesBuilding } from "./geometry";
 import type { JourneyTrack } from "./journey";
 import { advanceTrack, describeJourney, trackContext } from "./journey";
-import { JourneyPanel } from "./JourneyPanel";
+import { JourneyPanel, StartPicker } from "./JourneyPanel";
 import { useBuildingGeometry } from "./useBuildingGeometry";
 import type { ViewMode } from "./view";
 import { SPREAD_MAX, SPREAD_MIN } from "./view";
@@ -38,6 +39,8 @@ type Props = {
   readonly locateRequest: number;
   /** 제어 상태 조회가 끊기거나 늦은지. 그동안 선택 경로를 현재 안내로 보여 주지 않는다(M06). */
   readonly stale?: boolean;
+  /** 시연 조작을 3D 바로 아래에 그린다. 출발점 고르기와 골랐는지 여부를 넘겨받아 한 패널로 묶는다. */
+  readonly demo?: (startPicker: ReactNode, hasStart: boolean) => ReactNode;
 };
 
 const MISMATCH_LABEL = {
@@ -46,7 +49,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false }: Props) {
+export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, demo }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
@@ -251,7 +254,10 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             onPickNode={chooseStart}
           />
 
+          {demo?.(<StartPicker building={building} display={display} startId={startId} onStart={chooseStart} />, startId !== null)}
+
           <JourneyPanel
+            picker={demo === undefined}
             building={building}
             display={display}
             startId={startId}
