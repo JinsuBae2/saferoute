@@ -81,6 +81,9 @@ def test_legacy_config_retains_untransformed_four_thread_behavior():
 @pytest.mark.parametrize('io_binding', [False, True])
 def test_onnx_uses_bounded_cpu_session_before_video_inference(monkeypatch, tmp_path, io_binding):
     fake_dependencies(monkeypatch, {0: 'fire', 1: 'smoke'})
+    state = {'threads': 8}
+    monkeypatch.setitem(sys.modules, 'torch', SimpleNamespace(
+        set_num_threads=lambda n: state.update(threads=n), get_num_threads=lambda: state['threads']))
     model = sys.modules['ultralytics'].YOLO('unused')
     original_session = object()
     backend = SimpleNamespace(session=original_session, use_io_binding=io_binding)
@@ -121,6 +124,7 @@ def test_onnx_uses_bounded_cpu_session_before_video_inference(monkeypatch, tmp_p
         assert backend.session is original_session
     else:
         detector = Detector(config)
+        assert detector.metadata['torch_threads'] == state['threads'] == 1
         assert sessions == [original_session, backend.session]
         detector.predict(None)
         assert sessions[-1] is backend.session and backend.session is not original_session

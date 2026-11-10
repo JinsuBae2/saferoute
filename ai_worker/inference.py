@@ -41,7 +41,8 @@ class Detector:
             self.clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         self.predict(np.zeros((config.imgsz, config.imgsz, 3), dtype=np.uint8))
         # Ultralytics sets CPU threads during first predict; apply our bound afterwards.
-        torch.set_num_threads(config.cpu_threads)
+        # ONNX owns the compute pool; one Torch preprocessing thread avoids a second pool.
+        torch.set_num_threads(1 if path.suffix.lower() == ".onnx" else config.cpu_threads)
         onnx_runtime = None
         if path.suffix.lower() == ".onnx":
             import onnxruntime as ort
