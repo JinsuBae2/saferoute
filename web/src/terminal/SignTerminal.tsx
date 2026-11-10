@@ -6,7 +6,10 @@ import { useSearchParams } from "react-router-dom";
 
 import type { FaceResult } from "@contracts";
 
+import { useBuildingData } from "../building/useBuildingData";
 import { ArrowGlyph, DISPLAY_LABEL, UnavailableGlyph } from "./ArrowDisplay";
+import type { FacePresentation, SignKind } from "./signPresentation";
+import { SIGN_KIND_LABEL, SIGN_KIND_NOTE, presentFace, signKindOf } from "./signPresentation";
 import { INVALID_LABEL } from "./faults";
 import type { InvalidKind } from "./faults";
 import { useSignTerminal } from "./useSignTerminal";
@@ -42,23 +45,37 @@ const REASON_LABEL: Record<ReasonCode, string> = {
 
 const FACE_LABEL: Record<string, string> = { FRONT: "정면", REAR: "후면" };
 
-function FaceCard({ face }: { face: FaceResult }) {
-  const display = face.display;
-  const available = display !== null;
+function FaceCard({ face, kind }: { face: FaceResult; kind: SignKind | null }) {
+  const shown: FacePresentation = presentFace(kind, face);
+  const exitLocation = shown.role === "EXIT_LOCATION";
+  const headline = exitLocation
+    ? shown.available
+      ? "출구"
+      : MODE_LABEL[face.mode]
+    : shown.display === null
+      ? MODE_LABEL[face.mode]
+      : DISPLAY_LABEL[shown.display];
 
   return (
-    <section className={available ? "face face--live" : "face face--muted"}>
+    <section className={shown.available ? "face face--live" : "face face--muted"}>
       <h2 className="face__name">
         {FACE_LABEL[face.face_id] ?? face.face_id} 표시면
         <span className="face__id">{face.face_id}</span>
       </h2>
 
       <div className="face__glyph">
-        {available ? <ArrowGlyph display={display} /> : <UnavailableGlyph label={MODE_LABEL[face.mode]} />}
+        {shown.available ? (
+          // 출구 위치 표지는 방향을 그리지 않고 출구 기호만 쓴다.
+          <ArrowGlyph display={exitLocation ? "EXIT" : (shown.display ?? "FORWARD")} />
+        ) : (
+          <UnavailableGlyph label={MODE_LABEL[face.mode]} />
+        )}
       </div>
 
-      <p className="face__headline">{available ? DISPLAY_LABEL[display] : MODE_LABEL[face.mode]}</p>
+      <p className="face__headline">{headline}</p>
       <p className="face__mode">{MODE_LABEL[face.mode]}</p>
+
+      {shown.mismatch !== null && <p className="face__caution">{shown.mismatch}</p>}
 
       {face.reason_codes.length > 0 && (
         <ul className="face__reasons">
@@ -76,7 +93,11 @@ function FaceCard({ face }: { face: FaceResult }) {
         </p>
       )}
 
-      {available && (
+      {exitLocation && shown.available && (
+        <p className="face__note">{SIGN_KIND_NOTE.EXIT_LOCATION}</p>
+      )}
+
+      {!exitLocation && shown.available && (
         <dl className="face__detail">
           <div>
             <dt>다음 지점</dt>
@@ -110,6 +131,10 @@ export function SignTerminal({ signId }: { signId: string }) {
   // 점검 패널은 ?fault=1 일 때만 나온다. 시연 화면에 섞이지 않게 한다.
   const faultPanel = params.get("fault") === "1";
   const { state, session, lastAck, controls, faults } = view;
+  // 표지 종류와 한글 위치 이름은 표시 자료에서 온다. 못 읽어도 방향 안내는 그대로 보여준다.
+  const space = useBuildingData(session);
+  const kind = signKindOf(space.display, signId);
+  const label = space.display?.signs[signId]?.label ?? null;
   const live = state.display.kind === "LIVE" ? state.display : null;
   const remaining = view.remainingMs;
 
@@ -117,8 +142,11 @@ export function SignTerminal({ signId }: { signId: string }) {
     <main className="terminal">
       <header className="terminal__header">
         <div className="terminal__title">
-          <span className="terminal__sign">{signId}</span>
-          <span className="terminal__sub">유도등 단말</span>
+          <span className="terminal__sign">{label ?? signId}</span>
+          <span className="terminal__sub">
+            {kind === null ? "유도등 단말" : SIGN_KIND_LABEL[kind]}
+            {label !== null && ` · ${signId}`}
+          </span>
         </div>
         {/*
           controller_mode는 /api/session을 읽은 시점의 값이라 지금 상태가 아니다.
@@ -145,7 +173,7 @@ export function SignTerminal({ signId }: { signId: string }) {
       ) : (
         <div className={live && live.faces.length > 1 ? "faces faces--two" : "faces"}>
           {live ? (
-            live.faces.map((face) => <FaceCard key={face.face_id} face={face} />)
+            live.faces.map((face) => <FaceCard key={face.face_id} face={face} kind={kind} />)
           ) : state.display.kind === "EXPIRED" ? (
             <Placeholder
               title="방향 표시 없음"
@@ -185,6 +213,11 @@ export function SignTerminal({ signId }: { signId: string }) {
           </p>
         )}
         {view.notice !== null && <p className="terminal__notice">{view.notice}</p>}
+        {space.displayError !== null && (
+          <p className="terminal__notice">
+            표지 종류·이름을 읽지 못했습니다 ({space.displayError}). 방향 안내는 그대로 표시됩니다.
+          </p>
+        )}
 
         {faultPanel && (
           <div className="faults">

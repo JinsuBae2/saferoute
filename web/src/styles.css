@@ -667,3 +667,26 @@ code {
 .manual-fire__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .manual-fire__actions button { padding: 0.6rem 0.8rem; color: inherit; background: #263442; border: 1px solid #6d7c8d; border-radius: 6px; cursor: pointer; }
 .manual-fire__actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.face__note {
+  margin: 4px 0 0;
+  max-width: 34ch;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* 3D 범례: 표지 종류는 색이 아니라 모양으로 구분한다 */
+.key--sign-exit {
+  background: var(--text);
+  border-radius: 2px;
+  width: 14px;
+  height: 7px;
+}
+
+.key--sign-dir {
+  background: var(--text);
+  border-radius: 999px;
+  width: 5px;
+  height: 12px;
+}

@@ -558,33 +558,54 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       dynamicGroup.add(cones);
     }
 
-    // 유도등 기둥. 현재 표시면이 안내 중이면 초록, 안내 불가면 회색이다.
+    // 유도등. 표지 종류를 모양으로 구분한다(이슈 #70).
+    // 출구 위치 표지는 고정된 위치를 알리는 납작한 표지판, 가변 방향 안내는 기둥이다.
+    // 같은 모양으로 그리면 화재 때 모든 표지가 방향을 바꾸는 것처럼 보인다.
     const shownSigns = building.signs.filter((sign) => {
       const node = nodeById.get(sign.node_id);
       return node !== undefined && visibleFloors.has(node.floor_id);
     });
-    if (shownSigns.length > 0) {
-      const posts = new THREE.InstancedMesh(
-        new THREE.CylinderGeometry(0.16, 0.16, 2.4, 8),
+    const exitSigns = shownSigns.filter(
+      (sign) => display?.signs[sign.sign_id]?.kind === "EXIT_LOCATION",
+    );
+    const directionalSigns = shownSigns.filter(
+      (sign) => display?.signs[sign.sign_id]?.kind !== "EXIT_LOCATION",
+    );
+
+    const placeSigns = (
+      signs: typeof shownSigns,
+      geometryFor: () => THREE.BufferGeometry,
+      height: number,
+    ) => {
+      if (signs.length === 0) return;
+      const mesh = new THREE.InstancedMesh(
+        geometryFor(),
         new THREE.MeshLambertMaterial(),
-        shownSigns.length,
+        signs.length,
       );
       const matrix = new THREE.Matrix4();
       const color = new THREE.Color();
-      shownSigns.forEach((sign, index) => {
+      signs.forEach((sign, index) => {
         const node = nodeById.get(sign.node_id);
         if (node === undefined) return;
-        matrix.setPosition(node.position.x, displayY(node.position.y, node.floor_id, lift) + 1.2, node.position.z);
-        posts.setMatrixAt(index, matrix);
+        matrix.setPosition(
+          node.position.x,
+          displayY(node.position.y, node.floor_id, lift) + height,
+          node.position.z,
+        );
+        mesh.setMatrixAt(index, matrix);
         const current = signState.get(sign.sign_id);
         const guiding = current?.faces.some((face) => face.display !== null) ?? false;
         color.setHex(guiding ? COLOR.sign : COLOR.noRoute);
-        posts.setColorAt(index, color);
+        mesh.setColorAt(index, color);
       });
-      posts.instanceMatrix.needsUpdate = true;
-      if (posts.instanceColor !== null) posts.instanceColor.needsUpdate = true;
-      dynamicGroup.add(posts);
-    }
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
+      dynamicGroup.add(mesh);
+    };
+
+    placeSigns(directionalSigns, () => new THREE.CylinderGeometry(0.16, 0.16, 2.4, 8), 1.2);
+    placeSigns(exitSigns, () => new THREE.BoxGeometry(1.5, 0.75, 0.16), 2.3);
 
     // 관측 위험 구역: 활성 경보 원인의 담당 구역을 바닥 판으로 칠한다.
     for (const mesh of handles.zoneMeshes.values()) mesh.visible = false;
@@ -614,7 +635,7 @@ export function BuildingScene({ geometry, building, display, state, smokeByZone,
       mesh.position.y = baseY + height;
       mesh.material.opacity = 0.14 + smoke * 0.32;
     }
-  }, [state, smokeByZone, visibleFloors, building, geometry, nodeById, zoneById, sourceById, lift]);
+  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift]);
 
   return <div className="scene" ref={mountRef} />;
 }
