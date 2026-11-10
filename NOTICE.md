@@ -13,6 +13,7 @@ Copyright (C) 2026 SafeRoute contributors.
 |---|---|
 | 선정 가중치 | [xiazh0219 고정 모델 카드](https://huggingface.co/xiazh0219/yolo26m-UAV-fire-smoke-detection/blob/57cf971a788fff62b8f3e5b1c3632e1214b8255c/README.md), 게시자 AGPL-3.0 표기. [출처·해시 기록](docs/ai/a01-alternative-models.md) |
 | 추론 런타임 | [Ultralytics AGPL 조건](https://www.ultralytics.com/license), [AI lock](requirements-ai.lock.txt). PyTorch·NumPy·OpenCV 등은 해당 배포물의 별도 라이선스·고지 유지 |
+| ONNX/OpenVINO 실행 후보 | [변환·실행 기록](docs/ai/a01-performance-improvement.md), [ONNX lock](requirements-ai-onnx.lock.txt), [OpenVINO lock](requirements-ai-openvino.lock.txt). 선정 가중치의 변환본이며 원본의 조건 유지. ONNX·ONNX Runtime·OpenVINO 및 추가 패키지는 각 배포물의 별도 라이선스·고지 유지 |
 | 백엔드·웹 의존성 | [백엔드 lock](requirements-core.lock.txt), [웹 lock](web/package-lock.json). 각 패키지의 저작권·라이선스 고지 보존 |
 | 영상 | [manifest](data/manifests/assets.json), [자료 인계](docs/ai/evaluation-freeze-and-handoff.md)의 원출처·파일별 조건 유지. 원본 파일은 Git에 포함하지 않음 |
 | 공간 자료 | [공간 자료](data/space)의 원출처·가정·수정 기록 유지. 팀 코드의 라이선스를 원자료에 적용하지 않음 |
