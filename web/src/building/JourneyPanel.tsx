@@ -182,7 +182,7 @@ export function JourneyPanel({ building, display, startId, onStart, journey, tra
                       <small className="location-detail">
                         {item.commandVersion === null
                           ? "명령 없음"
-                          : `명령 버전 ${item.commandVersion}${item.current ? " (현재)" : " (이전 안내)"}`}
+                          : `명령 버전 ${item.commandVersion}${item.current ? " (현재 안내)" : " (이전 안내)"}`}
                       </small>
                     </td>
                   </tr>
