@@ -43,6 +43,14 @@ class Fault(WireModel):
         return self
 
 
+class Spread(WireModel):
+    """화재 경보가 난 구역에서 연기가 번지는 시험용 모형. 유체 계산이 아니다."""
+    ms_per_m: PositiveInt
+    rise_ms: PositiveInt
+    floor_delay_ms: NonnegativeInt
+    other_floor_cap: Annotated[float, Field(ge=0, le=1)]
+
+
 class Scenario(BuildingIdentity):
     scenario_id: Identifier
     seed: NonnegativeInt
@@ -52,6 +60,7 @@ class Scenario(BuildingIdentity):
     smoke_timeline: list[SmokePoint]
     observation_rules: Annotated[list[ObservationRule], Field(min_length=1)]
     faults: list[Fault]
+    spread: Spread | None = None
 
     def smoke_at(self, time_ms):
         smoke = {}
