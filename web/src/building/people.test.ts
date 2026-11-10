@@ -75,4 +75,32 @@ describe("대피 인원 이동", () => {
     expect(people[0]).toMatchObject({ from: "A", to: "C", status: "MOVING" });
     expect(people[0].progress).toBeCloseTo(0.2);
   });
+
+  it.each(["ORIGIN_BLOCKED", "NO_REACHABLE_EXIT"] as const)("이동 중 %s가 되면 멈추고 복구되면 이어 걷는다", (reason) => {
+    const people = [person("A")];
+    const safe = routes(route("A", "B"), route("B", null));
+    stepPeople(people, safe, true, TEN_METRES, 5);
+    stepPeople(people, routes(route("A", null, [reason])), true, TEN_METRES, 2);
+    expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.5, status: "STUCK" });
+    stepPeople(people, safe, true, TEN_METRES, 2);
+    expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.7, status: "MOVING" });
+  });
+
+  it("이동 중 경로가 누락되면 옛 안내를 계속 따라가지 않는다", () => {
+    const people = [person("A")];
+    stepPeople(people, routes(route("A", "B")), true, TEN_METRES, 5);
+    stepPeople(people, routes(), true, TEN_METRES, 2);
+    expect(people[0]).toMatchObject({ progress: 0.5, status: "STUCK" });
+  });
+
+  it("되돌아갈 지점의 안내도 사라지면 멈추고 복구를 기다린다", () => {
+    const people = [person("A")];
+    stepPeople(people, routes(route("A", "B")), true, TEN_METRES, 5);
+    const changed = routes(route("A", "C"), route("B", null, ["ORIGIN_BLOCKED"]), route("C", null));
+    stepPeople(people, changed, true, TEN_METRES, 1);
+    stepPeople(people, routes(route("A", null, ["NO_REACHABLE_EXIT"])), true, TEN_METRES, 2);
+    expect(people[0]).toMatchObject({ from: "B", to: "A", progress: 0.6, returning: true, status: "STUCK" });
+    stepPeople(people, changed, true, TEN_METRES, 1);
+    expect(people[0]).toMatchObject({ from: "B", to: "A", progress: 0.7, status: "MOVING" });
+  });
 });
