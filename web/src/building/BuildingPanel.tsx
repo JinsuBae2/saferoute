@@ -11,6 +11,8 @@ import type { Building, BuildingDisplay, Position, SimulationState, StateSnapsho
 import { setExitGuide } from "../control/alarmSound";
 import { exitCall } from "../control/broadcast";
 import { BuildingScene } from "./BuildingScene";
+import { PhoneGuide } from "./EvacuationPhone";
+import type { FollowPose } from "./phoneGuide";
 import { matchesBuilding } from "./geometry";
 import type { JourneyTrack } from "./journey";
 import type { PeopleCount } from "./people";
@@ -73,6 +75,9 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
   useEffect(() => { onPeopleCount?.(showPeople ? people : null); }, [people, showPeople, onPeopleCount]);
   // 1인칭으로 따라갈 사람. 3D에서 사람을 누르면 들어가고, 그 사람이 빠져나가면 저절로 나온다.
   const [follow, setFollow] = useState<number | null>(null);
+  const [followRequest, setFollowRequest] = useState<{ nodeId: string; nonce: number } | null>(null);
+  const [followMessage, setFollowMessage] = useState<{ runId: string; text: string } | null>(null);
+  const [phonePose, setPhonePose] = useState<FollowPose | null>(null);
   const firstPerson = follow !== null && showPeople;
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
   // 층 간격은 처음부터 조금 벌려 위층 바닥이 아래층 복도를 덮지 않게 한다.
@@ -227,7 +232,11 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
               <button type="button" className={showGuidance ? "chip chip--on" : "chip"} aria-pressed={showGuidance} onClick={() => setShowGuidance((previous) => !previous)}>전체 안내</button>
               {showPeople && people !== null && people.total > 0 && (
                 // 작은 사람을 정확히 누르기 어려우므로 버튼으로도 들어간다. 누를 때마다 다음 사람으로 넘어간다.
-                <button type="button" className="chip" onClick={() => setFollow((previous) => ((previous ?? -1) + 1) % people.total)}>
+                <button type="button" className="chip" onClick={() => {
+                  setFollowMessage(null);
+                  if (!firstPerson && startId !== null) setFollowRequest(previous => ({ nodeId: startId, nonce: (previous?.nonce ?? 0) + 1 }));
+                  else setFollow(previous => ((previous ?? -1) + 1) % people.total);
+                }}>
                   {firstPerson ? "다음 사람" : "1인칭 보기"}
                 </button>
               )}
@@ -287,6 +296,8 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             </span>
           </div>
 
+          {followMessage?.runId === state.run_id && <p role="status" className="panel__note">{followMessage.text}</p>}
+          <div className={`first-person-stage${firstPerson ? " first-person-stage--active" : ""}`}>
           <BuildingScene
             geometry={geometry}
             building={building}
@@ -295,7 +306,10 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             showGuidance={showGuidance}
             showPeople={showPeople}
             stale={stale}
+            followRequest={followRequest}
+            onFollowUnavailable={() => setFollowMessage({ runId: state.run_id, text: "선택한 층에 남아 있는 사람이 없습니다. 다른 위치를 선택해 주세요." })}
             onListener={(pose) => {
+              setPhonePose(pose);
               // 서 있는 지점의 서버 경로가 가리키는 출구만 부른다. 경로가 바뀌거나 사라지면 소리 모듈이 이전 안내를 끊는다.
               const latest = guideRef.current;
               setExitGuide(pose === null || latest.building === null ? null : exitCall(latest.state, latest.building, pose, latest.stale), pose);
@@ -318,6 +332,9 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             onPickZone={onPickZone}
             pickTarget={pickTarget}
           />
+          {firstPerson && <PhoneGuide key={`${runKey}/${follow}`} building={building} display={display} geometry={geometry} state={state} stale={stale}
+            pose={phonePose?.personIndex === follow && phonePose.runId === state.run_id ? phonePose : null} />}
+          </div>
 
           {demo?.(<StartPicker building={building} display={display} startId={startId} onStart={chooseStart} />, startId !== null)}
 
