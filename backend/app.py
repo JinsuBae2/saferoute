@@ -17,6 +17,7 @@ from .contracts.messages import (
 )
 from .contracts.building import Building
 from .controller import Controller
+from .reader import SnapshotReader
 
 ROOT = Path(__file__).resolve().parents[1]
 LOGGER = logging.getLogger(__name__)
@@ -42,11 +43,13 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None):
         app.state.controller = Controller(configured_building,
             runs_dir or Path(os.environ.get("SAFEROUTE_RUNS_DIR",str(ROOT / "runs"))), clock=clock,
             operator_id=operator_id or os.environ.get("SAFEROUTE_OPERATOR_ID","local-operator"))
+        app.state.reader = SnapshotReader(app.state.controller)
         task = asyncio.create_task(expire_periodically(app.state.controller))
         try: yield
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError): await task
+            await app.state.reader.close()
             try:
                 await asyncio.to_thread(app.state.controller.close)
             except ContractError:
@@ -62,7 +65,8 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None):
 
     @app.exception_handler(ContractError)
     async def contract_error(request, error):
-        return JSONResponse(status_code=error.status_code,content=error.to_response().model_dump(mode="json"))
+        headers = {"Retry-After": "1"} if error.code == "CONTROLLER_BUSY" else None
+        return JSONResponse(status_code=error.status_code,content=error.to_response().model_dump(mode="json"),headers=headers)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, error):
@@ -82,13 +86,15 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None):
     def health(): return {"status":"ok"}
 
     @app.get("/api/session", response_model=Session)
-    def session(): return app.state.controller.session()
+    async def session():
+        snapshot = await app.state.reader.read()
+        return Session(**snapshot.model_dump(include=set(Session.model_fields)))
 
     @app.get("/api/building", response_model=Building)
     def get_building(): return app.state.controller.building.model_copy(deep=True)
 
     @app.get("/api/state", response_model=StateSnapshot)
-    def state(): return app.state.controller.snapshot()
+    async def state(): return await app.state.reader.read()
 
     @app.post("/api/events", response_model=EventReceipt)
     def events(payload: ObservationEvent): return app.state.controller.receive(payload.model_dump(mode="json"))

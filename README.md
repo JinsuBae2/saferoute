@@ -147,7 +147,9 @@ python -m tools.verify_run runs/RUN_ID
 
 검증기는 **종료된 실행의 로그 무결성**만 판정하며 `verification.json`을 작성합니다. 실행 중·강제 종료·손상·구형 로그는 FAIL입니다. PASS는 실제 AI·브라우저 표시·실물 유도등 검증을 의미하지 않습니다. 명령·ACK가 없는 실행은 해당 개수가 0으로 기록됩니다. 시나리오 증거는 `runs/<run_id>/simulations/<별도 실행 ID>/`에 분리됩니다.
 
-운영 도구의 다른 서버 접속은 `python -m tools.control --url http://127.0.0.1:8000 state`처럼 지정합니다. 직접 관측 전송은 `python -m tools.control event --file 관측.json`입니다. 설정 검사는 성공 0·오류 2, control은 성공 0·통신/서버 오류 1·입력 오류 2, 로그 검증은 PASS 0·FAIL 1·인자 오류 2를 반환합니다. 실행기는 잘못된 설정이면 2, 기동 실패면 비정상 종료합니다. 실행 중 연결 실패·시간 초과는 `CONTROLLER_UNAVAILABLE`로 표시하고 1초 간격으로 재시도합니다. 연결되면 초기화 없이 이어 가며 오래된 관측은 제어기가 거부합니다. HTTP 오류·잘못된 응답·실행 불일치·기록 실패 등은 `/sim/state`의 FAILED·error_code로 표시하며 자동 재시작하지 않습니다.
+운영 도구의 다른 서버 접속은 `python -m tools.control --url http://127.0.0.1:8000 state`처럼 지정합니다. 직접 관측 전송은 `python -m tools.control event --file 관측.json`입니다. 설정 검사는 성공 0·오류 2, control은 성공 0·통신/서버 오류 1·입력 오류 2, 로그 검증은 PASS 0·FAIL 1·인자 오류 2를 반환합니다. 실행기는 잘못된 설정이면 2, 기동 실패면 비정상 종료합니다. 연결 실패·시간 초과·제어기 `CONTROLLER_BUSY` 응답은 `CONTROLLER_UNAVAILABLE`로 표시하고 1초 간격으로 재시도합니다. 연결되면 초기화 없이 이어 가며 오래된 관측은 제어기가 거부합니다. 그 밖의 HTTP 오류·잘못된 응답·실행 불일치·기록 실패 등은 `/sim/state`의 FAILED·error_code로 표시하며 자동 재시작하지 않습니다.
+
+제어기의 `/api/state`·`/api/session` 조회는 250ms 안에 상태를 얻지 못하면 503 `CONTROLLER_BUSY`와 `Retry-After: 1`을 반환합니다. 저장 중인 작업은 취소하지 않으며 앞선 조회 결과를 새 요청에 재사용하지 않습니다. `/sim/state`는 마지막 완료된 작업의 상태를 제공하고, 진행 중 작업이 250ms를 넘기면 `CONTROLLER_UNAVAILABLE`로 표시합니다. 아직 실행에 연결되지 않았거나 초기화 뒤 재연결 중이면 503을 반환합니다. OS나 이벤트 루프 자체가 멈춘 경우까지 250ms 응답을 보장하지는 않습니다. 250ms 이상 걸린 조회·감사 저장은 `slow_controller_snapshot`·`slow_audit_write` 로그로 남깁니다. 후자는 직렬화·쓰기/flush·fsync 시간과 스레드 CPU 시간을 구분하며 관측 내용은 포함하지 않습니다. 기존 감사 로그 순서·저장 완료 조건과 관측 만료 기준은 유지합니다.
 
 B04 집중 검사: `python -m pytest tests/test_operating_tools.py tests/test_scenario_runner.py tests/test_audit_lifecycle.py tests/test_run_verification.py -q`. 초기화·지연·누락·역순·손상 로그와 기존 B01/B03의 오래된 입력·ACK 방어를 함께 확인합니다. 실제 화면 검수는 P01·I01에서 수행합니다.
 

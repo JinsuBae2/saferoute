@@ -14,10 +14,11 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
     if cv2_module is None:
         import cv2 as cv2_module
     video_sha256 = file_hash(video)
-    session = get_contract(client, "/api/session", "Session")
-    building = get_contract(client, "/api/building", "Building")
+    reads = dict(max_attempts=config.max_attempts, retry_delay_ms=config.retry_delay_ms, clock=clock)
+    session = get_contract(client, "/api/session", "Session", **reads)
+    building = get_contract(client, "/api/building", "Building", **reads)
     source = config.validate_mapping(building, session)
-    state = get_contract(client, "/api/state", "StateSnapshot")
+    state = get_contract(client, "/api/state", "StateSnapshot", **reads)
     if state.run_id != session.run_id:
         raise WorkerError("RUN_OR_BUILDING_CHANGED")
     owned = next(s for s in state.sources if s.source_id == config.source_id)
