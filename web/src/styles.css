@@ -3,15 +3,30 @@
  * 단말은 경로 안내만 표시하므로 초록(안내 가능)과 회색(확인 불가)을 쓴다.
  */
 :root {
-  --bg: #0b0f14;
-  --panel: #151b23;
-  --line: #27313d;
-  --text: #e7edf4;
-  --muted: #9aa7b5;
+  /* 면·글자. 카드 사이는 테두리 대신 2px 틈으로 나눈다(이슈 #191). */
+  --bg: #1a1a1c;
+  --panel: #0e0e10;
+  --sunken: #090909;
+  --raised: #141417;
+  --line: #26262a;
+  --text: #e9e9e6;
+  --muted: #8a8a86;
+  --dim: #55555a;
+  /* 지금 보고 있는 값 하나만 이 색으로 채운다. */
+  --accent: #5b6c99;
+  --accent-soft: #2b3450;
+  --accent-line: #3c4766;
+  --accent-text: #f2f4f8;
+
+  /* 3D·범례와 맞춘 팀 색상 규약. BuildingScene이 같은 값을 쓰므로 바꾸지 않는다. */
   --route: #22c55e;
   --unavailable: #9ca3af;
   --fire: #ef4444;
   --warn: #f59e0b;
+  /* 표·수치에서 쓰는 차분한 짝. 범례 색과 뜻은 같고 채도만 낮다. */
+  --tone-route: #8fb9a4;
+  --tone-fire: #c98f7e;
+  --tone-warn: #c7a98f;
   color-scheme: dark;
 }
 
@@ -29,8 +44,19 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Pretendard", "Segoe UI", system-ui, -apple-system, sans-serif;
+  /*
+   * 숫자·라틴은 각진 서체로, 한글은 그대로 읽히는 산세리프로 떨어진다(이슈 #191).
+   * 웹폰트를 받지 않는다. 내려받기가 실패하면 시연 중에 글자만 달라 보이고,
+   * 외부 자료가 늘면 NOTICE도 함께 고쳐야 한다. 설치된 서체만 쓴다.
+   */
+  font-family: "Bahnschrift", "DIN Alternate", "Pretendard", "Segoe UI", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 수치는 자릿수가 흔들리지 않게 고정폭으로 센다. */
+.tile__value,
+.evac__counts strong {
+  font-variant-numeric: tabular-nums;
 }
 
 code {
@@ -274,7 +300,26 @@ code {
   padding: 16px clamp(12px, 1.4vw, 28px) 48px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  /* 카드를 테두리 대신 틈으로 나눈다(이슈 #191). */
+  gap: 2px;
+}
+
+/* 머리말·알림은 카드와 같은 면 위에 올린다. */
+.control__header,
+.alarm-bar {
+  padding: 16px 20px;
+  background: var(--panel);
+}
+
+.control__header h1 {
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.control__ids {
+  font-size: 11px;
+  letter-spacing: 0.05em;
 }
 
 .control__header {
@@ -299,17 +344,20 @@ code {
 
 .control__alert {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--fire);
-  background: rgba(239, 68, 68, 0.1);
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: inset 3px 0 0 var(--tone-warn);
+  background: rgba(199, 169, 143, 0.09);
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
 }
 
 .control__alert--warn {
-  border-color: var(--warn);
-  background: rgba(245, 158, 11, 0.1);
+  box-shadow: inset 3px 0 0 var(--tone-warn);
+  background: rgba(199, 169, 143, 0.09);
 }
 
 .control__footer {
@@ -336,43 +384,91 @@ code {
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+  gap: 2px;
 }
 
 .tile {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 16px 20px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
 }
 
 .tile__label {
-  font-size: 12px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
   color: var(--muted);
 }
 
 .tile__value {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 1;
 }
 
-.tile__value--route { color: var(--route); }
-.tile__value--fire { color: var(--fire); }
-.tile__value--warn { color: var(--warn); }
+.tile__value--route { color: var(--tone-route); }
+.tile__value--fire { color: var(--tone-fire); }
+.tile__value--warn { color: var(--tone-warn); }
+
+/* 지금 제일 먼저 봐야 하는 카드 하나만 채운다. 나머지가 검정이라 눈이 여기로 온다. */
+.tile--lead {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tile--lead .tile__label { color: #c7d1e8; }
+.tile--lead .tile__value { color: #ffffff; }
+.tile--lead .tile__note { color: #9fabc9; }
+
+/* 최근 값 몇 개를 세운 막대. 마지막 칸이 지금 값이다. */
+.tile__trail,
+.evac__trail {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.tile__trail { height: 14px; }
+
+.trail__bar {
+  flex: 1 1 0;
+  min-width: 4px;
+  background: #2f2f33;
+  transition: background 0.4s ease;
+}
+
+/* 채워진 칸. 왼쪽부터 늘어난다. */
+.trail__bar--now { background: var(--accent); }
+
+/* 수치 옆 비율 막대. 장식이라 마크업에서 aria-hidden으로 숨겨 둔다. */
+.tile__bar {
+  display: block;
+  height: 3px;
+  background: var(--sunken);
+}
+
+.tile__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.tile__bar--route .tile__bar-fill { background: var(--tone-route); }
+.tile__bar--fire .tile__bar-fill { background: var(--tone-fire); }
+.tile__bar--warn .tile__bar-fill { background: var(--tone-warn); }
 
 .tile__note {
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  color: var(--dim);
 }
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px 16px;
+  padding: 16px 20px;
 }
 
 .panel__head {
@@ -385,12 +481,16 @@ code {
 
 .panel__head h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
 }
 
 .panel__note {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
   color: var(--muted);
 }
 
@@ -606,19 +706,20 @@ code {
 }
 
 .chip {
-  padding: 3px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: transparent;
+  padding: 7px 14px;
+  border-radius: 0;
+  border: 0;
+  background: var(--raised);
   color: var(--muted);
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   cursor: pointer;
 }
 
 .chip--on {
-  border-color: var(--route);
-  color: var(--route);
+  background: var(--accent);
+  color: var(--accent-text);
 }
 
 .scene__legend {
@@ -673,35 +774,41 @@ code {
 
 .control__demo-buttons { display: flex; gap: 8px; }
 
+.control__demo-buttons { gap: 2px; }
+
 .control__demo button {
-  padding: 9px 20px;
+  padding: 11px 22px;
   font: inherit;
-  color: inherit;
-  background: #263442;
-  border: 1px solid #6d7c8d;
-  border-radius: 8px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  background: var(--raised);
+  border: 0;
+  border-radius: 0;
   cursor: pointer;
 }
 
-.control__demo-start { font-weight: 700; background: #1a7f4b; border-color: #2f9c62; }
-.control__demo button:disabled { opacity: 0.45; cursor: not-allowed; }
-.control__demo-note { margin: 0; max-width: 34ch; font-size: 12px; color: var(--muted); line-height: 1.5; }
+/* 바로 위 `.control__demo button`보다 명시도가 높아야 채운 색이 산다. */
+.control__demo button.control__demo-start { font-weight: 500; color: var(--accent-text); background: var(--accent); }
+.control__demo button:disabled { opacity: 0.4; cursor: not-allowed; }
+.control__demo-note { margin: 0; max-width: 32ch; font-size: 10px; letter-spacing: 0.06em; color: var(--muted); line-height: 1.5; }
 
 /* 「건물 3D」 제목 옆 — 지금 무엇을 고르는 중인지. 눌러서 대상을 바꾼다(이슈 #189). */
-.panel__aim { font-size: 13px; color: var(--muted); }
+.panel__aim { font-size: 10px; letter-spacing: 0.06em; color: var(--dim); }
 
 .panel__aim-btn {
-  padding: 3px 10px;
+  padding: 5px 13px;
   font: inherit;
-  font-weight: 700;
-  color: var(--text);
-  background: #263442;
-  border: 1px solid #6d7c8d;
-  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #cdd5e8;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: 0;
   cursor: pointer;
 }
 
-.panel__aim-btn:hover { border-color: #9fb0c2; }
+.panel__aim-btn:hover { border-color: var(--accent); }
 
 .face__note {
   margin: 4px 0 0;
@@ -857,7 +964,7 @@ code {
 
 /* AI 시연은 기존 영상·3D를 재배치한다. 제어·선택 상태는 전환해도 유지한다. */
 .control__actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.control__visuals { display: grid; gap: 14px; }
+.control__visuals { display: grid; gap: 2px; }
 .control__building, .control__camera { min-width: 0; }
 .control--presentation { max-width: 1720px; }
 .control--presentation .control__overview { display: none; }
@@ -1047,8 +1154,8 @@ code {
 .key--person-stuck { background: #7c3aed; border-radius: 50%; }
 
 .control__alert--ok {
-  border-color: var(--route);
-  background: rgba(34, 197, 94, 0.1);
+  box-shadow: inset 3px 0 0 var(--tone-route);
+  background: rgba(143, 185, 164, 0.09);
 }
 
 .causes--actions li {
@@ -1068,29 +1175,33 @@ code {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  font-size: 13px;
+  gap: 14px;
+  padding: 13px 20px;
+  border-radius: 0;
+  border: 0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
+/* 경보가 있으면 왼쪽 띠로만 알린다. 면 전체를 물들이면 아래 카드가 안 읽힌다. */
 .alarm-bar--fire {
-  border-color: var(--fire);
-  background: rgba(239, 68, 68, 0.14);
+  box-shadow: inset 3px 0 0 var(--tone-warn);
+  background: rgba(199, 169, 143, 0.08);
 }
+
+.alarm-bar--fire .alarm-bar__title { color: var(--tone-warn); }
 
 .alarm-bar--smoke {
-  border-color: var(--warn);
-  background: rgba(245, 158, 11, 0.12);
+  box-shadow: inset 3px 0 0 var(--warn);
+  background: rgba(245, 158, 11, 0.07);
 }
 
 .alarm-bar__lamp {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--fire);
-  box-shadow: 0 0 10px var(--fire);
+  background: var(--tone-warn);
+  box-shadow: 0 0 10px rgba(199, 169, 143, 0.55);
   animation: alarm-lamp 1s steps(2, jump-none) infinite;
 }
 
@@ -1127,7 +1238,7 @@ code {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 2px;
 }
 
 @media (min-width: 1180px) {
@@ -1219,39 +1330,51 @@ code {
 
 /* 대피 현황 */
 .evac__counts {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 6px;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 42px;
+  margin-bottom: 4px;
 }
 
 .evac__counts div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  gap: 5px;
 }
 
 .evac__counts span {
-  font-size: 11px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
   color: var(--muted);
 }
 
 .evac__counts strong {
-  font-size: 22px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: 34px;
+  font-weight: 300;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
 }
 
 .evac__out {
-  color: var(--route);
+  color: #a9b6d6;
 }
 
 .evac__stuck {
-  color: var(--fire);
+  color: var(--tone-warn);
 }
+
+/* 탈출 인원이 늘어 온 모양. 수치 줄 오른쪽 끝에 붙는다. */
+.evac__trail {
+  margin-left: auto;
+  height: 42px;
+}
+
+.evac__trail .trail__bar {
+  flex: 0 0 auto;
+  width: 15px;
+}
+
 
 /* 긴 표를 접어 두는 자리. 패널 안에서 쓴다. */
 .fold > summary {
@@ -1260,10 +1383,11 @@ code {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 8px 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   color: var(--muted);
   border-top: 1px solid var(--line);
 }
