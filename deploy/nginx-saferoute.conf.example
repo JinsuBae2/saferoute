@@ -1,8 +1,9 @@
 # D02(#28): 웹 정적 파일과 API를 한 주소로 내보낸다(동일 오리진, 설계 04번 9.1절).
 # /etc/nginx/sites-available/saferoute 로 복사해 sites-enabled 에 연결한다. 기본 사이트(default)는 끈다.
 server {
-    # 기본은 SSH 터널 전용이다. 공개하려면 `listen 80;` 으로 바꾸고 아래 "공개 시" 두 줄의 주석을 푼다.
-    listen 127.0.0.1:8080;
+    # 공인 주소로 공개한다(2026-11-11 결정). 로그인이 없으므로 조작은 개인 체험방에만 허용한다.
+    # SSH 터널 전용으로 되돌리려면 `listen 127.0.0.1:8080;` 으로 바꾼다.
+    listen 80;
     server_name _;
 
     # 홈 폴더는 다른 계정이 읽지 못한다(0750). 빌드한 web/dist 를 여기로 복사해 쓴다.
@@ -30,15 +31,15 @@ server {
         proxy_pass http://127.0.0.1:8000;
     }
 
-    # 공동 시연 제어 API. 인증이 없으므로 공개할 때는 읽기만 허용한다.
+    # 공동 시연 제어 API. 인증이 없으므로 읽기만 허용한다.
     location /api/ {
-        # limit_except GET { deny all; }  # 공개 시
+        limit_except GET { deny all; }
         proxy_pass http://127.0.0.1:8000;
     }
 
     # 공동 시연의 시나리오 실행기(8001)는 선택이다.
     location /sim/ {
-        # limit_except GET { deny all; }  # 공개 시
+        limit_except GET { deny all; }
         proxy_pass http://127.0.0.1:8001;
     }
 
