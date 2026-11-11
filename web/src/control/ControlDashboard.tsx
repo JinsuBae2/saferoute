@@ -2,7 +2,7 @@
  * 관제 화면. 서버가 확정한 한 안내 버전의 상태·위험·경로·단말 현황을 표시한다.
  * 경로나 방향을 여기서 계산하지 않고, 미적용·단절·오래된 버전을 숨기지 않는다.
  */
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SourceNotice } from "../SourceNotice";
 
@@ -13,10 +13,16 @@ import {
   checkExplanation,
   connectionHealth,
   simulationMatchesRun,
+  simulationConnectionLost,
+  defaultDisplays,
+  observedAgeMs,
+  sourceStatus,
   summarizeRoutes,
+  summarizeSignChanges,
   summarizeSigns,
   summarizeSources,
 } from "./controlModel";
+import { agoText, AlarmPanel, SOURCE_STATUS_LABEL, SOURCE_STATUS_TONE } from "./AlarmPanel";
 import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
@@ -29,8 +35,6 @@ import { useBuildingData } from "../building/useBuildingData";
 const BuildingPanel = lazy(() => import("../building/BuildingPanel"));
 
 type Mode = StateSnapshot["controller_mode"];
-type Validity = StateSnapshot["sources"][number]["validity"];
-type Hazard = StateSnapshot["active_causes"][number]["hazard_type"];
 type ApplicationStatus = StateSnapshot["signs"][number]["application_status"];
 
 const MODE_LABEL: Record<Mode, string> = {
@@ -47,32 +51,6 @@ const MODE_TONE: Record<Mode, string> = {
   DEGRADED: "warn",
 };
 
-const VALIDITY_LABEL: Record<Validity, string> = {
-  VALID: "유효",
-  STALE: "오래됨",
-  UNAVAILABLE: "관측 불가",
-  INITIALIZING: "준비 중",
-};
-
-const VALIDITY_TONE: Record<Validity, string> = {
-  VALID: "route",
-  STALE: "warn",
-  UNAVAILABLE: "fire",
-  INITIALIZING: "muted",
-};
-
-const HAZARD_LABEL: Record<Hazard, string> = {
-  FIRE: "화재",
-  SMOKE: "연기",
-  SPRINKLER: "스프링클러",
-};
-
-const HAZARD_TONE: Record<Hazard, string> = {
-  FIRE: "fire",
-  SMOKE: "warn",
-  SPRINKLER: "warn",
-};
-
 const BLOCK_REASON_LABEL: Record<StateSnapshot["blocked_edges"][number]["reason_codes"][number], string> = {
   ACTIVE_ALARM: "경보로 차단",
   REQUIRED_OBSERVATION_UNKNOWN: "필수 관측 확인 불가",
@@ -80,12 +58,23 @@ const BLOCK_REASON_LABEL: Record<StateSnapshot["blocked_edges"][number]["reason_
 };
 
 const APPLICATION_LABEL: Record<ApplicationStatus, string> = {
-  NOT_ISSUED: "미발행",
-  PENDING: "확인 대기",
-  APPLIED: "적용 확인",
-  REJECTED: "적용 실패",
-  EXPIRED: "기한 만료",
-  DUPLICATE_TERMINAL: "중복 단말",
+  NOT_ISSUED: "안내를 아직 보내지 않음",
+  PENDING: "응답 대기",
+  APPLIED: "반영 확인",
+  REJECTED: "반영 실패",
+  EXPIRED: "응답 없음(기한 지남)",
+  DUPLICATE_TERMINAL: "같은 유도등 화면이 둘 이상",
+};
+
+/** 시뮬레이션이 완전히 멈춘 사유. 일시적인 연결 끊김은 여기 오지 않고 스스로 다시 시도한다. */
+const SIMULATION_FAILURE_LABEL: Record<string, string> = {
+  CONTROLLER_UNAVAILABLE: "제어기가 오류를 돌려줬습니다",
+  INVALID_RESPONSE: "제어기 응답을 해석하지 못했습니다",
+  RUN_MISMATCH: "제어기가 다른 실행으로 바뀌었습니다",
+  BUILDING_MISMATCH: "제어기의 건물 자료가 다릅니다",
+  SOURCE_CONFLICT: "같은 감지기를 쓰는 다른 실행기가 있습니다",
+  LOG_WRITE_FAILED: "실행 기록을 저장하지 못했습니다",
+  CONTROLLER_NOT_READY: "제어기가 실행 기록 오류로 멈췄습니다",
 };
 
 const APPLICATION_TONE: Record<ApplicationStatus, string> = {
@@ -159,6 +148,36 @@ function Panel({
   );
 }
 
+/** 끊겼다가 다시 이어진 직후 10초 동안만 참이다. */
+function useRecoveryNotice(lost: boolean | null, runId: string | null): boolean {
+  const wasLost = useRef(false);
+  const previousRun = useRef(runId);
+  const [recovered, setRecovered] = useState(false);
+  useEffect(() => {
+    if (previousRun.current !== runId) {
+      previousRun.current = runId;
+      wasLost.current = false;
+      setRecovered(false);
+    }
+    if (lost === null) {
+      wasLost.current = false;
+      setRecovered(false);
+      return;
+    }
+    if (lost) {
+      wasLost.current = true;
+      setRecovered(false);
+      return;
+    }
+    if (!wasLost.current) return;
+    wasLost.current = false;
+    setRecovered(true);
+    const timer = setTimeout(() => setRecovered(false), 10_000);
+    return () => clearTimeout(timer);
+  }, [lost, runId]);
+  return previousRun.current === runId && recovered;
+}
+
 export function ControlDashboard() {
   const view = useControlSnapshot();
   const [onlyUnavailable, setOnlyUnavailable] = useState(false);
@@ -173,6 +192,13 @@ export function ControlDashboard() {
   const display = space.display;
 
   const health = connectionHealth(view.lastStateSuccessAtMs, view.nowMs, view.pollIntervalMs * 3);
+
+  const defaults = useMemo(() => (space.building === null ? null : defaultDisplays(space.building.signs)), [space.building]);
+  // 실행 중이거나 시작을 기다리는 동안의 연결 끊김. 실행기가 스스로 다시 시도한다.
+  // 다른 실행·영구 실패·종료는 복구로 표시하지 않는다.
+  const simulationLink = simulationConnectionLost(view.simulation, state);
+  const recovered = useRecoveryNotice(simulationLink, state?.run_id ?? null);
+  const simulationLost = simulationLink === true;
 
   if (state === null) {
     return (
@@ -194,6 +220,8 @@ export function ControlDashboard() {
   const sources = summarizeSources(state);
   const explanation = checkExplanation(view.explanation, state);
   const simulation = simulationMatchesRun(view.simulation, state) ? view.simulation : null;
+  const signChanges = summarizeSignChanges(state, defaults);
+  const stale = health.stale || view.stateError !== null;
   const visibleRoutes = onlyUnavailable
     ? state.routes.filter((route) => route.reason_codes.length > 0)
     : state.routes;
@@ -226,6 +254,24 @@ export function ControlDashboard() {
         </p>
       )}
 
+      {simulationLost && (
+        <p className="control__alert" role="alert">
+          시뮬레이션이 제어기에 감지 정보를 전달하지 못하고 있습니다. 1초마다 다시 시도하며, 연결되면 초기화 없이 이어집니다.
+          {" "}전달이 끊긴 동안 감지 정보가 만료되면 제어기는 해당 구간의 경로 안내를 멈춥니다.
+        </p>
+      )}
+      {!simulationLost && recovered && (
+        <p className="control__alert control__alert--ok" role="status">
+          시뮬레이션과 제어기의 연결이 복구됐습니다. 끊긴 동안 밀린 옛 감지 정보는 쓰지 않고 새 정보부터 반영합니다.
+        </p>
+      )}
+      {simulation?.status === "FAILED" && (
+        <p className="control__alert" role="alert">
+          시뮬레이션이 멈췄습니다. {SIMULATION_FAILURE_LABEL[simulation.error_code ?? ""] ?? "원인을 확인하지 못했습니다"}
+          {simulation.error_code !== null && <> (<code>{simulation.error_code}</code>)</>}. 새 감지 정보가 오지 않아 경로 안내가 멈춥니다. 시연 패널의 초기화로 다시 시작하세요.
+        </p>
+      )}
+
       <div className="tiles control__overview">
         <Tile
           label="활성 경보"
@@ -239,8 +285,8 @@ export function ControlDashboard() {
           tone={state.blocked_nodes.length > 0 ? "warn" : undefined}
         />
         <Tile
-          label="안내"
-          value={`${routes.guided} / ${routes.total} 지점`}
+          label="경로 안내 가능 위치"
+          value={`${routes.guided} / ${routes.total}곳`}
           tone={routes.unavailable > 0 ? "warn" : "route"}
           note={(() => {
             // 그 자리가 차단된 곳과, 자리는 멀쩡하지만 출구에 닿지 못하는 곳은 성격이 다르다. 사람이 있는지는 알 수 없다.
@@ -253,28 +299,36 @@ export function ControlDashboard() {
           })()}
         />
         <Tile
-          label="관측원"
-          value={`${sources.valid} / ${sources.total} 유효`}
+          label="감지 정보"
+          value={`${sources.total}개 중 ${sources.valid}개`}
           tone={sources.anyUnconfirmed ? "warn" : "route"}
+          note={`최신 정보 수신 ${sources.valid}개 · 받지 못함 ${sources.initializing} · 만료 ${sources.stale} · 관측 불가 ${sources.unavailable} · 최신 정보가 위험 없음을 뜻하지는 않습니다`}
         />
         <Tile
-          label="단말 적용"
-          value={`${signs.confirmedCurrent} / ${signs.total}`}
+          label="유도등 반영 확인"
+          value={`${signs.total}개 중 ${signs.confirmedCurrent}개`}
           tone={signs.unconfirmed > 0 ? "warn" : "route"}
-          note={signs.mixedVersion ? "혼합 버전 표시 중" : `미확인 ${signs.unconfirmed}대`}
+          note={signs.mixedVersion ? "서로 다른 안내 버전 표시 중" : `응답 없어 미확인 ${signs.unconfirmed}대`}
+        />
+        <Tile
+          label="방향 변경 확인"
+          value={signChanges === null ? "확인 불가" : `${signChanges.changedConfirmed}대`}
+          tone={signChanges !== null && signChanges.changed > signChanges.changedConfirmed ? "warn" : undefined}
+          note={signChanges === null ? "건물 자료를 읽지 못했습니다"
+            : `평상시와 방향이 달라진 유도등 ${signChanges.changed}대 중 반영 응답 ${signChanges.changedConfirmed}대 · 안내 중단 ${signChanges.stopped}대(응답 ${signChanges.stoppedConfirmed}대)`}
         />
       </div>
 
       {signs.mixedVersion && (
         <p className="control__alert control__alert--warn">
-          단말들이 서로 다른 안내 버전을 표시하고 있습니다. 이전 버전 {signs.behindGuidance}대.
+          유도등들이 서로 다른 안내 버전을 표시하고 있습니다. 이전 버전 {signs.behindGuidance}대.
         </p>
       )}
 
       {space.displayError !== null && <p className="panel__note">위치 이름 표시: {space.displayError} · 기본 ID로 표시합니다.</p>}
 
       {presentation && <AiDemoSummary state={state} building={space.building} display={display}
-        sourceId={camera.sourceId} stale={health.stale || view.stateError !== null} />}
+        sourceId={camera.sourceId} stale={stale} />}
 
       <div className="control__visuals">
         <div className="control__building">
@@ -293,7 +347,7 @@ export function ControlDashboard() {
               buildingError={space.buildingError}
               highlightSourceId={camera.sourceId}
               locateRequest={camera.locate}
-              stale={health.stale || view.stateError !== null}
+              stale={stale}
               demo={(startPicker, hasStart) => space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
                 building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null}
                 startPicker={startPicker} hasStart={hasStart} />}
@@ -337,22 +391,29 @@ export function ControlDashboard() {
           </div>
         ) : (
           <p className="panel__empty">
-            {EXPLANATION_BLOCK_LABEL[explanation.reason]}
-            {view.explanation?.error_code != null && ` — ${EXPLANATION_ERROR_LABEL[view.explanation.error_code]}`}
-            {view.explanationError !== null && ` (${view.explanationError})`}
+            {/* 연결 실패·실행 대기·생성 실패를 나눠 말한다. HTTP 상태값만 보여 주지 않는다. */}
+            {view.explanationError !== null ? (
+              <span title={view.explanationError}>연결 실패 · 상황 설명 서버에 연결하지 못했습니다. 서버가 실행 중인지 확인하세요.</span>
+            ) : view.explanation?.status === "PENDING" ? (
+              "실행 대기 · 현재 안내에 대한 설명을 만들고 있습니다."
+            ) : view.explanation?.error_code != null ? (
+              <span title={view.explanation.error_code}>생성 실패 · {EXPLANATION_ERROR_LABEL[view.explanation.error_code]}.</span>
+            ) : (
+              EXPLANATION_BLOCK_LABEL[explanation.reason]
+            )}
             <br />
-            경로·방향·적용 현황은 아래 제어 결과로 계속 표시됩니다.
+            설명이 없어도 경로·방향·유도등 반영 현황은 아래 제어 결과로 계속 표시됩니다.
           </p>
         )}
       </Panel>
 
       <div className="columns">
-        <Panel title="관측원" note="경보 상태와 관측 유효성은 별개입니다" folding>
+        <Panel title="감지 정보" note="정보를 받고 있는지만 보여 줍니다. 최신 정보를 받아도 그 내용이 경보일 수 있습니다" folding>
           <table className="grid">
             <thead>
               <tr>
-                <th>관측원</th>
-                <th>유효성</th>
+                <th>감지기·카메라</th>
+                <th>수신 상태</th>
                 <th>마지막 관측</th>
                 <th>순번</th>
               </tr>
@@ -368,9 +429,9 @@ export function ControlDashboard() {
                     </small>}
                   </td>
                   <td>
-                    <Badge tone={VALIDITY_TONE[source.validity]}>{VALIDITY_LABEL[source.validity]}</Badge>
+                    <span title={source.validity}><Badge tone={SOURCE_STATUS_TONE[sourceStatus(source.validity)]}>{SOURCE_STATUS_LABEL[sourceStatus(source.validity)]}</Badge></span>
                   </td>
-                  <td className="grid__dim">{source.last_observed_at ?? "—"}</td>
+                  <td className="grid__dim" title={source.last_observed_at ?? undefined}>{agoText(observedAgeMs(state, source))}</td>
                   <td className="grid__dim">{source.last_source_sequence ?? "—"}</td>
                 </tr>
               ))}
@@ -378,20 +439,8 @@ export function ControlDashboard() {
           </table>
         </Panel>
 
-        <Panel title="활성 경보" note="다른 관측원의 정상 신호로 지워지지 않습니다">
-          {state.active_causes.length === 0 ? (
-            <p className="panel__empty">활성 경보가 없습니다.</p>
-          ) : (
-            <ul className="causes">
-              {state.active_causes.map((cause) => (
-                <li key={`${cause.source_id}:${cause.hazard_type}`}>
-                  <Badge tone={HAZARD_TONE[cause.hazard_type]}>{HAZARD_LABEL[cause.hazard_type]}</Badge>
-                  <span title={cause.source_id}>{display?.sources[cause.source_id]?.label ?? cause.source_id}</span>
-                  <span className="grid__dim">{cause.activated_at}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+        <Panel title="활성 경보" note="화재·연기 모두 원인별로 확인한 뒤 해제합니다">
+          <AlarmPanel key={`${state.run_id}/${state.building_id}/${state.building_version}`} state={state} building={space.building} display={display} connected={!stale} />
         </Panel>
       </div>
 
@@ -437,8 +486,8 @@ export function ControlDashboard() {
       </Panel>
 
       <Panel
-        title="유도등 단말 적용 현황"
-        note="적용 확인은 단말이 화면에 반영하고 응답한 것만 셉니다"
+        title="유도등 반영 확인"
+        note="반영 확인은 유도등 화면이 안내를 표시하고 스스로 응답한 것만 셉니다. 서버가 방향을 계산한 것과는 다릅니다"
         folding
       >
         <table className="grid">
@@ -446,9 +495,9 @@ export function ControlDashboard() {
             <tr>
               <th>유도등</th>
               <th>현재 안내</th>
-              <th>적용 상태</th>
+              <th>반영 상태</th>
               <th>명령</th>
-              <th>단말</th>
+              <th>유도등 화면</th>
               <th />
             </tr>
           </thead>
@@ -470,9 +519,9 @@ export function ControlDashboard() {
                     ))}
                   </td>
                   <td>
-                    <Badge tone={APPLICATION_TONE[sign.application_status]}>
+                    <span title={sign.application_status}><Badge tone={APPLICATION_TONE[sign.application_status]}>
                       {APPLICATION_LABEL[sign.application_status]}
-                    </Badge>
+                    </Badge></span>
                   </td>
                   <td className="grid__dim">
                     {command === null ? (
@@ -493,7 +542,7 @@ export function ControlDashboard() {
                   </td>
                   <td>
                     <Link className="grid__link" to={`/sign/${encodeURIComponent(sign.sign_id)}`}>
-                      단말 열기
+                      유도등 화면 열기
                     </Link>
                   </td>
                 </tr>
