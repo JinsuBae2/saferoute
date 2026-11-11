@@ -1,4 +1,8 @@
-/** 직사각형 외관을 활성 출구의 통로 폭에 맞춰 나눈다. 높이는 층 바닥 기준이다. */
+/**
+ * 직사각형 외관을 외부 출입문 자리에 맞춰 나눈다. 높이는 층 바닥 기준이다.
+ * 문이 있는 것과 그 문을 대피 출구로 쓰는 것은 다르다. 출구 후보는 모두 문 자리로 그리고,
+ * enabled는 대피의 최종 출구로 쓰는지만 정한다. 쓰지 않는 후보는 닫힌 문으로 남기고 통로는 열지 않는다.
+ */
 import type { Building } from "@contracts";
 import type { GeometryFloor } from "./geometry";
 
@@ -51,7 +55,7 @@ function withoutOpenings(min: number, max: number, openings: readonly Interval[]
   return pieces.filter(([start, end]) => end > start);
 }
 
-export function facadeParts(building: Building, floor: GeometryFloor, wallHeight: number): { glass: FacadeBox[]; frames: FacadeBox[]; band: FacadeBox[] } {
+export function facadeParts(building: Building, floor: GeometryFloor, wallHeight: number): { glass: FacadeBox[]; frames: FacadeBox[]; band: FacadeBox[]; closedDoors: FacadeBox[] } {
   const xs = floor.slab.map((point) => point.x);
   const zs = floor.slab.map((point) => point.z);
   const [minX, maxX, minZ, maxZ] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
@@ -61,26 +65,35 @@ export function facadeParts(building: Building, floor: GeometryFloor, wallHeight
     { alongX: false, min: minZ, max: maxZ, edge: minX, outward: -1 },
     { alongX: false, min: minZ, max: maxZ, edge: maxX, outward: 1 },
   ];
-  const exits = new Set(building.exits.filter((exit) => exit.enabled).map((exit) => exit.node_id));
+  const exits = new Map(building.exits.map((exit) => [exit.node_id, exit.enabled]));
   const openings: Interval[][] = sides.map(() => []);
+  const closed: Interval[][] = sides.map(() => []);
   for (const node of building.nodes) {
-    if (node.floor_id !== floor.floor_id || !exits.has(node.node_id)) continue;
+    const used = exits.get(node.node_id);
+    if (node.floor_id !== floor.floor_id || used === undefined) continue;
     const distances = sides.map((side) => Math.abs((side.alongX ? node.position.z : node.position.x) - side.edge));
     const index = distances.indexOf(Math.min(...distances));
     const side = sides[index];
     const center = side.alongX ? node.position.x : node.position.z;
-    openings[index].push([Math.max(side.min, center - 0.9), Math.min(side.max, center + 0.9)]);
+    (used ? openings : closed)[index].push([Math.max(side.min, center - 0.9), Math.min(side.max, center + 0.9)]);
   }
+  const closedDoors: FacadeBox[] = [];
   const glass: FacadeBox[] = [];
   const frames: FacadeBox[] = [];
   const band: FacadeBox[] = [];
   sides.forEach((side, index) => {
-    const gaps: [number, number][] = [];
-    for (const [start, end] of openings[index].sort((a, b) => a[0] - b[0])) {
-      const previous = gaps.at(-1);
-      if (previous !== undefined && start <= previous[1]) previous[1] = Math.max(previous[1], end);
-      else if (end > start) gaps.push([start, end]);
-    }
+    const merge = (intervals: Interval[]) => {
+      const merged: [number, number][] = [];
+      for (const [start, end] of [...intervals].sort((a, b) => a[0] - b[0])) {
+        const previous = merged.at(-1);
+        if (previous !== undefined && start <= previous[1]) previous[1] = Math.max(previous[1], end);
+        else if (end > start) merged.push([start, end]);
+      }
+      return merged;
+    };
+    // open: 대피 출구로 쓰는 문. 사람과 미끄럼판이 지나가게 비운다. gaps: 문 자리 전체(유리·창틀을 세우지 않는 구간).
+    const open = merge(openings[index]);
+    const gaps = merge([...openings[index], ...closed[index]]);
     const box = (start: number, end: number, bottom: number, height: number, depth: number, offset: number): FacadeBox => ({
       x: side.alongX ? (start + end) / 2 : side.edge + side.outward * offset,
       y: bottom + height / 2,
@@ -102,7 +115,26 @@ export function facadeParts(building: Building, floor: GeometryFloor, wallHeight
     }
     // 하단 띠도 비워 바닥보다 낮아지는 미끄럼판을 막지 않는다.
     const grow = side.alongX ? 1 : 0;
-    for (const [start, end] of withoutOpenings(side.min - grow, side.max + grow, gaps)) band.push(box(start, end, -0.45, 0.45, 1, 0.5));
+    for (const [start, end] of withoutOpenings(side.min - grow, side.max + grow, open)) band.push(box(start, end, -0.45, 0.45, 1, 0.5));
+    // 대피 출구로 쓰지 않는 문은 닫힌 문짝으로 막아 둔다. 열린 통로와 겹치는 구간은 통로가 우선이다.
+    for (const [from, to] of merge(closed[index])) {
+      for (const [start, end] of withoutOpenings(from, to, open)) closedDoors.push(box(start, end, 0, doorHeight, 0.08, 0.08));
+    }
   });
-  return { glass, frames, band };
+  return { glass, frames, band, closedDoors };
+}
+
+/**
+ * 방 입구(DOOR)마다 문이 향하는 쪽의 지점. 복도 쪽 연결을 쓴다.
+ * 외부 출구 후보로 이어진 연결은 기준으로 삼지 않고, 연결이 여럿이면 자료에서 먼저 나온 것을 쓴다.
+ * 그래서 출구 후보나 연결을 추가해도 기존 문 방향이 바뀌지 않는다.
+ */
+export function doorFacing(building: Building): Map<string, string> {
+  const kinds = new Map(building.nodes.map((node) => [node.node_id, node.kind]));
+  const facing = new Map<string, string>();
+  for (const edge of building.edges) {
+    if (edge.kind !== "DOOR" || kinds.get(edge.from_node_id) !== "DOOR" || facing.has(edge.from_node_id) || kinds.get(edge.to_node_id) === "EXIT") continue;
+    facing.set(edge.from_node_id, edge.to_node_id);
+  }
+  return facing;
 }

@@ -1001,3 +1001,20 @@ code {
 /* 시연용 대피 인원 범례 */
 .key--person { background: #ff5fd2; border-radius: 50%; }
 .key--person-stuck { background: #7c3aed; border-radius: 50%; }
+
+.control__alert--ok {
+  border-color: var(--route);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.causes--actions li {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.causes--actions li > span:nth-child(2) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}

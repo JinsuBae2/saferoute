@@ -191,6 +191,14 @@ export function simulationMatchesRun(
   );
 }
 
+/** 현재 실행의 재시도 가능한 연결만 판정한다. 영구 실패·종료·다른 실행은 복구가 아니다. */
+export function simulationConnectionLost(simulation: SimulationState | null, state: StateSnapshot | null): boolean | null {
+  if (state === null || simulation === null || !simulationMatchesRun(simulation, state)) return null;
+  if (simulation.status !== "RUNNING" && simulation.status !== "WAITING_FOR_ARM") return null;
+  if (simulation.error_code === "CONTROLLER_UNAVAILABLE") return true;
+  return simulation.error_code === null ? false : null;
+}
+
 export type ConnectionHealth = {
   /** 마지막 성공 조회 이후 경과(ms). 한 번도 성공하지 못했으면 null. */
   readonly ageMs: number | null;
@@ -207,4 +215,75 @@ export function connectionHealth(
   if (lastSuccessAtMs === null) return { ageMs: null, stale: true };
   const ageMs = Math.max(0, nowMs - lastSuccessAtMs);
   return { ageMs, stale: ageMs >= staleAfterMs };
+}
+
+export type SourceStatus = "NEVER" | "FRESH" | "EXPIRED" | "UNAVAILABLE";
+
+/**
+ * 감지 정보의 수신 상태. 위험 여부가 아니다. 최신 정보를 받고 있어도 그 내용이 경보일 수 있다.
+ * 만료 판정은 제어기가 한 것을 그대로 읽는다. 화면이 기준 시간을 따로 두지 않는다.
+ */
+export function sourceStatus(validity: StateSnapshot["sources"][number]["validity"]): SourceStatus {
+  if (validity === "VALID") return "FRESH";
+  if (validity === "STALE") return "EXPIRED";
+  return validity === "UNAVAILABLE" ? "UNAVAILABLE" : "NEVER";
+}
+
+/** 마지막 관측에서 상태 기준 시각까지 지난 시간. 둘 다 서버가 준 시각이라 브라우저 시계와 무관하다. */
+export function observedAgeMs(state: StateSnapshot, source: StateSnapshot["sources"][number]): number | null {
+  const at = utcMs(source.last_observed_at);
+  const now = utcMs(state.generated_at);
+  return at === null || now === null ? null : Math.max(0, now - at);
+}
+
+export type SignChangeSummary = {
+  /** 유도등 대수. 양면 유도등도 한 대로 센다. */
+  readonly total: number;
+  /** 현재 안내를 화면에 반영했다고 단말이 응답한 대수. 같은 방향을 다시 받은 경우도 포함한다. */
+  readonly confirmed: number;
+  /** 응답이 없거나 실패해 현재 안내의 반영을 확인하지 못한 대수. */
+  readonly unconfirmed: number;
+  /** 서버 계산 기준, 평상시 방향과 지금 방향이 다른 대수(안내 중단 제외). 누적 변경 횟수가 아니다. */
+  readonly changed: number;
+  /** changed 가운데 단말이 반영을 응답한 대수. */
+  readonly changedConfirmed: number;
+  /** 서버 계산 기준, 방향을 표시하지 못하는 면이 있는 대수. */
+  readonly stopped: number;
+  readonly stoppedConfirmed: number;
+};
+
+/**
+ * 유도등별 반영 확인·방향 변경·안내 중단을 나눠 센다.
+ * 평상시 방향은 건물 자료의 면별 기본 방향이다. 건물 자료가 없으면 변경 수를 셀 수 없어 null을 준다.
+ */
+export function summarizeSignChanges(
+  state: StateSnapshot,
+  defaults: ReadonlyMap<string, ReadonlyMap<string, string>> | null,
+): SignChangeSummary | null {
+  if (defaults === null) return null;
+  let confirmed = 0;
+  let changed = 0;
+  let changedConfirmed = 0;
+  let stopped = 0;
+  let stoppedConfirmed = 0;
+  for (const sign of state.signs) {
+    const applied = sign.application_status === "APPLIED";
+    if (applied) confirmed += 1;
+    const base = defaults.get(sign.sign_id);
+    if (sign.faces.some((face) => face.display === null)) {
+      stopped += 1;
+      if (applied) stoppedConfirmed += 1;
+    } else if (base !== undefined && sign.faces.some((face) => base.get(face.face_id) !== face.display)) {
+      changed += 1;
+      if (applied) changedConfirmed += 1;
+    }
+  }
+  return { total: state.signs.length, confirmed, unconfirmed: state.signs.length - confirmed, changed, changedConfirmed, stopped, stoppedConfirmed };
+}
+
+/** 건물 자료에서 유도등 면별 평상시 방향을 뽑는다. */
+export function defaultDisplays(
+  signs: ReadonlyArray<{ sign_id: string; faces: ReadonlyArray<{ face_id: string; default_next_node_id: string; next_node_to_display: Readonly<Record<string, string>> }> }>,
+): Map<string, Map<string, string>> {
+  return new Map(signs.map((sign) => [sign.sign_id, new Map(sign.faces.map((face) => [face.face_id, face.next_node_to_display[face.default_next_node_id]]))]));
 }

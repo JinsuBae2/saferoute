@@ -3,7 +3,7 @@ import * as THREE from "three";
 import type { Building } from "@contracts";
 import rawBuilding from "@space/wfi-v1.json";
 import rawGeometry from "@space/wfi-geometry-v1.json";
-import { EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
+import { doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
 import { parseGeometry } from "./geometry";
 
 const building = rawBuilding as Building;
@@ -43,11 +43,33 @@ describe("출구 외벽 통로", () => {
     material.dispose();
   });
 
-  it("비활성 출구는 통로를 열지 않고 기존 외벽의 유리 면적을 유지한다", () => {
-    const parts = facadeParts({ ...building, exits: building.exits.map((exit) => ({ ...exit, enabled: false })) }, floor, 3.8);
+  it("대피 출구로 쓰지 않는 후보도 문 자리는 남기되 닫힌 문으로 막아 통로를 열지 않는다", () => {
+    const allClosed = facadeParts({ ...building, exits: building.exits.map((exit) => ({ ...exit, enabled: false })) }, floor, 3.8);
     const xs = floor.slab.map((point) => point.x);
     const zs = floor.slab.map((point) => point.z);
     const perimeter = 2 * (Math.max(...xs) - Math.min(...xs) + Math.max(...zs) - Math.min(...zs));
-    expect(parts.glass.reduce((area, panel) => area + Math.max(panel.width, panel.depth) * panel.height, 0)).toBeCloseTo(perimeter * 3.8);
+    const area = (boxes: { width: number; depth: number; height: number }[]) => boxes.reduce((sum, panel) => sum + Math.max(panel.width, panel.depth) * panel.height, 0);
+    // 유리와 닫힌 문이 외벽을 빈틈없이 덮는다. 출구를 꺼도 문 형상이 사라지거나 뚫리지 않는다.
+    expect(area(allClosed.glass) + area(allClosed.closedDoors)).toBeCloseTo(perimeter * 3.8);
+    expect(allClosed.closedDoors).toHaveLength(building.exits.length);
+    // 실제 자료: 활성 2곳은 열린 통로, 비활성 후보 2곳(EXIT-NW·EXIT-SE)은 닫힌 문.
+    const real = facadeParts(building, floor, 3.8);
+    expect(real.closedDoors).toHaveLength(building.exits.filter((exit) => !exit.enabled).length);
+    expect(real.closedDoors).toHaveLength(2);
+  });
+});
+
+describe("방 입구 문 방향", () => {
+  it("23개 입구 모두 복도 쪽을 향하고, 101호는 외부 출구 후보가 아니라 아래쪽 통로를 향한다", () => {
+    const facing = doorFacing(building);
+    expect(facing.size).toBe(building.nodes.filter((node) => node.kind === "DOOR").length);
+    expect(facing.size).toBe(23);
+    expect(facing.get("F1-D-R101")).toBe("F1-J-PS");
+    for (const target of facing.values()) expect(nodes.get(target)?.kind).not.toBe("EXIT");
+  });
+
+  it("연결 순서가 바뀌거나 출구 쪽 연결이 먼저 와도 101호 문 방향은 그대로다", () => {
+    const reordered = { ...building, edges: [...building.edges].reverse() };
+    expect(doorFacing(reordered).get("F1-D-R101")).toBe("F1-J-PS");
   });
 });
