@@ -1,0 +1,3 @@
+# Optional CPU plugin for the OpenVINO profile, Windows/Linux x86_64 Python 3.12.
+-r requirements-ai-onnx.lock.txt
+onnxruntime-ep-openvino==1.8.1

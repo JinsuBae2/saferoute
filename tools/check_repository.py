@@ -91,18 +91,18 @@ def check_documents(root, paths):
 
 def main():
     root = Path(__file__).resolve().parents[1]
-    tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=root, text=True)
+    tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=root, encoding="utf-8")
     paths = [Path(name) for name in tracked.split("\0") if name]
     errors = check_documents(root, paths)
     for path in paths:
         if path.suffix in {".pem", ".key"} or (path.name.startswith(".env") and path.name != ".env.example"):
             errors.append(f"저장소에 포함할 수 없는 비밀 설정 파일: {path}")
     if os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
-        event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+        event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
         pr = event["pull_request"]
         revision = f'{pr["base"]["sha"]}..{pr["head"]["sha"]}'
         commits = subprocess.check_output(
-            ["git", "log", "--no-merges", "--format=%s", revision], cwd=root, text=True
+            ["git", "log", "--no-merges", "--format=%s", revision], cwd=root, encoding="utf-8"
         ).splitlines()
         errors.extend(check_pr(pr, commits))
     for error in errors:

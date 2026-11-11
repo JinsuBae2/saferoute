@@ -1,0 +1,853 @@
+{
+  "status": "PASS",
+  "scope": "DEVELOPMENT_TWO_ROUTE_ACTUAL_BEDROCK",
+  "independent_v15": "PENDING",
+  "children_stopped": true,
+  "environment": {
+    "python": "3.12.3",
+    "os": "Ubuntu 24.04.5 LTS",
+    "sdk": {
+      "boto3": "1.43.126",
+      "botocore": "1.43.126",
+      "s3transfer": "0.19.3",
+      "jmespath": "1.1.0",
+      "urllib3": "2.8.0"
+    },
+    "region": "ap-south-1",
+    "credentials": "server IAM role; no new key"
+  },
+  "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "prompt_version": "a05-v2",
+  "limits": {
+    "min_interval_seconds": 5,
+    "timeout_seconds": 5,
+    "ttl_seconds": 15,
+    "max_tokens": 512,
+    "total_max_attempts": 1
+  },
+  "source_hash_bytes": "LF-normalized file bytes",
+  "source_sha256": {
+    "explanation_worker/app.py": "4366b78a4825ce432061c59168cbfa48af91effb769d587a645971a5c3c4413f",
+    "explanation_worker/bedrock.py": "7ad1492c2c4d9f8b0191ceecc5c532ed730de29d300fcc69a5ebb379c0e52b6d",
+    "explanation_worker/config.py": "0c8ce0c0fdb2315be2e966759e1dce3395b40770c8f4ac0aae307282cee90411",
+    "explanation_worker/facts.py": "0b153617dc9216e58858592e3cdc76210723a2747c139eb903cee8990080f587",
+    "explanation_worker/journal.py": "8d3ebf90002a8e1b007830726e945201b20b6dfd0babb43b5cb7b8db758100a8",
+    "explanation_worker/service.py": "09b61774d8a12932e710296ab8facb24181fc653f78e5c7fd1ed74f8bbcf7553",
+    "tools/validate_explanation.py": "19912bc6aebf3b097a5f115234c616c36facc36c35a2a5da993dffb088537d5d"
+  },
+  "artifacts_sha256": {
+    "report": "d2ac84323e49fb26d6738abab6e0d65896c30c2f3f86b3ec1cead641577b567b",
+    "explanations": "d71b2d1f829ac30f8ec544cff3f796202bc7f45a1437db15c8f62274efbc9da2",
+    "ai_predictions": "3b7abfba5a0b9bc66b59a2257b4be7d8237922248c2c2ca98a776f60ac92bcaf"
+  },
+  "actual_ai": {
+    "video_sha256": "248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5",
+    "predictions": 51,
+    "source": "CAM-A",
+    "development_only": true
+  },
+  "requests": 7,
+  "outcomes": {
+    "accepted": 6,
+    "discarded": 1,
+    "timeout": 0
+  },
+  "input_tokens": 10144,
+  "output_tokens": 1309,
+  "cases": [
+    {
+      "scenario": "G01",
+      "basis": {
+        "schema_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "guidance_version": 3,
+        "basis_generated_at": "2026-11-09T13:06:59.401227Z",
+        "facts": {
+          "mode": {
+            "controller_mode": "NORMAL"
+          },
+          "route:A": {
+            "node_id": "A",
+            "next_node_id": "X",
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "A",
+              "X"
+            ],
+            "cost": 1.0,
+            "reason_codes": []
+          },
+          "route:B": {
+            "node_id": "B",
+            "next_node_id": "Y",
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "B",
+              "Y"
+            ],
+            "cost": 2.0,
+            "reason_codes": []
+          },
+          "route:I": {
+            "node_id": "I",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "NO_REACHABLE_EXIT"
+            ]
+          },
+          "route:S": {
+            "node_id": "S",
+            "next_node_id": "A",
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "S",
+              "A",
+              "X"
+            ],
+            "cost": 2.0,
+            "reason_codes": []
+          },
+          "route:X": {
+            "node_id": "X",
+            "next_node_id": null,
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "X"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          },
+          "route:Y": {
+            "node_id": "Y",
+            "next_node_id": null,
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "Y"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          }
+        }
+      },
+      "explanation": {
+        "schema_version": 1,
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "guidance_version": 3,
+        "status": "READY",
+        "basis_generated_at": "2026-11-09T13:06:59.401227Z",
+        "generated_at": "2026-11-09T13:07:00.916867Z",
+        "expires_at": "2026-11-09T13:07:14.401227Z",
+        "summary": "제어 모드는 NORMAL이며, 노드 A에서 EXIT-X로 가는 경로, 노드 B에서 EXIT-Y로 가는 경로, 노드 S에서 EXIT-X로 가는 경로가 계산되어 있고, 노드 I에서는 계산된 출구 경로가 없습니다.",
+        "fact_refs": [
+          "mode",
+          "route:A",
+          "route:B",
+          "route:S",
+          "route:I"
+        ],
+        "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "prompt_version": "a05-v2",
+        "error_code": null
+      },
+      "requested_at": "2026-11-09T13:06:59.405108Z",
+      "dispatched_at": "2026-11-09T13:06:59.408918Z",
+      "responded_at": "2026-11-09T13:07:00.916867Z",
+      "usage": {
+        "inputTokens": 1201,
+        "outputTokens": 139,
+        "totalTokens": 1340,
+        "cacheReadInputTokens": 0,
+        "cacheWriteInputTokens": 0
+      },
+      "metrics": {
+        "latencyMs": 1273
+      },
+      "server_time": "2026-11-09T13:07:01.091883Z"
+    },
+    {
+      "scenario": "G02_actual_video",
+      "basis": {
+        "schema_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "guidance_version": 4,
+        "basis_generated_at": "2026-11-09T13:07:06.799872Z",
+        "facts": {
+          "mode": {
+            "controller_mode": "EMERGENCY"
+          },
+          "cause:CAM-A:FIRE": {
+            "source_id": "CAM-A",
+            "hazard_type": "FIRE"
+          },
+          "blocked-node:A": {
+            "node_id": "A",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:A-S": {
+            "edge_id": "A-S",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:A-X": {
+            "edge_id": "A-X",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:S-A": {
+            "edge_id": "S-A",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:X-A": {
+            "edge_id": "X-A",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "route:A": {
+            "node_id": "A",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "ORIGIN_BLOCKED"
+            ]
+          },
+          "route:B": {
+            "node_id": "B",
+            "next_node_id": "Y",
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "B",
+              "Y"
+            ],
+            "cost": 2.0,
+            "reason_codes": []
+          },
+          "route:I": {
+            "node_id": "I",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "NO_REACHABLE_EXIT"
+            ]
+          },
+          "route:S": {
+            "node_id": "S",
+            "next_node_id": "B",
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "S",
+              "B",
+              "Y"
+            ],
+            "cost": 4.0,
+            "reason_codes": []
+          },
+          "route:X": {
+            "node_id": "X",
+            "next_node_id": null,
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "X"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          },
+          "route:Y": {
+            "node_id": "Y",
+            "next_node_id": null,
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "Y"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          }
+        }
+      },
+      "explanation": {
+        "schema_version": 1,
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "guidance_version": 4,
+        "status": "READY",
+        "basis_generated_at": "2026-11-09T13:07:06.799872Z",
+        "generated_at": "2026-11-09T13:07:08.765867Z",
+        "expires_at": "2026-11-09T13:07:21.799872Z",
+        "summary": "제어 모드는 긴급(EMERGENCY)이며, CAM-A에서 감지된 화재로 인해 노드 A와 A 주변 경로(A-S, A-X, S-A, X-A)가 차단되었다. 노드 B, S, X, Y에서는 계산된 경로가 있으나 노드 I에서는 도달 가능한 출구 경로가 없다.",
+        "fact_refs": [
+          "mode",
+          "cause:CAM-A:FIRE",
+          "blocked-node:A",
+          "blocked-edge:A-S",
+          "blocked-edge:A-X",
+          "blocked-edge:S-A",
+          "blocked-edge:X-A",
+          "route:A",
+          "route:B",
+          "route:I",
+          "route:S",
+          "route:X",
+          "route:Y"
+        ],
+        "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "prompt_version": "a05-v2",
+        "error_code": null
+      },
+      "requested_at": "2026-11-09T13:07:06.804955Z",
+      "dispatched_at": "2026-11-09T13:07:06.808529Z",
+      "responded_at": "2026-11-09T13:07:08.765867Z",
+      "usage": {
+        "inputTokens": 1439,
+        "outputTokens": 213,
+        "totalTokens": 1652,
+        "cacheReadInputTokens": 0,
+        "cacheWriteInputTokens": 0
+      },
+      "metrics": {
+        "latencyMs": 1930
+      },
+      "server_time": "2026-11-09T13:07:08.898611Z"
+    },
+    {
+      "scenario": "G04",
+      "basis": {
+        "schema_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "guidance_version": 5,
+        "basis_generated_at": "2026-11-09T13:07:32.826011Z",
+        "facts": {
+          "mode": {
+            "controller_mode": "EMERGENCY"
+          },
+          "cause:CAM-A:FIRE": {
+            "source_id": "CAM-A",
+            "hazard_type": "FIRE"
+          },
+          "cause:DETECTOR-B:SMOKE": {
+            "source_id": "DETECTOR-B",
+            "hazard_type": "SMOKE"
+          },
+          "blocked-node:A": {
+            "node_id": "A",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-node:B": {
+            "node_id": "B",
+            "source_ids": [
+              "DETECTOR-B"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:A-S": {
+            "edge_id": "A-S",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:A-X": {
+            "edge_id": "A-X",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:B-S": {
+            "edge_id": "B-S",
+            "source_ids": [
+              "DETECTOR-B"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:B-Y": {
+            "edge_id": "B-Y",
+            "source_ids": [
+              "DETECTOR-B"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:S-A": {
+            "edge_id": "S-A",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:S-B": {
+            "edge_id": "S-B",
+            "source_ids": [
+              "DETECTOR-B"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:X-A": {
+            "edge_id": "X-A",
+            "source_ids": [
+              "CAM-A"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "blocked-edge:Y-B": {
+            "edge_id": "Y-B",
+            "source_ids": [
+              "DETECTOR-B"
+            ],
+            "reason_codes": [
+              "ACTIVE_ALARM"
+            ]
+          },
+          "route:A": {
+            "node_id": "A",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "ORIGIN_BLOCKED"
+            ]
+          },
+          "route:B": {
+            "node_id": "B",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "ORIGIN_BLOCKED"
+            ]
+          },
+          "route:I": {
+            "node_id": "I",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "NO_REACHABLE_EXIT"
+            ]
+          },
+          "route:S": {
+            "node_id": "S",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "NO_REACHABLE_EXIT"
+            ]
+          },
+          "route:X": {
+            "node_id": "X",
+            "next_node_id": null,
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "X"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          },
+          "route:Y": {
+            "node_id": "Y",
+            "next_node_id": null,
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "Y"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          }
+        }
+      },
+      "explanation": {
+        "schema_version": 1,
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "guidance_version": 5,
+        "status": "READY",
+        "basis_generated_at": "2026-11-09T13:07:32.826011Z",
+        "generated_at": "2026-11-09T13:07:34.793317Z",
+        "expires_at": "2026-11-09T13:07:47.826011Z",
+        "summary": "제어 모드는 긴급(EMERGENCY)이며, CAM-A의 화재와 DETECTOR-B의 연기 감지로 인해 노드 A, B와 이들을 연결하는 경로들이 차단되었고, 노드 I와 S는 도달 가능한 출구 경로가 없는 상태입니다.",
+        "fact_refs": [
+          "mode",
+          "cause:CAM-A:FIRE",
+          "cause:DETECTOR-B:SMOKE",
+          "blocked-node:A",
+          "blocked-node:B",
+          "blocked-edge:A-S",
+          "blocked-edge:A-X",
+          "blocked-edge:B-S",
+          "blocked-edge:B-Y",
+          "blocked-edge:S-A",
+          "blocked-edge:S-B",
+          "blocked-edge:X-A",
+          "blocked-edge:Y-B",
+          "route:I",
+          "route:S"
+        ],
+        "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "prompt_version": "a05-v2",
+        "error_code": null
+      },
+      "requested_at": "2026-11-09T13:07:32.829899Z",
+      "dispatched_at": "2026-11-09T13:07:32.833527Z",
+      "responded_at": "2026-11-09T13:07:34.793317Z",
+      "usage": {
+        "inputTokens": 1671,
+        "outputTokens": 238,
+        "totalTokens": 1909,
+        "cacheReadInputTokens": 0,
+        "cacheWriteInputTokens": 0
+      },
+      "metrics": {
+        "latencyMs": 1950
+      },
+      "server_time": "2026-11-09T13:07:34.927821Z"
+    },
+    {
+      "scenario": "G07",
+      "basis": {
+        "schema_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "guidance_version": 8,
+        "basis_generated_at": "2026-11-09T13:07:42.987088Z",
+        "facts": {
+          "mode": {
+            "controller_mode": "DEGRADED"
+          },
+          "blocked-node:A": {
+            "node_id": "A",
+            "source_ids": [
+              "DETECTOR-A"
+            ],
+            "reason_codes": [
+              "REQUIRED_OBSERVATION_UNKNOWN"
+            ]
+          },
+          "blocked-edge:A-S": {
+            "edge_id": "A-S",
+            "source_ids": [
+              "DETECTOR-A"
+            ],
+            "reason_codes": [
+              "REQUIRED_OBSERVATION_UNKNOWN"
+            ]
+          },
+          "blocked-edge:A-X": {
+            "edge_id": "A-X",
+            "source_ids": [
+              "DETECTOR-A"
+            ],
+            "reason_codes": [
+              "REQUIRED_OBSERVATION_UNKNOWN"
+            ]
+          },
+          "blocked-edge:S-A": {
+            "edge_id": "S-A",
+            "source_ids": [
+              "DETECTOR-A"
+            ],
+            "reason_codes": [
+              "REQUIRED_OBSERVATION_UNKNOWN"
+            ]
+          },
+          "blocked-edge:X-A": {
+            "edge_id": "X-A",
+            "source_ids": [
+              "DETECTOR-A"
+            ],
+            "reason_codes": [
+              "REQUIRED_OBSERVATION_UNKNOWN"
+            ]
+          },
+          "route:A": {
+            "node_id": "A",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "ORIGIN_BLOCKED",
+              "REQUIRED_OBSERVATION_UNKNOWN"
+            ]
+          },
+          "route:B": {
+            "node_id": "B",
+            "next_node_id": "Y",
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "B",
+              "Y"
+            ],
+            "cost": 2.0,
+            "reason_codes": []
+          },
+          "route:I": {
+            "node_id": "I",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "NO_REACHABLE_EXIT"
+            ]
+          },
+          "route:S": {
+            "node_id": "S",
+            "next_node_id": "B",
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "S",
+              "B",
+              "Y"
+            ],
+            "cost": 4.0,
+            "reason_codes": []
+          },
+          "route:X": {
+            "node_id": "X",
+            "next_node_id": null,
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "X"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          },
+          "route:Y": {
+            "node_id": "Y",
+            "next_node_id": null,
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "Y"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          }
+        }
+      },
+      "explanation": {
+        "schema_version": 1,
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "guidance_version": 8,
+        "status": "READY",
+        "basis_generated_at": "2026-11-09T13:07:42.987088Z",
+        "generated_at": "2026-11-09T13:07:44.618018Z",
+        "expires_at": "2026-11-09T13:07:57.987088Z",
+        "summary": "제어 모드는 DEGRADED이며, 노드 A와 이에 연결된 모든 경로가 DETECTOR-A의 관측 불가로 차단되어 있다. 노드 B, S, X, Y에서는 계산된 경로가 있고, 노드 I에서는 도달 가능한 출구 경로가 없다.",
+        "fact_refs": [
+          "mode",
+          "blocked-node:A",
+          "blocked-edge:A-S",
+          "blocked-edge:A-X",
+          "blocked-edge:S-A",
+          "blocked-edge:X-A",
+          "route:A",
+          "route:B",
+          "route:I",
+          "route:S",
+          "route:X",
+          "route:Y"
+        ],
+        "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "prompt_version": "a05-v2",
+        "error_code": null
+      },
+      "requested_at": "2026-11-09T13:07:42.989594Z",
+      "dispatched_at": "2026-11-09T13:07:42.992868Z",
+      "responded_at": "2026-11-09T13:07:44.618018Z",
+      "usage": {
+        "inputTokens": 1432,
+        "outputTokens": 196,
+        "totalTokens": 1628,
+        "cacheReadInputTokens": 0,
+        "cacheWriteInputTokens": 0
+      },
+      "metrics": {
+        "latencyMs": 1615
+      },
+      "server_time": "2026-11-09T13:07:44.691792Z"
+    },
+    {
+      "scenario": "G09",
+      "basis": {
+        "schema_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "guidance_version": 9,
+        "basis_generated_at": "2026-11-09T13:07:48.076913Z",
+        "facts": {
+          "mode": {
+            "controller_mode": "NORMAL"
+          },
+          "route:A": {
+            "node_id": "A",
+            "next_node_id": "X",
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "A",
+              "X"
+            ],
+            "cost": 1.0,
+            "reason_codes": []
+          },
+          "route:B": {
+            "node_id": "B",
+            "next_node_id": "Y",
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "B",
+              "Y"
+            ],
+            "cost": 2.0,
+            "reason_codes": []
+          },
+          "route:I": {
+            "node_id": "I",
+            "next_node_id": null,
+            "exit_id": null,
+            "path_node_ids": [],
+            "cost": null,
+            "reason_codes": [
+              "NO_REACHABLE_EXIT"
+            ]
+          },
+          "route:S": {
+            "node_id": "S",
+            "next_node_id": "A",
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "S",
+              "A",
+              "X"
+            ],
+            "cost": 2.0,
+            "reason_codes": []
+          },
+          "route:X": {
+            "node_id": "X",
+            "next_node_id": null,
+            "exit_id": "EXIT-X",
+            "path_node_ids": [
+              "X"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          },
+          "route:Y": {
+            "node_id": "Y",
+            "next_node_id": null,
+            "exit_id": "EXIT-Y",
+            "path_node_ids": [
+              "Y"
+            ],
+            "cost": 0.0,
+            "reason_codes": []
+          }
+        }
+      },
+      "explanation": {
+        "schema_version": 1,
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "run_id": "af88ba4b-6872-48af-9e00-8682ae5219e2",
+        "guidance_version": 9,
+        "status": "READY",
+        "basis_generated_at": "2026-11-09T13:07:48.076913Z",
+        "generated_at": "2026-11-09T13:07:49.281793Z",
+        "expires_at": "2026-11-09T13:08:03.076913Z",
+        "summary": "제어 모드는 NORMAL이며, 노드 A, B, S, X, Y에서는 계산된 경로가 있고 노드 I에서는 계산된 출구 경로가 없습니다.",
+        "fact_refs": [
+          "mode",
+          "route:A",
+          "route:B",
+          "route:S",
+          "route:X",
+          "route:Y",
+          "route:I"
+        ],
+        "model_id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "prompt_version": "a05-v2",
+        "error_code": null
+      },
+      "requested_at": "2026-11-09T13:07:48.080042Z",
+      "dispatched_at": "2026-11-09T13:07:48.083480Z",
+      "responded_at": "2026-11-09T13:07:49.281793Z",
+      "usage": {
+        "inputTokens": 1201,
+        "outputTokens": 110,
+        "totalTokens": 1311,
+        "cacheReadInputTokens": 0,
+        "cacheWriteInputTokens": 0
+      },
+      "metrics": {
+        "latencyMs": 1190
+      },
+      "server_time": "2026-11-09T13:07:49.412925Z"
+    }
+  ]
+}

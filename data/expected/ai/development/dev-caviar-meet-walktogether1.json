@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "asset_id": "dev-caviar-meet-walktogether1",
+  "scene_id": "caviar-inria-grenoble-lobby",
+  "video_sha256": "8fb18d0c4c6bb7a895480e53e08e7b02bfd7f0e6876dc05bdd049b8805176e82",
+  "source": "https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/",
+  "split": "development",
+  "annotator": "준영",
+  "reviewer": null,
+  "annotation_complete": true,
+  "training_overlap": "unknown",
+  "development_used": true,
+  "duration_ms": 28320,
+  "normal_video": true,
+  "events": []
+
+}

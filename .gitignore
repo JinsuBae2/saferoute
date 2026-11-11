@@ -1,8 +1,10 @@
 .venv/
 .venv-ai/
+.venv-explanation/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+/node_modules/
 web/node_modules/
 web/dist/
 configs/*.local.json

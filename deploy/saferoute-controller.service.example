@@ -1,0 +1,23 @@
+# D02(#28): 제어 서버. 개인 체험방의 방별 제어기·시뮬레이션을 이 프로세스 하나가 품는다.
+# /etc/systemd/system/saferoute-controller.service 로 복사한다.
+[Unit]
+Description=saferoute controller with personal rooms
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/saferoute
+Environment=SAFEROUTE_BUILDING_FILE=data/space/wfi-v1.json
+Environment=SAFEROUTE_ROOM_SCENARIO_FILE=data/scenarios/wfi-idle.json
+# 실행 기록은 저장소 밖에 둔다. 방 5개를 계속 쓰면 30분에 2GB쯤 쌓이므로 디스크를 지켜본다.
+Environment=SAFEROUTE_RUNS_DIR=/home/ubuntu/saferoute-runs
+# 방 상태가 프로세스 메모리에 있으므로 worker는 반드시 1개다. 바깥에는 Nginx만 내보낸다.
+ExecStart=/home/ubuntu/saferoute/.venv/bin/python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
+Restart=on-failure
+RestartSec=2
+# 종료 때 방 정리와 AI 종료 확인(최대 6초)을 기다린다.
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

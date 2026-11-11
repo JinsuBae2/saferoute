@@ -1,0 +1,732 @@
+{
+  "basis": "docs/07-integration-test-demo-scenarios.md section 3; manually specified paths, not solver output",
+  "node_order": [
+    "S",
+    "A",
+    "B",
+    "X",
+    "Y",
+    "I"
+  ],
+  "row_fields": [
+    "next_node_id",
+    "exit_id",
+    "cost",
+    "path_node_ids",
+    "reason_codes"
+  ],
+  "cases": [
+    {
+      "id": "G01",
+      "description": "All required observations valid; default route",
+      "blocked_nodes": {},
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          "A",
+          "EXIT-X",
+          2,
+          [
+            "S",
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "A": [
+          "X",
+          "EXIT-X",
+          1,
+          [
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "B": [
+          "Y",
+          "EXIT-Y",
+          2,
+          [
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G02",
+      "description": "A has an active alarm",
+      "blocked_nodes": {
+        "A": [
+          "ACTIVE_ALARM"
+        ]
+      },
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          "B",
+          "EXIT-Y",
+          4,
+          [
+            "S",
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "A": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED"
+          ]
+        ],
+        "B": [
+          "Y",
+          "EXIT-Y",
+          2,
+          [
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G03",
+      "description": "B has an active alarm",
+      "blocked_nodes": {
+        "B": [
+          "ACTIVE_ALARM"
+        ]
+      },
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          "A",
+          "EXIT-X",
+          2,
+          [
+            "S",
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "A": [
+          "X",
+          "EXIT-X",
+          1,
+          [
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "B": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED"
+          ]
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G04",
+      "description": "Both corridors blocked",
+      "blocked_nodes": {
+        "A": [
+          "ACTIVE_ALARM"
+        ],
+        "B": [
+          "ACTIVE_ALARM"
+        ]
+      },
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ],
+        "A": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED"
+          ]
+        ],
+        "B": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED"
+          ]
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G05",
+      "description": "Origin S blocked",
+      "blocked_nodes": {
+        "S": [
+          "ACTIVE_ALARM"
+        ]
+      },
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED"
+          ]
+        ],
+        "A": [
+          "X",
+          "EXIT-X",
+          1,
+          [
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "B": [
+          "Y",
+          "EXIT-Y",
+          2,
+          [
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G06",
+      "description": "EXIT-X disabled; dynamic routing only",
+      "blocked_nodes": {},
+      "blocked_edges": {},
+      "disabled_exits": [
+        "EXIT-X"
+      ],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          "B",
+          "EXIT-Y",
+          4,
+          [
+            "S",
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "A": [
+          "S",
+          "EXIT-Y",
+          5,
+          [
+            "A",
+            "S",
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "B": [
+          "Y",
+          "EXIT-Y",
+          2,
+          [
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "X": [
+          "A",
+          "EXIT-Y",
+          6,
+          [
+            "X",
+            "A",
+            "S",
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G07",
+      "description": "A alarm and B required observation unavailable",
+      "blocked_nodes": {
+        "A": [
+          "ACTIVE_ALARM"
+        ],
+        "B": [
+          "REQUIRED_OBSERVATION_UNKNOWN"
+        ]
+      },
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT",
+            "REQUIRED_OBSERVATION_UNKNOWN"
+          ]
+        ],
+        "A": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED"
+          ]
+        ],
+        "B": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED",
+            "REQUIRED_OBSERVATION_UNKNOWN"
+          ]
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G08",
+      "description": "One of two A causes cleared; remaining cause still blocks A",
+      "blocked_nodes": {
+        "A": [
+          "ACTIVE_ALARM"
+        ]
+      },
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          "B",
+          "EXIT-Y",
+          4,
+          [
+            "S",
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "A": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "ORIGIN_BLOCKED"
+          ]
+        ],
+        "B": [
+          "Y",
+          "EXIT-Y",
+          2,
+          [
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G09",
+      "description": "All A causes cleared with valid required observations",
+      "blocked_nodes": {},
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {},
+      "expected": {
+        "S": [
+          "A",
+          "EXIT-X",
+          2,
+          [
+            "S",
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "A": [
+          "X",
+          "EXIT-X",
+          1,
+          [
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "B": [
+          "Y",
+          "EXIT-Y",
+          2,
+          [
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "G10",
+      "description": "Equal total cost uses EXIT-X",
+      "blocked_nodes": {},
+      "blocked_edges": {},
+      "disabled_exits": [],
+      "edge_costs": {
+        "S-B": 1,
+        "B-S": 1,
+        "B-Y": 1,
+        "Y-B": 1
+      },
+      "expected": {
+        "S": [
+          "A",
+          "EXIT-X",
+          2,
+          [
+            "S",
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "A": [
+          "X",
+          "EXIT-X",
+          1,
+          [
+            "A",
+            "X"
+          ],
+          []
+        ],
+        "B": [
+          "Y",
+          "EXIT-Y",
+          1,
+          [
+            "B",
+            "Y"
+          ],
+          []
+        ],
+        "X": [
+          null,
+          "EXIT-X",
+          0,
+          [
+            "X"
+          ],
+          []
+        ],
+        "Y": [
+          null,
+          "EXIT-Y",
+          0,
+          [
+            "Y"
+          ],
+          []
+        ],
+        "I": [
+          null,
+          null,
+          null,
+          [],
+          [
+            "NO_REACHABLE_EXIT"
+          ]
+        ]
+      }
+    }
+  ]
+}

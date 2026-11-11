@@ -1,0 +1,647 @@
+{
+  "schema_version": 1,
+  "building_id": "WFI",
+  "building_version": 5,
+  "floor_labels": {
+    "F1": "1층",
+    "F2": "2층",
+    "F3": "3층"
+  },
+  "zone_labels": {
+    "F1-CONF": "1층 컨퍼런스룸",
+    "F1-R102": "1층 102호",
+    "F1-NURSING": "1층 수유실",
+    "F1-STAIR-A": "1층 좌측 계단 A",
+    "F1-LOBBY": "1층 중앙 로비",
+    "F1-PASSAGE-N": "1층 블록 사이 위쪽 통로",
+    "F1-PASSAGE-S": "1층 블록 사이 아래쪽 통로",
+    "F1-STAIR-B": "1층 우측 계단 B",
+    "F1-R101": "1층 101호",
+    "F2-SERVER": "2층 전산실",
+    "F2-R201": "2층 201호",
+    "F2-R202": "2층 202호",
+    "F2-R203": "2층 203호",
+    "F2-ADMIN": "2층 경영지원실",
+    "F2-DIRECTOR": "2층 원장실",
+    "F2-INDUSTRY": "2층 디지털·모빌리티 산업부",
+    "F2-ROOM-W": "2층 좌측 이름 미확인 방",
+    "F2-VOID": "2층 중앙 개방 공간",
+    "F2-CORR-N": "2층 위쪽 복도",
+    "F2-CORR-W": "2층 좌측 복도",
+    "F2-CORR-E": "2층 중앙 우측 복도",
+    "F2-CORR-E2": "2층 우측 호실 앞 복도",
+    "F2-STAIR-A": "2층 좌측 계단 A",
+    "F2-STAIR-B": "2층 우측 계단 B",
+    "F3-R308": "3층 308호",
+    "F3-VOID-N": "3층 위쪽 개방 공간",
+    "F3-ROOM-NE": "3층 우측 위 이름 미확인 공간",
+    "F3-R300": "3층 300호",
+    "F3-R301": "3층 301호",
+    "F3-R302": "3층 302호",
+    "F3-R303": "3층 303호",
+    "F3-R304": "3층 304호",
+    "F3-R305": "3층 305호",
+    "F3-COMMUNITY": "3층 커뮤니티룸",
+    "F3-R306": "3층 306호",
+    "F3-R307": "3층 307호",
+    "F3-CENTER": "3층 중앙 공간",
+    "F3-CORR-N": "3층 위쪽 복도",
+    "F3-CORR-W": "3층 좌측 복도",
+    "F3-CORR-E": "3층 중앙 우측 복도",
+    "F3-CORR-E2": "3층 우측 호실 앞 복도",
+    "F3-STAIR-A": "3층 좌측 계단 A",
+    "F3-STAIR-B": "3층 우측 계단 B"
+  },
+  "node_labels": {
+    "F1-X-N": "1층 블록 사이 위쪽 출구",
+    "F1-X-S": "1층 블록 사이 아래쪽 출구",
+    "F1-X-NW": "1층 로비 위쪽 출구(시뮬레이션 가정)",
+    "F1-X-SE": "1층 101호 아래쪽 출구(시뮬레이션 가정)",
+    "F1-J-PN": "1층 블록 사이 위쪽 통로",
+    "F1-J-PM": "1층 블록 사이 중앙 통로",
+    "F1-J-PS": "1층 블록 사이 아래쪽 통로",
+    "F1-J-LNW": "1층 로비 위쪽 출입구 앞",
+    "F1-J-LW": "1층 102호 아래 좌측 로비",
+    "F1-J-LE": "1층 102호 아래 우측 로비",
+    "F1-J-LA": "1층 좌측 계단 A 앞 로비",
+    "F1-J-LC": "1층 열린 계단 C 위쪽 로비",
+    "F1-J-LM": "1층 열린 계단 C 우측 로비",
+    "F1-J-LSW": "1층 컨퍼런스룸 아래쪽 입구 앞",
+    "F1-J-LS": "1층 로비 아래쪽 분기점",
+    "F1-D-R102": "1층 102호 입구",
+    "F1-D-NURSING": "1층 수유실 입구",
+    "F1-D-CONF-N": "1층 컨퍼런스룸 위쪽 입구",
+    "F1-D-CONF-S": "1층 컨퍼런스룸 아래쪽 입구",
+    "F1-D-R101": "1층 101호 입구",
+    "F1-S-A": "1층 좌측 계단 A",
+    "F1-S-B": "1층 우측 계단 B",
+    "F1-S-C": "1층 중앙 열린 계단 C",
+    "F2-D-SERVER": "2층 전산실 입구",
+    "F2-J-N1": "2층 전산실 앞 복도",
+    "F2-J-N2": "2층 위쪽 복도 좌측 분기점",
+    "F2-J-N3": "2층 201호 앞 복도",
+    "F2-D-R201": "2층 201호 입구",
+    "F2-J-N4": "2층 위쪽 복도 중앙 분기점",
+    "F2-J-N6": "2층 위쪽 복도 우측 연결점",
+    "F2-J-N7": "2층 202호 앞 복도",
+    "F2-D-R202": "2층 202호 입구",
+    "F2-J-R1": "2층 203호 앞 복도",
+    "F2-D-R203": "2층 203호 입구",
+    "F2-J-R2": "2층 우측 계단 B 앞 복도",
+    "F2-J-R2B": "2층 경영지원실 앞 복도",
+    "F2-D-ADMIN": "2층 경영지원실 입구",
+    "F2-J-R3": "2층 원장실 앞 복도",
+    "F2-D-DIRECTOR": "2층 원장실 입구",
+    "F2-J-W1": "2층 좌측 계단 A 앞 복도",
+    "F2-J-W2": "2층 디지털·모빌리티 산업부 앞 복도",
+    "F2-D-INDUSTRY": "2층 디지털·모빌리티 산업부 서쪽 입구",
+    "F2-J-E1": "2층 중앙 우측 복도 위쪽",
+    "F2-J-E2": "2층 열린 계단 C·D 사이 분기점",
+    "F2-J-E3": "2층 중앙 우측 복도 아래쪽",
+    "F2-J-E4": "2층 우측 계단 B 연결 복도",
+    "F2-S-A": "2층 좌측 계단 A",
+    "F2-S-B": "2층 우측 계단 B",
+    "F2-S-C": "2층 중앙 열린 계단 C",
+    "F2-S-D": "2층 중앙 우측 열린 계단 D",
+    "F3-D-R308": "3층 308호 입구",
+    "F3-J-N1": "3층 308호 앞 복도",
+    "F3-J-N2": "3층 위쪽 복도 좌측 분기점",
+    "F3-S-D": "3층 중앙 우측 열린 계단 D",
+    "F3-J-N3": "3층 열린 계단 D 위쪽 복도",
+    "F3-J-N4": "3층 위쪽 복도 중앙 우측 분기점",
+    "F3-D-ROOM-NE": "3층 우측 위 이름 미확인 공간 입구",
+    "F3-J-N6": "3층 우측 위 이름 미확인 공간 앞",
+    "F3-J-N5": "3층 우측 호실 복도 위쪽 분기점",
+    "F3-J-R0": "3층 300호 앞 복도",
+    "F3-D-R300": "3층 300호 입구",
+    "F3-J-R1": "3층 301호 앞 복도",
+    "F3-D-R301": "3층 301호 입구",
+    "F3-J-R2": "3층 302호 앞 복도",
+    "F3-D-R302": "3층 302호 입구",
+    "F3-J-R3": "3층 303호 앞 복도",
+    "F3-D-R303": "3층 303호 입구",
+    "F3-J-E1": "3층 우측 계단 B 연결 복도",
+    "F3-J-E2": "3층 304호 앞 복도",
+    "F3-D-R304": "3층 304호 북쪽 입구",
+    "F3-J-W1": "3층 좌측 계단 A 앞 복도",
+    "F3-J-W2": "3층 305호 앞 복도",
+    "F3-J-SW": "3층 306·307호 앞 복도",
+    "F3-D-R307": "3층 307호 남쪽 입구",
+    "F3-D-R306": "3층 306호 입구",
+    "F3-D-COMMUNITY": "3층 커뮤니티룸 입구",
+    "F3-D-R305": "3층 305호 입구",
+    "F3-S-A": "3층 좌측 계단 A",
+    "F3-S-B": "3층 우측 계단 B",
+    "F1-J-CONF-N": "1층 컨퍼런스룸 안 위쪽",
+    "F1-J-CONF-S": "1층 컨퍼런스룸 안 아래쪽",
+    "F1-J-R101": "1층 101호 안 아래쪽 출구 앞",
+    "F2-D-INDUSTRY-E": "2층 디지털·모빌리티 산업부 동쪽 입구",
+    "F2-J-INDUSTRY-W": "2층 디지털·모빌리티 산업부 안 서쪽",
+    "F2-J-INDUSTRY-E": "2층 디지털·모빌리티 산업부 안 동쪽",
+    "F3-D-R307-N": "3층 307호 북쪽 입구",
+    "F3-J-R307-N": "3층 307호 안 북쪽",
+    "F3-J-R307-S": "3층 307호 안 남쪽",
+    "F3-D-R304-E": "3층 304호 동쪽 입구",
+    "F3-J-R304-N": "3층 304호 안 북쪽",
+    "F3-J-R304-E": "3층 304호 안 동쪽",
+    "F3-J-R4": "3층 304호 동쪽 입구 앞 복도"
+  },
+  "exit_labels": {
+    "EXIT-N": "1층 블록 사이 위쪽 출구",
+    "EXIT-S": "1층 블록 사이 아래쪽 출구",
+    "EXIT-NW": "1층 로비 위쪽 출구(시뮬레이션 가정)",
+    "EXIT-SE": "1층 101호 아래쪽 출구(시뮬레이션 가정)"
+  },
+  "sources": {
+    "CAM-F2-CORR-W": {
+      "label": "2층 좌측 계단 A 앞 CAM",
+      "installation": {
+        "floor_id": "F2",
+        "position": {
+          "x": 14.3,
+          "y": 6.5,
+          "z": 16.5
+        },
+        "basis": "SIMULATED"
+      }
+    },
+    "CAM-F2-CORR-E": {
+      "label": "2층 우측 계단 B 앞 CAM",
+      "installation": {
+        "floor_id": "F2",
+        "position": {
+          "x": 33.1,
+          "y": 6.5,
+          "z": 15.2
+        },
+        "basis": "SIMULATED"
+      }
+    },
+    "CAM-F3-CORR-W": {
+      "label": "3층 좌측 계단 A 앞 CAM",
+      "installation": {
+        "floor_id": "F3",
+        "position": {
+          "x": 14.3,
+          "y": 10.5,
+          "z": 16.5
+        },
+        "basis": "SIMULATED"
+      }
+    },
+    "CAM-F3-CORR-E": {
+      "label": "3층 우측 계단 B 앞 CAM",
+      "installation": {
+        "floor_id": "F3",
+        "position": {
+          "x": 33.1,
+          "y": 10.5,
+          "z": 15.3
+        },
+        "basis": "SIMULATED"
+      }
+    },
+    "SMK-F1-LOBBY": {
+      "label": "1층 중앙 로비 가상 감지기",
+      "installation": null
+    },
+    "SMK-F1-PASSAGE-N": {
+      "label": "1층 블록 사이 위쪽 통로 가상 감지기",
+      "installation": null
+    },
+    "SMK-F1-PASSAGE-S": {
+      "label": "1층 블록 사이 아래쪽 통로 가상 감지기",
+      "installation": null
+    },
+    "SMK-F2-VOID": {
+      "label": "2층 중앙 개방 공간 가상 감지기",
+      "installation": null
+    },
+    "SMK-F2-CORR-N": {
+      "label": "2층 위쪽 복도 가상 감지기",
+      "installation": null
+    },
+    "SMK-F2-CORR-W": {
+      "label": "2층 좌측 복도 가상 감지기",
+      "installation": null
+    },
+    "SMK-F2-CORR-E": {
+      "label": "2층 중앙 우측 복도 가상 감지기",
+      "installation": null
+    },
+    "SMK-F2-CORR-E2": {
+      "label": "2층 우측 호실 앞 복도 가상 감지기",
+      "installation": null
+    },
+    "SMK-F3-CORR-N": {
+      "label": "3층 위쪽 복도 가상 감지기",
+      "installation": null
+    },
+    "SMK-F3-CORR-W": {
+      "label": "3층 좌측 복도 가상 감지기",
+      "installation": null
+    },
+    "SMK-F3-CORR-E": {
+      "label": "3층 중앙 우측 복도 가상 감지기",
+      "installation": null
+    },
+    "SMK-F3-CORR-E2": {
+      "label": "3층 우측 호실 앞 복도 가상 감지기",
+      "installation": null
+    },
+    "SPK-F1-LOBBY": {
+      "label": "1층 중앙 로비 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F1-PASSAGE-N": {
+      "label": "1층 블록 사이 위쪽 통로 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F1-PASSAGE-S": {
+      "label": "1층 블록 사이 아래쪽 통로 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F2-VOID": {
+      "label": "2층 중앙 개방 공간 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F2-CORR-N": {
+      "label": "2층 위쪽 복도 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F2-CORR-W": {
+      "label": "2층 좌측 복도 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F2-CORR-E": {
+      "label": "2층 중앙 우측 복도 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F2-CORR-E2": {
+      "label": "2층 우측 호실 앞 복도 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F3-CORR-N": {
+      "label": "3층 위쪽 복도 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F3-CORR-W": {
+      "label": "3층 좌측 복도 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F3-CORR-E": {
+      "label": "3층 중앙 우측 복도 가상 스프링클러",
+      "installation": null
+    },
+    "SPK-F3-CORR-E2": {
+      "label": "3층 우측 호실 앞 복도 가상 스프링클러",
+      "installation": null
+    },
+    "MANUAL-F1-LOBBY": {
+      "label": "1층 중앙 로비 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-PASSAGE-N": {
+      "label": "1층 블록 사이 위쪽 통로 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-PASSAGE-S": {
+      "label": "1층 블록 사이 아래쪽 통로 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-VOID": {
+      "label": "2층 중앙 개방 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-N": {
+      "label": "2층 위쪽 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-W": {
+      "label": "2층 좌측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-E": {
+      "label": "2층 중앙 우측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-CORR-E2": {
+      "label": "2층 우측 호실 앞 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-N": {
+      "label": "3층 위쪽 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-W": {
+      "label": "3층 좌측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-E": {
+      "label": "3층 중앙 우측 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CORR-E2": {
+      "label": "3층 우측 호실 앞 복도 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-CONF": {
+      "label": "1층 컨퍼런스룸 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-R102": {
+      "label": "1층 102호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-NURSING": {
+      "label": "1층 수유실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-STAIR-A": {
+      "label": "1층 좌측 계단 A 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-STAIR-B": {
+      "label": "1층 우측 계단 B 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-R101": {
+      "label": "1층 101호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-SERVER": {
+      "label": "2층 전산실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-R201": {
+      "label": "2층 201호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-R202": {
+      "label": "2층 202호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-R203": {
+      "label": "2층 203호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-ADMIN": {
+      "label": "2층 경영지원실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-DIRECTOR": {
+      "label": "2층 원장실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-INDUSTRY": {
+      "label": "2층 디지털·모빌리티 산업부 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-ROOM-W": {
+      "label": "2층 좌측 이름 미확인 방 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-STAIR-A": {
+      "label": "2층 좌측 계단 A 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-STAIR-B": {
+      "label": "2층 우측 계단 B 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R308": {
+      "label": "3층 308호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-VOID-N": {
+      "label": "3층 위쪽 개방 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-ROOM-NE": {
+      "label": "3층 우측 위 이름 미확인 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R300": {
+      "label": "3층 300호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R301": {
+      "label": "3층 301호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R302": {
+      "label": "3층 302호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R303": {
+      "label": "3층 303호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R304": {
+      "label": "3층 304호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R305": {
+      "label": "3층 305호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-COMMUNITY": {
+      "label": "3층 커뮤니티룸 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R306": {
+      "label": "3층 306호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R307": {
+      "label": "3층 307호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CENTER": {
+      "label": "3층 중앙 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-STAIR-A": {
+      "label": "3층 좌측 계단 A 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-STAIR-B": {
+      "label": "3층 우측 계단 B 시험 화재 입력",
+      "installation": null
+    }
+  },
+  "signs": {
+    "SIGN-F1-X-N": {
+      "label": "1층 블록 사이 위쪽 출구 위치 표지",
+      "kind": "EXIT_LOCATION"
+    },
+    "SIGN-F1-X-S": {
+      "label": "1층 블록 사이 아래쪽 출구 위치 표지",
+      "kind": "EXIT_LOCATION"
+    },
+    "SIGN-F1-X-NW": {
+      "label": "1층 로비 위쪽 출구(시뮬레이션 가정) 위치 표지",
+      "kind": "EXIT_LOCATION"
+    },
+    "SIGN-F1-X-SE": {
+      "label": "1층 101호 아래쪽 출구(시뮬레이션 가정) 위치 표지",
+      "kind": "EXIT_LOCATION"
+    },
+    "SIGN-F1-J-PN": {
+      "label": "1층 블록 사이 위쪽 통로 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-PM": {
+      "label": "1층 블록 사이 중앙 통로 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-PS": {
+      "label": "1층 블록 사이 아래쪽 통로 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-LNW": {
+      "label": "1층 로비 위쪽 출입구 앞 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-LW": {
+      "label": "1층 102호 아래 좌측 로비 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-LE": {
+      "label": "1층 102호 아래 우측 로비 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-LC": {
+      "label": "1층 열린 계단 C 위쪽 로비 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-LM": {
+      "label": "1층 열린 계단 C 우측 로비 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F1-J-LS": {
+      "label": "1층 로비 아래쪽 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-N2": {
+      "label": "2층 위쪽 복도 좌측 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-N3": {
+      "label": "2층 201호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-N4": {
+      "label": "2층 위쪽 복도 중앙 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-N6": {
+      "label": "2층 위쪽 복도 우측 연결점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-N7": {
+      "label": "2층 202호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-R1": {
+      "label": "2층 203호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-R2": {
+      "label": "2층 우측 계단 B 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-R2B": {
+      "label": "2층 경영지원실 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-R3": {
+      "label": "2층 원장실 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-W1": {
+      "label": "2층 좌측 계단 A 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-E2": {
+      "label": "2층 열린 계단 C·D 사이 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-J-E4": {
+      "label": "2층 우측 계단 B 연결 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-S-A": {
+      "label": "2층 좌측 계단 A 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F2-S-B": {
+      "label": "2층 우측 계단 B 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-N1": {
+      "label": "3층 308호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-N2": {
+      "label": "3층 위쪽 복도 좌측 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-N3": {
+      "label": "3층 열린 계단 D 위쪽 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-N4": {
+      "label": "3층 위쪽 복도 중앙 우측 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-N6": {
+      "label": "3층 우측 위 이름 미확인 공간 앞 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-N5": {
+      "label": "3층 우측 호실 복도 위쪽 분기점 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-R1": {
+      "label": "3층 301호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-R2": {
+      "label": "3층 302호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-R3": {
+      "label": "3층 303호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-E1": {
+      "label": "3층 우측 계단 B 연결 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-W1": {
+      "label": "3층 좌측 계단 A 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-W2": {
+      "label": "3층 305호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-SW": {
+      "label": "3층 306·307호 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-S-A": {
+      "label": "3층 좌측 계단 A 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-S-B": {
+      "label": "3층 우측 계단 B 가변 안내",
+      "kind": "DIRECTIONAL"
+    },
+    "SIGN-F3-J-R4": {
+      "label": "3층 304호 동쪽 입구 앞 복도 가변 안내",
+      "kind": "DIRECTIONAL"
+    }
+  }
+}

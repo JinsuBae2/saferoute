@@ -1,0 +1,6833 @@
+{
+  "schema_version": 1,
+  "building_id": "WFI",
+  "building_version": 5,
+  "coordinate_system": {
+    "unit": "m",
+    "measured": false,
+    "up_axis": "+y",
+    "plan_right_axis": "+x",
+    "plan_up_axis": "-z",
+    "origin": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "floor_transforms": [
+      {
+        "floor_id": "F1",
+        "scale": 1.0,
+        "translation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "floor_id": "F2",
+        "scale": 1.0,
+        "translation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      {
+        "floor_id": "F3",
+        "scale": 1.0,
+        "translation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      }
+    ]
+  },
+  "floors": [
+    {
+      "floor_id": "F1",
+      "label": "1층",
+      "elevation": 0.0
+    },
+    {
+      "floor_id": "F2",
+      "label": "2층",
+      "elevation": 4.0
+    },
+    {
+      "floor_id": "F3",
+      "label": "3층",
+      "elevation": 8.0
+    }
+  ],
+  "zones": [
+    {
+      "zone_id": "F1-CONF",
+      "floor_id": "F1",
+      "label": "컨퍼런스룸",
+      "polygon": [
+        {
+          "x": 0.6,
+          "z": 6.3
+        },
+        {
+          "x": 9.6,
+          "z": 6.3
+        },
+        {
+          "x": 9.6,
+          "z": 27.2
+        },
+        {
+          "x": 0.6,
+          "z": 27.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-D-CONF-N",
+        "F1-D-CONF-S",
+        "F1-J-CONF-N",
+        "F1-J-CONF-S"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-J-LW-F1-D-CONF-N",
+        "E-F1-D-CONF-N-F1-J-LW",
+        "E-F1-J-LSW-F1-D-CONF-S",
+        "E-F1-D-CONF-S-F1-J-LSW",
+        "E-F1-D-CONF-N-F1-J-CONF-N",
+        "E-F1-J-CONF-N-F1-D-CONF-N",
+        "E-F1-J-CONF-N-F1-J-CONF-S",
+        "E-F1-J-CONF-S-F1-J-CONF-N",
+        "E-F1-J-CONF-S-F1-D-CONF-S",
+        "E-F1-D-CONF-S-F1-J-CONF-S"
+      ]
+    },
+    {
+      "zone_id": "F1-R102",
+      "floor_id": "F1",
+      "label": "102호",
+      "polygon": [
+        {
+          "x": 10.0,
+          "z": 6.3
+        },
+        {
+          "x": 15.2,
+          "z": 6.3
+        },
+        {
+          "x": 15.2,
+          "z": 10.9
+        },
+        {
+          "x": 10.0,
+          "z": 10.9
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-D-R102"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-J-LW-F1-D-R102",
+        "E-F1-D-R102-F1-J-LW"
+      ]
+    },
+    {
+      "zone_id": "F1-NURSING",
+      "floor_id": "F1",
+      "label": "수유실",
+      "polygon": [
+        {
+          "x": 10.0,
+          "z": 12.9
+        },
+        {
+          "x": 15.2,
+          "z": 12.9
+        },
+        {
+          "x": 15.2,
+          "z": 15.6
+        },
+        {
+          "x": 10.0,
+          "z": 15.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-D-NURSING"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-J-LW-F1-D-NURSING",
+        "E-F1-D-NURSING-F1-J-LW"
+      ]
+    },
+    {
+      "zone_id": "F1-STAIR-A",
+      "floor_id": "F1",
+      "label": "계단실 A",
+      "polygon": [
+        {
+          "x": 10.0,
+          "z": 15.7
+        },
+        {
+          "x": 15.2,
+          "z": 15.7
+        },
+        {
+          "x": 15.2,
+          "z": 21.9
+        },
+        {
+          "x": 10.0,
+          "z": 21.9
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-S-A"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-J-LA-F1-S-A",
+        "E-F1-S-A-F1-J-LA",
+        "E-F1-S-A-F2-S-A",
+        "E-F2-S-A-F1-S-A"
+      ]
+    },
+    {
+      "zone_id": "F1-LOBBY",
+      "floor_id": "F1",
+      "label": "로비",
+      "polygon": [
+        {
+          "x": 15.3,
+          "z": 5.8
+        },
+        {
+          "x": 29.2,
+          "z": 5.8
+        },
+        {
+          "x": 29.2,
+          "z": 27.3
+        },
+        {
+          "x": 9.9,
+          "z": 27.3
+        },
+        {
+          "x": 9.9,
+          "z": 22.0
+        },
+        {
+          "x": 15.3,
+          "z": 22.0
+        },
+        {
+          "x": 15.3,
+          "z": 12.8
+        },
+        {
+          "x": 9.9,
+          "z": 12.8
+        },
+        {
+          "x": 9.9,
+          "z": 10.9
+        },
+        {
+          "x": 15.3,
+          "z": 10.9
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-X-NW",
+        "F1-J-LNW",
+        "F1-J-LW",
+        "F1-J-LE",
+        "F1-J-LA",
+        "F1-J-LC",
+        "F1-J-LM",
+        "F1-J-LSW",
+        "F1-J-LS",
+        "F1-S-C"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-X-NW-F1-J-LNW",
+        "E-F1-J-LNW-F1-X-NW",
+        "E-F1-J-LNW-F1-J-LE",
+        "E-F1-J-LE-F1-J-LNW",
+        "E-F1-J-LE-F1-J-LW",
+        "E-F1-J-LW-F1-J-LE",
+        "E-F1-J-LE-F1-J-LC",
+        "E-F1-J-LC-F1-J-LE",
+        "E-F1-J-LE-F1-J-LA",
+        "E-F1-J-LA-F1-J-LE",
+        "E-F1-J-LNW-F1-J-PN",
+        "E-F1-J-PN-F1-J-LNW",
+        "E-F1-J-LW-F1-D-R102",
+        "E-F1-D-R102-F1-J-LW",
+        "E-F1-J-LW-F1-D-NURSING",
+        "E-F1-D-NURSING-F1-J-LW",
+        "E-F1-J-LW-F1-D-CONF-N",
+        "E-F1-D-CONF-N-F1-J-LW",
+        "E-F1-J-LA-F1-S-A",
+        "E-F1-S-A-F1-J-LA",
+        "E-F1-J-LC-F1-J-LM",
+        "E-F1-J-LM-F1-J-LC",
+        "E-F1-J-LC-F1-S-C",
+        "E-F1-S-C-F1-J-LC",
+        "E-F1-J-LM-F1-S-C",
+        "E-F1-S-C-F1-J-LM",
+        "E-F1-J-LM-F1-J-PM",
+        "E-F1-J-PM-F1-J-LM",
+        "E-F1-J-LM-F1-J-LS",
+        "E-F1-J-LS-F1-J-LM",
+        "E-F1-J-LSW-F1-D-CONF-S",
+        "E-F1-D-CONF-S-F1-J-LSW",
+        "E-F1-J-LSW-F1-J-LS",
+        "E-F1-J-LS-F1-J-LSW",
+        "E-F1-J-LS-F1-J-PS",
+        "E-F1-J-PS-F1-J-LS",
+        "E-F1-S-C-F2-S-C",
+        "E-F2-S-C-F1-S-C"
+      ]
+    },
+    {
+      "zone_id": "F1-PASSAGE-N",
+      "floor_id": "F1",
+      "label": "블록 사이 통로 북쪽",
+      "polygon": [
+        {
+          "x": 29.2,
+          "z": 5.8
+        },
+        {
+          "x": 35.2,
+          "z": 5.8
+        },
+        {
+          "x": 35.2,
+          "z": 8.4
+        },
+        {
+          "x": 35.2,
+          "z": 14.3
+        },
+        {
+          "x": 39.0,
+          "z": 14.3
+        },
+        {
+          "x": 39.0,
+          "z": 15.6
+        },
+        {
+          "x": 29.2,
+          "z": 15.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-X-N",
+        "F1-J-PN",
+        "F1-J-PM"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-X-N-F1-J-PN",
+        "E-F1-J-PN-F1-X-N",
+        "E-F1-J-PN-F1-J-PM",
+        "E-F1-J-PM-F1-J-PN",
+        "E-F1-J-PM-F1-J-PS",
+        "E-F1-J-PS-F1-J-PM",
+        "E-F1-J-PM-F1-S-B",
+        "E-F1-S-B-F1-J-PM",
+        "E-F1-J-LNW-F1-J-PN",
+        "E-F1-J-PN-F1-J-LNW",
+        "E-F1-J-LM-F1-J-PM",
+        "E-F1-J-PM-F1-J-LM"
+      ]
+    },
+    {
+      "zone_id": "F1-PASSAGE-S",
+      "floor_id": "F1",
+      "label": "블록 사이 통로 남쪽",
+      "polygon": [
+        {
+          "x": 29.2,
+          "z": 15.6
+        },
+        {
+          "x": 35.2,
+          "z": 15.6
+        },
+        {
+          "x": 35.2,
+          "z": 27.3
+        },
+        {
+          "x": 29.2,
+          "z": 27.3
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-X-S",
+        "F1-J-PS"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-J-PM-F1-J-PS",
+        "E-F1-J-PS-F1-J-PM",
+        "E-F1-J-PS-F1-X-S",
+        "E-F1-X-S-F1-J-PS",
+        "E-F1-J-PS-F1-D-R101",
+        "E-F1-D-R101-F1-J-PS",
+        "E-F1-J-LS-F1-J-PS",
+        "E-F1-J-PS-F1-J-LS"
+      ]
+    },
+    {
+      "zone_id": "F1-STAIR-B",
+      "floor_id": "F1",
+      "label": "계단실 B",
+      "polygon": [
+        {
+          "x": 35.3,
+          "z": 15.6
+        },
+        {
+          "x": 39.2,
+          "z": 15.6
+        },
+        {
+          "x": 39.2,
+          "z": 21.8
+        },
+        {
+          "x": 35.3,
+          "z": 21.8
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-S-B"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-J-PM-F1-S-B",
+        "E-F1-S-B-F1-J-PM",
+        "E-F1-S-B-F2-S-B",
+        "E-F2-S-B-F1-S-B"
+      ]
+    },
+    {
+      "zone_id": "F1-R101",
+      "floor_id": "F1",
+      "label": "101호",
+      "polygon": [
+        {
+          "x": 39.3,
+          "z": 16.2
+        },
+        {
+          "x": 44.8,
+          "z": 16.2
+        },
+        {
+          "x": 44.8,
+          "z": 27.3
+        },
+        {
+          "x": 35.3,
+          "z": 27.3
+        },
+        {
+          "x": 35.3,
+          "z": 21.9
+        },
+        {
+          "x": 39.3,
+          "z": 21.9
+        }
+      ],
+      "blocked_node_ids": [
+        "F1-X-SE",
+        "F1-D-R101",
+        "F1-J-R101"
+      ],
+      "blocked_edge_ids": [
+        "E-F1-J-PS-F1-D-R101",
+        "E-F1-D-R101-F1-J-PS",
+        "E-F1-D-R101-F1-J-R101",
+        "E-F1-J-R101-F1-D-R101",
+        "E-F1-J-R101-F1-X-SE",
+        "E-F1-X-SE-F1-J-R101"
+      ]
+    },
+    {
+      "zone_id": "F2-SERVER",
+      "floor_id": "F2",
+      "label": "전산실",
+      "polygon": [
+        {
+          "x": 0.4,
+          "z": 0.4
+        },
+        {
+          "x": 8.9,
+          "z": 0.4
+        },
+        {
+          "x": 8.9,
+          "z": 7.2
+        },
+        {
+          "x": 0.4,
+          "z": 7.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-D-SERVER"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-N1-F2-D-SERVER",
+        "E-F2-D-SERVER-F2-J-N1"
+      ]
+    },
+    {
+      "zone_id": "F2-R201",
+      "floor_id": "F2",
+      "label": "201호",
+      "polygon": [
+        {
+          "x": 9.0,
+          "z": 0.3
+        },
+        {
+          "x": 26.6,
+          "z": 0.3
+        },
+        {
+          "x": 26.6,
+          "z": 5.2
+        },
+        {
+          "x": 9.0,
+          "z": 5.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-D-R201"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-N3-F2-D-R201",
+        "E-F2-D-R201-F2-J-N3"
+      ]
+    },
+    {
+      "zone_id": "F2-R202",
+      "floor_id": "F2",
+      "label": "202호",
+      "polygon": [
+        {
+          "x": 28.9,
+          "z": 0.4
+        },
+        {
+          "x": 44.6,
+          "z": 0.4
+        },
+        {
+          "x": 44.6,
+          "z": 5.5
+        },
+        {
+          "x": 28.9,
+          "z": 5.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-D-R202"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-N7-F2-D-R202",
+        "E-F2-D-R202-F2-J-N7"
+      ]
+    },
+    {
+      "zone_id": "F2-R203",
+      "floor_id": "F2",
+      "label": "203호",
+      "polygon": [
+        {
+          "x": 37.9,
+          "z": 5.7
+        },
+        {
+          "x": 44.6,
+          "z": 5.7
+        },
+        {
+          "x": 44.6,
+          "z": 12.9
+        },
+        {
+          "x": 37.9,
+          "z": 12.9
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-D-R203"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-R1-F2-D-R203",
+        "E-F2-D-R203-F2-J-R1"
+      ]
+    },
+    {
+      "zone_id": "F2-ADMIN",
+      "floor_id": "F2",
+      "label": "경영지원실",
+      "polygon": [
+        {
+          "x": 37.9,
+          "z": 13.0
+        },
+        {
+          "x": 44.6,
+          "z": 13.0
+        },
+        {
+          "x": 44.6,
+          "z": 21.5
+        },
+        {
+          "x": 37.9,
+          "z": 21.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-D-ADMIN"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-R2B-F2-D-ADMIN",
+        "E-F2-D-ADMIN-F2-J-R2B"
+      ]
+    },
+    {
+      "zone_id": "F2-DIRECTOR",
+      "floor_id": "F2",
+      "label": "원장실",
+      "polygon": [
+        {
+          "x": 37.9,
+          "z": 21.6
+        },
+        {
+          "x": 44.6,
+          "z": 21.6
+        },
+        {
+          "x": 44.6,
+          "z": 28.6
+        },
+        {
+          "x": 37.9,
+          "z": 28.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-D-DIRECTOR"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-R3-F2-D-DIRECTOR",
+        "E-F2-D-DIRECTOR-F2-J-R3"
+      ]
+    },
+    {
+      "zone_id": "F2-INDUSTRY",
+      "floor_id": "F2",
+      "label": "디지털·모빌리티 산업부",
+      "polygon": [
+        {
+          "x": 0.4,
+          "z": 21.4
+        },
+        {
+          "x": 31.1,
+          "z": 21.4
+        },
+        {
+          "x": 31.1,
+          "z": 28.6
+        },
+        {
+          "x": 0.4,
+          "z": 28.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-D-INDUSTRY",
+        "F2-D-INDUSTRY-E",
+        "F2-J-INDUSTRY-W",
+        "F2-J-INDUSTRY-E"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-W2-F2-D-INDUSTRY",
+        "E-F2-D-INDUSTRY-F2-J-W2",
+        "E-F2-D-INDUSTRY-E-F2-J-R3",
+        "E-F2-J-R3-F2-D-INDUSTRY-E",
+        "E-F2-D-INDUSTRY-F2-J-INDUSTRY-W",
+        "E-F2-J-INDUSTRY-W-F2-D-INDUSTRY",
+        "E-F2-J-INDUSTRY-W-F2-J-INDUSTRY-E",
+        "E-F2-J-INDUSTRY-E-F2-J-INDUSTRY-W",
+        "E-F2-J-INDUSTRY-E-F2-D-INDUSTRY-E",
+        "E-F2-D-INDUSTRY-E-F2-J-INDUSTRY-E"
+      ]
+    },
+    {
+      "zone_id": "F2-ROOM-W",
+      "floor_id": "F2",
+      "label": "이름 없는 방",
+      "polygon": [
+        {
+          "x": 0.4,
+          "z": 9.4
+        },
+        {
+          "x": 8.9,
+          "z": 9.4
+        },
+        {
+          "x": 8.9,
+          "z": 21.2
+        },
+        {
+          "x": 0.4,
+          "z": 21.2
+        }
+      ],
+      "blocked_node_ids": [],
+      "blocked_edge_ids": []
+    },
+    {
+      "zone_id": "F2-VOID",
+      "floor_id": "F2",
+      "label": "뚫린 공간",
+      "polygon": [
+        {
+          "x": 16.0,
+          "z": 7.5
+        },
+        {
+          "x": 23.6,
+          "z": 7.5
+        },
+        {
+          "x": 23.6,
+          "z": 21.2
+        },
+        {
+          "x": 16.0,
+          "z": 21.2
+        }
+      ],
+      "blocked_node_ids": [],
+      "blocked_edge_ids": [
+        "E-F1-S-C-F2-S-C",
+        "E-F2-S-C-F1-S-C",
+        "E-F2-S-D-F3-S-D",
+        "E-F3-S-D-F2-S-D"
+      ]
+    },
+    {
+      "zone_id": "F2-CORR-N",
+      "floor_id": "F2",
+      "label": "복도 (위쪽)",
+      "polygon": [
+        {
+          "x": 9.0,
+          "z": 5.3
+        },
+        {
+          "x": 36.0,
+          "z": 5.3
+        },
+        {
+          "x": 36.0,
+          "z": 7.2
+        },
+        {
+          "x": 9.0,
+          "z": 7.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-J-N1",
+        "F2-J-N2",
+        "F2-J-N3",
+        "F2-J-N4",
+        "F2-J-N6"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-N1-F2-D-SERVER",
+        "E-F2-D-SERVER-F2-J-N1",
+        "E-F2-J-N1-F2-J-N2",
+        "E-F2-J-N2-F2-J-N1",
+        "E-F2-J-N2-F2-J-N3",
+        "E-F2-J-N3-F2-J-N2",
+        "E-F2-J-N3-F2-D-R201",
+        "E-F2-D-R201-F2-J-N3",
+        "E-F2-J-N3-F2-J-N4",
+        "E-F2-J-N4-F2-J-N3",
+        "E-F2-J-N4-F2-J-N6",
+        "E-F2-J-N6-F2-J-N4",
+        "E-F2-J-N6-F2-J-N7",
+        "E-F2-J-N7-F2-J-N6",
+        "E-F2-J-E4-F2-J-N6",
+        "E-F2-J-N6-F2-J-E4",
+        "E-F2-J-E1-F2-J-N4",
+        "E-F2-J-N4-F2-J-E1",
+        "E-F2-J-N2-F2-J-W1",
+        "E-F2-J-W1-F2-J-N2"
+      ]
+    },
+    {
+      "zone_id": "F2-CORR-W",
+      "floor_id": "F2",
+      "label": "복도 (왼쪽)",
+      "polygon": [
+        {
+          "x": 14.0,
+          "z": 7.2
+        },
+        {
+          "x": 15.9,
+          "z": 7.2
+        },
+        {
+          "x": 15.9,
+          "z": 21.3
+        },
+        {
+          "x": 14.0,
+          "z": 21.3
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-J-W1",
+        "F2-J-W2"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-N2-F2-J-W1",
+        "E-F2-J-W1-F2-J-N2",
+        "E-F2-J-W1-F2-S-A",
+        "E-F2-S-A-F2-J-W1",
+        "E-F2-J-W1-F2-J-W2",
+        "E-F2-J-W2-F2-J-W1",
+        "E-F2-J-W2-F2-D-INDUSTRY",
+        "E-F2-D-INDUSTRY-F2-J-W2"
+      ]
+    },
+    {
+      "zone_id": "F2-CORR-E",
+      "floor_id": "F2",
+      "label": "복도 (오른쪽, 계단 D 주변)",
+      "polygon": [
+        {
+          "x": 23.6,
+          "z": 7.2
+        },
+        {
+          "x": 32.3,
+          "z": 7.2
+        },
+        {
+          "x": 32.3,
+          "z": 21.2
+        },
+        {
+          "x": 23.6,
+          "z": 21.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-J-E1",
+        "F2-J-E2",
+        "F2-J-E3",
+        "F2-J-E4",
+        "F2-S-C",
+        "F2-S-D"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-S-B-F2-J-E4",
+        "E-F2-J-E4-F2-S-B",
+        "E-F2-J-E4-F2-J-N6",
+        "E-F2-J-N6-F2-J-E4",
+        "E-F2-J-E4-F2-J-E3",
+        "E-F2-J-E3-F2-J-E4",
+        "E-F2-J-E3-F2-J-E2",
+        "E-F2-J-E2-F2-J-E3",
+        "E-F2-J-E2-F2-S-D",
+        "E-F2-S-D-F2-J-E2",
+        "E-F2-J-E2-F2-S-C",
+        "E-F2-S-C-F2-J-E2",
+        "E-F2-J-E2-F2-J-E1",
+        "E-F2-J-E1-F2-J-E2",
+        "E-F2-J-E1-F2-J-N4",
+        "E-F2-J-N4-F2-J-E1",
+        "E-F1-S-C-F2-S-C",
+        "E-F2-S-C-F1-S-C",
+        "E-F2-S-D-F3-S-D",
+        "E-F3-S-D-F2-S-D"
+      ]
+    },
+    {
+      "zone_id": "F2-CORR-E2",
+      "floor_id": "F2",
+      "label": "복도 (오른쪽 호실 앞)",
+      "polygon": [
+        {
+          "x": 36.0,
+          "z": 5.3
+        },
+        {
+          "x": 37.8,
+          "z": 5.3
+        },
+        {
+          "x": 37.8,
+          "z": 28.6
+        },
+        {
+          "x": 36.0,
+          "z": 28.6
+        },
+        {
+          "x": 36.0,
+          "z": 15.9
+        },
+        {
+          "x": 32.3,
+          "z": 15.9
+        },
+        {
+          "x": 32.3,
+          "z": 14.6
+        },
+        {
+          "x": 36.0,
+          "z": 14.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-J-N7",
+        "F2-J-R1",
+        "F2-J-R2",
+        "F2-J-R2B",
+        "F2-J-R3"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-N6-F2-J-N7",
+        "E-F2-J-N7-F2-J-N6",
+        "E-F2-J-N7-F2-D-R202",
+        "E-F2-D-R202-F2-J-N7",
+        "E-F2-J-N7-F2-J-R1",
+        "E-F2-J-R1-F2-J-N7",
+        "E-F2-J-R1-F2-D-R203",
+        "E-F2-D-R203-F2-J-R1",
+        "E-F2-J-R1-F2-J-R2",
+        "E-F2-J-R2-F2-J-R1",
+        "E-F2-J-R2-F2-J-R2B",
+        "E-F2-J-R2B-F2-J-R2",
+        "E-F2-J-R2B-F2-D-ADMIN",
+        "E-F2-D-ADMIN-F2-J-R2B",
+        "E-F2-J-R2-F2-S-B",
+        "E-F2-S-B-F2-J-R2",
+        "E-F2-J-R2B-F2-J-R3",
+        "E-F2-J-R3-F2-J-R2B",
+        "E-F2-J-R3-F2-D-DIRECTOR",
+        "E-F2-D-DIRECTOR-F2-J-R3",
+        "E-F2-D-INDUSTRY-E-F2-J-R3",
+        "E-F2-J-R3-F2-D-INDUSTRY-E"
+      ]
+    },
+    {
+      "zone_id": "F2-STAIR-A",
+      "floor_id": "F2",
+      "label": "계단실 A",
+      "polygon": [
+        {
+          "x": 9.0,
+          "z": 15.8
+        },
+        {
+          "x": 14.0,
+          "z": 15.8
+        },
+        {
+          "x": 14.0,
+          "z": 21.2
+        },
+        {
+          "x": 9.0,
+          "z": 21.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-S-A"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-W1-F2-S-A",
+        "E-F2-S-A-F2-J-W1",
+        "E-F1-S-A-F2-S-A",
+        "E-F2-S-A-F1-S-A",
+        "E-F2-S-A-F3-S-A",
+        "E-F3-S-A-F2-S-A"
+      ]
+    },
+    {
+      "zone_id": "F2-STAIR-B",
+      "floor_id": "F2",
+      "label": "계단실 B",
+      "polygon": [
+        {
+          "x": 32.3,
+          "z": 15.0
+        },
+        {
+          "x": 36.0,
+          "z": 15.0
+        },
+        {
+          "x": 36.0,
+          "z": 21.5
+        },
+        {
+          "x": 32.3,
+          "z": 21.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F2-S-B"
+      ],
+      "blocked_edge_ids": [
+        "E-F2-J-R2-F2-S-B",
+        "E-F2-S-B-F2-J-R2",
+        "E-F2-S-B-F2-J-E4",
+        "E-F2-J-E4-F2-S-B",
+        "E-F1-S-B-F2-S-B",
+        "E-F2-S-B-F1-S-B",
+        "E-F2-S-B-F3-S-B",
+        "E-F3-S-B-F2-S-B"
+      ]
+    },
+    {
+      "zone_id": "F3-R308",
+      "floor_id": "F3",
+      "label": "308호",
+      "polygon": [
+        {
+          "x": 0.4,
+          "z": 0.4
+        },
+        {
+          "x": 8.8,
+          "z": 0.4
+        },
+        {
+          "x": 8.8,
+          "z": 7.2
+        },
+        {
+          "x": 0.4,
+          "z": 7.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R308"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-N1-F3-D-R308",
+        "E-F3-D-R308-F3-J-N1"
+      ]
+    },
+    {
+      "zone_id": "F3-VOID-N",
+      "floor_id": "F3",
+      "label": "위쪽 X 표시 공간",
+      "polygon": [
+        {
+          "x": 9.0,
+          "z": 0.5
+        },
+        {
+          "x": 26.5,
+          "z": 0.5
+        },
+        {
+          "x": 26.5,
+          "z": 5.2
+        },
+        {
+          "x": 9.0,
+          "z": 5.2
+        }
+      ],
+      "blocked_node_ids": [],
+      "blocked_edge_ids": []
+    },
+    {
+      "zone_id": "F3-ROOM-NE",
+      "floor_id": "F3",
+      "label": "이름 없는 공간",
+      "polygon": [
+        {
+          "x": 27.3,
+          "z": 0.3
+        },
+        {
+          "x": 35.2,
+          "z": 0.3
+        },
+        {
+          "x": 35.2,
+          "z": 5.3
+        },
+        {
+          "x": 27.3,
+          "z": 5.3
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-ROOM-NE"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-N6-F3-D-ROOM-NE",
+        "E-F3-D-ROOM-NE-F3-J-N6"
+      ]
+    },
+    {
+      "zone_id": "F3-R300",
+      "floor_id": "F3",
+      "label": "300호",
+      "polygon": [
+        {
+          "x": 37.9,
+          "z": 0.4
+        },
+        {
+          "x": 44.6,
+          "z": 0.4
+        },
+        {
+          "x": 44.6,
+          "z": 7.0
+        },
+        {
+          "x": 37.9,
+          "z": 7.0
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R300"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-R0-F3-D-R300",
+        "E-F3-D-R300-F3-J-R0"
+      ]
+    },
+    {
+      "zone_id": "F3-R301",
+      "floor_id": "F3",
+      "label": "301호",
+      "polygon": [
+        {
+          "x": 37.9,
+          "z": 7.3
+        },
+        {
+          "x": 44.6,
+          "z": 7.3
+        },
+        {
+          "x": 44.6,
+          "z": 14.5
+        },
+        {
+          "x": 37.9,
+          "z": 14.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R301"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-R1-F3-D-R301",
+        "E-F3-D-R301-F3-J-R1"
+      ]
+    },
+    {
+      "zone_id": "F3-R302",
+      "floor_id": "F3",
+      "label": "302호",
+      "polygon": [
+        {
+          "x": 37.9,
+          "z": 14.8
+        },
+        {
+          "x": 44.6,
+          "z": 14.8
+        },
+        {
+          "x": 44.6,
+          "z": 21.2
+        },
+        {
+          "x": 37.9,
+          "z": 21.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R302"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-R2-F3-D-R302",
+        "E-F3-D-R302-F3-J-R2"
+      ]
+    },
+    {
+      "zone_id": "F3-R303",
+      "floor_id": "F3",
+      "label": "303호",
+      "polygon": [
+        {
+          "x": 37.9,
+          "z": 21.4
+        },
+        {
+          "x": 44.6,
+          "z": 21.4
+        },
+        {
+          "x": 44.6,
+          "z": 28.5
+        },
+        {
+          "x": 37.9,
+          "z": 28.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R303"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-R3-F3-D-R303",
+        "E-F3-D-R303-F3-J-R3"
+      ]
+    },
+    {
+      "zone_id": "F3-R304",
+      "floor_id": "F3",
+      "label": "304호",
+      "polygon": [
+        {
+          "x": 26.9,
+          "z": 21.6
+        },
+        {
+          "x": 35.6,
+          "z": 21.6
+        },
+        {
+          "x": 35.6,
+          "z": 28.5
+        },
+        {
+          "x": 26.9,
+          "z": 28.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R304",
+        "F3-D-R304-E",
+        "F3-J-R304-N",
+        "F3-J-R304-E"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-E2-F3-D-R304",
+        "E-F3-D-R304-F3-J-E2",
+        "E-F3-D-R304-E-F3-J-R4",
+        "E-F3-J-R4-F3-D-R304-E",
+        "E-F3-D-R304-F3-J-R304-N",
+        "E-F3-J-R304-N-F3-D-R304",
+        "E-F3-J-R304-N-F3-J-R304-E",
+        "E-F3-J-R304-E-F3-J-R304-N",
+        "E-F3-J-R304-E-F3-D-R304-E",
+        "E-F3-D-R304-E-F3-J-R304-E"
+      ]
+    },
+    {
+      "zone_id": "F3-R305",
+      "floor_id": "F3",
+      "label": "305호",
+      "polygon": [
+        {
+          "x": 15.1,
+          "z": 21.6
+        },
+        {
+          "x": 26.6,
+          "z": 21.6
+        },
+        {
+          "x": 26.6,
+          "z": 28.5
+        },
+        {
+          "x": 12.3,
+          "z": 28.5
+        },
+        {
+          "x": 12.3,
+          "z": 22.7
+        },
+        {
+          "x": 15.1,
+          "z": 22.7
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R305"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-W2-F3-D-R305",
+        "E-F3-D-R305-F3-J-W2"
+      ]
+    },
+    {
+      "zone_id": "F3-COMMUNITY",
+      "floor_id": "F3",
+      "label": "커뮤니티룸",
+      "polygon": [
+        {
+          "x": 7.4,
+          "z": 22.7
+        },
+        {
+          "x": 12.2,
+          "z": 22.7
+        },
+        {
+          "x": 12.2,
+          "z": 28.5
+        },
+        {
+          "x": 7.4,
+          "z": 28.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-COMMUNITY"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-SW-F3-D-COMMUNITY",
+        "E-F3-D-COMMUNITY-F3-J-SW"
+      ]
+    },
+    {
+      "zone_id": "F3-R306",
+      "floor_id": "F3",
+      "label": "306호",
+      "polygon": [
+        {
+          "x": 0.4,
+          "z": 21.6
+        },
+        {
+          "x": 7.2,
+          "z": 21.6
+        },
+        {
+          "x": 7.2,
+          "z": 28.5
+        },
+        {
+          "x": 0.4,
+          "z": 28.5
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R306"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-SW-F3-D-R306",
+        "E-F3-D-R306-F3-J-SW"
+      ]
+    },
+    {
+      "zone_id": "F3-R307",
+      "floor_id": "F3",
+      "label": "307호",
+      "polygon": [
+        {
+          "x": 0.4,
+          "z": 7.4
+        },
+        {
+          "x": 8.8,
+          "z": 7.4
+        },
+        {
+          "x": 8.8,
+          "z": 21.3
+        },
+        {
+          "x": 0.4,
+          "z": 21.3
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-D-R307",
+        "F3-D-R307-N",
+        "F3-J-R307-N",
+        "F3-J-R307-S"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-SW-F3-D-R307",
+        "E-F3-D-R307-F3-J-SW",
+        "E-F3-D-R307-N-F3-J-N1",
+        "E-F3-J-N1-F3-D-R307-N",
+        "E-F3-D-R307-N-F3-J-R307-N",
+        "E-F3-J-R307-N-F3-D-R307-N",
+        "E-F3-J-R307-N-F3-J-R307-S",
+        "E-F3-J-R307-S-F3-J-R307-N",
+        "E-F3-J-R307-S-F3-D-R307",
+        "E-F3-D-R307-F3-J-R307-S"
+      ]
+    },
+    {
+      "zone_id": "F3-CENTER",
+      "floor_id": "F3",
+      "label": "가운데 블록",
+      "polygon": [
+        {
+          "x": 18.2,
+          "z": 7.6
+        },
+        {
+          "x": 26.9,
+          "z": 7.6
+        },
+        {
+          "x": 26.9,
+          "z": 21.2
+        },
+        {
+          "x": 18.2,
+          "z": 21.2
+        }
+      ],
+      "blocked_node_ids": [],
+      "blocked_edge_ids": []
+    },
+    {
+      "zone_id": "F3-CORR-N",
+      "floor_id": "F3",
+      "label": "복도 (위쪽)",
+      "polygon": [
+        {
+          "x": 8.8,
+          "z": 5.3
+        },
+        {
+          "x": 35.5,
+          "z": 5.3
+        },
+        {
+          "x": 35.5,
+          "z": 7.2
+        },
+        {
+          "x": 8.8,
+          "z": 7.2
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-J-N1",
+        "F3-J-N2",
+        "F3-S-D",
+        "F3-J-N3",
+        "F3-J-N4",
+        "F3-J-N6"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-N1-F3-D-R308",
+        "E-F3-D-R308-F3-J-N1",
+        "E-F3-J-N1-F3-J-N2",
+        "E-F3-J-N2-F3-J-N1",
+        "E-F3-J-N2-F3-J-N3",
+        "E-F3-J-N3-F3-J-N2",
+        "E-F3-J-N3-F3-S-D",
+        "E-F3-S-D-F3-J-N3",
+        "E-F3-J-N3-F3-J-N4",
+        "E-F3-J-N4-F3-J-N3",
+        "E-F3-J-N4-F3-J-N6",
+        "E-F3-J-N6-F3-J-N4",
+        "E-F3-J-N6-F3-D-ROOM-NE",
+        "E-F3-D-ROOM-NE-F3-J-N6",
+        "E-F3-J-N6-F3-J-N5",
+        "E-F3-J-N5-F3-J-N6",
+        "E-F3-J-N4-F3-J-E1",
+        "E-F3-J-E1-F3-J-N4",
+        "E-F3-J-N2-F3-J-W1",
+        "E-F3-J-W1-F3-J-N2",
+        "E-F2-S-D-F3-S-D",
+        "E-F3-S-D-F2-S-D",
+        "E-F3-D-R307-N-F3-J-N1",
+        "E-F3-J-N1-F3-D-R307-N"
+      ]
+    },
+    {
+      "zone_id": "F3-CORR-W",
+      "floor_id": "F3",
+      "label": "복도 (왼쪽)",
+      "polygon": [
+        {
+          "x": 13.9,
+          "z": 7.2
+        },
+        {
+          "x": 17.8,
+          "z": 7.2
+        },
+        {
+          "x": 17.8,
+          "z": 21.2
+        },
+        {
+          "x": 15.1,
+          "z": 21.2
+        },
+        {
+          "x": 15.1,
+          "z": 22.7
+        },
+        {
+          "x": 7.4,
+          "z": 22.7
+        },
+        {
+          "x": 7.4,
+          "z": 21.4
+        },
+        {
+          "x": 13.9,
+          "z": 21.4
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-J-W1",
+        "F3-J-W2",
+        "F3-J-SW"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-N2-F3-J-W1",
+        "E-F3-J-W1-F3-J-N2",
+        "E-F3-J-W1-F3-S-A",
+        "E-F3-S-A-F3-J-W1",
+        "E-F3-J-W1-F3-J-W2",
+        "E-F3-J-W2-F3-J-W1",
+        "E-F3-J-W2-F3-D-R305",
+        "E-F3-D-R305-F3-J-W2",
+        "E-F3-J-W2-F3-J-SW",
+        "E-F3-J-SW-F3-J-W2",
+        "E-F3-J-SW-F3-D-R307",
+        "E-F3-D-R307-F3-J-SW",
+        "E-F3-J-SW-F3-D-R306",
+        "E-F3-D-R306-F3-J-SW",
+        "E-F3-J-SW-F3-D-COMMUNITY",
+        "E-F3-D-COMMUNITY-F3-J-SW"
+      ]
+    },
+    {
+      "zone_id": "F3-CORR-E",
+      "floor_id": "F3",
+      "label": "복도 (오른쪽, 계단 D 옆)",
+      "polygon": [
+        {
+          "x": 28.9,
+          "z": 7.2
+        },
+        {
+          "x": 32.3,
+          "z": 7.2
+        },
+        {
+          "x": 32.3,
+          "z": 21.6
+        },
+        {
+          "x": 28.9,
+          "z": 21.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-J-E1",
+        "F3-J-E2"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-N4-F3-J-E1",
+        "E-F3-J-E1-F3-J-N4",
+        "E-F3-S-B-F3-J-E1",
+        "E-F3-J-E1-F3-S-B",
+        "E-F3-J-E1-F3-J-E2",
+        "E-F3-J-E2-F3-J-E1",
+        "E-F3-J-E2-F3-D-R304",
+        "E-F3-D-R304-F3-J-E2",
+        "E-F2-S-D-F3-S-D",
+        "E-F3-S-D-F2-S-D"
+      ]
+    },
+    {
+      "zone_id": "F3-CORR-E2",
+      "floor_id": "F3",
+      "label": "복도 (오른쪽 호실 앞)",
+      "polygon": [
+        {
+          "x": 35.5,
+          "z": 0.3
+        },
+        {
+          "x": 37.8,
+          "z": 0.3
+        },
+        {
+          "x": 37.8,
+          "z": 28.6
+        },
+        {
+          "x": 35.7,
+          "z": 28.6
+        },
+        {
+          "x": 35.7,
+          "z": 15.9
+        },
+        {
+          "x": 32.3,
+          "z": 15.9
+        },
+        {
+          "x": 32.3,
+          "z": 14.6
+        },
+        {
+          "x": 35.5,
+          "z": 14.6
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-J-N5",
+        "F3-J-R0",
+        "F3-J-R1",
+        "F3-J-R2",
+        "F3-J-R3",
+        "F3-J-R4"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-N6-F3-J-N5",
+        "E-F3-J-N5-F3-J-N6",
+        "E-F3-J-N5-F3-J-R0",
+        "E-F3-J-R0-F3-J-N5",
+        "E-F3-J-R0-F3-D-R300",
+        "E-F3-D-R300-F3-J-R0",
+        "E-F3-J-N5-F3-J-R1",
+        "E-F3-J-R1-F3-J-N5",
+        "E-F3-J-R1-F3-D-R301",
+        "E-F3-D-R301-F3-J-R1",
+        "E-F3-J-R1-F3-J-R2",
+        "E-F3-J-R2-F3-J-R1",
+        "E-F3-J-R2-F3-D-R302",
+        "E-F3-D-R302-F3-J-R2",
+        "E-F3-J-R2-F3-S-B",
+        "E-F3-S-B-F3-J-R2",
+        "E-F3-J-R2-F3-J-R3",
+        "E-F3-J-R3-F3-J-R2",
+        "E-F3-J-R3-F3-D-R303",
+        "E-F3-D-R303-F3-J-R3",
+        "E-F3-D-R304-E-F3-J-R4",
+        "E-F3-J-R4-F3-D-R304-E",
+        "E-F3-J-R4-F3-J-R3",
+        "E-F3-J-R3-F3-J-R4",
+        "E-F3-J-R4-F3-J-R2",
+        "E-F3-J-R2-F3-J-R4"
+      ]
+    },
+    {
+      "zone_id": "F3-STAIR-A",
+      "floor_id": "F3",
+      "label": "계단실 A",
+      "polygon": [
+        {
+          "x": 9.0,
+          "z": 15.8
+        },
+        {
+          "x": 13.9,
+          "z": 15.8
+        },
+        {
+          "x": 13.9,
+          "z": 21.3
+        },
+        {
+          "x": 9.0,
+          "z": 21.3
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-S-A"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-W1-F3-S-A",
+        "E-F3-S-A-F3-J-W1",
+        "E-F2-S-A-F3-S-A",
+        "E-F3-S-A-F2-S-A"
+      ]
+    },
+    {
+      "zone_id": "F3-STAIR-B",
+      "floor_id": "F3",
+      "label": "계단실 B",
+      "polygon": [
+        {
+          "x": 32.3,
+          "z": 15.0
+        },
+        {
+          "x": 35.7,
+          "z": 15.0
+        },
+        {
+          "x": 35.7,
+          "z": 21.4
+        },
+        {
+          "x": 32.3,
+          "z": 21.4
+        }
+      ],
+      "blocked_node_ids": [
+        "F3-S-B"
+      ],
+      "blocked_edge_ids": [
+        "E-F3-J-R2-F3-S-B",
+        "E-F3-S-B-F3-J-R2",
+        "E-F3-S-B-F3-J-E1",
+        "E-F3-J-E1-F3-S-B",
+        "E-F2-S-B-F3-S-B",
+        "E-F3-S-B-F2-S-B"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "F1-X-N",
+      "floor_id": "F1",
+      "zone_id": "F1-PASSAGE-N",
+      "position": {
+        "x": 32.4,
+        "y": 0.0,
+        "z": 5.9
+      },
+      "kind": "EXIT"
+    },
+    {
+      "node_id": "F1-X-S",
+      "floor_id": "F1",
+      "zone_id": "F1-PASSAGE-S",
+      "position": {
+        "x": 32.4,
+        "y": 0.0,
+        "z": 27.3
+      },
+      "kind": "EXIT"
+    },
+    {
+      "node_id": "F1-X-NW",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 17.4,
+        "y": 0.0,
+        "z": 5.9
+      },
+      "kind": "EXIT"
+    },
+    {
+      "node_id": "F1-X-SE",
+      "floor_id": "F1",
+      "zone_id": "F1-R101",
+      "position": {
+        "x": 40.1,
+        "y": 0.0,
+        "z": 27.2
+      },
+      "kind": "EXIT"
+    },
+    {
+      "node_id": "F1-J-PN",
+      "floor_id": "F1",
+      "zone_id": "F1-PASSAGE-N",
+      "position": {
+        "x": 32.4,
+        "y": 0.0,
+        "z": 9.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-PM",
+      "floor_id": "F1",
+      "zone_id": "F1-PASSAGE-N",
+      "position": {
+        "x": 32.4,
+        "y": 0.0,
+        "z": 15.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-PS",
+      "floor_id": "F1",
+      "zone_id": "F1-PASSAGE-S",
+      "position": {
+        "x": 32.4,
+        "y": 0.0,
+        "z": 23.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LNW",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 17.4,
+        "y": 0.0,
+        "z": 9.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LW",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 13.0,
+        "y": 0.0,
+        "z": 11.9
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LE",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 16.5,
+        "y": 0.0,
+        "z": 11.9
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LA",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 16.3,
+        "y": 0.0,
+        "z": 16.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LC",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 21.0,
+        "y": 0.0,
+        "z": 13.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LM",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 27.0,
+        "y": 0.0,
+        "z": 16.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LSW",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 13.0,
+        "y": 0.0,
+        "z": 24.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-LS",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 27.0,
+        "y": 0.0,
+        "z": 23.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-D-R102",
+      "floor_id": "F1",
+      "zone_id": "F1-R102",
+      "position": {
+        "x": 13.7,
+        "y": 0.0,
+        "z": 10.7
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F1-D-NURSING",
+      "floor_id": "F1",
+      "zone_id": "F1-NURSING",
+      "position": {
+        "x": 11.8,
+        "y": 0.0,
+        "z": 13.1
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F1-D-CONF-N",
+      "floor_id": "F1",
+      "zone_id": "F1-CONF",
+      "position": {
+        "x": 9.5,
+        "y": 0.0,
+        "z": 11.7
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F1-D-CONF-S",
+      "floor_id": "F1",
+      "zone_id": "F1-CONF",
+      "position": {
+        "x": 9.5,
+        "y": 0.0,
+        "z": 24.6
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F1-D-R101",
+      "floor_id": "F1",
+      "zone_id": "F1-R101",
+      "position": {
+        "x": 35.6,
+        "y": 0.0,
+        "z": 23.2
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F1-S-A",
+      "floor_id": "F1",
+      "zone_id": "F1-STAIR-A",
+      "position": {
+        "x": 14.0,
+        "y": 0.0,
+        "z": 16.2
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F1-S-B",
+      "floor_id": "F1",
+      "zone_id": "F1-STAIR-B",
+      "position": {
+        "x": 37.2,
+        "y": 0.0,
+        "z": 15.9
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F1-S-C",
+      "floor_id": "F1",
+      "zone_id": "F1-LOBBY",
+      "position": {
+        "x": 23.0,
+        "y": 0.0,
+        "z": 16.0
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F2-D-SERVER",
+      "floor_id": "F2",
+      "zone_id": "F2-SERVER",
+      "position": {
+        "x": 8.7,
+        "y": 4.0,
+        "z": 6.6
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-N1",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-N",
+      "position": {
+        "x": 10.0,
+        "y": 4.0,
+        "z": 6.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-N2",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-N",
+      "position": {
+        "x": 15.0,
+        "y": 4.0,
+        "z": 6.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-N3",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-N",
+      "position": {
+        "x": 16.6,
+        "y": 4.0,
+        "z": 6.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-R201",
+      "floor_id": "F2",
+      "zone_id": "F2-R201",
+      "position": {
+        "x": 16.6,
+        "y": 4.0,
+        "z": 5.0
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-N4",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-N",
+      "position": {
+        "x": 25.5,
+        "y": 4.0,
+        "z": 6.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-N6",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-N",
+      "position": {
+        "x": 30.5,
+        "y": 4.0,
+        "z": 6.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-N7",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E2",
+      "position": {
+        "x": 36.9,
+        "y": 4.0,
+        "z": 6.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-R202",
+      "floor_id": "F2",
+      "zone_id": "F2-R202",
+      "position": {
+        "x": 36.9,
+        "y": 4.0,
+        "z": 5.0
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-R1",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E2",
+      "position": {
+        "x": 36.9,
+        "y": 4.0,
+        "z": 7.7
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-R203",
+      "floor_id": "F2",
+      "zone_id": "F2-R203",
+      "position": {
+        "x": 38.1,
+        "y": 4.0,
+        "z": 7.7
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-R2",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E2",
+      "position": {
+        "x": 36.9,
+        "y": 4.0,
+        "z": 15.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-R2B",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E2",
+      "position": {
+        "x": 36.9,
+        "y": 4.0,
+        "z": 16.5
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-ADMIN",
+      "floor_id": "F2",
+      "zone_id": "F2-ADMIN",
+      "position": {
+        "x": 38.1,
+        "y": 4.0,
+        "z": 16.5
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-R3",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E2",
+      "position": {
+        "x": 36.9,
+        "y": 4.0,
+        "z": 22.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-DIRECTOR",
+      "floor_id": "F2",
+      "zone_id": "F2-DIRECTOR",
+      "position": {
+        "x": 38.1,
+        "y": 4.0,
+        "z": 22.2
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-W1",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-W",
+      "position": {
+        "x": 15.0,
+        "y": 4.0,
+        "z": 16.5
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-W2",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-W",
+      "position": {
+        "x": 14.9,
+        "y": 4.0,
+        "z": 20.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-INDUSTRY",
+      "floor_id": "F2",
+      "zone_id": "F2-INDUSTRY",
+      "position": {
+        "x": 14.5,
+        "y": 4.0,
+        "z": 21.8
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-E1",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E",
+      "position": {
+        "x": 25.5,
+        "y": 4.0,
+        "z": 8.5
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-E2",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E",
+      "position": {
+        "x": 25.5,
+        "y": 4.0,
+        "z": 18.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-E3",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E",
+      "position": {
+        "x": 30.5,
+        "y": 4.0,
+        "z": 18.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-E4",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E",
+      "position": {
+        "x": 30.5,
+        "y": 4.0,
+        "z": 15.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-S-A",
+      "floor_id": "F2",
+      "zone_id": "F2-STAIR-A",
+      "position": {
+        "x": 13.3,
+        "y": 4.0,
+        "z": 16.5
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F2-S-B",
+      "floor_id": "F2",
+      "zone_id": "F2-STAIR-B",
+      "position": {
+        "x": 34.1,
+        "y": 4.0,
+        "z": 15.2
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F2-S-C",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E",
+      "position": {
+        "x": 24.6,
+        "y": 4.0,
+        "z": 20.3
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F2-S-D",
+      "floor_id": "F2",
+      "zone_id": "F2-CORR-E",
+      "position": {
+        "x": 27.8,
+        "y": 4.0,
+        "z": 16.5
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F3-D-R308",
+      "floor_id": "F3",
+      "zone_id": "F3-R308",
+      "position": {
+        "x": 8.6,
+        "y": 8.0,
+        "z": 6.2
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-N1",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-N",
+      "position": {
+        "x": 10.0,
+        "y": 8.0,
+        "z": 6.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-N2",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-N",
+      "position": {
+        "x": 15.8,
+        "y": 8.0,
+        "z": 6.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-S-D",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-N",
+      "position": {
+        "x": 27.8,
+        "y": 8.0,
+        "z": 6.6
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F3-J-N3",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-N",
+      "position": {
+        "x": 27.8,
+        "y": 8.0,
+        "z": 6.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-N4",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-N",
+      "position": {
+        "x": 30.6,
+        "y": 8.0,
+        "z": 6.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-ROOM-NE",
+      "floor_id": "F3",
+      "zone_id": "F3-ROOM-NE",
+      "position": {
+        "x": 34.5,
+        "y": 8.0,
+        "z": 5.0
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-N6",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-N",
+      "position": {
+        "x": 34.5,
+        "y": 8.0,
+        "z": 6.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-N5",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E2",
+      "position": {
+        "x": 37.1,
+        "y": 8.0,
+        "z": 6.2
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-R0",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E2",
+      "position": {
+        "x": 37.1,
+        "y": 8.0,
+        "z": 1.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R300",
+      "floor_id": "F3",
+      "zone_id": "F3-R300",
+      "position": {
+        "x": 38.2,
+        "y": 8.0,
+        "z": 1.6
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-R1",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E2",
+      "position": {
+        "x": 37.1,
+        "y": 8.0,
+        "z": 8.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R301",
+      "floor_id": "F3",
+      "zone_id": "F3-R301",
+      "position": {
+        "x": 38.2,
+        "y": 8.0,
+        "z": 8.6
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-R2",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E2",
+      "position": {
+        "x": 37.1,
+        "y": 8.0,
+        "z": 15.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R302",
+      "floor_id": "F3",
+      "zone_id": "F3-R302",
+      "position": {
+        "x": 38.2,
+        "y": 8.0,
+        "z": 15.6
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-R3",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E2",
+      "position": {
+        "x": 37.1,
+        "y": 8.0,
+        "z": 23.9
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R303",
+      "floor_id": "F3",
+      "zone_id": "F3-R303",
+      "position": {
+        "x": 38.2,
+        "y": 8.0,
+        "z": 23.9
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-E1",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E",
+      "position": {
+        "x": 30.6,
+        "y": 8.0,
+        "z": 15.3
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-E2",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E",
+      "position": {
+        "x": 31.7,
+        "y": 8.0,
+        "z": 20.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R304",
+      "floor_id": "F3",
+      "zone_id": "F3-R304",
+      "position": {
+        "x": 31.7,
+        "y": 8.0,
+        "z": 22.3
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-W1",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-W",
+      "position": {
+        "x": 15.8,
+        "y": 8.0,
+        "z": 16.5
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-W2",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-W",
+      "position": {
+        "x": 14.5,
+        "y": 8.0,
+        "z": 22.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-SW",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-W",
+      "position": {
+        "x": 8.1,
+        "y": 8.0,
+        "z": 22.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R307",
+      "floor_id": "F3",
+      "zone_id": "F3-R307",
+      "position": {
+        "x": 8.1,
+        "y": 8.0,
+        "z": 21.1
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-D-R306",
+      "floor_id": "F3",
+      "zone_id": "F3-R306",
+      "position": {
+        "x": 7.0,
+        "y": 8.0,
+        "z": 22.1
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-D-COMMUNITY",
+      "floor_id": "F3",
+      "zone_id": "F3-COMMUNITY",
+      "position": {
+        "x": 9.8,
+        "y": 8.0,
+        "z": 22.9
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-D-R305",
+      "floor_id": "F3",
+      "zone_id": "F3-R305",
+      "position": {
+        "x": 13.6,
+        "y": 8.0,
+        "z": 22.9
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-S-A",
+      "floor_id": "F3",
+      "zone_id": "F3-STAIR-A",
+      "position": {
+        "x": 13.3,
+        "y": 8.0,
+        "z": 16.5
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F3-S-B",
+      "floor_id": "F3",
+      "zone_id": "F3-STAIR-B",
+      "position": {
+        "x": 34.1,
+        "y": 8.0,
+        "z": 15.3
+      },
+      "kind": "STAIR"
+    },
+    {
+      "node_id": "F1-J-CONF-N",
+      "floor_id": "F1",
+      "zone_id": "F1-CONF",
+      "position": {
+        "x": 7.5,
+        "y": 0.0,
+        "z": 11.7
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-CONF-S",
+      "floor_id": "F1",
+      "zone_id": "F1-CONF",
+      "position": {
+        "x": 7.5,
+        "y": 0.0,
+        "z": 24.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-R101",
+      "floor_id": "F1",
+      "zone_id": "F1-R101",
+      "position": {
+        "x": 40.1,
+        "y": 0.0,
+        "z": 24.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-INDUSTRY-E",
+      "floor_id": "F2",
+      "zone_id": "F2-INDUSTRY",
+      "position": {
+        "x": 31.0,
+        "y": 4.0,
+        "z": 22.0
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-INDUSTRY-W",
+      "floor_id": "F2",
+      "zone_id": "F2-INDUSTRY",
+      "position": {
+        "x": 14.5,
+        "y": 4.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-INDUSTRY-E",
+      "floor_id": "F2",
+      "zone_id": "F2-INDUSTRY",
+      "position": {
+        "x": 30.0,
+        "y": 4.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R307-N",
+      "floor_id": "F3",
+      "zone_id": "F3-R307",
+      "position": {
+        "x": 8.4,
+        "y": 8.0,
+        "z": 7.5
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-R307-N",
+      "floor_id": "F3",
+      "zone_id": "F3-R307",
+      "position": {
+        "x": 7.0,
+        "y": 8.0,
+        "z": 8.9
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-R307-S",
+      "floor_id": "F3",
+      "zone_id": "F3-R307",
+      "position": {
+        "x": 7.0,
+        "y": 8.0,
+        "z": 19.9
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R304-E",
+      "floor_id": "F3",
+      "zone_id": "F3-R304",
+      "position": {
+        "x": 35.5,
+        "y": 8.0,
+        "z": 22.2
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-R304-N",
+      "floor_id": "F3",
+      "zone_id": "F3-R304",
+      "position": {
+        "x": 31.7,
+        "y": 8.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-R304-E",
+      "floor_id": "F3",
+      "zone_id": "F3-R304",
+      "position": {
+        "x": 34.6,
+        "y": 8.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-R4",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E2",
+      "position": {
+        "x": 36.9,
+        "y": 8.0,
+        "z": 22.2
+      },
+      "kind": "JUNCTION"
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "E-F1-X-N-F1-J-PN",
+      "from_node_id": "F1-X-N",
+      "to_node_id": "F1-J-PN",
+      "kind": "CORRIDOR",
+      "cost": 3.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PN-F1-X-N",
+      "from_node_id": "F1-J-PN",
+      "to_node_id": "F1-X-N",
+      "kind": "CORRIDOR",
+      "cost": 3.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PN-F1-J-PM",
+      "from_node_id": "F1-J-PN",
+      "to_node_id": "F1-J-PM",
+      "kind": "CORRIDOR",
+      "cost": 6.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PM-F1-J-PN",
+      "from_node_id": "F1-J-PM",
+      "to_node_id": "F1-J-PN",
+      "kind": "CORRIDOR",
+      "cost": 6.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PM-F1-J-PS",
+      "from_node_id": "F1-J-PM",
+      "to_node_id": "F1-J-PS",
+      "kind": "CORRIDOR",
+      "cost": 8.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PS-F1-J-PM",
+      "from_node_id": "F1-J-PS",
+      "to_node_id": "F1-J-PM",
+      "kind": "CORRIDOR",
+      "cost": 8.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PS-F1-X-S",
+      "from_node_id": "F1-J-PS",
+      "to_node_id": "F1-X-S",
+      "kind": "CORRIDOR",
+      "cost": 4.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-X-S-F1-J-PS",
+      "from_node_id": "F1-X-S",
+      "to_node_id": "F1-J-PS",
+      "kind": "CORRIDOR",
+      "cost": 4.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PM-F1-S-B",
+      "from_node_id": "F1-J-PM",
+      "to_node_id": "F1-S-B",
+      "kind": "CORRIDOR",
+      "cost": 4.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-S-B-F1-J-PM",
+      "from_node_id": "F1-S-B",
+      "to_node_id": "F1-J-PM",
+      "kind": "CORRIDOR",
+      "cost": 4.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PS-F1-D-R101",
+      "from_node_id": "F1-J-PS",
+      "to_node_id": "F1-D-R101",
+      "kind": "DOOR",
+      "cost": 3.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-D-R101-F1-J-PS",
+      "from_node_id": "F1-D-R101",
+      "to_node_id": "F1-J-PS",
+      "kind": "DOOR",
+      "cost": 3.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-X-NW-F1-J-LNW",
+      "from_node_id": "F1-X-NW",
+      "to_node_id": "F1-J-LNW",
+      "kind": "CORRIDOR",
+      "cost": 3.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LNW-F1-X-NW",
+      "from_node_id": "F1-J-LNW",
+      "to_node_id": "F1-X-NW",
+      "kind": "CORRIDOR",
+      "cost": 3.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LNW-F1-J-LE",
+      "from_node_id": "F1-J-LNW",
+      "to_node_id": "F1-J-LE",
+      "kind": "CORRIDOR",
+      "cost": 3.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LE-F1-J-LNW",
+      "from_node_id": "F1-J-LE",
+      "to_node_id": "F1-J-LNW",
+      "kind": "CORRIDOR",
+      "cost": 3.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LE-F1-J-LW",
+      "from_node_id": "F1-J-LE",
+      "to_node_id": "F1-J-LW",
+      "kind": "CORRIDOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LW-F1-J-LE",
+      "from_node_id": "F1-J-LW",
+      "to_node_id": "F1-J-LE",
+      "kind": "CORRIDOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LE-F1-J-LC",
+      "from_node_id": "F1-J-LE",
+      "to_node_id": "F1-J-LC",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LC-F1-J-LE",
+      "from_node_id": "F1-J-LC",
+      "to_node_id": "F1-J-LE",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LE-F1-J-LA",
+      "from_node_id": "F1-J-LE",
+      "to_node_id": "F1-J-LA",
+      "kind": "CORRIDOR",
+      "cost": 4.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LA-F1-J-LE",
+      "from_node_id": "F1-J-LA",
+      "to_node_id": "F1-J-LE",
+      "kind": "CORRIDOR",
+      "cost": 4.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LNW-F1-J-PN",
+      "from_node_id": "F1-J-LNW",
+      "to_node_id": "F1-J-PN",
+      "kind": "CORRIDOR",
+      "cost": 15.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PN-F1-J-LNW",
+      "from_node_id": "F1-J-PN",
+      "to_node_id": "F1-J-LNW",
+      "kind": "CORRIDOR",
+      "cost": 15.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LW-F1-D-R102",
+      "from_node_id": "F1-J-LW",
+      "to_node_id": "F1-D-R102",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-D-R102-F1-J-LW",
+      "from_node_id": "F1-D-R102",
+      "to_node_id": "F1-J-LW",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-J-LW-F1-D-NURSING",
+      "from_node_id": "F1-J-LW",
+      "to_node_id": "F1-D-NURSING",
+      "kind": "DOOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-D-NURSING-F1-J-LW",
+      "from_node_id": "F1-D-NURSING",
+      "to_node_id": "F1-J-LW",
+      "kind": "DOOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-J-LW-F1-D-CONF-N",
+      "from_node_id": "F1-J-LW",
+      "to_node_id": "F1-D-CONF-N",
+      "kind": "DOOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-D-CONF-N-F1-J-LW",
+      "from_node_id": "F1-D-CONF-N",
+      "to_node_id": "F1-J-LW",
+      "kind": "DOOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-J-LA-F1-S-A",
+      "from_node_id": "F1-J-LA",
+      "to_node_id": "F1-S-A",
+      "kind": "CORRIDOR",
+      "cost": 2.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-S-A-F1-J-LA",
+      "from_node_id": "F1-S-A",
+      "to_node_id": "F1-J-LA",
+      "kind": "CORRIDOR",
+      "cost": 2.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LC-F1-J-LM",
+      "from_node_id": "F1-J-LC",
+      "to_node_id": "F1-J-LM",
+      "kind": "CORRIDOR",
+      "cost": 6.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LM-F1-J-LC",
+      "from_node_id": "F1-J-LM",
+      "to_node_id": "F1-J-LC",
+      "kind": "CORRIDOR",
+      "cost": 6.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LC-F1-S-C",
+      "from_node_id": "F1-J-LC",
+      "to_node_id": "F1-S-C",
+      "kind": "CORRIDOR",
+      "cost": 3.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-S-C-F1-J-LC",
+      "from_node_id": "F1-S-C",
+      "to_node_id": "F1-J-LC",
+      "kind": "CORRIDOR",
+      "cost": 3.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LM-F1-S-C",
+      "from_node_id": "F1-J-LM",
+      "to_node_id": "F1-S-C",
+      "kind": "CORRIDOR",
+      "cost": 4.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-S-C-F1-J-LM",
+      "from_node_id": "F1-S-C",
+      "to_node_id": "F1-J-LM",
+      "kind": "CORRIDOR",
+      "cost": 4.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LM-F1-J-PM",
+      "from_node_id": "F1-J-LM",
+      "to_node_id": "F1-J-PM",
+      "kind": "CORRIDOR",
+      "cost": 5.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PM-F1-J-LM",
+      "from_node_id": "F1-J-PM",
+      "to_node_id": "F1-J-LM",
+      "kind": "CORRIDOR",
+      "cost": 5.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LM-F1-J-LS",
+      "from_node_id": "F1-J-LM",
+      "to_node_id": "F1-J-LS",
+      "kind": "CORRIDOR",
+      "cost": 7.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LS-F1-J-LM",
+      "from_node_id": "F1-J-LS",
+      "to_node_id": "F1-J-LM",
+      "kind": "CORRIDOR",
+      "cost": 7.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LSW-F1-D-CONF-S",
+      "from_node_id": "F1-J-LSW",
+      "to_node_id": "F1-D-CONF-S",
+      "kind": "DOOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-D-CONF-S-F1-J-LSW",
+      "from_node_id": "F1-D-CONF-S",
+      "to_node_id": "F1-J-LSW",
+      "kind": "DOOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-J-LSW-F1-J-LS",
+      "from_node_id": "F1-J-LSW",
+      "to_node_id": "F1-J-LS",
+      "kind": "CORRIDOR",
+      "cost": 14.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LS-F1-J-LSW",
+      "from_node_id": "F1-J-LS",
+      "to_node_id": "F1-J-LSW",
+      "kind": "CORRIDOR",
+      "cost": 14.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-LS-F1-J-PS",
+      "from_node_id": "F1-J-LS",
+      "to_node_id": "F1-J-PS",
+      "kind": "CORRIDOR",
+      "cost": 5.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-PS-F1-J-LS",
+      "from_node_id": "F1-J-PS",
+      "to_node_id": "F1-J-LS",
+      "kind": "CORRIDOR",
+      "cost": 5.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N1-F2-D-SERVER",
+      "from_node_id": "F2-J-N1",
+      "to_node_id": "F2-D-SERVER",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-SERVER-F2-J-N1",
+      "from_node_id": "F2-D-SERVER",
+      "to_node_id": "F2-J-N1",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-J-N1-F2-J-N2",
+      "from_node_id": "F2-J-N1",
+      "to_node_id": "F2-J-N2",
+      "kind": "CORRIDOR",
+      "cost": 5.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N2-F2-J-N1",
+      "from_node_id": "F2-J-N2",
+      "to_node_id": "F2-J-N1",
+      "kind": "CORRIDOR",
+      "cost": 5.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N2-F2-J-N3",
+      "from_node_id": "F2-J-N2",
+      "to_node_id": "F2-J-N3",
+      "kind": "CORRIDOR",
+      "cost": 1.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N3-F2-J-N2",
+      "from_node_id": "F2-J-N3",
+      "to_node_id": "F2-J-N2",
+      "kind": "CORRIDOR",
+      "cost": 1.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N3-F2-D-R201",
+      "from_node_id": "F2-J-N3",
+      "to_node_id": "F2-D-R201",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-R201-F2-J-N3",
+      "from_node_id": "F2-D-R201",
+      "to_node_id": "F2-J-N3",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-J-N3-F2-J-N4",
+      "from_node_id": "F2-J-N3",
+      "to_node_id": "F2-J-N4",
+      "kind": "CORRIDOR",
+      "cost": 8.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N4-F2-J-N3",
+      "from_node_id": "F2-J-N4",
+      "to_node_id": "F2-J-N3",
+      "kind": "CORRIDOR",
+      "cost": 8.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N4-F2-J-N6",
+      "from_node_id": "F2-J-N4",
+      "to_node_id": "F2-J-N6",
+      "kind": "CORRIDOR",
+      "cost": 5.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N6-F2-J-N4",
+      "from_node_id": "F2-J-N6",
+      "to_node_id": "F2-J-N4",
+      "kind": "CORRIDOR",
+      "cost": 5.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N6-F2-J-N7",
+      "from_node_id": "F2-J-N6",
+      "to_node_id": "F2-J-N7",
+      "kind": "CORRIDOR",
+      "cost": 6.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N7-F2-J-N6",
+      "from_node_id": "F2-J-N7",
+      "to_node_id": "F2-J-N6",
+      "kind": "CORRIDOR",
+      "cost": 6.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N7-F2-D-R202",
+      "from_node_id": "F2-J-N7",
+      "to_node_id": "F2-D-R202",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-R202-F2-J-N7",
+      "from_node_id": "F2-D-R202",
+      "to_node_id": "F2-J-N7",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-J-N7-F2-J-R1",
+      "from_node_id": "F2-J-N7",
+      "to_node_id": "F2-J-R1",
+      "kind": "CORRIDOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R1-F2-J-N7",
+      "from_node_id": "F2-J-R1",
+      "to_node_id": "F2-J-N7",
+      "kind": "CORRIDOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R1-F2-D-R203",
+      "from_node_id": "F2-J-R1",
+      "to_node_id": "F2-D-R203",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-R203-F2-J-R1",
+      "from_node_id": "F2-D-R203",
+      "to_node_id": "F2-J-R1",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-J-R1-F2-J-R2",
+      "from_node_id": "F2-J-R1",
+      "to_node_id": "F2-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 7.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R2-F2-J-R1",
+      "from_node_id": "F2-J-R2",
+      "to_node_id": "F2-J-R1",
+      "kind": "CORRIDOR",
+      "cost": 7.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R2-F2-J-R2B",
+      "from_node_id": "F2-J-R2",
+      "to_node_id": "F2-J-R2B",
+      "kind": "CORRIDOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R2B-F2-J-R2",
+      "from_node_id": "F2-J-R2B",
+      "to_node_id": "F2-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R2B-F2-D-ADMIN",
+      "from_node_id": "F2-J-R2B",
+      "to_node_id": "F2-D-ADMIN",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-ADMIN-F2-J-R2B",
+      "from_node_id": "F2-D-ADMIN",
+      "to_node_id": "F2-J-R2B",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-J-R2-F2-S-B",
+      "from_node_id": "F2-J-R2",
+      "to_node_id": "F2-S-B",
+      "kind": "CORRIDOR",
+      "cost": 2.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-B-F2-J-R2",
+      "from_node_id": "F2-S-B",
+      "to_node_id": "F2-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 2.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R2B-F2-J-R3",
+      "from_node_id": "F2-J-R2B",
+      "to_node_id": "F2-J-R3",
+      "kind": "CORRIDOR",
+      "cost": 5.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R3-F2-J-R2B",
+      "from_node_id": "F2-J-R3",
+      "to_node_id": "F2-J-R2B",
+      "kind": "CORRIDOR",
+      "cost": 5.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-R3-F2-D-DIRECTOR",
+      "from_node_id": "F2-J-R3",
+      "to_node_id": "F2-D-DIRECTOR",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-DIRECTOR-F2-J-R3",
+      "from_node_id": "F2-D-DIRECTOR",
+      "to_node_id": "F2-J-R3",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-S-B-F2-J-E4",
+      "from_node_id": "F2-S-B",
+      "to_node_id": "F2-J-E4",
+      "kind": "CORRIDOR",
+      "cost": 3.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E4-F2-S-B",
+      "from_node_id": "F2-J-E4",
+      "to_node_id": "F2-S-B",
+      "kind": "CORRIDOR",
+      "cost": 3.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E4-F2-J-N6",
+      "from_node_id": "F2-J-E4",
+      "to_node_id": "F2-J-N6",
+      "kind": "CORRIDOR",
+      "cost": 8.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N6-F2-J-E4",
+      "from_node_id": "F2-J-N6",
+      "to_node_id": "F2-J-E4",
+      "kind": "CORRIDOR",
+      "cost": 8.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E4-F2-J-E3",
+      "from_node_id": "F2-J-E4",
+      "to_node_id": "F2-J-E3",
+      "kind": "CORRIDOR",
+      "cost": 3.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E3-F2-J-E4",
+      "from_node_id": "F2-J-E3",
+      "to_node_id": "F2-J-E4",
+      "kind": "CORRIDOR",
+      "cost": 3.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E3-F2-J-E2",
+      "from_node_id": "F2-J-E3",
+      "to_node_id": "F2-J-E2",
+      "kind": "CORRIDOR",
+      "cost": 5.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E2-F2-J-E3",
+      "from_node_id": "F2-J-E2",
+      "to_node_id": "F2-J-E3",
+      "kind": "CORRIDOR",
+      "cost": 5.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E2-F2-S-D",
+      "from_node_id": "F2-J-E2",
+      "to_node_id": "F2-S-D",
+      "kind": "CORRIDOR",
+      "cost": 2.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-D-F2-J-E2",
+      "from_node_id": "F2-S-D",
+      "to_node_id": "F2-J-E2",
+      "kind": "CORRIDOR",
+      "cost": 2.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E2-F2-S-C",
+      "from_node_id": "F2-J-E2",
+      "to_node_id": "F2-S-C",
+      "kind": "CORRIDOR",
+      "cost": 2.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-C-F2-J-E2",
+      "from_node_id": "F2-S-C",
+      "to_node_id": "F2-J-E2",
+      "kind": "CORRIDOR",
+      "cost": 2.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E2-F2-J-E1",
+      "from_node_id": "F2-J-E2",
+      "to_node_id": "F2-J-E1",
+      "kind": "CORRIDOR",
+      "cost": 9.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E1-F2-J-E2",
+      "from_node_id": "F2-J-E1",
+      "to_node_id": "F2-J-E2",
+      "kind": "CORRIDOR",
+      "cost": 9.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-E1-F2-J-N4",
+      "from_node_id": "F2-J-E1",
+      "to_node_id": "F2-J-N4",
+      "kind": "CORRIDOR",
+      "cost": 2.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N4-F2-J-E1",
+      "from_node_id": "F2-J-N4",
+      "to_node_id": "F2-J-E1",
+      "kind": "CORRIDOR",
+      "cost": 2.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-N2-F2-J-W1",
+      "from_node_id": "F2-J-N2",
+      "to_node_id": "F2-J-W1",
+      "kind": "CORRIDOR",
+      "cost": 10.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-W1-F2-J-N2",
+      "from_node_id": "F2-J-W1",
+      "to_node_id": "F2-J-N2",
+      "kind": "CORRIDOR",
+      "cost": 10.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-W1-F2-S-A",
+      "from_node_id": "F2-J-W1",
+      "to_node_id": "F2-S-A",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-A-F2-J-W1",
+      "from_node_id": "F2-S-A",
+      "to_node_id": "F2-J-W1",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-W1-F2-J-W2",
+      "from_node_id": "F2-J-W1",
+      "to_node_id": "F2-J-W2",
+      "kind": "CORRIDOR",
+      "cost": 4.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-W2-F2-J-W1",
+      "from_node_id": "F2-J-W2",
+      "to_node_id": "F2-J-W1",
+      "kind": "CORRIDOR",
+      "cost": 4.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-W2-F2-D-INDUSTRY",
+      "from_node_id": "F2-J-W2",
+      "to_node_id": "F2-D-INDUSTRY",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-INDUSTRY-F2-J-W2",
+      "from_node_id": "F2-D-INDUSTRY",
+      "to_node_id": "F2-J-W2",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-N1-F3-D-R308",
+      "from_node_id": "F3-J-N1",
+      "to_node_id": "F3-D-R308",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R308-F3-J-N1",
+      "from_node_id": "F3-D-R308",
+      "to_node_id": "F3-J-N1",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-N1-F3-J-N2",
+      "from_node_id": "F3-J-N1",
+      "to_node_id": "F3-J-N2",
+      "kind": "CORRIDOR",
+      "cost": 5.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N2-F3-J-N1",
+      "from_node_id": "F3-J-N2",
+      "to_node_id": "F3-J-N1",
+      "kind": "CORRIDOR",
+      "cost": 5.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N2-F3-J-N3",
+      "from_node_id": "F3-J-N2",
+      "to_node_id": "F3-J-N3",
+      "kind": "CORRIDOR",
+      "cost": 12.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N3-F3-J-N2",
+      "from_node_id": "F3-J-N3",
+      "to_node_id": "F3-J-N2",
+      "kind": "CORRIDOR",
+      "cost": 12.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N3-F3-S-D",
+      "from_node_id": "F3-J-N3",
+      "to_node_id": "F3-S-D",
+      "kind": "CORRIDOR",
+      "cost": 0.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-S-D-F3-J-N3",
+      "from_node_id": "F3-S-D",
+      "to_node_id": "F3-J-N3",
+      "kind": "CORRIDOR",
+      "cost": 0.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N3-F3-J-N4",
+      "from_node_id": "F3-J-N3",
+      "to_node_id": "F3-J-N4",
+      "kind": "CORRIDOR",
+      "cost": 2.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N4-F3-J-N3",
+      "from_node_id": "F3-J-N4",
+      "to_node_id": "F3-J-N3",
+      "kind": "CORRIDOR",
+      "cost": 2.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N4-F3-J-N6",
+      "from_node_id": "F3-J-N4",
+      "to_node_id": "F3-J-N6",
+      "kind": "CORRIDOR",
+      "cost": 3.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N6-F3-J-N4",
+      "from_node_id": "F3-J-N6",
+      "to_node_id": "F3-J-N4",
+      "kind": "CORRIDOR",
+      "cost": 3.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N6-F3-D-ROOM-NE",
+      "from_node_id": "F3-J-N6",
+      "to_node_id": "F3-D-ROOM-NE",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-ROOM-NE-F3-J-N6",
+      "from_node_id": "F3-D-ROOM-NE",
+      "to_node_id": "F3-J-N6",
+      "kind": "DOOR",
+      "cost": 1.2,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-N6-F3-J-N5",
+      "from_node_id": "F3-J-N6",
+      "to_node_id": "F3-J-N5",
+      "kind": "CORRIDOR",
+      "cost": 2.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N5-F3-J-N6",
+      "from_node_id": "F3-J-N5",
+      "to_node_id": "F3-J-N6",
+      "kind": "CORRIDOR",
+      "cost": 2.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N4-F3-J-E1",
+      "from_node_id": "F3-J-N4",
+      "to_node_id": "F3-J-E1",
+      "kind": "CORRIDOR",
+      "cost": 9.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-E1-F3-J-N4",
+      "from_node_id": "F3-J-E1",
+      "to_node_id": "F3-J-N4",
+      "kind": "CORRIDOR",
+      "cost": 9.1,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-N5-F3-J-R0",
+      "from_node_id": "F3-J-N5",
+      "to_node_id": "F3-J-R0",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R0-F3-J-N5",
+      "from_node_id": "F3-J-R0",
+      "to_node_id": "F3-J-N5",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R0-F3-D-R300",
+      "from_node_id": "F3-J-R0",
+      "to_node_id": "F3-D-R300",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R300-F3-J-R0",
+      "from_node_id": "F3-D-R300",
+      "to_node_id": "F3-J-R0",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-N5-F3-J-R1",
+      "from_node_id": "F3-J-N5",
+      "to_node_id": "F3-J-R1",
+      "kind": "CORRIDOR",
+      "cost": 2.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R1-F3-J-N5",
+      "from_node_id": "F3-J-R1",
+      "to_node_id": "F3-J-N5",
+      "kind": "CORRIDOR",
+      "cost": 2.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R1-F3-D-R301",
+      "from_node_id": "F3-J-R1",
+      "to_node_id": "F3-D-R301",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R301-F3-J-R1",
+      "from_node_id": "F3-D-R301",
+      "to_node_id": "F3-J-R1",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-R1-F3-J-R2",
+      "from_node_id": "F3-J-R1",
+      "to_node_id": "F3-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 6.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R2-F3-J-R1",
+      "from_node_id": "F3-J-R2",
+      "to_node_id": "F3-J-R1",
+      "kind": "CORRIDOR",
+      "cost": 6.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R2-F3-D-R302",
+      "from_node_id": "F3-J-R2",
+      "to_node_id": "F3-D-R302",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R302-F3-J-R2",
+      "from_node_id": "F3-D-R302",
+      "to_node_id": "F3-J-R2",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-R2-F3-S-B",
+      "from_node_id": "F3-J-R2",
+      "to_node_id": "F3-S-B",
+      "kind": "CORRIDOR",
+      "cost": 3.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-S-B-F3-J-R2",
+      "from_node_id": "F3-S-B",
+      "to_node_id": "F3-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 3.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R2-F3-J-R3",
+      "from_node_id": "F3-J-R2",
+      "to_node_id": "F3-J-R3",
+      "kind": "CORRIDOR",
+      "cost": 8.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R3-F3-J-R2",
+      "from_node_id": "F3-J-R3",
+      "to_node_id": "F3-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 8.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R3-F3-D-R303",
+      "from_node_id": "F3-J-R3",
+      "to_node_id": "F3-D-R303",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R303-F3-J-R3",
+      "from_node_id": "F3-D-R303",
+      "to_node_id": "F3-J-R3",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-S-B-F3-J-E1",
+      "from_node_id": "F3-S-B",
+      "to_node_id": "F3-J-E1",
+      "kind": "CORRIDOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-E1-F3-S-B",
+      "from_node_id": "F3-J-E1",
+      "to_node_id": "F3-S-B",
+      "kind": "CORRIDOR",
+      "cost": 3.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-E1-F3-J-E2",
+      "from_node_id": "F3-J-E1",
+      "to_node_id": "F3-J-E2",
+      "kind": "CORRIDOR",
+      "cost": 5.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-E2-F3-J-E1",
+      "from_node_id": "F3-J-E2",
+      "to_node_id": "F3-J-E1",
+      "kind": "CORRIDOR",
+      "cost": 5.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-E2-F3-D-R304",
+      "from_node_id": "F3-J-E2",
+      "to_node_id": "F3-D-R304",
+      "kind": "DOOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R304-F3-J-E2",
+      "from_node_id": "F3-D-R304",
+      "to_node_id": "F3-J-E2",
+      "kind": "DOOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-N2-F3-J-W1",
+      "from_node_id": "F3-J-N2",
+      "to_node_id": "F3-J-W1",
+      "kind": "CORRIDOR",
+      "cost": 10.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-W1-F3-J-N2",
+      "from_node_id": "F3-J-W1",
+      "to_node_id": "F3-J-N2",
+      "kind": "CORRIDOR",
+      "cost": 10.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-W1-F3-S-A",
+      "from_node_id": "F3-J-W1",
+      "to_node_id": "F3-S-A",
+      "kind": "CORRIDOR",
+      "cost": 2.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-S-A-F3-J-W1",
+      "from_node_id": "F3-S-A",
+      "to_node_id": "F3-J-W1",
+      "kind": "CORRIDOR",
+      "cost": 2.5,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-W1-F3-J-W2",
+      "from_node_id": "F3-J-W1",
+      "to_node_id": "F3-J-W2",
+      "kind": "CORRIDOR",
+      "cost": 5.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-W2-F3-J-W1",
+      "from_node_id": "F3-J-W2",
+      "to_node_id": "F3-J-W1",
+      "kind": "CORRIDOR",
+      "cost": 5.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-W2-F3-D-R305",
+      "from_node_id": "F3-J-W2",
+      "to_node_id": "F3-D-R305",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R305-F3-J-W2",
+      "from_node_id": "F3-D-R305",
+      "to_node_id": "F3-J-W2",
+      "kind": "DOOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-W2-F3-J-SW",
+      "from_node_id": "F3-J-W2",
+      "to_node_id": "F3-J-SW",
+      "kind": "CORRIDOR",
+      "cost": 6.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-SW-F3-J-W2",
+      "from_node_id": "F3-J-SW",
+      "to_node_id": "F3-J-W2",
+      "kind": "CORRIDOR",
+      "cost": 6.4,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-SW-F3-D-R307",
+      "from_node_id": "F3-J-SW",
+      "to_node_id": "F3-D-R307",
+      "kind": "DOOR",
+      "cost": 0.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R307-F3-J-SW",
+      "from_node_id": "F3-D-R307",
+      "to_node_id": "F3-J-SW",
+      "kind": "DOOR",
+      "cost": 0.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-SW-F3-D-R306",
+      "from_node_id": "F3-J-SW",
+      "to_node_id": "F3-D-R306",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R306-F3-J-SW",
+      "from_node_id": "F3-D-R306",
+      "to_node_id": "F3-J-SW",
+      "kind": "DOOR",
+      "cost": 1.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-SW-F3-D-COMMUNITY",
+      "from_node_id": "F3-J-SW",
+      "to_node_id": "F3-D-COMMUNITY",
+      "kind": "DOOR",
+      "cost": 1.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-COMMUNITY-F3-J-SW",
+      "from_node_id": "F3-D-COMMUNITY",
+      "to_node_id": "F3-J-SW",
+      "kind": "DOOR",
+      "cost": 1.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F1-S-A-F2-S-A",
+      "from_node_id": "F1-S-A",
+      "to_node_id": "F2-S-A",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-A-F1-S-A",
+      "from_node_id": "F2-S-A",
+      "to_node_id": "F1-S-A",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-A-F3-S-A",
+      "from_node_id": "F2-S-A",
+      "to_node_id": "F3-S-A",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-S-A-F2-S-A",
+      "from_node_id": "F3-S-A",
+      "to_node_id": "F2-S-A",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-S-B-F2-S-B",
+      "from_node_id": "F1-S-B",
+      "to_node_id": "F2-S-B",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-B-F1-S-B",
+      "from_node_id": "F2-S-B",
+      "to_node_id": "F1-S-B",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-B-F3-S-B",
+      "from_node_id": "F2-S-B",
+      "to_node_id": "F3-S-B",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-S-B-F2-S-B",
+      "from_node_id": "F3-S-B",
+      "to_node_id": "F2-S-B",
+      "kind": "STAIR",
+      "cost": 10.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-S-C-F2-S-C",
+      "from_node_id": "F1-S-C",
+      "to_node_id": "F2-S-C",
+      "kind": "STAIR",
+      "cost": 7652.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-C-F1-S-C",
+      "from_node_id": "F2-S-C",
+      "to_node_id": "F1-S-C",
+      "kind": "STAIR",
+      "cost": 7652.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-S-D-F3-S-D",
+      "from_node_id": "F2-S-D",
+      "to_node_id": "F3-S-D",
+      "kind": "STAIR",
+      "cost": 7652.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-S-D-F2-S-D",
+      "from_node_id": "F3-S-D",
+      "to_node_id": "F2-S-D",
+      "kind": "STAIR",
+      "cost": 7652.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-D-CONF-N-F1-J-CONF-N",
+      "from_node_id": "F1-D-CONF-N",
+      "to_node_id": "F1-J-CONF-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-N-F1-D-CONF-N",
+      "from_node_id": "F1-J-CONF-N",
+      "to_node_id": "F1-D-CONF-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-N-F1-J-CONF-S",
+      "from_node_id": "F1-J-CONF-N",
+      "to_node_id": "F1-J-CONF-S",
+      "kind": "CORRIDOR",
+      "cost": 852.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-S-F1-J-CONF-N",
+      "from_node_id": "F1-J-CONF-S",
+      "to_node_id": "F1-J-CONF-N",
+      "kind": "CORRIDOR",
+      "cost": 852.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-S-F1-D-CONF-S",
+      "from_node_id": "F1-J-CONF-S",
+      "to_node_id": "F1-D-CONF-S",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-D-CONF-S-F1-J-CONF-S",
+      "from_node_id": "F1-D-CONF-S",
+      "to_node_id": "F1-J-CONF-S",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-D-R101-F1-J-R101",
+      "from_node_id": "F1-D-R101",
+      "to_node_id": "F1-J-R101",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-R101-F1-D-R101",
+      "from_node_id": "F1-J-R101",
+      "to_node_id": "F1-D-R101",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-R101-F1-X-SE",
+      "from_node_id": "F1-J-R101",
+      "to_node_id": "F1-X-SE",
+      "kind": "CORRIDOR",
+      "cost": 3.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-X-SE-F1-J-R101",
+      "from_node_id": "F1-X-SE",
+      "to_node_id": "F1-J-R101",
+      "kind": "CORRIDOR",
+      "cost": 3.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-D-INDUSTRY-E-F2-J-R3",
+      "from_node_id": "F2-D-INDUSTRY-E",
+      "to_node_id": "F2-J-R3",
+      "kind": "DOOR",
+      "cost": 5.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-J-R3-F2-D-INDUSTRY-E",
+      "from_node_id": "F2-J-R3",
+      "to_node_id": "F2-D-INDUSTRY-E",
+      "kind": "DOOR",
+      "cost": 5.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-INDUSTRY-F2-J-INDUSTRY-W",
+      "from_node_id": "F2-D-INDUSTRY",
+      "to_node_id": "F2-J-INDUSTRY-W",
+      "kind": "CORRIDOR",
+      "cost": 1.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-W-F2-D-INDUSTRY",
+      "from_node_id": "F2-J-INDUSTRY-W",
+      "to_node_id": "F2-D-INDUSTRY",
+      "kind": "CORRIDOR",
+      "cost": 1.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-W-F2-J-INDUSTRY-E",
+      "from_node_id": "F2-J-INDUSTRY-W",
+      "to_node_id": "F2-J-INDUSTRY-E",
+      "kind": "CORRIDOR",
+      "cost": 855.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-E-F2-J-INDUSTRY-W",
+      "from_node_id": "F2-J-INDUSTRY-E",
+      "to_node_id": "F2-J-INDUSTRY-W",
+      "kind": "CORRIDOR",
+      "cost": 855.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-E-F2-D-INDUSTRY-E",
+      "from_node_id": "F2-J-INDUSTRY-E",
+      "to_node_id": "F2-D-INDUSTRY-E",
+      "kind": "CORRIDOR",
+      "cost": 1.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-D-INDUSTRY-E-F2-J-INDUSTRY-E",
+      "from_node_id": "F2-D-INDUSTRY-E",
+      "to_node_id": "F2-J-INDUSTRY-E",
+      "kind": "CORRIDOR",
+      "cost": 1.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R307-N-F3-J-N1",
+      "from_node_id": "F3-D-R307-N",
+      "to_node_id": "F3-J-N1",
+      "kind": "DOOR",
+      "cost": 2.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-N1-F3-D-R307-N",
+      "from_node_id": "F3-J-N1",
+      "to_node_id": "F3-D-R307-N",
+      "kind": "DOOR",
+      "cost": 2.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R307-N-F3-J-R307-N",
+      "from_node_id": "F3-D-R307-N",
+      "to_node_id": "F3-J-R307-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-N-F3-D-R307-N",
+      "from_node_id": "F3-J-R307-N",
+      "to_node_id": "F3-D-R307-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-N-F3-J-R307-S",
+      "from_node_id": "F3-J-R307-N",
+      "to_node_id": "F3-J-R307-S",
+      "kind": "CORRIDOR",
+      "cost": 850.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-S-F3-J-R307-N",
+      "from_node_id": "F3-J-R307-S",
+      "to_node_id": "F3-J-R307-N",
+      "kind": "CORRIDOR",
+      "cost": 850.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-S-F3-D-R307",
+      "from_node_id": "F3-J-R307-S",
+      "to_node_id": "F3-D-R307",
+      "kind": "CORRIDOR",
+      "cost": 1.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R307-F3-J-R307-S",
+      "from_node_id": "F3-D-R307",
+      "to_node_id": "F3-J-R307-S",
+      "kind": "CORRIDOR",
+      "cost": 1.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R304-E-F3-J-R4",
+      "from_node_id": "F3-D-R304-E",
+      "to_node_id": "F3-J-R4",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-R4-F3-D-R304-E",
+      "from_node_id": "F3-J-R4",
+      "to_node_id": "F3-D-R304-E",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-R4-F3-J-R3",
+      "from_node_id": "F3-J-R4",
+      "to_node_id": "F3-J-R3",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R3-F3-J-R4",
+      "from_node_id": "F3-J-R3",
+      "to_node_id": "F3-J-R4",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R4-F3-J-R2",
+      "from_node_id": "F3-J-R4",
+      "to_node_id": "F3-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 6.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R2-F3-J-R4",
+      "from_node_id": "F3-J-R2",
+      "to_node_id": "F3-J-R4",
+      "kind": "CORRIDOR",
+      "cost": 6.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R304-F3-J-R304-N",
+      "from_node_id": "F3-D-R304",
+      "to_node_id": "F3-J-R304-N",
+      "kind": "CORRIDOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-N-F3-D-R304",
+      "from_node_id": "F3-J-R304-N",
+      "to_node_id": "F3-D-R304",
+      "kind": "CORRIDOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-N-F3-J-R304-E",
+      "from_node_id": "F3-J-R304-N",
+      "to_node_id": "F3-J-R304-E",
+      "kind": "CORRIDOR",
+      "cost": 842.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-E-F3-J-R304-N",
+      "from_node_id": "F3-J-R304-E",
+      "to_node_id": "F3-J-R304-N",
+      "kind": "CORRIDOR",
+      "cost": 842.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-E-F3-D-R304-E",
+      "from_node_id": "F3-J-R304-E",
+      "to_node_id": "F3-D-R304-E",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R304-E-F3-J-R304-E",
+      "from_node_id": "F3-D-R304-E",
+      "to_node_id": "F3-J-R304-E",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    }
+  ],
+  "exits": [
+    {
+      "exit_id": "EXIT-N",
+      "node_id": "F1-X-N",
+      "enabled": true,
+      "assumption": "A05 기본 출구. 1F 블록 사이 통로 위쪽 끝의 외곽 벽 끊김으로 판독"
+    },
+    {
+      "exit_id": "EXIT-S",
+      "node_id": "F1-X-S",
+      "enabled": true,
+      "assumption": "A05 기본 출구. 1F 블록 사이 통로 아래쪽 끝의 외곽 벽 끊김으로 판독"
+    },
+    {
+      "exit_id": "EXIT-NW",
+      "node_id": "F1-X-NW",
+      "enabled": true,
+      "assumption": "A10 시뮬레이션 가정으로 사용. 로비 위쪽 외곽 벽 틈으로 판독했으며 실제 비상구 지정·잠금 여부는 미확인(U06)"
+    },
+    {
+      "exit_id": "EXIT-SE",
+      "node_id": "F1-X-SE",
+      "enabled": true,
+      "assumption": "A10 시뮬레이션 가정으로 사용. 101호 아래 외곽 벽 틈으로 판독했으며 101호 전용 문일 수 있고 실제 비상구 지정·잠금 여부는 미확인(U06)"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "CAM-F2-CORR-W",
+      "source_type": "VIDEO_AI",
+      "zone_id": "F2-CORR-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE",
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "CAM-F2-CORR-E",
+      "source_type": "VIDEO_AI",
+      "zone_id": "F2-CORR-E",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE",
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "CAM-F3-CORR-W",
+      "source_type": "VIDEO_AI",
+      "zone_id": "F3-CORR-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE",
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "CAM-F3-CORR-E",
+      "source_type": "VIDEO_AI",
+      "zone_id": "F3-CORR-E",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE",
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F1-LOBBY",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F1-LOBBY",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F1-PASSAGE-N",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F1-PASSAGE-N",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F1-PASSAGE-S",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F1-PASSAGE-S",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F2-VOID",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F2-VOID",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F2-CORR-N",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F2-CORR-N",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F2-CORR-W",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F2-CORR-W",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F2-CORR-E",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F2-CORR-E",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F2-CORR-E2",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F2-CORR-E2",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F3-CORR-N",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F3-CORR-N",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F3-CORR-W",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F3-CORR-W",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F3-CORR-E",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F3-CORR-E",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SMK-F3-CORR-E2",
+      "source_type": "SIM_SMOKE_DETECTOR",
+      "zone_id": "F3-CORR-E2",
+      "required": true,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SMOKE"
+      ]
+    },
+    {
+      "source_id": "SPK-F1-LOBBY",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F1-LOBBY",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F1-PASSAGE-N",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F1-PASSAGE-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F1-PASSAGE-S",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F1-PASSAGE-S",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F2-VOID",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F2-VOID",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F2-CORR-N",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F2-CORR-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F2-CORR-W",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F2-CORR-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F2-CORR-E",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F2-CORR-E",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F2-CORR-E2",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F2-CORR-E2",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F3-CORR-N",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F3-CORR-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F3-CORR-W",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F3-CORR-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F3-CORR-E",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F3-CORR-E",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "SPK-F3-CORR-E2",
+      "source_type": "SIM_SPRINKLER",
+      "zone_id": "F3-CORR-E2",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "SPRINKLER"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-LOBBY",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-LOBBY",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-PASSAGE-N",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-PASSAGE-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-PASSAGE-S",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-PASSAGE-S",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-VOID",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-VOID",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-CORR-N",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-CORR-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-CORR-W",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-CORR-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-CORR-E",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-CORR-E",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-CORR-E2",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-CORR-E2",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-CORR-N",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-CORR-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-CORR-W",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-CORR-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-CORR-E",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-CORR-E",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-CORR-E2",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-CORR-E2",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-CONF",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-CONF",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-R102",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-R102",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-NURSING",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-NURSING",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-STAIR-A",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-STAIR-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-STAIR-B",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-STAIR-B",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-R101",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-R101",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-SERVER",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-SERVER",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-R201",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-R201",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-R202",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-R202",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-R203",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-R203",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-ADMIN",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-ADMIN",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-DIRECTOR",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-DIRECTOR",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-INDUSTRY",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-INDUSTRY",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-ROOM-W",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-ROOM-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-STAIR-A",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-STAIR-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-STAIR-B",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-STAIR-B",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R308",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R308",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-VOID-N",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-VOID-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-ROOM-NE",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-ROOM-NE",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R300",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R300",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R301",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R301",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R302",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R302",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R303",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R303",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R304",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R304",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R305",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R305",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-COMMUNITY",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-COMMUNITY",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R306",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R306",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R307",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R307",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-CENTER",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-CENTER",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-STAIR-A",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-STAIR-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-STAIR-B",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-STAIR-B",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "sign_id": "SIGN-F1-X-N",
+      "node_id": "F1-X-N",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-X-N",
+          "next_node_to_display": {
+            "F1-X-N": "EXIT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-X-S",
+      "node_id": "F1-X-S",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-X-S",
+          "next_node_to_display": {
+            "F1-X-S": "EXIT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-X-NW",
+      "node_id": "F1-X-NW",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-X-NW",
+          "next_node_to_display": {
+            "F1-X-NW": "EXIT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-X-SE",
+      "node_id": "F1-X-SE",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-X-SE",
+          "next_node_to_display": {
+            "F1-X-SE": "EXIT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-PN",
+      "node_id": "F1-J-PN",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-X-N",
+          "next_node_to_display": {
+            "F1-X-N": "FORWARD",
+            "F1-J-PM": "BACK",
+            "F1-J-LNW": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-X-N",
+          "next_node_to_display": {
+            "F1-X-N": "BACK",
+            "F1-J-PM": "FORWARD",
+            "F1-J-LNW": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-PM",
+      "node_id": "F1-J-PM",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-J-PN",
+          "next_node_to_display": {
+            "F1-J-PN": "FORWARD",
+            "F1-J-PS": "BACK",
+            "F1-S-B": "RIGHT",
+            "F1-J-LM": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-J-PN",
+          "next_node_to_display": {
+            "F1-J-PN": "BACK",
+            "F1-J-PS": "FORWARD",
+            "F1-S-B": "LEFT",
+            "F1-J-LM": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-PS",
+      "node_id": "F1-J-PS",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-X-S",
+          "next_node_to_display": {
+            "F1-J-PM": "BACK",
+            "F1-X-S": "FORWARD",
+            "F1-D-R101": "LEFT",
+            "F1-J-LS": "RIGHT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-X-S",
+          "next_node_to_display": {
+            "F1-J-PM": "FORWARD",
+            "F1-X-S": "BACK",
+            "F1-D-R101": "RIGHT",
+            "F1-J-LS": "LEFT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-LNW",
+      "node_id": "F1-J-LNW",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-X-NW",
+          "next_node_to_display": {
+            "F1-X-NW": "FORWARD",
+            "F1-J-LE": "BACK",
+            "F1-J-PN": "RIGHT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-X-NW",
+          "next_node_to_display": {
+            "F1-X-NW": "BACK",
+            "F1-J-LE": "FORWARD",
+            "F1-J-PN": "LEFT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-LW",
+      "node_id": "F1-J-LW",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-LE",
+          "next_node_to_display": {
+            "F1-J-LE": "FORWARD",
+            "F1-D-R102": "LEFT",
+            "F1-D-NURSING": "BACK",
+            "F1-D-CONF-N": "BACK"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-LE",
+          "next_node_to_display": {
+            "F1-J-LE": "BACK",
+            "F1-D-R102": "RIGHT",
+            "F1-D-NURSING": "FORWARD",
+            "F1-D-CONF-N": "FORWARD"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-LE",
+      "node_id": "F1-J-LE",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-J-LNW",
+          "next_node_to_display": {
+            "F1-J-LNW": "FORWARD",
+            "F1-J-LW": "LEFT",
+            "F1-J-LC": "RIGHT",
+            "F1-J-LA": "BACK"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-J-LNW",
+          "next_node_to_display": {
+            "F1-J-LNW": "BACK",
+            "F1-J-LW": "RIGHT",
+            "F1-J-LC": "LEFT",
+            "F1-J-LA": "FORWARD"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-LC",
+      "node_id": "F1-J-LC",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-LE",
+          "next_node_to_display": {
+            "F1-J-LE": "FORWARD",
+            "F1-J-LM": "BACK",
+            "F1-S-C": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-LE",
+          "next_node_to_display": {
+            "F1-J-LE": "BACK",
+            "F1-J-LM": "FORWARD",
+            "F1-S-C": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-LM",
+      "node_id": "F1-J-LM",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-PM",
+          "next_node_to_display": {
+            "F1-J-LC": "BACK",
+            "F1-S-C": "BACK",
+            "F1-J-PM": "FORWARD",
+            "F1-J-LS": "RIGHT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-PM",
+          "next_node_to_display": {
+            "F1-J-LC": "FORWARD",
+            "F1-S-C": "FORWARD",
+            "F1-J-PM": "BACK",
+            "F1-J-LS": "LEFT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-J-LS",
+      "node_id": "F1-J-LS",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-PS",
+          "next_node_to_display": {
+            "F1-J-LM": "LEFT",
+            "F1-J-LSW": "BACK",
+            "F1-J-PS": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-PS",
+          "next_node_to_display": {
+            "F1-J-LM": "RIGHT",
+            "F1-J-LSW": "FORWARD",
+            "F1-J-PS": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-N2",
+      "node_id": "F2-J-N2",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-W1",
+          "next_node_to_display": {
+            "F2-J-N1": "RIGHT",
+            "F2-J-N3": "LEFT",
+            "F2-J-W1": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-W1",
+          "next_node_to_display": {
+            "F2-J-N1": "LEFT",
+            "F2-J-N3": "RIGHT",
+            "F2-J-W1": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-N3",
+      "node_id": "F2-J-N3",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-N2",
+          "next_node_to_display": {
+            "F2-J-N2": "FORWARD",
+            "F2-D-R201": "RIGHT",
+            "F2-J-N4": "BACK"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-N2",
+          "next_node_to_display": {
+            "F2-J-N2": "BACK",
+            "F2-D-R201": "LEFT",
+            "F2-J-N4": "FORWARD"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-N4",
+      "node_id": "F2-J-N4",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-N6",
+          "next_node_to_display": {
+            "F2-J-N3": "BACK",
+            "F2-J-N6": "FORWARD",
+            "F2-J-E1": "RIGHT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-N6",
+          "next_node_to_display": {
+            "F2-J-N3": "FORWARD",
+            "F2-J-N6": "BACK",
+            "F2-J-E1": "LEFT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-N6",
+      "node_id": "F2-J-N6",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-E4",
+          "next_node_to_display": {
+            "F2-J-N4": "RIGHT",
+            "F2-J-N7": "LEFT",
+            "F2-J-E4": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-E4",
+          "next_node_to_display": {
+            "F2-J-N4": "LEFT",
+            "F2-J-N7": "RIGHT",
+            "F2-J-E4": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-N7",
+      "node_id": "F2-J-N7",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-R1",
+          "next_node_to_display": {
+            "F2-J-N6": "RIGHT",
+            "F2-D-R202": "BACK",
+            "F2-J-R1": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-R1",
+          "next_node_to_display": {
+            "F2-J-N6": "LEFT",
+            "F2-D-R202": "FORWARD",
+            "F2-J-R1": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-R1",
+      "node_id": "F2-J-R1",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-R2",
+          "next_node_to_display": {
+            "F2-J-N7": "BACK",
+            "F2-D-R203": "LEFT",
+            "F2-J-R2": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-R2",
+          "next_node_to_display": {
+            "F2-J-N7": "FORWARD",
+            "F2-D-R203": "RIGHT",
+            "F2-J-R2": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-R2",
+      "node_id": "F2-J-R2",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-J-R1": "RIGHT",
+            "F2-J-R2B": "LEFT",
+            "F2-S-B": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-J-R1": "LEFT",
+            "F2-J-R2B": "RIGHT",
+            "F2-S-B": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-R2B",
+      "node_id": "F2-J-R2B",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-R2",
+          "next_node_to_display": {
+            "F2-J-R2": "FORWARD",
+            "F2-D-ADMIN": "RIGHT",
+            "F2-J-R3": "BACK"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-R2",
+          "next_node_to_display": {
+            "F2-J-R2": "BACK",
+            "F2-D-ADMIN": "LEFT",
+            "F2-J-R3": "FORWARD"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-R3",
+      "node_id": "F2-J-R3",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-R2B",
+          "next_node_to_display": {
+            "F2-J-R2B": "FORWARD",
+            "F2-D-DIRECTOR": "RIGHT",
+            "F2-D-INDUSTRY-E": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-R2B",
+          "next_node_to_display": {
+            "F2-J-R2B": "BACK",
+            "F2-D-DIRECTOR": "LEFT",
+            "F2-D-INDUSTRY-E": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-W1",
+      "node_id": "F2-J-W1",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-A",
+          "next_node_to_display": {
+            "F2-J-N2": "RIGHT",
+            "F2-S-A": "FORWARD",
+            "F2-J-W2": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-A",
+          "next_node_to_display": {
+            "F2-J-N2": "LEFT",
+            "F2-S-A": "BACK",
+            "F2-J-W2": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-E2",
+      "node_id": "F2-J-E2",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-E3",
+          "next_node_to_display": {
+            "F2-J-E3": "FORWARD",
+            "F2-S-D": "FORWARD",
+            "F2-S-C": "RIGHT",
+            "F2-J-E1": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-E3",
+          "next_node_to_display": {
+            "F2-J-E3": "BACK",
+            "F2-S-D": "BACK",
+            "F2-S-C": "LEFT",
+            "F2-J-E1": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-E4",
+      "node_id": "F2-J-E4",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-S-B": "FORWARD",
+            "F2-J-N6": "LEFT",
+            "F2-J-E3": "RIGHT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-S-B": "BACK",
+            "F2-J-N6": "RIGHT",
+            "F2-J-E3": "LEFT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-S-A",
+      "node_id": "F2-S-A",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-S-A",
+          "next_node_to_display": {
+            "F1-S-A": "STAIRS_DOWN",
+            "F2-J-W1": "BACK",
+            "F3-S-A": "STAIRS_UP"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-S-B",
+      "node_id": "F2-S-B",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-S-B",
+          "next_node_to_display": {
+            "F1-S-B": "STAIRS_DOWN",
+            "F2-J-E4": "BACK",
+            "F2-J-R2": "FORWARD",
+            "F3-S-B": "STAIRS_UP"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-N1",
+      "node_id": "F3-J-N1",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N2",
+          "next_node_to_display": {
+            "F3-D-R308": "BACK",
+            "F3-J-N2": "FORWARD",
+            "F3-D-R307-N": "BACK"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N2",
+          "next_node_to_display": {
+            "F3-D-R308": "FORWARD",
+            "F3-J-N2": "BACK",
+            "F3-D-R307-N": "FORWARD"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-N2",
+      "node_id": "F3-J-N2",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-W1",
+          "next_node_to_display": {
+            "F3-J-N1": "RIGHT",
+            "F3-J-N3": "LEFT",
+            "F3-J-W1": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-W1",
+          "next_node_to_display": {
+            "F3-J-N1": "LEFT",
+            "F3-J-N3": "RIGHT",
+            "F3-J-W1": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-N3",
+      "node_id": "F3-J-N3",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N4",
+          "next_node_to_display": {
+            "F3-J-N2": "BACK",
+            "F3-S-D": "RIGHT",
+            "F3-J-N4": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N4",
+          "next_node_to_display": {
+            "F3-J-N2": "FORWARD",
+            "F3-S-D": "LEFT",
+            "F3-J-N4": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-N4",
+      "node_id": "F3-J-N4",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-E1",
+          "next_node_to_display": {
+            "F3-J-N3": "RIGHT",
+            "F3-J-N6": "LEFT",
+            "F3-J-E1": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-E1",
+          "next_node_to_display": {
+            "F3-J-N3": "LEFT",
+            "F3-J-N6": "RIGHT",
+            "F3-J-E1": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-N6",
+      "node_id": "F3-J-N6",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N5",
+          "next_node_to_display": {
+            "F3-J-N4": "BACK",
+            "F3-D-ROOM-NE": "LEFT",
+            "F3-J-N5": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N5",
+          "next_node_to_display": {
+            "F3-J-N4": "FORWARD",
+            "F3-D-ROOM-NE": "RIGHT",
+            "F3-J-N5": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-N5",
+      "node_id": "F3-J-N5",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-R1",
+          "next_node_to_display": {
+            "F3-J-N6": "RIGHT",
+            "F3-J-R0": "BACK",
+            "F3-J-R1": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-R1",
+          "next_node_to_display": {
+            "F3-J-N6": "LEFT",
+            "F3-J-R0": "FORWARD",
+            "F3-J-R1": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-R1",
+      "node_id": "F3-J-R1",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-N5": "BACK",
+            "F3-D-R301": "LEFT",
+            "F3-J-R2": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-N5": "FORWARD",
+            "F3-D-R301": "RIGHT",
+            "F3-J-R2": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-R2",
+      "node_id": "F3-J-R2",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-R1": "RIGHT",
+            "F3-D-R302": "BACK",
+            "F3-S-B": "FORWARD",
+            "F3-J-R3": "LEFT",
+            "F3-J-R4": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-R1": "LEFT",
+            "F3-D-R302": "FORWARD",
+            "F3-S-B": "BACK",
+            "F3-J-R3": "RIGHT",
+            "F3-J-R4": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-R3",
+      "node_id": "F3-J-R3",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-R2": "FORWARD",
+            "F3-D-R303": "RIGHT",
+            "F3-J-R4": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-R2": "BACK",
+            "F3-D-R303": "LEFT",
+            "F3-J-R4": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-E1",
+      "node_id": "F3-J-E1",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-N4": "LEFT",
+            "F3-S-B": "FORWARD",
+            "F3-J-E2": "RIGHT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-N4": "RIGHT",
+            "F3-S-B": "BACK",
+            "F3-J-E2": "LEFT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-W1",
+      "node_id": "F3-J-W1",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-S-A",
+          "next_node_to_display": {
+            "F3-J-N2": "RIGHT",
+            "F3-S-A": "FORWARD",
+            "F3-J-W2": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-S-A",
+          "next_node_to_display": {
+            "F3-J-N2": "LEFT",
+            "F3-S-A": "BACK",
+            "F3-J-W2": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-W2",
+      "node_id": "F3-J-W2",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-W1",
+          "next_node_to_display": {
+            "F3-J-W1": "FORWARD",
+            "F3-D-R305": "LEFT",
+            "F3-J-SW": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-W1",
+          "next_node_to_display": {
+            "F3-J-W1": "BACK",
+            "F3-D-R305": "RIGHT",
+            "F3-J-SW": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-SW",
+      "node_id": "F3-J-SW",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-W2",
+          "next_node_to_display": {
+            "F3-J-W2": "FORWARD",
+            "F3-D-R307": "LEFT",
+            "F3-D-R306": "BACK",
+            "F3-D-COMMUNITY": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-W2",
+          "next_node_to_display": {
+            "F3-J-W2": "BACK",
+            "F3-D-R307": "RIGHT",
+            "F3-D-R306": "FORWARD",
+            "F3-D-COMMUNITY": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-S-A",
+      "node_id": "F3-S-A",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-A",
+          "next_node_to_display": {
+            "F2-S-A": "STAIRS_DOWN",
+            "F3-J-W1": "BACK"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-S-B",
+      "node_id": "F3-S-B",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-S-B": "STAIRS_DOWN",
+            "F3-J-E1": "BACK",
+            "F3-J-R2": "FORWARD"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-R4",
+      "node_id": "F3-J-R4",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-D-R304-E": "LEFT",
+            "F3-J-R3": "BACK",
+            "F3-J-R2": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-D-R304-E": "RIGHT",
+            "F3-J-R3": "FORWARD",
+            "F3-J-R2": "BACK"
+          }
+        }
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "item": "A01 축척",
+      "basis": "공개 면적 5곳과 안내도 픽셀 면적 비교",
+      "description": "0.0125 m/px로 추정했고 오차는 ±5% 수준이다. 실측이 아니므로 measured는 false",
+      "reviewer": null
+    },
+    {
+      "item": "A02 층 높이",
+      "basis": "공개 자료에 층 높이 없음",
+      "description": "4.0 m로 두고 계단 cost와 3D 높이에 쓴다",
+      "reviewer": null
+    },
+    {
+      "item": "A03 엘리베이터 제외",
+      "basis": "화재 시 엘리베이터 사용 금지 일반 원칙",
+      "description": "엘리베이터 노드와 통로를 만들지 않는다",
+      "reviewer": null
+    },
+    {
+      "item": "A04 열린 계단 C·D는 우회용",
+      "basis": "팀 결정 2026-11-08. 연기가 열린 공간을 타고 퍼지기 쉬운 일반 원칙",
+      "description": "C·D 각 방향의 cost는 781.6(기본 10 + C·D를 제외한 모든 방향 통로 cost 합계 771.6)이다. 양수 비용의 일반 경로가 있으면 C·D보다 항상 저렴하므로 A·B를 먼저 쓴다(#52). 통로·비용 변경 시 이 상한 조건을 다시 검사한다. F2-VOID 경보 시 C·D, F3-CORR-E 경보 시 D 통로도 막는다",
+      "reviewer": null
+    },
+    {
+      "item": "A05 기본 출구",
+      "basis": "1F 블록 사이 통로 양 끝의 외곽 벽 끊김",
+      "description": "EXIT-N·EXIT-S만 활성. EXIT-NW·EXIT-SE는 비활성으로 남긴다. 통로를 남북 구역으로 나눠 한쪽 경보 시 반대편 출구가 남게 했다(M03) (버전 5에서 A10으로 대체: 네 곳 모두 사용)",
+      "reviewer": null
+    },
+    {
+      "item": "A06 문 위치 근사",
+      "basis": "안내도의 벽 끊김",
+      "description": "방문 노드는 벽 끊김 가운데에 두었고 실제 문 위치와 다를 수 있다 버전 5: 307호 북쪽, 304호 동쪽, 산업부 동쪽 진입부를 더했고, 문이 둘인 방과 101호에는 방 안 이동 지점을 두었다",
+      "reviewer": null
+    },
+    {
+      "item": "A07 가상 설비",
+      "basis": "실제 설비 위치는 공개되지 않음",
+      "description": "카메라·연기감지기·스프링클러·유도등은 시연용 가상 배치다",
+      "reviewer": null
+    },
+    {
+      "item": "A08 계단 C 방향",
+      "basis": "1F·2F 안내도의 계단 그림",
+      "description": "1F 로비의 사선 계단 위쪽 끝에서 올라 2F 뚫린 공간 오른쪽(F2-CORR-E)에 닿는다고 보았다",
+      "reviewer": null
+    },
+    {
+      "item": "A09 관측원 required·freshness",
+      "basis": "C02 샘플의 값",
+      "description": "연기감지기 required true, 카메라·스프링클러 false, freshness 3000 ms. 2번이 상태 규칙에 맞춰 확정한다",
+      "reviewer": null
+    },
+    {
+      "item": "A10 1층 출구 4곳 사용 (시뮬레이션 가정)",
+      "basis": "공개 층별 안내도의 외곽 벽 끊김 4곳. 현장 확인이나 비상구 지정 자료는 없음",
+      "description": "EXIT-N·EXIT-S·EXIT-NW·EXIT-SE를 모두 대피 출구로 계산한다. 시뮬레이션을 위한 명시적 가정이며 현장에서 확인된 비상구가 아니다. EXIT-SE는 101호 안을 지나야 닿는다",
+      "reviewer": null
+    },
+    {
+      "item": "A11 방 안 이동은 다른 길이 없을 때만",
+      "basis": "방은 통로가 아니라는 기존 원칙(10.2절)과 안내도의 두 진입부",
+      "description": "문이 둘인 방(컨퍼런스룸·산업부·304호·307호) 안을 가로지르는 구간 cost에 일반 통로 전체 합계를 더한다. 복도 길이 남아 있으면 방을 지름길로 쓰지 않고, 자기 방의 한쪽 문 앞이 막혔을 때만 방 안을 지나 다른 문으로 나간다",
+      "reviewer": null
+    }
+  ],
+  "provenance": {
+    "source_url": "https://wfi.or.kr/communication/?b=B_1_4",
+    "checked_on": "2026-11-11",
+    "author": "담당 4",
+    "description": "원주미래산업진흥원 창업지원허브 공개 층별 안내도(1F·2F·3F)를 판독해 만든 시연용 근사 모델. 실측 아님"
+  }
+}

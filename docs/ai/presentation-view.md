@@ -1,0 +1,52 @@
+# AI 영상·3D 시연 보기
+
+관련: [#158](https://github.com/JinsuBae2/saferoute/issues/158), 기존 [P06 #74](https://github.com/JinsuBae2/saferoute/issues/74).
+
+관제 상단 **AI 시연 보기**를 누르고 카메라를 선택한다. 넓은 화면에서는 실제 AI 분석 프레임과 기존 건물 3D를 나란히 보여준다. **3D에서 찾기**로 선택한 카메라의 가상 설치 위치를 찾는다. 좁은 화면은 영상을 먼저 세로로 표시한다. 기본 관제로 돌아가도 3D 선택 상태는 유지한다.
+
+상단 01·02는 선택한 카메라의 관측 유효성·활성 경보·해당 관측원이 원인으로 기록된 차단 통로다. 03·04는 **모든 관측원이 반영된 건물 전체** 경로와 브라우저 단말 ACK다. 영상 상자만으로 경보·경로를 계산하거나 모든 제어 결과를 선택 카메라의 공으로 표시하지 않는다. 단말을 실제로 띄우지 않으면 적용은 0대다.
+
+검출 %는 모델 신뢰도이며 정확도가 아니다. 평가 기준 미달은 화면의 고정된 [별도 설정 평가 기록](final-evaluation-closeout.md)으로 연결한다. 영상 프레임, 제어 스냅샷, 단말 응답은 별도 조회이며 동일 시각의 원자적 측정이나 지연 벤치마크가 아니다. 3D와 이동 인원·연기는 가상 표현이다.
+
+## WFI 로컬 실행
+
+저장소 루트에서 실행하며 각 장기 실행 명령은 별도 터미널을 사용한다. core 환경과 AI 환경의 설치는 README·A01을 따른다. 아래 `python`은 해당 환경의 실행 파일로 바꾼다. 기존 공용 서버에 중복 작업자를 붙이지 않고 별도 로컬 실행에서 확인한다.
+
+1. PowerShell에서 WFI 제어기를 실행한다.
+
+```powershell
+$env:SAFEROUTE_BUILDING_FILE = "data/space/wfi-v1.json"
+python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
+```
+
+2. 정상 관측을 유지하는 **가상 감지기**와 미리보기 API를 각각 실행한다.
+
+```sh
+python -m scenario_runner --building data/space/wfi-v1.json --scenario data/scenarios/wfi-idle.json --controller-url http://127.0.0.1:8000 --port 8001
+```
+
+```sh
+python -m uvicorn preview_worker.app:create_app --factory --host 127.0.0.1 --port 8003 --workers 1
+```
+
+3. `python -m tools.control session`의 실제 run_id를 사용해 `python -m tools.control arm --run-id RUN_ID --reason "AI 시연 준비"`를 실행한다. 새 실행 ID로 직접 치환하며, 재시연은 이전 작업자를 종료하고 reset·새 시나리오부터 진행한다.
+
+4. AI 환경에서 가중치·개발 영상의 실제 경로를 확인하고 실행한다.
+
+```sh
+python -m ai_worker --config configs/ai.wfi.preview.example.json --video "C:\01_development\candle-and-match.ogv" --controller http://127.0.0.1:8000 --preview-url http://127.0.0.1:8003
+```
+
+이 예제는 팀이 공유한 초기 `fire-smoke-yolov8n.pt`와 SHA-256 `b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f`를 사용하는 **영상 연결 예제**다. 기존 선정·평가 모델을 바꾸는 설정이 아니다. 샘플 간격 500ms·확인 창 1500ms는 기존 예제와 이번 실측 조건이다. 공유된 2000ms·6000ms 조건을 검증했다고 주장하지 않는다. WFI 영상 관측 유효기간은 3000ms이므로 처리 지연까지 포함해 관측 만료를 확인해야 한다.
+
+`--preview-url`이 없으면 관측만 전송하고 영상은 송출하지 않는다. `smoke-0009.webm` 등 다른 개발 영상은 경로를 바꿀 수 있으나 디코더 지원과 해당 모델의 검출 여부가 별개다. AV1 지원 한계·변환 경로는 [A01 입력 지연 기록](a01-input-latency.md)을 참고한다. 영상·가중치·개인별 경로는 Git에 넣지 않는다.
+
+5. `npm --prefix web run dev` → 관제 **AI 시연 보기** → **2층 좌측 계단 A 앞 CAM**을 선택한다. 단말 적용 시연은 관제의 해당 단말 링크를 별도 브라우저로 열어 확인한다. Bedrock은 기존 별도 설명 API가 필요하며, 이 화면 때문에 자동 호출하거나 결과를 꾸미지 않는다.
+
+## 확인 기록 (2026-11-11 KST)
+
+- Windows 로컬 WFI v4, 별도 8158/8159/8160/5178 포트에서 기존 모델과 개발 `candle-and-match.ogv`를 실제 실행했다. 원본 SHA-256 `248be916e95fe7fa5155c94125d60abb3e611721f1f14de7629c2572eb99c3e5`.
+- run `52b5b7ef-44fa-457a-aba0-ae155302911d`: 761프레임 중 51샘플 분석, 늦은 샘플 폐기0, 이벤트52수락, EOF. Playwright 브라우저에서 실제 JPEG·불꽃 상자1개와 3D를 함께 확인했다. 당시 선택 카메라 경보1·차단 통로8, 건물 안내76/79, 단말0/37이었다. 단말0은 미연결 상태이며 성공으로 표시하지 않았다.
+- EOF에서 영상·상자 제거와 경보 유지, `3D에서 찾기`, 카메라 전환, 시연/기본 관제 전환을 확인했다. 브라우저의 제어 상태 요청을 차단한 주입 시험에서 요약 네 칸은 확인 불가로 전환됐다. 390px 화면은 가로 넘침 없이 세로 배치됐다.
+- Fable 검토의 카메라 변경 시 패널 재마운트·포커스 손실을 수용했다. 실제 브라우저에서 선택 후 포커스 손실을 재현하고, 패널 key를 실행·건물까지만 사용하도록 수정해 포커스 유지와 이전 프레임 제거를 확인했다. 카메라 변경은 기존 훅의 정리와 현재 source 일치 검사로 처리한다.
+- 별도 Bedrock 프로세스를 띄우지 않아 설명 조회 실패가 기록됐다. 실제 모델 재평가·연기 영상 검출·실물 단말·공용 서버 배포·팀 공동 인수는 이번 검증 범위가 아니다. 자동 검사는 기존 미리보기 상태/만료 검사와 선택 카메라별 집계·제어 단절·잔존 경보 표시를 포함한다.

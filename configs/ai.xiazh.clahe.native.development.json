@@ -1,0 +1,20 @@
+{
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "source_id": "CAM-A",
+  "expected_zone_id": "Z-A",
+  "model_path": "models/xiazh-fire-smoke-yolo26m.onnx",
+  "model_sha256": "4163c96eef1ebab77c7f073d0d4001feffda64fbc544f441abf4ca8f4fd69929",
+  "imgsz": 640,
+  "interval_ms": 500,
+  "confidence": 0.25,
+  "cpu_threads": 4,
+  "preprocess": "clahe",
+  "window_ms": 1500,
+  "min_detections": 2,
+  "request_timeout_ms": 750,
+  "max_attempts": 2,
+  "retry_delay_ms": 100,
+  "onnx_provider": "openvino",
+  "native_input_size": true
+}
