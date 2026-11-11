@@ -5082,6 +5082,316 @@
       "allowed_hazard_types": [
         "FIRE"
       ]
+    },
+    {
+      "source_id": "MANUAL-F1-CONF",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-CONF",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-R102",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-R102",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-NURSING",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-NURSING",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-STAIR-A",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-STAIR-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-STAIR-B",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-STAIR-B",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F1-R101",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F1-R101",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-SERVER",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-SERVER",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-R201",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-R201",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-R202",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-R202",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-R203",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-R203",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-ADMIN",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-ADMIN",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-DIRECTOR",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-DIRECTOR",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-INDUSTRY",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-INDUSTRY",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-ROOM-W",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-ROOM-W",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-STAIR-A",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-STAIR-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F2-STAIR-B",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F2-STAIR-B",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R308",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R308",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-VOID-N",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-VOID-N",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-ROOM-NE",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-ROOM-NE",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R300",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R300",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R301",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R301",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R302",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R302",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R303",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R303",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R304",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R304",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R305",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R305",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-COMMUNITY",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-COMMUNITY",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R306",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R306",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-R307",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-R307",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-CENTER",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-CENTER",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-STAIR-A",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-STAIR-A",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
+    },
+    {
+      "source_id": "MANUAL-F3-STAIR-B",
+      "source_type": "MANUAL_TEST",
+      "zone_id": "F3-STAIR-B",
+      "required": false,
+      "freshness_ms": 3000,
+      "allowed_hazard_types": [
+        "FIRE"
+      ]
     }
   ],
   "signs": [

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from backend.app import create_app
 from scenario_runner.config import Scenario, load_building, load_scenario
 from scenario_runner.runner import Runner
+from http_reads import current_read
 from test_observation_state import ROOT, building, clock
 
 
@@ -18,13 +19,25 @@ def scenario(building):
 def setup(building, scenario, clock, tmp_path):
     with TestClient(create_app(building=building, clock=clock, runs_dir=tmp_path / "controller")) as client:
         runner = Runner(building, scenario, client, tmp_path / "sim", clock=clock)
-        runner.tick()
+        prepare(runner, clock)
         yield client, runner
         runner.close()
 
 
+def prepare(runner, clock):
+    # Functional scenarios start after initial observations arrive. A busy read
+    # leaves the runner waiting for its next scheduled retry, just as in production.
+    for attempt in range(3):
+        runner.tick()
+        if runner.error_code != "CONTROLLER_UNAVAILABLE":
+            break
+        if attempt < 2:
+            clock.advance(1000)
+    assert runner.error_code is None
+
+
 def arm(client):
-    run_id = client.get("/api/session").json()["run_id"]
+    run_id = current_read(client, "/api/session")["run_id"]
     assert client.post("/api/control/arm", json=dict(schema_version=1,run_id=run_id,reason="start test")).status_code == 200
 
 
@@ -163,7 +176,7 @@ def test_smoke_spreads_from_fire_zone_and_alarms_only_fire_floor_detectors(clock
     wfi = load_building(ROOT / "data/space/wfi-v1.json")
     with TestClient(create_app(building=wfi, clock=clock, runs_dir=tmp_path / "controller")) as client:
         runner = Runner(wfi, load_scenario(ROOT / "data/scenarios/wfi-idle.json", wfi), client, tmp_path / "sim", clock=clock)
-        runner.tick()
+        prepare(runner, clock)
         arm(client)
 
         def run_to(target):
@@ -173,12 +186,12 @@ def test_smoke_spreads_from_fire_zone_and_alarms_only_fire_floor_detectors(clock
             return {zone.zone_id: zone.smoke for zone in runner.state().zones}
 
         assert not any(run_to(1000).values())
-        run_id = client.get("/api/session").json()["run_id"]
+        run_id = current_read(client, "/api/session")["run_id"]
         assert client.post("/api/events", json=event(clock, run_id, "MANUAL-F2-CORR-E")).status_code == 200
         early = run_to(15000)
         assert early["F2-CORR-E"] > early["F2-CORR-W"] and early["F1-LOBBY"] == 0
         late = run_to(150000)
-        causes = {cause["source_id"] for cause in client.get("/api/state").json()["active_causes"]}
+        causes = {cause["source_id"] for cause in current_read(client, "/api/state")["active_causes"]}
         assert "SMK-F2-CORR-E" in causes and "SMK-F2-CORR-W" in causes
         assert not any(source.startswith(("SMK-F1", "SMK-F3")) for source in causes)
         assert 0 < late["F1-LOBBY"] <= 0.4

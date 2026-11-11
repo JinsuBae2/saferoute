@@ -139,6 +139,16 @@ type Props = {
   } | null;
   /** 3D에서 지점을 눌렀을 때. 끌어서 돌린 것은 누름으로 보지 않는다. */
   readonly onPickNode?: (nodeId: string) => void;
+  /**
+   * 3D에서 구역(방·복도)을 눌렀을 때. 도면에서 바로 화재 위치를 고르는 데 쓴다(이슈 #21).
+   * 구역 판은 모든 구역에 깔려 있으므로 목록에 없는 방도 누를 수 있다.
+   */
+  readonly onPickZone?: (zoneId: string) => void;
+  /**
+   * 한 번 누를 때 무엇을 고를지. 지점과 구역은 같은 자리에 겹쳐 있어 하나만 받는다.
+   * "ZONE"이면 지점 구를 지나쳐 그 아래 구역을 고른다.
+   */
+  readonly pickTarget?: "NODE" | "ZONE";
 };
 
 type Handles = {
@@ -382,7 +392,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
+export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -390,6 +400,10 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
   useEffect(() => {
     pickRef.current = onPickNode;
   }, [onPickNode]);
+  const zoneRef = useRef({ pick: onPickZone, target: pickTarget });
+  useEffect(() => {
+    zoneRef.current = { pick: onPickZone, target: pickTarget };
+  }, [onPickZone, pickTarget]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
   const firstPersonView = followIndex !== null;
   const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string } | null>(null);
@@ -520,9 +534,28 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         -((event.clientY - rect.top) / rect.height) * 2 + 1,
       );
       raycaster.setFromCamera(pointer, camera);
+      // 1인칭으로 걷는 동안에는 도면을 고르지 않는다. 걷는 사람 눈에는 지점 구도 구역 판도 없다.
+      if (liveRef.current.follow !== null) return;
+      const zone = zoneRef.current;
+      if (zone.target === "ZONE") {
+        // 도면에서 바로 화재 위치를 고른다(이슈 #21).
+        //
+        // 사람보다 먼저 본다. 화재 위치를 고르는 중에는 도면을 가리키는 것이지 사람을
+        // 가리키는 것이 아니다. 사람을 먼저 보면 누르려는 방에 사람이 서 있을 때
+        // 1인칭으로 끌려 들어가 화재 위치를 영영 고르지 못한다.
+        //
+        // 구역 판은 모든 구역에 깔려 있어 목록에 없던 방도 누를 수 있다. 평소에는
+        // 숨겨 두지만 three.js의 교차 판정은 visible을 보지 않으므로 숨긴 채로 눌린다.
+        if (zone.pick === undefined) return;
+        const entries = [...handles.zoneMeshes.entries()];
+        const hitZone = raycaster.intersectObjects(entries.map(([, mesh]) => mesh), false)[0];
+        const zoneId = entries.find(([, mesh]) => mesh === hitZone?.object)?.[0];
+        if (zoneId !== undefined) zone.pick(zoneId);
+        return;
+      }
       // 사람을 누르면 그 사람의 1인칭 시점으로 들어간다. 지점보다 먼저 본다.
       const people = peopleRef.current;
-      if (people !== null && liveRef.current.follow === null) {
+      if (people !== null) {
         const targets = [...people.markers, ...people.figures.map((figure) => figure.group)].filter((item) => item.visible);
         let picked: THREE.Object3D | null = raycaster.intersectObjects(targets, true)[0]?.object ?? null;
         while (picked !== null && picked.userData.personIndex === undefined) picked = picked.parent;
