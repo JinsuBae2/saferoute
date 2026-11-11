@@ -8,6 +8,8 @@ import type { ReactNode } from "react";
 
 import type { Building, BuildingDisplay, Position, SimulationState, StateSnapshot } from "@contracts";
 
+import { setExitGuide } from "../control/alarmSound";
+import { exitCall } from "../control/broadcast";
 import { BuildingScene } from "./BuildingScene";
 import { matchesBuilding } from "./geometry";
 import type { JourneyTrack } from "./journey";
@@ -71,6 +73,11 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
   // "3D에서 찾기"를 누르면 그 층을 열고 설치 위치를 비춘다.
   // 요청 번호를 기억해 두어, 표시 자료가 늦게 와도 같은 요청으로 두 번 움직이지 않는다.
   const handledLocate = useRef(0);
+  // 장면의 매 프레임 콜백이 최신 서버 상태를 읽게 한다.
+  const guideRef = useRef({ state, building, stale });
+  useEffect(() => { guideRef.current = { state, building, stale }; }, [state, building, stale]);
+  // 1인칭에서 나오거나 화면이 닫히면 출구 유도음을 끈다.
+  useEffect(() => () => setExitGuide(null, null), []);
   useEffect(() => {
     if (locateRequest === 0 || locateRequest === handledLocate.current) return;
     const installation = highlightSourceId === null
@@ -277,6 +284,11 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             showGuidance={showGuidance}
             showPeople={showPeople}
             stale={stale}
+            onListener={(pose) => {
+              // 서 있는 지점의 서버 경로가 가리키는 출구만 부른다. 경로가 바뀌거나 사라지면 소리 모듈이 이전 안내를 끊는다.
+              const latest = guideRef.current;
+              setExitGuide(pose === null || latest.building === null ? null : exitCall(latest.state, latest.building, pose, latest.stale), pose);
+            }}
             onPeople={setPeople}
             followIndex={firstPerson ? follow : null}
             onFollow={(index) => {

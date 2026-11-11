@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import { enableSound } from "./alarmSound";
 import { ManualFireControl, manualFireSources } from "./manualFire";
 import type { ManualAction, ManualResult } from "./manualFire";
 
@@ -32,6 +33,8 @@ export function ManualFirePanel({ building, display, state, connected, startPick
 
   async function act(action: ManualAction) {
     if (disabled || busy.current) return;
+    // 시연 시작은 사용자가 직접 누른 동작이라 여기서 소리를 켤 수 있다. 이후 경보 변화에는 방송이 스스로 반응한다.
+    if (action.kind === "ignite") enableSound();
     busy.current = true;
     setPending(true); setNotice(null);
     const target = action.kind === "clear_all" ? "모든 시험 화재" : name(action.zoneId);
