@@ -24,6 +24,8 @@ import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
 import { countPeople, spawnPeople, stepPeople } from "./people";
 import { loadPeople, savePeople } from "./peopleStore";
+import { nearestPerson } from "./phoneGuide";
+import type { FollowPose } from "./phoneGuide";
 import { storageScope } from "../api/scope";
 import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
 import type { ViewBox, ViewMode } from "./view";
@@ -104,10 +106,12 @@ type Props = {
   readonly onPeople?: (count: PeopleCount) => void;
   /** 1인칭으로 따라갈 사람의 순번. null이면 평소 시점이다. */
   readonly followIndex?: number | null;
+  readonly followRequest?: { nodeId: string; nonce: number } | null;
+  readonly onFollowUnavailable?: () => void;
   /** 3D에서 사람을 눌렀거나(순번), 따라가던 사람이 빠져나갔을 때(null). */
   readonly onFollow?: (index: number | null) => void;
   /** 1인칭으로 따라가는 사람의 위치·시선·지금 경로를 읽는 지점. 출구 유도음이 쓴다. 1인칭이 아니면 null. */
-  readonly onListener?: (pose: { x: number; z: number; yaw: number; nodeId: string; evacuating: boolean } | null) => void;
+  readonly onListener?: (pose: FollowPose | null) => void;
   /** 전체 안내(지점별 초록 화살표·선)를 그릴지. 꺼도 지점·유도등·위험·선택 경로는 남는다. */
   readonly showGuidance?: boolean;
   readonly state: StateSnapshot;
@@ -392,7 +396,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -761,7 +765,9 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       if (time - lastListenerAt > 0.25) {
         lastListenerAt = time;
         // 계단을 걷는 동안의 지점은 떠나온 층의 계단 지점이다. 아래층에 닿아야 그 층의 출구 유도음 대상이 된다.
-        live.onListener?.({ x: camera.position.x, z: camera.position.z, yaw: viewYaw, nodeId: followed.from,
+        live.onListener?.({ x: camera.position.x, z: camera.position.z, yaw: viewYaw, nodeId: followed.from, toNodeId: followed.to,
+          routeNodeId: followed.returning && followed.to !== null ? followed.to : followed.from,
+          personIndex: live.follow, runId: live.state.run_id, progress: followed.progress, moving: followed.status === "MOVING",
           evacuating: followed.started === true && followed.status !== "OUT" });
       }
       const zoneId = live.nodeById.get(followed.from)?.zone_id;
@@ -918,6 +924,15 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       peopleRef.current = null;
     };
   }, [building, state.run_id]);
+
+  const handledFollow = useRef(0);
+  useEffect(() => {
+    if (followRequest === null || followRequest.nonce === handledFollow.current || peopleRef.current === null) return;
+    handledFollow.current = followRequest.nonce;
+    const index = nearestPerson(building, peopleRef.current.list, followRequest.nodeId);
+    if (index === null) onFollowUnavailable?.();
+    else onFollow?.(index);
+  }, [followRequest, building, onFollow, onFollowUnavailable]);
 
   // 1-2) 1인칭 전환. 시야를 넓히고 궤도 조작을 끈다. 나오면 2-1의 화면 맞춤이 시점을 되돌린다.
   useEffect(() => {
@@ -1189,6 +1204,18 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         hung.group.position.set(node.position.x, base + wallHeight - 0.56, node.position.z);
         staticGroup.add(hung.group);
         handles.signFaces.set(sign.sign_id, hung.faces);
+        // QR은 유도등 옆의 위치 확인판이다. 인식 연출은 휴대폰 UI에서만 수행한다.
+        if (building.building_id === "WFI" && building.building_version === 5) {
+          const texture = new THREE.TextureLoader().load(`/qr/${encodeURIComponent(sign.sign_id)}.png`);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.magFilter = THREE.NearestFilter;
+          const qr = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.65), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }));
+          qr.userData.ownsMap = true;
+          const face = sign.faces[0];
+          qr.rotation.y = Math.atan2(-face.view_direction.x, -face.view_direction.z);
+          qr.position.set(node.position.x - face.view_direction.z * 0.85, base + 1.85, node.position.z + face.view_direction.x * 0.85);
+          staticGroup.add(qr);
+        }
       }
 
       // 구역 판. 관측 위험 표시에 재사용하므로 평소에는 숨겨 둔다.
