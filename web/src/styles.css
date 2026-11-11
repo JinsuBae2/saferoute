@@ -268,12 +268,13 @@ code {
 /* ---------- 관제 ---------- */
 
 .control {
-  max-width: 1200px;
+  /* 화면을 꽉 채운다. 1200px로 묶어 두니 넓은 화면에서 양옆이 다 여백이었다(이슈 #21). */
+  max-width: none;
   margin: 0 auto;
-  padding: 20px 16px 48px;
+  padding: 16px clamp(12px, 1.4vw, 28px) 48px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .control__header {
@@ -998,6 +999,15 @@ code {
 .manual-fire__steps .manual-fire__zone { margin: 0; }
 .manual-fire__actions .manual-fire__start { background: #7f1d1d; border-color: #ef4444; font-weight: 600; }
 
+/* 지금 도면을 누르면 무엇이 정해지는지. 누르기 전에 알아야 해서 단계 위에 한 줄로 둔다(이슈 #21). */
+.manual-fire__aim { margin: 0 0 10px; padding: 6px 10px; font-size: 12px; color: var(--muted);
+  background: #10202c; border: 1px solid var(--line); border-radius: 6px; }
+.manual-fire__aim strong { color: var(--text); }
+.manual-fire__aim-btn { margin-top: 6px; padding: 4px 10px; font-size: 12px; color: inherit;
+  background: #263442; border: 1px solid #6d7c8d; border-radius: 6px; cursor: pointer; }
+.manual-fire__aim-btn[aria-pressed="true"] { background: #1d4ed8; border-color: #60a5fa; font-weight: 600; }
+.manual-fire__aim-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
 /* 시연용 대피 인원 범례 */
 .key--person { background: #ff5fd2; border-radius: 50%; }
 .key--person-stuck { background: #7c3aed; border-radius: 50%; }
@@ -1074,6 +1084,121 @@ code {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* 관제 두 칸 배치 (이슈 #21).
+   왼쪽에 건물 3D·시연 설정·경로 상세, 오른쪽에 대피 현황·CCTV·설명과 접은 표들.
+   좁은 화면에서는 좌우로 나누지 않고 위아래로 쌓는다. 반씩 나누면 둘 다 못 읽는다. */
+.control__side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 1180px) {
+  .control__visuals {
+    /* 6 : 4 */
+    grid-template-columns: minmax(0, 6fr) minmax(360px, 4fr);
+    align-items: start;
+  }
+
+  /* 왼쪽 3D는 화면에 붙여 두고, 오른쪽 칸만 따로 스크롤한다. */
+  .control__building {
+    position: sticky;
+    top: 12px;
+  }
+
+  .control__side {
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  /* 3D를 크게. 시연에서 제일 많이 보는 곳이다. */
+  .scene {
+    height: clamp(420px, 66vh, 880px);
+  }
+}
+
+/* 카드 6개를 한 줄로. 화면 전체 너비를 쓴다. */
+@media (min-width: 1180px) {
+  .tiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* 대피 현황 */
+.evac__counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.evac__counts div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.evac__counts span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.evac__counts strong {
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.evac__out {
+  color: var(--route);
+}
+
+.evac__stuck {
+  color: var(--fire);
+}
+
+/* 긴 표를 접어 두는 자리. 패널 안에서 쓴다. */
+.fold > summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+
+.fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fold > summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 6px solid var(--muted);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform 120ms ease;
+}
+
+.fold[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.fold > summary:hover {
+  color: var(--text);
 }
 
 /* 개인 체험방 표시줄과 입장 화면 */

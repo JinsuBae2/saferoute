@@ -21,11 +21,15 @@ def clear(client, run_id, source_id):
         source_id=source_id, hazard_type="FIRE", reason="B06 시험 화재 해제"))
 
 
-def test_manual_sources_are_optional_fire_only_and_cover_instrumented_zones():
+def test_manual_sources_are_optional_fire_only_and_cover_every_zone():
+    """도면 아무 데나 눌러 불을 낼 수 있어야 하므로 모든 구역에 시험 입력이 있어야 한다(이슈 #21).
+
+    예전에는 연기감지기가 있는 12곳에만 두어 호실은 고를 수 없었다. 하나라도 빠지면
+    그 방은 눌러도 불이 나지 않는다.
+    """
     manual = [s for s in BUILDING.sources if s.source_type == "MANUAL_TEST"]
-    expected = {s.zone_id for s in BUILDING.sources if s.source_type == "SIM_SMOKE_DETECTOR"}
-    assert len(manual) == len(expected) == 12
-    assert {s.zone_id for s in manual} == expected
+    assert {s.zone_id for s in manual} == {z.zone_id for z in BUILDING.zones}
+    assert len(manual) == len(BUILDING.zones)
     assert all(not s.required and s.allowed_hazard_types == ["FIRE"] for s in manual)
 
 

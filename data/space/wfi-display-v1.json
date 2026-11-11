@@ -331,6 +331,130 @@
     "MANUAL-F3-CORR-E2": {
       "label": "3층 우측 호실 앞 복도 시험 화재 입력",
       "installation": null
+    },
+    "MANUAL-F1-CONF": {
+      "label": "1층 컨퍼런스룸 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-R102": {
+      "label": "1층 102호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-NURSING": {
+      "label": "1층 수유실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-STAIR-A": {
+      "label": "1층 좌측 계단 A 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-STAIR-B": {
+      "label": "1층 우측 계단 B 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F1-R101": {
+      "label": "1층 101호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-SERVER": {
+      "label": "2층 전산실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-R201": {
+      "label": "2층 201호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-R202": {
+      "label": "2층 202호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-R203": {
+      "label": "2층 203호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-ADMIN": {
+      "label": "2층 경영지원실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-DIRECTOR": {
+      "label": "2층 원장실 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-INDUSTRY": {
+      "label": "2층 디지털·모빌리티 산업부 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-ROOM-W": {
+      "label": "2층 좌측 이름 미확인 방 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-STAIR-A": {
+      "label": "2층 좌측 계단 A 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F2-STAIR-B": {
+      "label": "2층 우측 계단 B 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R308": {
+      "label": "3층 308호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-VOID-N": {
+      "label": "3층 위쪽 개방 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-ROOM-NE": {
+      "label": "3층 우측 위 이름 미확인 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R300": {
+      "label": "3층 300호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R301": {
+      "label": "3층 301호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R302": {
+      "label": "3층 302호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R303": {
+      "label": "3층 303호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R304": {
+      "label": "3층 304호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R305": {
+      "label": "3층 305호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-COMMUNITY": {
+      "label": "3층 커뮤니티룸 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R306": {
+      "label": "3층 306호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-R307": {
+      "label": "3층 307호 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-CENTER": {
+      "label": "3층 중앙 공간 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-STAIR-A": {
+      "label": "3층 좌측 계단 A 시험 화재 입력",
+      "installation": null
+    },
+    "MANUAL-F3-STAIR-B": {
+      "label": "3층 우측 계단 B 시험 화재 입력",
+      "installation": null
     }
   },
   "signs": {
