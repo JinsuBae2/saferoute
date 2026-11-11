@@ -21,6 +21,7 @@ export type ControlView = {
 
 function messageOf(error: unknown, fallback: string): string {
   if (error instanceof ApiError) return error.code === null ? `HTTP ${error.status}` : `${error.message} (${error.code})`;
+  if (error instanceof DOMException && error.name === "TimeoutError") return "응답 시간이 초과됐습니다";
   return error instanceof Error ? error.message : fallback;
 }
 
