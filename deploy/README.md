@@ -157,22 +157,22 @@ D01은 실제 자원·접근 성공·오류·미확인 사항을 기록한 것�
 
 ```sh
 sudo apt-get update && sudo apt-get install -y nginx python3-venv
+sudo snap install node --classic --channel=24/stable
 git clone https://github.com/JinsuBae2/saferoute.git ~/saferoute
 cd ~/saferoute && git checkout <COMMIT>
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-core.lock.txt
 ```
 
-웹은 PC에서 같은 커밋을 깨끗한 상태로 빌드해 올린다. 빌드는 미커밋 변경이 있으면 거부한다. 이 방식이면 서버에 Node를 설치하지 않는다.
+웹도 서버에서 같은 커밋으로 빌드한다(CI와 같은 Node 24). 빌드는 미커밋 변경이 있으면 거부한다. Ubuntu 24.04 기본 저장소의 Node 18은 Vite 7이 요구하는 버전보다 낮아 쓰지 않는다.
 
 ```sh
-git checkout <COMMIT> && cd web && npm ci --ignore-scripts && npm run build
-scp -i "<PEM_PATH>" -r dist ubuntu@<HOST>:~/saferoute-web-dist
+cd ~/saferoute/web && npm ci && npm run build
 ```
 
-서버에서 배치하고 서비스로 등록한다.
+배치하고 서비스로 등록한다.
 
 ```sh
-sudo rm -rf /var/www/saferoute && sudo cp -r ~/saferoute-web-dist /var/www/saferoute
+sudo rm -rf /var/www/saferoute && sudo cp -r ~/saferoute/web/dist /var/www/saferoute
 sudo cp ~/saferoute/deploy/saferoute-controller.service.example /etc/systemd/system/saferoute-controller.service
 sudo cp ~/saferoute/deploy/nginx-saferoute.conf.example /etc/nginx/sites-available/saferoute
 sudo ln -sf /etc/nginx/sites-available/saferoute /etc/nginx/sites-enabled/saferoute
@@ -200,7 +200,7 @@ curl -s http://127.0.0.1/api/health; curl -s http://127.0.0.1/api/rooms/availabi
 - 디스크: 실행 기록이 `/home/ubuntu/saferoute-runs`에 쌓인다. PC 부하 확인에서 방 5개를 30분 계속 쓰면 약 2.3GB였다. `df -h /`로 지켜보고, 부족해지면 서비스를 멈춘 뒤 필요한 기록을 S3로 옮기고 지운다.
 - 로그: `journalctl -u saferoute-controller -n 100`, `/var/log/nginx/error.log`.
 - 다시 시작: `sudo systemctl restart saferoute-controller`. 진행 중이던 방은 사라지고 화면은 종료 안내를 보여 준다.
-- 새 버전: `git fetch && git checkout <COMMIT>` 후 웹을 다시 빌드해 올리고 서비스를 다시 시작한다.
+- 새 버전: `cd ~/saferoute && git fetch && git checkout <COMMIT>`, `(cd web && npm ci && npm run build)`, `sudo rm -rf /var/www/saferoute && sudo cp -r web/dist /var/www/saferoute`, `sudo systemctl restart saferoute-controller` 순서로 한다. 의존성 잠금 파일이 바뀌었으면 `.venv/bin/python -m pip install -r requirements-core.lock.txt`도 다시 실행한다.
 
 ### 8.4 PC에서 확인한 것 (2026-11-11)
 
