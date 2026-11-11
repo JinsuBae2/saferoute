@@ -5,6 +5,8 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SourceNotice } from "../SourceNotice";
+import { inRoom, signPath } from "../api/scope";
+import { RoomAiPanel } from "../room/RoomAiPanel";
 
 import type { StateSnapshot } from "@contracts";
 
@@ -248,6 +250,7 @@ export function ControlDashboard() {
           </p>
         </div>
         <div className="control__actions">
+          {!inRoom() && <Link className="chip" to="/room">개인 체험 시작</Link>}
           <button type="button" className={presentation ? "chip chip--on" : "chip"}
             aria-pressed={presentation} onClick={() => setPresentation((previous) => !previous)}>
             {presentation ? "기본 관제로 돌아가기" : "AI 시연 보기"}
@@ -414,6 +417,8 @@ export function ControlDashboard() {
               setCamera((previous) => ({ sourceId, locate: previous.locate + 1 }))
             }
           />
+
+      {inRoom() && <RoomAiPanel />}
 
       <Panel
         title="상황 설명"
@@ -584,7 +589,7 @@ export function ControlDashboard() {
                           .join(", ")}
                   </td>
                   <td>
-                    <Link className="grid__link" to={`/sign/${encodeURIComponent(sign.sign_id)}`}>
+                    <Link className="grid__link" to={signPath(sign.sign_id)}>
                       유도등 화면 열기
                     </Link>
                   </td>

@@ -8,6 +8,7 @@ import httpx
 
 from .config import AIConfig
 from .inference import Detector, ROOT
+from .events import room_headers
 from .worker import run
 
 
@@ -31,7 +32,7 @@ def main():
             raise ValueError("video file does not exist")
         detector = Detector(config)
         with httpx.Client(base_url=args.controller, timeout=config.request_timeout_ms / 1000,
-                          trust_env=False, follow_redirects=False) as client:
+                          trust_env=False, follow_redirects=False, headers=room_headers()) as client:
             result = run(config, args.video, client, args.runs_dir, detector, preview_url=args.preview_url)
         print(json.dumps(result))
         return 0

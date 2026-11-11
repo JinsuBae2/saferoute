@@ -297,6 +297,8 @@ B03의 성공 응답은 HTTP 200과 해당 유도등의 `SignState` 객체(`sign
 
 조회 응답은 `Cache-Control: no-store`로 제공한다. 클라이언트도 캐시를 사용하지 않는다. POST 제어 기능은 기본 배포에서 SSH 접속 권한이 있는 팀원만 접근하는 내부 경로다. 공개 배포가 결정되면 인증·권한을 먼저 구현하고 무인증 reset·clear·event 전송을 열지 않는다.
 
+`GET /api/state`·`GET /api/session`의 조회 대기 예산은 호출 전체에 250ms다. 만료 처리·감사 저장을 포함한 최신 상태 조회가 끝나지 않으면 503 `CONTROLLER_BUSY`와 `Retry-After: 1`을 반환한다. 제어기당 미완료 조회 작업은 하나만 유지한다. 기존 작업을 기다린 요청은 그 결과를 재사용하지 않고 남은 예산 안에서 새로 조회하므로, 초기화·화재 이후 요청에 이전 작업의 상태를 넘기지 않는다. 타임아웃이나 요청 취소는 진행 중인 감사 저장을 취소하지 않는다. OS/이벤트 루프 정지는 이 대기 예산으로 제어할 수 없다.
+
 B01에서 health·session·building·state·events·arm·clear·reset, B02에서 상태별 경로, B03에서 현재 표시면·단말별 명령·ACK·감사 로그를 구현했다. INITIALIZING은 INITIALIZING 사유와 UNKNOWN 표시다. NORMAL은 DEFAULT, DEGRADED·EMERGENCY는 DYNAMIC 또는 NO_ROUTE이며, 등록된 출구 지점은 EXIT, 지원하지 않는 면은 NO_ROUTE·UNSUPPORTED_DISPLAY다. DEGRADED에서도 필수 관측 불가 구역의 차단 사유는 REQUIRED_OBSERVATION_UNKNOWN으로 남으며, 경로가 없으면 ORIGIN_BLOCKED·NO_REACHABLE_EXIT 등 해당 위치의 사유를 제공한다. 안내 가능한 표시면에는 실패 사유를 넣지 않는다. B04에서 `/sim/*`와 설정·운영·로그 검증 도구를 구현했다. 실제 브라우저 단말은 후속 구현이다. 경로·표시면 조회는 명령 발행·적용 완료를 의미하지 않는다.
 
 ### 6.1 오류
@@ -311,6 +313,7 @@ B01에서 health·session·building·state·events·arm·clear·reset, B02에서
 | 409 | STALE_OBSERVATION / CLOCK_INVALID / SOURCE_CAUSE_INACTIVE | 오래된 관측·허용하지 않는 미래 시각·비활성 원인 해제 |
 | 422 | SCHEMA_VALIDATION_FAILED | 필수 필드·자료형 오류 |
 | 503 | CONTROLLER_NOT_READY | 새 명령 제공 불가. 클라이언트는 만료 정책 유지 |
+| 503 | CONTROLLER_BUSY | 상태 조회가 250ms 내 완료되지 않음. Retry-After: 1, 기존 만료 정책 유지 |
 | 409 | COMMAND_MISMATCH / COMMAND_EXPIRED | 명령·표시면·응답 불일치 또는 기한 만료. 적용 성공으로 집계하지 않음 |
 
 네트워크 재시도는 같은 event_id·sequence로 제한한다. 오래된 경보를 몇 분 뒤 정상 신규 관측처럼 제출하지 않는다. 공급자가 재시작해 순번을 잊었으면 시연을 명시적으로 새 실행으로 시작한다.
@@ -338,7 +341,9 @@ B01에서 health·session·building·state·events·arm·clear·reset, B02에서
 
 seed는 현재 결정적 시간표에서 난수를 사용하지 않으므로 결과에 영향을 주지 않는다. 관측원 임계값·초기값은 실제 설비 사양이 아닌 시험 가정이다. DROP도 관측 순번을 소비하고, DELAY는 원래 시각을 보존하며, UNAVAILABLE은 SMOKE 경보를 자동 해제하지 않는다. arm 전에는 초기 관측을 즉시·주기적으로 전송하고 주요 시간표·fault는 대기한다. arm 확인 후에 delay·fault 규칙을 적용한다. 오래 지연된 마지막 큐는 완료 시 버리며 이후 입력을 만들지 않는다. 같은 source를 다른 공급자와 공유하지 않는다. 초기 관측에서 순번 충돌이 발생하면 SOURCE_CONFLICT로 중단한다. 이는 운영 충돌 감지이며 분산 소유권·인증 잠금 기능은 아니다.
 
-`/sim/state`의 공통 형식은 `SimulationState`다. schema_version, building_id, building_version, scenario_id, 고정 run_id, simulation_time_ms, simulation_sequence, status, zones(`{zone_id, smoke}` 객체 배열), error_code(null 또는 문자열)를 제공한다. status는 WAITING_FOR_ARM·RUNNING·COMPLETED·FAILED·STOPPED다. 시간과 순번은 프로세스가 진행시키며 GET 요청은 진행시키지 않는다. 기동 시 백엔드·설정 불일치면 서비스가 뜨지 않는다. 실행 중 오류면 FAILED 상태를 유지하고 새 실행기로 재시작해야 한다. GET /sim/health는 현재 status만 반환하므로 HTTP 200만으로 정상 진행을 판정하지 않는다. 응답은 no-store다. 현재 값 외 시간표·미래 값·경로·기대 결과는 노출하지 않는다. 관제는 연기 정답과 제어기 관측을 별도 범례로 표시한다.
+`/sim/state`의 공통 형식은 `SimulationState`다. schema_version, building_id, building_version, scenario_id, 고정 run_id, simulation_time_ms, simulation_sequence, status, zones(`{zone_id, smoke}` 객체 배열), error_code(null 또는 문자열)를 제공한다. status는 WAITING_FOR_ARM·RUNNING·COMPLETED·FAILED·STOPPED다. 시간과 순번은 프로세스가 진행시키며 GET 요청은 진행시키지 않는다. 조회는 마지막 완료된 작업의 사본을 반환하며 HTTP·기록 작업의 잠금을 기다리지 않는다. 진행 중 작업이 250ms를 넘기면 WAITING_FOR_ARM/RUNNING의 error_code를 CONTROLLER_UNAVAILABLE로 표시하되 기존 오류는 보존한다. 연결 실패·시간 초과·CONTROLLER_BUSY는 1초 뒤 재시도하며 원래 관측 시각을 유지한다. 최초 연결 또는 명시적 초기화 뒤 재연결이 끝나지 않으면 state·health는 503 CONTROLLER_UNAVAILABLE을 반환한다. 기동 시 설정 불일치는 실패하며 그 밖의 실행 중 HTTP 오류·잘못된 응답·실행 불일치·기록 실패는 FAILED를 유지한다. GET /sim/health는 현재 status만 반환하므로 HTTP 200만으로 정상 진행을 판정하지 않는다. 응답은 no-store다. 현재 값 외 시간표·미래 값·경로·기대 결과는 노출하지 않는다. 관제는 연기 정답과 제어기 관측을 별도 범례로 표시한다.
+
+AI 생산자는 CONTROLLER_BUSY를 기존 max_attempts·retry_delay_ms 범위에서만 재시도한다. 감지 시각·event_id를 새로 만들지 않으며 재시도 전 만료를 확인한다. 기동 전 상태 조회에도 같은 유한 재시도 예산을 적용한다.
 
 ## 8. 저장·감사 로그
 

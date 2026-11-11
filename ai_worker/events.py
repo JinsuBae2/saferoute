@@ -2,13 +2,21 @@ from collections import deque
 from datetime import datetime, timezone
 import json
 import math
+import os
 import time
 from uuid import uuid4
 
 import httpx
 
+from backend.client import ControllerBusy, raise_for_controller_status
 from backend.contracts import parse_contract
 from backend.contracts.messages import ObservationEvent
+
+
+def room_headers():
+    """When started for a personal room, name that room with the server's internal credential."""
+    room, token = os.environ.get("SAFEROUTE_ROOM_ID"), os.environ.get("SAFEROUTE_INTERNAL_TOKEN")
+    return {"X-Saferoute-Room": room, "X-Saferoute-Internal": token} if room and token else {}
 
 
 class WorkerError(RuntimeError):
@@ -75,10 +83,16 @@ class EventBuilder:
         return self._event(observed_at, media_ms, "UNAVAILABLE", reason=reason)
 
 
-def get_contract(client, path, model):
-    response = client.get(path)
-    response.raise_for_status()
-    return parse_contract(model, response.json())
+def get_contract(client, path, model, *, max_attempts=1, retry_delay_ms=0, clock=None):
+    for attempt in range(1, max_attempts + 1):
+        response = client.get(path)
+        try:
+            raise_for_controller_status(response)
+        except ControllerBusy:
+            if attempt == max_attempts: raise
+            (clock or Clock()).sleep(retry_delay_ms / 1000)
+            continue
+        return parse_contract(model, response.json())
 
 
 class EventSender:
@@ -114,7 +128,7 @@ class EventSender:
                          status_code=response.status_code)
                 if response.status_code < 500:
                     raise WorkerError(f"EVENT_REJECTED_{response.status_code}")
-            except httpx.TransportError as error:
+            except (httpx.TransportError, ControllerBusy) as error:
                 self.log("transport_error", attempt=attempt, event_id=event["event_id"],
                          error_type=type(error).__name__)
             if attempt < self.config.max_attempts:

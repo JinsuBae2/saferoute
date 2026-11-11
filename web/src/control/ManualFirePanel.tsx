@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import { ApiError, restartSimulation } from "../api/client";
 import { enableSound } from "./alarmSound";
 import { ManualFireControl, manualFireSources } from "./manualFire";
 import type { ManualAction, ManualResult } from "./manualFire";
@@ -61,8 +62,12 @@ export function ManualFirePanel({ building, display, state, connected, startPick
     busy.current = true;
     setPending(true); setNotice(null);
     try {
-      const response = await fetch("/sim/restart", { method: "POST", cache: "no-store", signal: AbortSignal.timeout(8000) });
-      if (!response.ok) throw new Error([404, 405].includes(response.status) ? "지금 실행기는 재실행을 지원하지 않습니다" : `HTTP ${response.status}`);
+      try {
+        await restartSimulation(AbortSignal.timeout(8000));
+      } catch (error) {
+        if (!(error instanceof ApiError)) throw error;
+        throw new Error([404, 405].includes(error.status) ? "지금 실행기는 재실행을 지원하지 않습니다" : `${error.message} (${error.code ?? error.status})`, { cause: error });
+      }
       if (mounted.current) setNotice({ text: "초기화 · 새 실행으로 다시 시작합니다", result: null, failed: false });
     } catch (error) {
       if (mounted.current) setNotice({ text: `초기화 실패 · ${error instanceof Error ? error.message : "응답을 확인하지 못했습니다"}`, result: null, failed: true });

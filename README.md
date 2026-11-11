@@ -108,6 +108,28 @@ B02 집중 검사: `python -m pytest tests/test_routing.py -q`. G01~G10의 전�
 
 B03 집중 검사: `python -m pytest tests/test_sign_guidance.py -q`. 정면·반대 면 매핑, 두 sign_id의 상태 분리, 명령 갱신·만료, 변조·역순·중복 ACK, reset·동시 요청·로그 실패를 확인합니다. 시험 클라이언트의 ACK는 실제 브라우저 화면이나 등기구를 관찰한 증거가 아닙니다. P01·I01의 두 화면 연결과 V06 검수는 별도로 수행합니다.
 
+## 개인 체험방 (동시 최대 5개)
+
+방문자마다 따로 조작하는 체험방입니다. 한 사람이 화재를 내거나 초기화해도 다른 사람에게 영향을 주지 않습니다. 첫 화면(`/#/`)은 개인 체험방(`/#/room`)으로 이어집니다. 기존 공동 시연은 `/#/shared`로 옮겼고 API(`/api`, `/sim`)와 유도등 주소(`/#/sign/<id>`)는 그대로입니다.
+
+```sh
+SAFEROUTE_BUILDING_FILE=data/space/wfi-v1.json \
+SAFEROUTE_ROOM_SCENARIO_FILE=data/scenarios/wfi-idle.json \
+python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
+```
+
+- `SAFEROUTE_ROOM_SCENARIO_FILE`을 주지 않으면 방 기능은 꺼져 있고 `POST /api/rooms`는 503(`ROOMS_UNAVAILABLE`)입니다. 사용자마다 서버나 컨테이너를 띄우지 않고, 이 프로세스 안에서 방마다 제어기와 시뮬레이션 실행기를 하나씩 둡니다. 반드시 worker 1개로 실행합니다.
+- 입장: `POST /api/rooms`. 빈자리가 있으면 방을 만들고 HttpOnly 쿠키로 접속 증표를 줍니다. 같은 브라우저의 다른 탭은 같은 방으로 돌아갑니다. 준비 중이거나 종료 후 정리 중인 방을 포함해 5개가 차면 409(`ROOM_FULL`)입니다.
+- 내 방의 API는 `/api/room/...`입니다(`state`, `events`, `control/clear`, `signs/{id}/command`·`ack`, `sim/state`, `sim/restart`, `ai`, `previews/...`, `explanations/current`). 어느 방인지는 쿠키로만 정합니다. 방 번호나 실행 번호를 안다고 다른 방에 닿을 수 없습니다.
+- 방 번호는 초기화해도 유지되고, 실행 번호(run_id)는 `POST /api/room/sim/restart`마다 새로 발급됩니다. 이전 실행의 요청·AI 결과는 `RUN_MISMATCH`로 거부됩니다.
+- 종료: `DELETE /api/room`. 사용자 화면의 요청이 10분 동안 없으면 자동 종료합니다. 실행기와 AI 같은 내부 요청은 이 시간을 늘리지 않습니다. 종료해도 실행 증거는 `runs/rooms/<방 번호>/<run_id>/`에 남습니다.
+- 서버를 다시 시작하면 진행 중이던 방은 사라지고, 화면은 "체험이 종료되었습니다. 새 체험을 시작해 주세요"를 보여 줍니다.
+- 방마다 따로 진행합니다. 한 방의 기록 저장이나 종료가 늦어져도 다른 방의 시뮬레이션과 감지 정보 갱신은 계속됩니다. 아직 이전 작업 중인 방은 그 주기를 건너뛸 뿐 작업이 쌓이지 않습니다. 종료된 방은 요청과 새 작업을 즉시 거부하고, 진행 중이던 작업과 자원 정리가 모두 끝난 뒤에 자리를 반환합니다.
+- 영상 AI는 서버 전체에서 한 번에 한 방만 분석하고 나머지는 대기합니다. 방 종료·초기화로 분석을 멈출 때는 그 프로세스가 실제로 끝난 것을 확인한 뒤에야 다음 방의 분석을 시작합니다(5초 안에 끝나지 않으면 강제 종료를 보내고 계속 기다립니다). `SAFEROUTE_AI_CONFIG_FILE`, `SAFEROUTE_AI_VIDEO_FILE`이 실제 파일을 가리킬 때만 켜지고, 아니면 화면에 "미연결"로 표시합니다. 작업기는 `SAFEROUTE_SELF_ORIGIN`(기본 `http://127.0.0.1:8000`)으로 접속하며 브라우저 쿠키가 아닌 내부 증표를 씁니다.
+- 방의 상황 설명은 `SAFEROUTE_EXPLANATION_CONFIG`가 있을 때만 켜집니다.
+- 서버 종료 때도 AI의 실제 종료를 확인합니다. 종료 요청 후 5초가 지나면 강제 종료하고, 추가 1초 뒤에도 종료가 확인되지 않으면 오류를 보고합니다. 이 경우에도 방과 공동 제어기의 정리는 시도합니다.
+- 부하 확인: `python -m tools.room_load --origin http://127.0.0.1:8000 --minutes 30 --server-pid <PID>`. 집중 검사: `python -m pytest tests/test_rooms.py -q`.
+
 ## 관제 없이 연기 시나리오 실행
 
 가상환경을 활성화한 터미널에서 건물·시나리오를 검사합니다. `two-route-smoke.json`은 사람이 읽는 Q02 시험 계획, `two-route-smoke.runtime.json`은 실행 설정입니다.
@@ -147,7 +169,9 @@ python -m tools.verify_run runs/RUN_ID
 
 검증기는 **종료된 실행의 로그 무결성**만 판정하며 `verification.json`을 작성합니다. 실행 중·강제 종료·손상·구형 로그는 FAIL입니다. PASS는 실제 AI·브라우저 표시·실물 유도등 검증을 의미하지 않습니다. 명령·ACK가 없는 실행은 해당 개수가 0으로 기록됩니다. 시나리오 증거는 `runs/<run_id>/simulations/<별도 실행 ID>/`에 분리됩니다.
 
-운영 도구의 다른 서버 접속은 `python -m tools.control --url http://127.0.0.1:8000 state`처럼 지정합니다. 직접 관측 전송은 `python -m tools.control event --file 관측.json`입니다. 설정 검사는 성공 0·오류 2, control은 성공 0·통신/서버 오류 1·입력 오류 2, 로그 검증은 PASS 0·FAIL 1·인자 오류 2를 반환합니다. 실행기는 잘못된 설정이면 2, 기동 실패면 비정상 종료합니다. 실행 중 연결 실패·시간 초과는 `CONTROLLER_UNAVAILABLE`로 표시하고 1초 간격으로 재시도합니다. 연결되면 초기화 없이 이어 가며 오래된 관측은 제어기가 거부합니다. HTTP 오류·잘못된 응답·실행 불일치·기록 실패 등은 `/sim/state`의 FAILED·error_code로 표시하며 자동 재시작하지 않습니다.
+운영 도구의 다른 서버 접속은 `python -m tools.control --url http://127.0.0.1:8000 state`처럼 지정합니다. 직접 관측 전송은 `python -m tools.control event --file 관측.json`입니다. 설정 검사는 성공 0·오류 2, control은 성공 0·통신/서버 오류 1·입력 오류 2, 로그 검증은 PASS 0·FAIL 1·인자 오류 2를 반환합니다. 실행기는 잘못된 설정이면 2, 기동 실패면 비정상 종료합니다. 연결 실패·시간 초과·제어기 `CONTROLLER_BUSY` 응답은 `CONTROLLER_UNAVAILABLE`로 표시하고 1초 간격으로 재시도합니다. 연결되면 초기화 없이 이어 가며 오래된 관측은 제어기가 거부합니다. 그 밖의 HTTP 오류·잘못된 응답·실행 불일치·기록 실패 등은 `/sim/state`의 FAILED·error_code로 표시하며 자동 재시작하지 않습니다.
+
+제어기의 `/api/state`·`/api/session`과 개인 체험방의 `/api/room/state`·`/api/room/session` 조회는 250ms 안에 상태를 얻지 못하면 503 `CONTROLLER_BUSY`와 `Retry-After: 1`을 반환합니다. 조회 대기는 제어기별로 분리하며, 같은 방의 브라우저와 내부 작업기는 진행 중인 조회 하나를 공유합니다. 저장 중인 작업은 취소하지 않으며 앞선 조회 결과를 새 요청에 재사용하지 않습니다. 개인 체험방 실행기가 초기화 후 재연결 중이면 상태·방 정보 조회도 503 `CONTROLLER_UNAVAILABLE`로 응답합니다. `/sim/state`는 마지막 완료된 작업의 상태를 제공하고, 진행 중 작업이 250ms를 넘기면 `CONTROLLER_UNAVAILABLE`로 표시합니다. 아직 실행에 연결되지 않았거나 초기화 뒤 재연결 중이면 503을 반환합니다. OS나 이벤트 루프 자체가 멈춘 경우까지 250ms 응답을 보장하지는 않습니다. 250ms 이상 걸린 조회·감사 저장은 `slow_controller_snapshot`·`slow_audit_write` 로그로 남깁니다. 후자는 직렬화·쓰기/flush·fsync 시간과 스레드 CPU 시간을 구분하며 관측 내용은 포함하지 않습니다. 기존 감사 로그 순서·저장 완료 조건과 관측 만료 기준은 유지합니다.
 
 B04 집중 검사: `python -m pytest tests/test_operating_tools.py tests/test_scenario_runner.py tests/test_audit_lifecycle.py tests/test_run_verification.py -q`. 초기화·지연·누락·역순·손상 로그와 기존 B01/B03의 오래된 입력·ACK 방어를 함께 확인합니다. 실제 화면 검수는 P01·I01에서 수행합니다.
 
