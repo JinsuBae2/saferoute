@@ -7,7 +7,9 @@ import time
 from .contracts import ContractError
 
 LOGGER = logging.getLogger(__name__)
-READ_WAIT_SECONDS = .25
+# 시연 스택을 모두 띄우면 조회의 90퍼센타일이 250ms를 넘어 503이 섞인다. 그 한 주기를
+# 건너뛴 CCTV 생산이 미리보기 기한을 넘겨 화면이 비므로, 느린 조회를 기다려 준다.
+READ_WAIT_SECONDS = 1.0
 
 
 class SnapshotReader:
