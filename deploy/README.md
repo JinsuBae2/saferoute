@@ -137,3 +137,90 @@ D01은 실제 자원·접근 성공·오류·미확인 사항을 기록한 것�
 ## 7. 후속 A01-3 입력 준비 개선 (2026-11-09)
 
 [A01-3 #84](../docs/ai/a01-input-latency.md)는 같은 원본 2개의 명시적 UTVideo 무손실 복사본을 사용한다. 모든 프레임·ms 시각, 연기 선택 BGR 샘플, 6개 영상의 기존 검출 수를 대조했다. 같은 모델·worker·유효기간으로 실제 전송 두 번 모두 각 92개 payload 일치, 연기 20/20 분석·건너뜀 0·STALE 0·EOF·로그 검증을 통과했다. 원본 AV1 직접 입력은 여전히 지원 경로가 아니므로 새 준비 스크립트와 runtime manifest를 따른다. 복사본 디스크 크기는 커졌으며 장시간/동시 부하·WFI·실제 배포는 별도다. 새 패키지·서비스 설치 없이 실행했고 검증 listener는 종료했다.
+
+## 8. D02 배포 절차 — 개인 체험방 최소 구성 (#28)
+
+**이 절은 실행 순서이며 배포 완료 기록이 아니다.** 2026-11-11 서버 읽기 전용 점검에서 제품 코드·Node·Nginx·서비스 등록이 모두 없고 디스크 여유 20GB, 메모리 가용 14GiB임을 확인했다. 설정 두 개는 PC의 Nginx와 검증용 제어 서버로만 동작을 확인했다(아래 "PC에서 확인한 것"). 서버 설치·실행·다른 PC 브라우저 확인은 아직 하지 않았다.
+
+구성은 Nginx 하나와 제어 서버 하나다. 개인 체험방은 제어 서버 프로세스가 방마다 제어기와 시뮬레이션을 품으므로 시나리오 실행기(8001)가 필요 없다. 상황 설명(8002)·영상 AI·공동 시연용 시나리오 실행기는 선택이며, 꺼져 있으면 화면이 "연결 실패"·"미연결"로 표시한다.
+
+| 파일 | 설치 위치 |
+| --- | --- |
+| [nginx-saferoute.conf.example](nginx-saferoute.conf.example) | `/etc/nginx/sites-available/saferoute` |
+| [saferoute-controller.service.example](saferoute-controller.service.example) | `/etc/systemd/system/saferoute-controller.service` |
+
+### 8.1 순서
+
+`<COMMIT>`은 `develop → main` PR로 반영한 공개 커밋이다. 서버와 웹 빌드가 같은 커밋이어야 화면 하단의 소스 링크가 맞는다.
+
+서버에서 설치하고 코드를 받는다.
+
+```sh
+sudo apt-get update && sudo apt-get install -y nginx python3-venv
+D=$(mktemp -d) && cd $D && B=https://nodejs.org/dist/latest-v24.x
+curl -fsS -o SHASUMS256.txt $B/SHASUMS256.txt
+F=$(grep -o "node-v24[0-9.]*-linux-x64.tar.xz" SHASUMS256.txt | head -1) && curl -fsS -o $F $B/$F
+grep " $F\$" SHASUMS256.txt | sha256sum -c - && sudo mkdir -p /opt/node && sudo tar -xJf $F -C /opt/node --strip-components=1
+for b in node npm npx; do sudo ln -sf /opt/node/bin/$b /usr/local/bin/$b; done; cd ~
+git clone https://github.com/JinsuBae2/saferoute.git ~/saferoute
+cd ~/saferoute && git checkout <COMMIT>
+python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-core.lock.txt
+```
+
+웹도 서버에서 같은 커밋으로 빌드한다(CI와 같은 Node 24). 빌드는 미커밋 변경이 있으면 거부한다. Ubuntu 24.04 기본 저장소의 Node 18은 Vite 7이 요구하는 버전보다 낮아 쓰지 않는다. 이 서버에서는 snap 저장소에 연결되지 않아(2026-11-11 확인) nodejs.org 공식 배포본을 해시 확인 후 `/opt/node`에 풀어 쓴다.
+
+```sh
+cd ~/saferoute/web && npm ci && npm run build
+```
+
+배치하고 서비스로 등록한다.
+
+```sh
+sudo rm -rf /var/www/saferoute && sudo cp -r ~/saferoute/web/dist /var/www/saferoute
+sudo cp ~/saferoute/deploy/saferoute-controller.service.example /etc/systemd/system/saferoute-controller.service
+sudo cp ~/saferoute/deploy/nginx-saferoute.conf.example /etc/nginx/sites-available/saferoute
+sudo ln -sf /etc/nginx/sites-available/saferoute /etc/nginx/sites-enabled/saferoute
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo systemctl daemon-reload && sudo systemctl enable --now saferoute-controller
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+서버 안에서 먼저 확인한다.
+
+```sh
+curl -s http://127.0.0.1/api/health; curl -s http://127.0.0.1/api/rooms/availability
+```
+
+브라우저에서 `http://<HOST>`를 열어 개인 체험 시작·화재·해제·초기화·종료를 확인한다. curl 성공만으로 브라우저 확인을 대신하지 않는다.
+
+### 8.2 공개 범위
+
+2026-11-11에 공인 주소(`http://<HOST>`, 포트 80)로 공개하기로 정했다. Nginx 설정은 로그인 없는 방문자가 자기 개인 체험방만 조작하게 하고, 공동 시연 API(`/api/…`, `/sim/…`)는 읽기만 허용한다. 제어 서버(8000)는 계속 127.0.0.1에만 둔다. 서버 안내문상 1024 이상 포트가 바깥에 열려 있으므로 `--host 0.0.0.0`으로 띄우지 않는다. SSH 터널 전용으로 되돌리려면 `listen 127.0.0.1:8080;`으로 바꾼다.
+
+공개 상태의 한계: HTTPS가 아니다. 한 사람이 쿠키를 지우며 반복 입장해 다섯 자리를 모두 차지하는 것을 막지 않는다(자리는 10분 뒤 반환). 공동 시연 화면(`/#/shared`)은 조작할 수 없는 관람용이 된다. 다른 PC·휴대폰 접속 검수는 D03에서 한다.
+
+### 8.3 운영 중 볼 것
+
+- 디스크: 실행 기록이 `/home/ubuntu/saferoute-runs`에 쌓인다. PC 부하 확인에서 방 5개를 30분 계속 쓰면 약 2.3GB였다. `df -h /`로 지켜보고, 부족해지면 서비스를 멈춘 뒤 필요한 기록을 S3로 옮기고 지운다.
+- 로그: `journalctl -u saferoute-controller -n 100`, `/var/log/nginx/error.log`.
+- 다시 시작: `sudo systemctl restart saferoute-controller`. 진행 중이던 방은 사라지고 화면은 종료 안내를 보여 준다.
+- 새 버전: `cd ~/saferoute && git fetch && git checkout <COMMIT>`, `(cd web && npm ci && npm run build)`, `sudo rm -rf /var/www/saferoute && sudo cp -r web/dist /var/www/saferoute`, `sudo systemctl restart saferoute-controller` 순서로 한다. 의존성 잠금 파일이 바뀌었으면 `.venv/bin/python -m pip install -r requirements-core.lock.txt`도 다시 실행한다.
+
+### 8.4 PC에서 확인한 것 (2026-11-11)
+
+Homebrew Nginx 두 벌(터널 전용으로 제한을 뺀 설정, 공개용인 현재 설정)과 검증용 제어 서버(8011, WFI 건물 버전 5, 방 기능 켬)로 확인했다.
+
+| 확인 | 터널 전용 | 공개용(현재) |
+| --- | --- | --- |
+| `nginx -t` | 통과 | 통과 |
+| 첫 화면 / 해시 붙은 자산 | 200 `no-cache` / 200 `immutable` | 같음 |
+| 없는 `/api/…`가 index.html로 대체되지 않음 | 404 | 404 |
+| API 응답 `Cache-Control: no-store` | 유지 | 유지 |
+| 방 입장 → 내 방 상태 → 초기화 → 종료 | 201 → 200 → 200 → 204 | 같음 |
+| 쿠키 없이 방 상태 | 401 | 401 |
+| 바깥에서 붙인 내부 증표 머리말 | 지워져 공동 상태 200 (직접 접속은 403) | 같음 |
+| `/internal/preview` | 404 | 404 |
+| 공동 시연 조작 POST `/api/control/reset`, `/sim/restart` | 제어 서버까지 전달(422, 8001 꺼짐 502) | 403, 403 |
+| 설명 작업자가 꺼졌을 때 `/api/explanations/current` | 502 | 502 |
+
+확인하지 않은 것: 서버의 실제 설치·systemd 서비스 동작·재부팅 뒤 유지, 다른 PC 브라우저 접속, 뭄바이 왕복 지연, 영상 AI와 Bedrock 설명 연결, 장시간 부하.
