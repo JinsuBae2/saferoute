@@ -12,7 +12,7 @@ const floor = geometry.floors[0];
 const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
 
 describe("출구 외벽 통로", () => {
-  it("활성 출구 두 곳에서 사람과 미끄럼판이 유리·창틀·하단 띠를 관통하지 않는다", () => {
+  it("활성 출구 네 곳에서 사람과 미끄럼판이 유리·창틀·하단 띠를 관통하지 않는다", () => {
     const parts = facadeParts(building, floor, 3.8);
     const material = new THREE.MeshBasicMaterial();
     const columns = facadeColumns(building, geometry.floors[1], floor, geometry.floor_height - geometry.slab_thickness);
@@ -23,7 +23,7 @@ describe("출구 외벽 통로", () => {
       return mesh;
     });
     const exits = building.exits.filter((exit) => exit.enabled && nodes.get(exit.node_id)?.floor_id === floor.floor_id);
-    expect(exits).toHaveLength(2);
+    expect(exits).toHaveLength(4);
     for (const exit of exits) {
       const node = nodes.get(exit.node_id)!;
       const inner = nodes.get(building.edges.find((edge) => edge.to_node_id === exit.node_id)!.from_node_id)!;
@@ -52,19 +52,29 @@ describe("출구 외벽 통로", () => {
     // 유리와 닫힌 문이 외벽을 빈틈없이 덮는다. 출구를 꺼도 문 형상이 사라지거나 뚫리지 않는다.
     expect(area(allClosed.glass) + area(allClosed.closedDoors)).toBeCloseTo(perimeter * 3.8);
     expect(allClosed.closedDoors).toHaveLength(building.exits.length);
-    // 실제 자료: 활성 2곳은 열린 통로, 비활성 후보 2곳(EXIT-NW·EXIT-SE)은 닫힌 문.
-    const real = facadeParts(building, floor, 3.8);
-    expect(real.closedDoors).toHaveLength(building.exits.filter((exit) => !exit.enabled).length);
-    expect(real.closedDoors).toHaveLength(2);
+    // 실제 자료(버전 5): 네 곳 모두 대피 출구라 닫힌 문이 없다. 한 곳만 꺼도 그 문만 닫힌다.
+    expect(facadeParts(building, floor, 3.8).closedDoors).toHaveLength(0);
+    const oneOff = facadeParts({ ...building, exits: building.exits.map((exit) => ({ ...exit, enabled: exit.exit_id !== "EXIT-SE" })) }, floor, 3.8);
+    expect(oneOff.closedDoors).toHaveLength(1);
   });
 });
 
 describe("방 입구 문 방향", () => {
-  it("23개 입구 모두 복도 쪽을 향하고, 101호는 외부 출구 후보가 아니라 아래쪽 통로를 향한다", () => {
+  it("26개 입구 모두 복도 쪽을 향하고, 방 안 통로나 출구 쪽을 문 방향으로 삼지 않는다", () => {
     const facing = doorFacing(building);
     expect(facing.size).toBe(building.nodes.filter((node) => node.kind === "DOOR").length);
-    expect(facing.size).toBe(23);
+    expect(facing.size).toBe(26);
     expect(facing.get("F1-D-R101")).toBe("F1-J-PS");
+    // 새로 넣은 문은 각자의 복도 쪽을, 기존 문은 방 안 통로가 생긴 뒤에도 예전 그대로를 향한다.
+    expect(facing.get("F3-D-R307-N")).toBe("F3-J-N1");
+    expect(facing.get("F3-D-R304-E")).toBe("F3-J-R4");
+    expect(facing.get("F2-D-INDUSTRY-E")).toBe("F2-J-R3");
+    expect(facing.get("F3-D-R307")).toBe("F3-J-SW");
+    expect(facing.get("F3-D-R304")).toBe("F3-J-E2");
+    expect(facing.get("F2-D-INDUSTRY")).toBe("F2-J-W2");
+    expect(facing.get("F1-D-CONF-N")).toBe("F1-J-LW");
+    expect(facing.get("F1-D-CONF-S")).toBe("F1-J-LSW");
+    for (const target of facing.values()) expect(nodes.get(target)?.zone_id).toMatch(/CORR|LOBBY|PASSAGE/);
     for (const target of facing.values()) expect(nodes.get(target)?.kind).not.toBe("EXIT");
   });
 

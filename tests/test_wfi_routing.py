@@ -57,7 +57,7 @@ def test_open_stairs_remain_available_when_primary_stairs_are_blocked(blocked, o
     routes = calculate_routes(BUILDING, block_nodes({n: ["ACTIVE_ALARM"] for n in blocked}))
     assert_safe(BUILDING, routes, blocked)
     route = next(r for r in routes if r.node_id == origin)
-    assert route.exit_id in {"EXIT-N", "EXIT-S"}
+    assert route.exit_id in {"EXIT-N", "EXIT-S", "EXIT-NW", "EXIT-SE"}
     assert required_pair in list(zip(route.path_node_ids, route.path_node_ids[1:]))
 
 
@@ -116,7 +116,8 @@ def test_single_required_detector_expiry_keeps_other_routes_and_recovers(api, so
 
 
 @pytest.mark.parametrize("prefix", ["SMK", "SPK"])
-@pytest.mark.parametrize("side,exit_id,stair", [("N", "EXIT-S", "F1-S-A"), ("S", "EXIT-N", "F1-S-B")])
+# 버전 5: 북쪽 통로가 막히면 가운데 2층은 계단 A를 내려와 가까운 북서 출구로 간다.
+@pytest.mark.parametrize("side,exit_id,stair", [("N", "EXIT-NW", "F1-S-A"), ("S", "EXIT-N", "F1-S-B")])
 def test_passage_alarm_uses_primary_stair_and_updates_sign_command(api, prefix, side, exit_id, stair):
     client, clock, run_id = api
     observe(client, clock, run_id, f"{prefix}-F1-PASSAGE-{side}", 2, alarm=True)
@@ -126,7 +127,7 @@ def test_passage_alarm_uses_primary_stair_and_updates_sign_command(api, prefix, 
     route = next(r for r in state.routes if r.node_id == "F2-J-E2")
     assert route.exit_id == exit_id and stair in route.path_node_ids
     assert not OPEN_PAIRS.intersection(zip(route.path_node_ids, route.path_node_ids[1:]))
-    assert {r.exit_id for r in state.routes if r.path_node_ids} == {exit_id}
+    assert f"EXIT-{side}" not in {r.exit_id for r in state.routes if r.path_node_ids}
     response = client.get("/api/signs/SIGN-F2-J-E2/command")
     assert response.status_code == 200
     command = parse_contract("SignCommand", response.json())
@@ -134,11 +135,13 @@ def test_passage_alarm_uses_primary_stair_and_updates_sign_command(api, prefix, 
     assert all(f.mode == "DYNAMIC" and f.next_node_id == route.next_node_id and f.exit_id == exit_id for f in command.faces)
 
 
-def test_both_exits_blocked_then_clear_restores_primary_route(api):
+def test_exit_zones_blocked_then_clear_restores_primary_route(api):
     client, clock, run_id = api
-    for side in ("N", "S"):
-        observe(client, clock, run_id, f"SMK-F1-PASSAGE-{side}", 2, alarm=True)
-    assert all(not r["path_node_ids"] for r in client.get("/api/state").json()["routes"])
+    for zone in ("PASSAGE-N", "PASSAGE-S", "LOBBY"):
+        observe(client, clock, run_id, f"SMK-F1-{zone}", 2, alarm=True)
+    # 통로 두 곳과 로비가 위험하면 101호 안에서 남동 출구로 나가는 길만 남는다. 101호에는 감지기가 없다.
+    routed = {r["node_id"]: r["exit_id"] for r in client.get("/api/state").json()["routes"] if r["path_node_ids"]}
+    assert routed == {"F1-D-R101": "EXIT-SE", "F1-J-R101": "EXIT-SE", "F1-X-SE": "EXIT-SE"}
     response = client.post("/api/control/clear", json=dict(schema_version=1, run_id=run_id,
         source_id="SMK-F1-PASSAGE-N", hazard_type="SMOKE", reason="WFI north passage checked"))
     assert response.status_code == 200

@@ -83,8 +83,10 @@ describe("출구 유도 음성", () => {
     expect(exitCall(routed("F1-J-PM", null, ["REQUIRED_OBSERVATION_UNKNOWN"], "DEGRADED"), building, walker, false)).toBeNull();
     expect(exitCall(routed("F1-J-PM", "EXIT-S"), building, walker, true)).toBeNull();
     expect(exitCall(routed("F1-J-PM", "EXIT-S"), building, walker, false)).toMatchObject({ exitId: "EXIT-S" });
-    // 대피 출구로 쓰지 않는 후보는 부르지 않는다.
-    expect(exitCall(routed("F1-J-PM", "EXIT-NW"), building, walker, false)).toBeNull();
+    // 대피 출구로 쓰지 않는 문은 부르지 않는다.
+    const closed = { ...building, exits: building.exits.map((exit) => ({ ...exit, enabled: exit.exit_id !== "EXIT-NW" })) };
+    expect(exitCall(routed("F1-J-PM", "EXIT-NW"), closed, walker, false)).toBeNull();
+    expect(exitCall(routed("F1-J-PM", "EXIT-NW"), building, walker, false)).toMatchObject({ exitId: "EXIT-NW" });
   });
 
   it("다른 층의 출구는 평면에서 바로 옆이어도 부르지 않는다 (3층 F3-J-N4와 1층 EXIT-N)", () => {

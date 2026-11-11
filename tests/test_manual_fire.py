@@ -29,7 +29,8 @@ def test_manual_sources_are_optional_fire_only_and_cover_instrumented_zones():
     assert all(not s.required and s.allowed_hazard_types == ["FIRE"] for s in manual)
 
 
-@pytest.mark.parametrize("side,exit_id", [("N", "EXIT-S"), ("S", "EXIT-N")])
+# 버전 5: 북쪽 통로 화재 시 가운데 2층은 계단 A를 내려와 가까운 북서 출구로 간다.
+@pytest.mark.parametrize("side,exit_id", [("N", "EXIT-NW"), ("S", "EXIT-N")])
 def test_manual_fire_changes_same_origin_route_and_sign(api, side, exit_id):
     client, clock, run_id = api
     response = client.post("/api/events", json=event(clock, run_id, f"MANUAL-F1-PASSAGE-{side}"))
