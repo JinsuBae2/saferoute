@@ -157,13 +157,17 @@ D01은 실제 자원·접근 성공·오류·미확인 사항을 기록한 것�
 
 ```sh
 sudo apt-get update && sudo apt-get install -y nginx python3-venv
-sudo snap install node --classic --channel=24/stable
+D=$(mktemp -d) && cd $D && B=https://nodejs.org/dist/latest-v24.x
+curl -fsS -o SHASUMS256.txt $B/SHASUMS256.txt
+F=$(grep -o "node-v24[0-9.]*-linux-x64.tar.xz" SHASUMS256.txt | head -1) && curl -fsS -o $F $B/$F
+grep " $F\$" SHASUMS256.txt | sha256sum -c - && sudo mkdir -p /opt/node && sudo tar -xJf $F -C /opt/node --strip-components=1
+for b in node npm npx; do sudo ln -sf /opt/node/bin/$b /usr/local/bin/$b; done; cd ~
 git clone https://github.com/JinsuBae2/saferoute.git ~/saferoute
 cd ~/saferoute && git checkout <COMMIT>
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-core.lock.txt
 ```
 
-웹도 서버에서 같은 커밋으로 빌드한다(CI와 같은 Node 24). 빌드는 미커밋 변경이 있으면 거부한다. Ubuntu 24.04 기본 저장소의 Node 18은 Vite 7이 요구하는 버전보다 낮아 쓰지 않는다.
+웹도 서버에서 같은 커밋으로 빌드한다(CI와 같은 Node 24). 빌드는 미커밋 변경이 있으면 거부한다. Ubuntu 24.04 기본 저장소의 Node 18은 Vite 7이 요구하는 버전보다 낮아 쓰지 않는다. 이 서버에서는 snap 저장소에 연결되지 않아(2026-11-11 확인) nodejs.org 공식 배포본을 해시 확인 후 `/opt/node`에 풀어 쓴다.
 
 ```sh
 cd ~/saferoute/web && npm ci && npm run build
