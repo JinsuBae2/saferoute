@@ -104,11 +104,52 @@ function Badge({ tone, children }: { tone: string; children: React.ReactNode }) 
   return <span className={`badge badge--${tone}`}>{children}</span>;
 }
 
-function Tile({ label, value, note, tone }: { label: string; value: string; note?: string; tone?: string }) {
+/** 0–1 밖의 값이나 0으로 나눈 결과가 와도 막대가 깨지지 않게 가둔다. */
+function bar(part: number, whole: number): number {
+  if (!Number.isFinite(part) || !Number.isFinite(whole) || whole <= 0) return 0;
+  return Math.min(1, Math.max(0, part / whole));
+}
+
+/**
+ * 막대 그래프의 칸 높이. 시안에서 가져온 모양 그대로다.
+ *
+ * 지나온 값을 기록해 그리지 않고 모양을 고정한 것은, 전체 23명을 꼭대기로 재면
+ * 서너 명이 빠져나간 동안 막대가 전부 바닥에 깔려 움직이지 않는 것처럼 보이기
+ * 때문이다. 높이는 눈금이 아니라 모양이고, 진행은 색으로 읽는다.
+ */
+const EVAC_SHAPE = [2, 6, 13, 23, 18, 9] as const;
+const BLOCKED_SHAPE = [4, 7, 11, 9, 5, 3] as const;
+
+/** filled(0~1)만큼 왼쪽 칸부터 채운다. 채운 칸이 지금까지의 진행이다. */
+function Gauge({ shape, filled, className }: { shape: readonly number[]; filled: number; className: string }) {
+  const top = Math.max(...shape);
+  const safe = Number.isFinite(filled) ? Math.min(1, Math.max(0, filled)) : 0;
+  const lit = Math.round(safe * shape.length);
   return (
-    <div className="tile">
+    <span className={className} aria-hidden="true">
+      {shape.map((height, index) => (
+        <span
+          key={index}
+          className={index < lit ? "trail__bar trail__bar--now" : "trail__bar"}
+          style={{ height: `${Math.round((height / top) * 100)}%` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function Tile({ label, value, note, tone, ratio, lead = false, gauge }: { label: string; value: string; note?: string; tone?: string; ratio?: number; lead?: boolean; gauge?: number }) {
+  return (
+    <div className={lead ? "tile tile--lead" : "tile"}>
       <span className="tile__label">{label}</span>
       <strong className={tone === undefined ? "tile__value" : `tile__value tile__value--${tone}`}>{value}</strong>
+      {/* 수치를 한눈에 가늠하라고 덧댄 장식이다. 값은 바로 위 글자가 전하므로 보조기기에서는 숨긴다. */}
+      {ratio !== undefined && (
+        <span className={tone === undefined ? "tile__bar" : `tile__bar tile__bar--${tone}`} aria-hidden="true">
+          <span className="tile__bar-fill" style={{ width: `${Math.round(ratio * 100)}%` }} />
+        </span>
+      )}
+      {gauge !== undefined && <Gauge shape={BLOCKED_SHAPE} filled={gauge} className="tile__trail" />}
       {note !== undefined && <span className="tile__note">{note}</span>}
     </div>
   );
@@ -311,14 +352,15 @@ export function ControlDashboard() {
       <div className="tiles control__overview">
         <Tile
           label="활성 경보"
+          lead
           value={`${state.active_causes.length}건`}
-          tone={state.active_causes.length > 0 ? "fire" : undefined}
           note={state.active_causes.length === 0 ? "원인별 해제만 가능" : "확인 해제 전까지 유지"}
         />
         <Tile
           label="차단"
           value={`지점 ${state.blocked_nodes.length} · 통로 ${state.blocked_edges.length}`}
           tone={state.blocked_nodes.length > 0 ? "warn" : undefined}
+          gauge={bar(state.blocked_nodes.length, routes.total)}
         />
         {/* 시연에서 제일 많이 보는 수치라 나머지 넷이 비운 자리를 다 쓴다(이슈 #21). */}
         <section className="panel evac tile--wide">
@@ -335,6 +377,8 @@ export function ControlDashboard() {
                 <div><span>탈출</span><strong className="evac__out">{people.out}</strong></div>
                 <div><span>대기</span><strong>{people.waiting}</strong></div>
                 <div><span>멈춤</span><strong className={people.stuck > 0 ? "evac__stuck" : undefined}>{people.stuck}</strong></div>
+                {/* 전체 인원 중 얼마나 빠져나갔는지. 왼쪽 칸부터 채워진다. */}
+                <Gauge shape={EVAC_SHAPE} filled={bar(people.out, people.total)} className="evac__trail" />
               </div>
               <p className="panel__note">
                 전체 {people.total}명
@@ -671,6 +715,7 @@ export function ControlDashboard() {
         <Tile
           label="경로 안내 가능 위치"
           value={`${routes.guided} / ${routes.total}곳`}
+          ratio={bar(routes.guided, routes.total)}
           tone={routes.unavailable > 0 ? "warn" : "route"}
           note={(() => {
             // 그 자리가 차단된 곳과, 자리는 멀쩡하지만 출구에 닿지 못하는 곳은 성격이 다르다. 사람이 있는지는 알 수 없다.
@@ -685,18 +730,21 @@ export function ControlDashboard() {
         <Tile
           label="감지 정보"
           value={`${sources.total}개 중 ${sources.valid}개`}
+          ratio={bar(sources.valid, sources.total)}
           tone={sources.anyUnconfirmed ? "warn" : "route"}
           note={`최신 정보 수신 ${sources.valid}개 · 받지 못함 ${sources.initializing} · 만료 ${sources.stale} · 관측 불가 ${sources.unavailable} · 최신 정보가 위험 없음을 뜻하지는 않습니다`}
         />
         <Tile
           label="유도등 반영 확인"
           value={`${signs.total}개 중 ${signs.confirmedCurrent}개`}
+          ratio={bar(signs.confirmedCurrent, signs.total)}
           tone={signs.unconfirmed > 0 ? "warn" : "route"}
           note={signs.mixedVersion ? "서로 다른 안내 버전 표시 중" : `응답 없어 미확인 ${signs.unconfirmed}대`}
         />
         <Tile
           label="방향 변경 확인"
           value={signChanges === null ? "확인 불가" : `${signChanges.changedConfirmed}대`}
+          ratio={signChanges === null ? undefined : bar(signChanges.changedConfirmed, signChanges.changed)}
           tone={signChanges !== null && signChanges.changed > signChanges.changedConfirmed ? "warn" : undefined}
           note={signChanges === null ? "건물 자료를 읽지 못했습니다"
             : `평상시와 방향이 달라진 유도등 ${signChanges.changed}대 중 반영 응답 ${signChanges.changedConfirmed}대 · 안내 중단 ${signChanges.stopped}대(응답 ${signChanges.stoppedConfirmed}대)`}
