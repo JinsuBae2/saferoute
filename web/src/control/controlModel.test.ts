@@ -9,9 +9,13 @@ import { emergency_state as emergencySample, state as initializingSample } from 
 import { explanation_ready, explanation_pending, explanation_unavailable } from "@samples";
 
 import {
+  observedAgeMs,
+  sourceStatus,
+  summarizeSignChanges,
   checkExplanation,
   connectionHealth,
   simulationMatchesRun,
+  simulationConnectionLost,
   summarizeRoutes,
   summarizeSigns,
   summarizeSources,
@@ -207,6 +211,15 @@ describe("시나리오 정답 표시 판정", () => {
     error_code: null,
   };
 
+  it("같은 실행의 정상 연결만 복구로 보고 영구 실패·다른 실행은 제외한다", () => {
+    expect(simulationConnectionLost({ ...simulation, error_code: "CONTROLLER_UNAVAILABLE" }, EMERGENCY)).toBe(true);
+    expect(simulationConnectionLost(simulation, EMERGENCY)).toBe(false);
+    expect(simulationConnectionLost({ ...simulation, status: "FAILED", error_code: "CONTROLLER_UNAVAILABLE" }, EMERGENCY)).toBeNull();
+    expect(simulationConnectionLost({ ...simulation, status: "STOPPED" }, EMERGENCY)).toBeNull();
+    expect(simulationConnectionLost({ ...simulation, run_id: "99999999-9999-4999-8999-999999999999" }, EMERGENCY)).toBeNull();
+    expect(simulationConnectionLost(null, EMERGENCY)).toBeNull();
+  });
+
   it("같은 실행·건물의 정답만 사용한다", () => {
     expect(simulationMatchesRun(simulation, EMERGENCY)).toBe(true);
     expect(simulationMatchesRun(null, EMERGENCY)).toBe(false);
@@ -235,5 +248,45 @@ describe("UTC 해석", () => {
     expect(utcMs(null)).toBeNull();
     expect(utcMs("not-a-time")).toBeNull();
     expect(utcMs("2026-11-10T01:00:00.000Z")).toBe(Date.parse("2026-11-10T01:00:00.000Z"));
+  });
+});
+
+describe("감지 정보 수신 상태", () => {
+  it("받지 못함·최신·만료·관측 불가를 구분한다", () => {
+    expect(sourceStatus("INITIALIZING")).toBe("NEVER");
+    expect(sourceStatus("VALID")).toBe("FRESH");
+    expect(sourceStatus("STALE")).toBe("EXPIRED");
+    expect(sourceStatus("UNAVAILABLE")).toBe("UNAVAILABLE");
+  });
+
+  it("경과 시간은 서버가 준 두 시각의 차이다", () => {
+    const source = { ...EMERGENCY.sources[0], last_observed_at: "2026-11-10T01:00:00.000Z" };
+    expect(observedAgeMs({ ...EMERGENCY, generated_at: "2026-11-10T01:00:02.500Z" }, source)).toBe(2500);
+    expect(observedAgeMs(EMERGENCY, { ...source, last_observed_at: null })).toBeNull();
+  });
+});
+
+describe("유도등 반영 확인과 방향 변경", () => {
+  const face = (display: "LEFT" | "RIGHT" | null) => ({ ...EMERGENCY.signs[0].faces[0], face_id: "FRONT", display, mode: display === null ? "NO_ROUTE" as const : "DYNAMIC" as const });
+  const sign = (id: string, display: "LEFT" | "RIGHT" | null, status: StateSnapshot["signs"][number]["application_status"], faces = [face(display)]) =>
+    ({ ...EMERGENCY.signs[0], sign_id: id, faces, application_status: status });
+  const defaults = new Map(["SAME", "TURNED", "TURNED-SILENT", "STOPPED", "TWO"].map((id) => [id, new Map([["FRONT", "LEFT"], ["REAR", "RIGHT"]])]));
+
+  it("같은 방향 유지·방향 변경·안내 중단·미확인을 대수로 나눠 센다", () => {
+    const state: StateSnapshot = { ...EMERGENCY, signs: [
+      sign("SAME", "LEFT", "APPLIED"),
+      sign("TURNED", "RIGHT", "APPLIED"),
+      sign("TURNED-SILENT", "RIGHT", "PENDING"),
+      sign("STOPPED", null, "APPLIED"),
+      // 양면 유도등은 두 면이 다 바뀌어도 한 대다.
+      sign("TWO", "RIGHT", "EXPIRED", [face("RIGHT"), { ...face("LEFT"), face_id: "REAR" }]),
+    ] };
+    expect(summarizeSignChanges(state, defaults)).toEqual({
+      total: 5, confirmed: 3, unconfirmed: 2, changed: 3, changedConfirmed: 1, stopped: 1, stoppedConfirmed: 1,
+    });
+  });
+
+  it("건물 자료가 없으면 변경 수를 지어내지 않는다", () => {
+    expect(summarizeSignChanges(EMERGENCY, null)).toBeNull();
   });
 });
