@@ -104,6 +104,8 @@ type Props = {
   readonly followIndex?: number | null;
   /** 3D에서 사람을 눌렀거나(순번), 따라가던 사람이 빠져나갔을 때(null). */
   readonly onFollow?: (index: number | null) => void;
+  /** 1인칭으로 따라가는 사람의 위치·시선·지금 경로를 읽는 지점. 출구 유도음이 쓴다. 1인칭이 아니면 null. */
+  readonly onListener?: (pose: { x: number; z: number; yaw: number; nodeId: string; evacuating: boolean } | null) => void;
   /** 전체 안내(지점별 초록 화살표·선)를 그릴지. 꺼도 지점·유도등·위험·선택 경로는 남는다. */
   readonly showGuidance?: boolean;
   readonly state: StateSnapshot;
@@ -378,7 +380,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, onFollow, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
+export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -404,9 +406,9 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
   );
 
   // 그리기 반복은 한 번만 만들어지므로, 매번 바뀌는 값은 참조로 넘긴다.
-  const liveRef = useRef({ state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
+  const liveRef = useRef({ state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
   useEffect(() => {
-    liveRef.current = { state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
+    liveRef.current = { state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
   });
 
   // 1) 렌더러·카메라·조작. 한 번만 만든다.
@@ -574,6 +576,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     let viewYaw = 0;
     let viewPitch = 0;
     let lastFollow: number | null = null;
+    let lastListenerAt = 0;
     const stairCache: { lift: unknown; geometry: unknown; building: unknown; paths: Map<string, StairTravel | null> } = { lift: null, geometry: null, building: null, paths: new Map() };
     const movePeople = (seconds: number, time: number) => {
       const people = peopleRef.current;
@@ -687,6 +690,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       }
       // 1인칭: 고른 사람의 눈높이에서 걷는 방향을 본다.
       const justPicked = live.follow !== lastFollow;
+      if (live.follow === null && lastFollow !== null) live.onListener?.(null);
       lastFollow = live.follow;
       if (live.follow === null) return;
       const followed = people.list[live.follow];
@@ -719,6 +723,12 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       const pitch = sliding ? -0.35 : -0.05 + slope * 0.9;
       viewPitch += (pitch - viewPitch) * Math.min(1, seconds * 4);
       camera.rotation.set(viewPitch, viewYaw + Math.PI, 0, "YXZ");
+      if (time - lastListenerAt > 0.25) {
+        lastListenerAt = time;
+        // 계단을 걷는 동안의 지점은 떠나온 층의 계단 지점이다. 아래층에 닿아야 그 층의 출구 유도음 대상이 된다.
+        live.onListener?.({ x: camera.position.x, z: camera.position.z, yaw: viewYaw, nodeId: followed.from,
+          evacuating: followed.started === true && followed.status !== "OUT" });
+      }
       const zoneId = live.nodeById.get(followed.from)?.zone_id;
       handles.fog.density = 0.012 + 0.11 * (zoneId === undefined ? 0 : live.smokeByZone?.get(zoneId) ?? 0);
     };

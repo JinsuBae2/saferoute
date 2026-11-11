@@ -1018,3 +1018,60 @@ code {
   flex-direction: column;
   gap: 2px;
 }
+
+/* 재난 방송 배너. 깜박임은 작은 경보등에만 주고 글자는 고정해 안내를 읽는 데 방해하지 않는다. */
+.alarm-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.alarm-bar--fire {
+  border-color: var(--fire);
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.alarm-bar--smoke {
+  border-color: var(--warn);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.alarm-bar__lamp {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--fire);
+  box-shadow: 0 0 10px var(--fire);
+  animation: alarm-lamp 1s steps(2, jump-none) infinite;
+}
+
+.alarm-bar--smoke .alarm-bar__lamp {
+  background: var(--warn);
+  box-shadow: 0 0 10px var(--warn);
+}
+
+@keyframes alarm-lamp {
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alarm-bar__lamp { animation: none; }
+}
+
+.alarm-bar__caption {
+  flex: 1;
+  min-width: 220px;
+  color: var(--text);
+}
+
+.alarm-bar__controls,
+.alarm-bar__volume {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

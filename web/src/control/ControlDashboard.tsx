@@ -29,6 +29,7 @@ import { useControlSnapshot } from "./useControlSnapshot";
 import { ManualFirePanel } from "./ManualFirePanel";
 import { CameraPreviewPanel } from "./CameraPreviewPanel";
 import { AiDemoSummary } from "./AiDemoSummary";
+import { AlarmSoundBar } from "./AlarmSoundBar";
 import { useBuildingData } from "../building/useBuildingData";
 
 // three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
@@ -253,6 +254,8 @@ export function ControlDashboard() {
             : `마지막 조회 ${(health.ageMs / 1000).toFixed(1)}초 전. 아래 값은 그때 기준입니다.`}
         </p>
       )}
+
+      <AlarmSoundBar state={state} stale={stale} />
 
       {simulationLost && (
         <p className="control__alert" role="alert">
