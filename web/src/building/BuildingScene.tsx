@@ -602,8 +602,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       stepPeople(
         people.list,
         routes,
-        // 연결이 끊겨 상태가 오래됐으면 옛 경로로 걷지 않고 선다.
-        live.state.controller_mode === "EMERGENCY" && !live.stale,
+        live.state.controller_mode === "EMERGENCY",
         (from, to) => {
           // 계단은 실제로 걷는 꺾은선 길이로 잰다. 곧은 거리로 재면 계단에서만 몇 배 빨라진다.
           const stair = stairPath(from, to);
@@ -613,6 +612,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
           return a === undefined || b === undefined ? 1 : Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
         },
         seconds * PEOPLE_SPEED,
+        // 연결이 끊겨 상태가 오래됐으면 옛 경로로 걷지 않고 선다.
+        !live.stale,
       );
       let sliding = false;
       people.list.forEach((person, index) => {
@@ -668,7 +669,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         marker.material.color.setHex(person.status === "STUCK" ? COLOR.personStuck : COLOR.person);
       });
       const count = countPeople(people.list);
-      const key = `${count.moving}/${count.out}/${count.stuck}`;
+      const key = `${count.moving}/${count.out}/${count.stuck}/${count.waiting}`;
       if (key !== people.key) {
         people.key = key;
         live.onPeople?.(count);

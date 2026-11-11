@@ -26,14 +26,51 @@ describe("대피 인원 이동", () => {
     expect(people[0]).toMatchObject({ from: "A", to: null, status: "WAITING" });
   });
 
-  it("이동 중에도 대피를 중단하면 즉시 멈추고 같은 위치에서 재개한다", () => {
+  it("연결이 끊겨 상태가 유효하지 않으면 즉시 멈추고, 돌아오면 같은 위치에서 이어 간다", () => {
     const people = [person("A")];
     const map = routes(route("A", "B"), route("B", null));
     stepPeople(people, map, true, TEN_METRES, 5);
-    stepPeople(people, map, false, TEN_METRES, 20);
-    expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.5, status: "WAITING" });
+    stepPeople(people, map, true, TEN_METRES, 20, false);
+    expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.5, status: "STUCK" });
     stepPeople(people, map, true, TEN_METRES, 2);
     expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.7, status: "MOVING" });
+  });
+
+  it("대피를 시작한 사람은 경보가 해제돼도 최신 경로를 따라 탈출할 때까지 걷는다", () => {
+    const people = [person("A")];
+    stepPeople(people, routes(route("A", "B"), route("B", "X"), route("X", null)), true, TEN_METRES, 5);
+    // 경보 해제(평상시). 해제 뒤 안내가 B에서 Y 출구로 바뀌었다. 그때의 최신 경로를 따른다.
+    const normal = routes(route("A", "B"), route("B", "Y"), route("Y", null), route("X", null));
+    stepPeople(people, normal, false, TEN_METRES, 8);
+    expect(people[0]).toMatchObject({ from: "B", to: "Y", status: "MOVING" });
+    stepPeople(people, normal, false, TEN_METRES, 10);
+    expect(people[0].status).toBe("OUT");
+    // 탈출한 사람은 다시 경보가 나도 움직이지 않는다.
+    stepPeople(people, normal, true, TEN_METRES, 50);
+    expect(people[0]).toMatchObject({ from: "Y", status: "OUT" });
+  });
+
+  it("처음부터 평상시면 기다리고, 오래된 상태의 경보로는 대피를 시작하지 않는다", () => {
+    const people = [person("A")];
+    const map = routes(route("A", "B"), route("B", null));
+    stepPeople(people, map, false, TEN_METRES, 5);
+    stepPeople(people, map, true, TEN_METRES, 5, false);
+    expect(people[0]).toMatchObject({ from: "A", to: null, status: "WAITING" });
+    expect(countPeople(people)).toMatchObject({ waiting: 1, done: false });
+  });
+
+  it("해제 뒤 걷다가 경로가 막히면 멈추고, 안내가 복구되면 남은 대피를 이어 가 전원 탈출로 끝난다", () => {
+    const people = [person("A"), person("C")];
+    const open = routes(route("A", "B"), route("C", "B"), route("B", null));
+    stepPeople(people, open, true, TEN_METRES, 5);
+    const blocked = routes(route("A", null, ["NO_REACHABLE_EXIT"]), route("C", null, ["NO_REACHABLE_EXIT"]), route("B", null, ["ORIGIN_BLOCKED"]));
+    stepPeople(people, blocked, false, TEN_METRES, 5);
+    expect(countPeople(people)).toMatchObject({ moving: 0, stuck: 2, out: 0, done: false });
+    stepPeople(people, open, false, TEN_METRES, 10);
+    expect(countPeople(people)).toEqual({ total: 2, moving: 0, out: 2, stuck: 0, waiting: 0, done: true });
+    // 대피 완료는 그대로 남는다.
+    stepPeople(people, open, false, TEN_METRES, 10);
+    expect(countPeople(people).done).toBe(true);
   });
 
   it("서버가 준 다음 지점으로만 걷고 출구에 닿으면 빠져나간다", () => {
@@ -43,7 +80,7 @@ describe("대피 인원 이동", () => {
     expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.5, status: "MOVING" });
     stepPeople(people, map, true, TEN_METRES, 20);
     expect(people[0].status).toBe("OUT");
-    expect(countPeople(people)).toEqual({ total: 1, moving: 0, out: 1, stuck: 0 });
+    expect(countPeople(people)).toEqual({ total: 1, moving: 0, out: 1, stuck: 0, waiting: 0, done: true });
   });
 
   it("걷는 중에 안내가 바뀌면 다음 지점에서 바뀐 방향으로 간다", () => {
