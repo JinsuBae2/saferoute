@@ -17,6 +17,8 @@ export type Person = {
   status: PersonStatus;
   /** 안내가 바뀌어 직전 지점으로 되돌아가는 중. 닿을 때까지는 다시 돌아서지 않는다. */
   returning?: boolean;
+  /** 경보로 대피를 시작했다. 한 번 시작하면 경보가 해제돼도 탈출할 때까지 이어 간다. 초기화(새 실행)에서만 처음으로 돌아간다. */
+  started?: boolean;
 };
 
 /** 방 입구(DOOR)마다 한 명. 방 안에 있던 사람이 문으로 나오는 것으로 본다. */
@@ -27,20 +29,30 @@ export function spawnPeople(building: Building): Person[] {
 }
 
 /**
- * metres만큼 걷는다. 대피 중이 아니면 제자리에 선다.
- * 경로가 없는 지점에서는 멈추고(STUCK), 안내가 돌아오면 다시 걷는다. 출구에 닿으면 OUT이다.
+ * metres만큼 걷는다.
+ * - 경보(alarm)가 난 적이 없으면 제자리에서 기다린다(WAITING). 처음부터 평상시면 아무도 움직이지 않는다.
+ * - 경보로 대피를 시작한 사람은 경보가 해제돼도 탈출할 때까지 계속 걷는다. 걸음마다 그때의 최신 서버 경로를 따른다.
+ * - 경로가 없는 지점이거나 연결이 끊겨 상태가 유효하지 않으면(valid=false) 멈추고(STUCK), 돌아오면 이어 간다.
+ * - 출구에 닿으면 OUT이고 다시 움직이지 않는다.
  */
 export function stepPeople(
   people: Person[],
   routes: ReadonlyMap<string, Route>,
-  evacuating: boolean,
+  alarm: boolean,
   lengthOf: (from: string, to: string) => number,
   metres: number,
+  valid = true,
 ): void {
   for (const person of people) {
     if (person.status === "OUT") continue;
-    if (!evacuating) {
+    // 오래된 상태의 경보로 대피를 시작하지 않는다.
+    if (alarm && valid) person.started = true;
+    if (person.started !== true) {
       person.status = "WAITING";
+      continue;
+    }
+    if (!valid) {
+      person.status = "STUCK";
       continue;
     }
     let budget = metres;
@@ -88,9 +100,18 @@ export function stepPeople(
   }
 }
 
-export type PeopleCount = { readonly total: number; readonly moving: number; readonly out: number; readonly stuck: number };
+export type PeopleCount = {
+  readonly total: number;
+  readonly moving: number;
+  readonly out: number;
+  readonly stuck: number;
+  readonly waiting: number;
+  /** 전원이 탈출했다. 초기화 전까지 유지된다. */
+  readonly done: boolean;
+};
 
 export function countPeople(people: readonly Person[]): PeopleCount {
   const count = (status: PersonStatus) => people.filter((person) => person.status === status).length;
-  return { total: people.length, moving: count("MOVING"), out: count("OUT"), stuck: count("STUCK") };
+  const out = count("OUT");
+  return { total: people.length, moving: count("MOVING"), out, stuck: count("STUCK"), waiting: count("WAITING"), done: people.length > 0 && out === people.length };
 }

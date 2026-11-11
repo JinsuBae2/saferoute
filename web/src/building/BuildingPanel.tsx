@@ -254,7 +254,8 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
               <span className="key key--camera" /> CCTV
               {showPeople && people !== null && (
                 <>
-                  <span className="key key--person" /> 사람 {people.total}명 (이동 {people.moving} · 탈출 {people.out})
+                  <span className="key key--person" /> 사람 {people.total}명 (이동 {people.moving} · 탈출 {people.out} · 대기 {people.waiting})
+                  {people.done && <strong className="badge badge--route" role="status">대피 완료 · 전원 {people.total}명 탈출</strong>}
                   <span className="key key--person-stuck" /> 멈춤 {people.stuck}
                   <small> · 사람을 누르면 1인칭</small>
                 </>
