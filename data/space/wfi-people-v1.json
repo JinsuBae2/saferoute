@@ -1,0 +1,31 @@
+{
+  "format": "saferoute-people",
+  "format_version": 1,
+  "building_id": "WFI",
+  "note": "시연용 대피 인원의 시작 위치. 실제 재실 인원이 아니다. 문이나 지점을 추가해도 인원은 이 목록으로만 정해진다. 순서가 곧 사람 번호(1인칭 대상)이므로 중간에 끼워 넣지 않는다",
+  "start_node_ids": [
+    "F1-D-R102",
+    "F1-D-NURSING",
+    "F1-D-CONF-N",
+    "F1-D-CONF-S",
+    "F1-D-R101",
+    "F2-D-SERVER",
+    "F2-D-R201",
+    "F2-D-R202",
+    "F2-D-R203",
+    "F2-D-ADMIN",
+    "F2-D-DIRECTOR",
+    "F2-D-INDUSTRY",
+    "F3-D-R308",
+    "F3-D-ROOM-NE",
+    "F3-D-R300",
+    "F3-D-R301",
+    "F3-D-R302",
+    "F3-D-R303",
+    "F3-D-R304",
+    "F3-D-R307",
+    "F3-D-R306",
+    "F3-D-COMMUNITY",
+    "F3-D-R305"
+  ]
+}

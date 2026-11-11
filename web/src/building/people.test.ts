@@ -1,10 +1,11 @@
 /** 대피 인원이 서버 경로만 따라 걷는지 확인한다. */
 import { describe, expect, it } from "vitest";
 
-import type { Route } from "@contracts";
+import type { Building, Route } from "@contracts";
+import rawBuilding from "@space/wfi-v1.json";
 
 import type { Person } from "./people";
-import { countPeople, stepPeople } from "./people";
+import { countPeople, spawnPeople, stepPeople } from "./people";
 
 const route = (node: string, next: string | null, reasons: Route["reason_codes"] = []): Route => ({
   node_id: node,
@@ -139,5 +140,36 @@ describe("대피 인원 이동", () => {
     expect(people[0]).toMatchObject({ from: "B", to: "A", progress: 0.6, returning: true, status: "STUCK" });
     stepPeople(people, changed, true, TEN_METRES, 1);
     expect(people[0]).toMatchObject({ from: "B", to: "A", progress: 0.7, status: "MOVING" });
+  });
+});
+
+describe("대피 인원 배치는 문 목록과 분리돼 있다", () => {
+  const wfi = rawBuilding as Building;
+
+  it("WFI는 문이 26개로 늘어도 23명이고, 추가된 문·방 안 지점·출구에는 사람을 세우지 않는다", () => {
+    const people = spawnPeople(wfi);
+    expect(wfi.nodes.filter((node) => node.kind === "DOOR").length).toBe(26);
+    expect(people).toHaveLength(23);
+    const starts = people.map((person) => person.from);
+    expect(new Set(starts).size).toBe(23);
+    for (const added of ["F3-D-R307-N", "F3-D-R304-E", "F2-D-INDUSTRY-E", "F1-J-CONF-N", "F1-J-R101", "F1-X-NW", "F1-X-SE"]) {
+      expect(starts).not.toContain(added);
+    }
+    expect(people.every((person) => person.to === null && person.status === "WAITING")).toBe(true);
+  });
+
+  it("지점 순서를 뒤집거나 문을 더 넣어도 같은 사람이 같은 자리에서 같은 순서로 선다", () => {
+    const base = spawnPeople(wfi).map((person) => person.from);
+    const extraDoor = { ...wfi.nodes.find((node) => node.node_id === "F3-D-R308")!, node_id: "F3-D-EXTRA" };
+    const changed = { ...wfi, nodes: [extraDoor, ...[...wfi.nodes].reverse()] };
+    expect(spawnPeople(changed).map((person) => person.from)).toEqual(base);
+    // 1인칭 대상(번호)이 가리키는 사람이 바뀌지 않는다.
+    expect(base[22]).toBe("F3-D-R305");
+    expect(base[0]).toBe("F1-D-R102");
+  });
+
+  it("배치 목록이 없는 건물은 예전처럼 방 입구마다 한 명이다", () => {
+    const other = { ...wfi, building_id: "OTHER" };
+    expect(spawnPeople(other)).toHaveLength(26);
   });
 });

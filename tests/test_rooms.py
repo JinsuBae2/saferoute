@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from backend.app import create_app
 from backend.rooms import COOKIE, RoomManager
 from scenario_runner.config import load_building, load_scenario
+from http_reads import current_read
 from test_manual_fire import event
 from test_observation_state import ROOT, clock  # noqa: F401  (fixture)
 from test_sign_guidance import ack as sign_ack
@@ -41,9 +42,7 @@ def enter(client):
 
 
 def state(client, who):
-    response = client.get("/api/room/state", headers=who)
-    assert response.status_code == 200, response.text
-    return response.json()
+    return current_read(client, "/api/room/state", headers=who)
 
 
 def ignite(client, who, clock, source_id):
@@ -230,10 +229,10 @@ def test_only_user_requests_extend_the_room_not_the_runner_or_internal_calls(set
         manager.step_all()
         if _ % 20 == 0:
             # A는 사용자가 화면을 보고 있고, B는 실행기와 내부(AI) 요청만 계속 들어온다.
-            assert client.get("/api/room/state", headers=a).status_code == 200
+            state(client, a)
             if room_b in manager.rooms:
-                assert client.get("/api/state", headers=internal).status_code == 200
-    assert client.get("/api/room/state", headers=a).status_code == 200
+                current_read(client, "/api/state", headers=internal)
+    state(client, a)
     assert client.get("/api/room/state", headers=b).status_code == 401
     assert manager.availability()["in_use"] == 1
 

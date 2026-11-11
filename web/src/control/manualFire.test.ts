@@ -39,7 +39,7 @@ describe("manual fire controls", () => {
     const { api, control, state } = setup();
     const result = await control.run({ kind: "ignite", zoneId: "F1-PASSAGE-N" });
     expect(api.ignite).toHaveBeenCalledOnce();
-    expect(api.ignite.mock.calls[0][0]).toMatchObject({ run_id: state.run_id, building_version: 4,
+    expect(api.ignite.mock.calls[0][0]).toMatchObject({ run_id: state.run_id, building_version: building.building_version,
       source_id: north, source_type: "MANUAL_TEST", source_sequence: 8, observed_at: state.generated_at,
       event_kind: "ALARM", hazard_type: "FIRE", media_time_ms: null, confidence: null });
     expect(api.ignite.mock.calls[0][0]).not.toHaveProperty("zone_id");

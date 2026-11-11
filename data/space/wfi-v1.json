@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "building_id": "WFI",
-  "building_version": 4,
+  "building_version": 5,
   "coordinate_system": {
     "unit": "m",
     "measured": false,
@@ -85,13 +85,21 @@
       ],
       "blocked_node_ids": [
         "F1-D-CONF-N",
-        "F1-D-CONF-S"
+        "F1-D-CONF-S",
+        "F1-J-CONF-N",
+        "F1-J-CONF-S"
       ],
       "blocked_edge_ids": [
         "E-F1-J-LW-F1-D-CONF-N",
         "E-F1-D-CONF-N-F1-J-LW",
         "E-F1-J-LSW-F1-D-CONF-S",
-        "E-F1-D-CONF-S-F1-J-LSW"
+        "E-F1-D-CONF-S-F1-J-LSW",
+        "E-F1-D-CONF-N-F1-J-CONF-N",
+        "E-F1-J-CONF-N-F1-D-CONF-N",
+        "E-F1-J-CONF-N-F1-J-CONF-S",
+        "E-F1-J-CONF-S-F1-J-CONF-N",
+        "E-F1-J-CONF-S-F1-D-CONF-S",
+        "E-F1-D-CONF-S-F1-J-CONF-S"
       ]
     },
     {
@@ -440,13 +448,16 @@
       ],
       "blocked_node_ids": [
         "F1-X-SE",
-        "F1-D-R101"
+        "F1-D-R101",
+        "F1-J-R101"
       ],
       "blocked_edge_ids": [
         "E-F1-J-PS-F1-D-R101",
         "E-F1-D-R101-F1-J-PS",
-        "E-F1-D-R101-F1-X-SE",
-        "E-F1-X-SE-F1-D-R101"
+        "E-F1-D-R101-F1-J-R101",
+        "E-F1-J-R101-F1-D-R101",
+        "E-F1-J-R101-F1-X-SE",
+        "E-F1-X-SE-F1-J-R101"
       ]
     },
     {
@@ -652,11 +663,22 @@
         }
       ],
       "blocked_node_ids": [
-        "F2-D-INDUSTRY"
+        "F2-D-INDUSTRY",
+        "F2-D-INDUSTRY-E",
+        "F2-J-INDUSTRY-W",
+        "F2-J-INDUSTRY-E"
       ],
       "blocked_edge_ids": [
         "E-F2-J-W2-F2-D-INDUSTRY",
-        "E-F2-D-INDUSTRY-F2-J-W2"
+        "E-F2-D-INDUSTRY-F2-J-W2",
+        "E-F2-D-INDUSTRY-E-F2-J-R3",
+        "E-F2-J-R3-F2-D-INDUSTRY-E",
+        "E-F2-D-INDUSTRY-F2-J-INDUSTRY-W",
+        "E-F2-J-INDUSTRY-W-F2-D-INDUSTRY",
+        "E-F2-J-INDUSTRY-W-F2-J-INDUSTRY-E",
+        "E-F2-J-INDUSTRY-E-F2-J-INDUSTRY-W",
+        "E-F2-J-INDUSTRY-E-F2-D-INDUSTRY-E",
+        "E-F2-D-INDUSTRY-E-F2-J-INDUSTRY-E"
       ]
     },
     {
@@ -921,7 +943,9 @@
         "E-F2-J-R2B-F2-J-R3",
         "E-F2-J-R3-F2-J-R2B",
         "E-F2-J-R3-F2-D-DIRECTOR",
-        "E-F2-D-DIRECTOR-F2-J-R3"
+        "E-F2-D-DIRECTOR-F2-J-R3",
+        "E-F2-D-INDUSTRY-E-F2-J-R3",
+        "E-F2-J-R3-F2-D-INDUSTRY-E"
       ]
     },
     {
@@ -1222,11 +1246,22 @@
         }
       ],
       "blocked_node_ids": [
-        "F3-D-R304"
+        "F3-D-R304",
+        "F3-D-R304-E",
+        "F3-J-R304-N",
+        "F3-J-R304-E"
       ],
       "blocked_edge_ids": [
         "E-F3-J-E2-F3-D-R304",
-        "E-F3-D-R304-F3-J-E2"
+        "E-F3-D-R304-F3-J-E2",
+        "E-F3-D-R304-E-F3-J-R4",
+        "E-F3-J-R4-F3-D-R304-E",
+        "E-F3-D-R304-F3-J-R304-N",
+        "E-F3-J-R304-N-F3-D-R304",
+        "E-F3-J-R304-N-F3-J-R304-E",
+        "E-F3-J-R304-E-F3-J-R304-N",
+        "E-F3-J-R304-E-F3-D-R304-E",
+        "E-F3-D-R304-E-F3-J-R304-E"
       ]
     },
     {
@@ -1350,11 +1385,22 @@
         }
       ],
       "blocked_node_ids": [
-        "F3-D-R307"
+        "F3-D-R307",
+        "F3-D-R307-N",
+        "F3-J-R307-N",
+        "F3-J-R307-S"
       ],
       "blocked_edge_ids": [
         "E-F3-J-SW-F3-D-R307",
-        "E-F3-D-R307-F3-J-SW"
+        "E-F3-D-R307-F3-J-SW",
+        "E-F3-D-R307-N-F3-J-N1",
+        "E-F3-J-N1-F3-D-R307-N",
+        "E-F3-D-R307-N-F3-J-R307-N",
+        "E-F3-J-R307-N-F3-D-R307-N",
+        "E-F3-J-R307-N-F3-J-R307-S",
+        "E-F3-J-R307-S-F3-J-R307-N",
+        "E-F3-J-R307-S-F3-D-R307",
+        "E-F3-D-R307-F3-J-R307-S"
       ]
     },
     {
@@ -1434,7 +1480,9 @@
         "E-F3-J-N2-F3-J-W1",
         "E-F3-J-W1-F3-J-N2",
         "E-F2-S-D-F3-S-D",
-        "E-F3-S-D-F2-S-D"
+        "E-F3-S-D-F2-S-D",
+        "E-F3-D-R307-N-F3-J-N1",
+        "E-F3-J-N1-F3-D-R307-N"
       ]
     },
     {
@@ -1581,7 +1629,8 @@
         "F3-J-R0",
         "F3-J-R1",
         "F3-J-R2",
-        "F3-J-R3"
+        "F3-J-R3",
+        "F3-J-R4"
       ],
       "blocked_edge_ids": [
         "E-F3-J-N6-F3-J-N5",
@@ -1603,7 +1652,13 @@
         "E-F3-J-R2-F3-J-R3",
         "E-F3-J-R3-F3-J-R2",
         "E-F3-J-R3-F3-D-R303",
-        "E-F3-D-R303-F3-J-R3"
+        "E-F3-D-R303-F3-J-R3",
+        "E-F3-D-R304-E-F3-J-R4",
+        "E-F3-J-R4-F3-D-R304-E",
+        "E-F3-J-R4-F3-J-R3",
+        "E-F3-J-R3-F3-J-R4",
+        "E-F3-J-R4-F3-J-R2",
+        "E-F3-J-R2-F3-J-R4"
       ]
     },
     {
@@ -2542,6 +2597,149 @@
         "z": 15.3
       },
       "kind": "STAIR"
+    },
+    {
+      "node_id": "F1-J-CONF-N",
+      "floor_id": "F1",
+      "zone_id": "F1-CONF",
+      "position": {
+        "x": 7.5,
+        "y": 0.0,
+        "z": 11.7
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-CONF-S",
+      "floor_id": "F1",
+      "zone_id": "F1-CONF",
+      "position": {
+        "x": 7.5,
+        "y": 0.0,
+        "z": 24.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F1-J-R101",
+      "floor_id": "F1",
+      "zone_id": "F1-R101",
+      "position": {
+        "x": 40.1,
+        "y": 0.0,
+        "z": 24.0
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-D-INDUSTRY-E",
+      "floor_id": "F2",
+      "zone_id": "F2-INDUSTRY",
+      "position": {
+        "x": 31.0,
+        "y": 4.0,
+        "z": 22.0
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F2-J-INDUSTRY-W",
+      "floor_id": "F2",
+      "zone_id": "F2-INDUSTRY",
+      "position": {
+        "x": 14.5,
+        "y": 4.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F2-J-INDUSTRY-E",
+      "floor_id": "F2",
+      "zone_id": "F2-INDUSTRY",
+      "position": {
+        "x": 30.0,
+        "y": 4.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R307-N",
+      "floor_id": "F3",
+      "zone_id": "F3-R307",
+      "position": {
+        "x": 8.4,
+        "y": 8.0,
+        "z": 7.5
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-R307-N",
+      "floor_id": "F3",
+      "zone_id": "F3-R307",
+      "position": {
+        "x": 7.0,
+        "y": 8.0,
+        "z": 8.9
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-R307-S",
+      "floor_id": "F3",
+      "zone_id": "F3-R307",
+      "position": {
+        "x": 7.0,
+        "y": 8.0,
+        "z": 19.9
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-D-R304-E",
+      "floor_id": "F3",
+      "zone_id": "F3-R304",
+      "position": {
+        "x": 35.5,
+        "y": 8.0,
+        "z": 22.2
+      },
+      "kind": "DOOR"
+    },
+    {
+      "node_id": "F3-J-R304-N",
+      "floor_id": "F3",
+      "zone_id": "F3-R304",
+      "position": {
+        "x": 31.7,
+        "y": 8.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-R304-E",
+      "floor_id": "F3",
+      "zone_id": "F3-R304",
+      "position": {
+        "x": 34.6,
+        "y": 8.0,
+        "z": 23.6
+      },
+      "kind": "JUNCTION"
+    },
+    {
+      "node_id": "F3-J-R4",
+      "floor_id": "F3",
+      "zone_id": "F3-CORR-E2",
+      "position": {
+        "x": 36.9,
+        "y": 8.0,
+        "z": 22.2
+      },
+      "kind": "JUNCTION"
     }
   ],
   "edges": [
@@ -2650,24 +2848,6 @@
       "to_node_id": "F1-J-PS",
       "kind": "DOOR",
       "cost": 3.2,
-      "traversable": true,
-      "door_open": true
-    },
-    {
-      "edge_id": "E-F1-D-R101-F1-X-SE",
-      "from_node_id": "F1-D-R101",
-      "to_node_id": "F1-X-SE",
-      "kind": "DOOR",
-      "cost": 6.0,
-      "traversable": true,
-      "door_open": true
-    },
-    {
-      "edge_id": "E-F1-X-SE-F1-D-R101",
-      "from_node_id": "F1-X-SE",
-      "to_node_id": "F1-D-R101",
-      "kind": "DOOR",
-      "cost": 6.0,
       "traversable": true,
       "door_open": true
     },
@@ -4098,7 +4278,7 @@
       "from_node_id": "F1-S-C",
       "to_node_id": "F2-S-C",
       "kind": "STAIR",
-      "cost": 781.6,
+      "cost": 7652.8,
       "traversable": true,
       "door_open": null
     },
@@ -4107,7 +4287,7 @@
       "from_node_id": "F2-S-C",
       "to_node_id": "F1-S-C",
       "kind": "STAIR",
-      "cost": 781.6,
+      "cost": 7652.8,
       "traversable": true,
       "door_open": null
     },
@@ -4116,7 +4296,7 @@
       "from_node_id": "F2-S-D",
       "to_node_id": "F3-S-D",
       "kind": "STAIR",
-      "cost": 781.6,
+      "cost": 7652.8,
       "traversable": true,
       "door_open": null
     },
@@ -4125,7 +4305,349 @@
       "from_node_id": "F3-S-D",
       "to_node_id": "F2-S-D",
       "kind": "STAIR",
-      "cost": 781.6,
+      "cost": 7652.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-D-CONF-N-F1-J-CONF-N",
+      "from_node_id": "F1-D-CONF-N",
+      "to_node_id": "F1-J-CONF-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-N-F1-D-CONF-N",
+      "from_node_id": "F1-J-CONF-N",
+      "to_node_id": "F1-D-CONF-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-N-F1-J-CONF-S",
+      "from_node_id": "F1-J-CONF-N",
+      "to_node_id": "F1-J-CONF-S",
+      "kind": "CORRIDOR",
+      "cost": 852.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-S-F1-J-CONF-N",
+      "from_node_id": "F1-J-CONF-S",
+      "to_node_id": "F1-J-CONF-N",
+      "kind": "CORRIDOR",
+      "cost": 852.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-CONF-S-F1-D-CONF-S",
+      "from_node_id": "F1-J-CONF-S",
+      "to_node_id": "F1-D-CONF-S",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-D-CONF-S-F1-J-CONF-S",
+      "from_node_id": "F1-D-CONF-S",
+      "to_node_id": "F1-J-CONF-S",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-D-R101-F1-J-R101",
+      "from_node_id": "F1-D-R101",
+      "to_node_id": "F1-J-R101",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-R101-F1-D-R101",
+      "from_node_id": "F1-J-R101",
+      "to_node_id": "F1-D-R101",
+      "kind": "CORRIDOR",
+      "cost": 4.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-J-R101-F1-X-SE",
+      "from_node_id": "F1-J-R101",
+      "to_node_id": "F1-X-SE",
+      "kind": "CORRIDOR",
+      "cost": 3.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F1-X-SE-F1-J-R101",
+      "from_node_id": "F1-X-SE",
+      "to_node_id": "F1-J-R101",
+      "kind": "CORRIDOR",
+      "cost": 3.2,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-D-INDUSTRY-E-F2-J-R3",
+      "from_node_id": "F2-D-INDUSTRY-E",
+      "to_node_id": "F2-J-R3",
+      "kind": "DOOR",
+      "cost": 5.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-J-R3-F2-D-INDUSTRY-E",
+      "from_node_id": "F2-J-R3",
+      "to_node_id": "F2-D-INDUSTRY-E",
+      "kind": "DOOR",
+      "cost": 5.9,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F2-D-INDUSTRY-F2-J-INDUSTRY-W",
+      "from_node_id": "F2-D-INDUSTRY",
+      "to_node_id": "F2-J-INDUSTRY-W",
+      "kind": "CORRIDOR",
+      "cost": 1.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-W-F2-D-INDUSTRY",
+      "from_node_id": "F2-J-INDUSTRY-W",
+      "to_node_id": "F2-D-INDUSTRY",
+      "kind": "CORRIDOR",
+      "cost": 1.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-W-F2-J-INDUSTRY-E",
+      "from_node_id": "F2-J-INDUSTRY-W",
+      "to_node_id": "F2-J-INDUSTRY-E",
+      "kind": "CORRIDOR",
+      "cost": 855.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-E-F2-J-INDUSTRY-W",
+      "from_node_id": "F2-J-INDUSTRY-E",
+      "to_node_id": "F2-J-INDUSTRY-W",
+      "kind": "CORRIDOR",
+      "cost": 855.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-J-INDUSTRY-E-F2-D-INDUSTRY-E",
+      "from_node_id": "F2-J-INDUSTRY-E",
+      "to_node_id": "F2-D-INDUSTRY-E",
+      "kind": "CORRIDOR",
+      "cost": 1.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F2-D-INDUSTRY-E-F2-J-INDUSTRY-E",
+      "from_node_id": "F2-D-INDUSTRY-E",
+      "to_node_id": "F2-J-INDUSTRY-E",
+      "kind": "CORRIDOR",
+      "cost": 1.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R307-N-F3-J-N1",
+      "from_node_id": "F3-D-R307-N",
+      "to_node_id": "F3-J-N1",
+      "kind": "DOOR",
+      "cost": 2.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-N1-F3-D-R307-N",
+      "from_node_id": "F3-J-N1",
+      "to_node_id": "F3-D-R307-N",
+      "kind": "DOOR",
+      "cost": 2.1,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-D-R307-N-F3-J-R307-N",
+      "from_node_id": "F3-D-R307-N",
+      "to_node_id": "F3-J-R307-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-N-F3-D-R307-N",
+      "from_node_id": "F3-J-R307-N",
+      "to_node_id": "F3-D-R307-N",
+      "kind": "CORRIDOR",
+      "cost": 2.0,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-N-F3-J-R307-S",
+      "from_node_id": "F3-J-R307-N",
+      "to_node_id": "F3-J-R307-S",
+      "kind": "CORRIDOR",
+      "cost": 850.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-S-F3-J-R307-N",
+      "from_node_id": "F3-J-R307-S",
+      "to_node_id": "F3-J-R307-N",
+      "kind": "CORRIDOR",
+      "cost": 850.8,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R307-S-F3-D-R307",
+      "from_node_id": "F3-J-R307-S",
+      "to_node_id": "F3-D-R307",
+      "kind": "CORRIDOR",
+      "cost": 1.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R307-F3-J-R307-S",
+      "from_node_id": "F3-D-R307",
+      "to_node_id": "F3-J-R307-S",
+      "kind": "CORRIDOR",
+      "cost": 1.6,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R304-E-F3-J-R4",
+      "from_node_id": "F3-D-R304-E",
+      "to_node_id": "F3-J-R4",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-R4-F3-D-R304-E",
+      "from_node_id": "F3-J-R4",
+      "to_node_id": "F3-D-R304-E",
+      "kind": "DOOR",
+      "cost": 1.4,
+      "traversable": true,
+      "door_open": true
+    },
+    {
+      "edge_id": "E-F3-J-R4-F3-J-R3",
+      "from_node_id": "F3-J-R4",
+      "to_node_id": "F3-J-R3",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R3-F3-J-R4",
+      "from_node_id": "F3-J-R3",
+      "to_node_id": "F3-J-R4",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R4-F3-J-R2",
+      "from_node_id": "F3-J-R4",
+      "to_node_id": "F3-J-R2",
+      "kind": "CORRIDOR",
+      "cost": 6.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R2-F3-J-R4",
+      "from_node_id": "F3-J-R2",
+      "to_node_id": "F3-J-R4",
+      "kind": "CORRIDOR",
+      "cost": 6.9,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R304-F3-J-R304-N",
+      "from_node_id": "F3-D-R304",
+      "to_node_id": "F3-J-R304-N",
+      "kind": "CORRIDOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-N-F3-D-R304",
+      "from_node_id": "F3-J-R304-N",
+      "to_node_id": "F3-D-R304",
+      "kind": "CORRIDOR",
+      "cost": 1.3,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-N-F3-J-R304-E",
+      "from_node_id": "F3-J-R304-N",
+      "to_node_id": "F3-J-R304-E",
+      "kind": "CORRIDOR",
+      "cost": 842.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-E-F3-J-R304-N",
+      "from_node_id": "F3-J-R304-E",
+      "to_node_id": "F3-J-R304-N",
+      "kind": "CORRIDOR",
+      "cost": 842.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-J-R304-E-F3-D-R304-E",
+      "from_node_id": "F3-J-R304-E",
+      "to_node_id": "F3-D-R304-E",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
+      "traversable": true,
+      "door_open": null
+    },
+    {
+      "edge_id": "E-F3-D-R304-E-F3-J-R304-E",
+      "from_node_id": "F3-D-R304-E",
+      "to_node_id": "F3-J-R304-E",
+      "kind": "CORRIDOR",
+      "cost": 1.7,
       "traversable": true,
       "door_open": null
     }
@@ -4146,14 +4668,14 @@
     {
       "exit_id": "EXIT-NW",
       "node_id": "F1-X-NW",
-      "enabled": false,
-      "assumption": "A05 비활성. 로비 왼쪽 위 외곽 벽 틈이며 출입문인지 미확인(U06)"
+      "enabled": true,
+      "assumption": "A10 시뮬레이션 가정으로 사용. 로비 위쪽 외곽 벽 틈으로 판독했으며 실제 비상구 지정·잠금 여부는 미확인(U06)"
     },
     {
       "exit_id": "EXIT-SE",
       "node_id": "F1-X-SE",
-      "enabled": false,
-      "assumption": "A05 비활성. 101호 아래 외곽 벽 틈이며 101호 전용 문일 수 있음(U06)"
+      "enabled": true,
+      "assumption": "A10 시뮬레이션 가정으로 사용. 101호 아래 외곽 벽 틈으로 판독했으며 101호 전용 문일 수 있고 실제 비상구 지정·잠금 여부는 미확인(U06)"
     }
   ],
   "sources": [
@@ -4910,6 +5432,42 @@
       ]
     },
     {
+      "sign_id": "SIGN-F1-X-NW",
+      "node_id": "F1-X-NW",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-X-NW",
+          "next_node_to_display": {
+            "F1-X-NW": "EXIT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F1-X-SE",
+      "node_id": "F1-X-SE",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-X-SE",
+          "next_node_to_display": {
+            "F1-X-SE": "EXIT"
+          }
+        }
+      ]
+    },
+    {
       "sign_id": "SIGN-F1-J-PN",
       "node_id": "F1-J-PN",
       "faces": [
@@ -4922,9 +5480,9 @@
           },
           "default_next_node_id": "F1-X-N",
           "next_node_to_display": {
-            "F1-J-LNW": "LEFT",
+            "F1-X-N": "FORWARD",
             "F1-J-PM": "BACK",
-            "F1-X-N": "FORWARD"
+            "F1-J-LNW": "LEFT"
           }
         },
         {
@@ -4936,9 +5494,9 @@
           },
           "default_next_node_id": "F1-X-N",
           "next_node_to_display": {
-            "F1-J-LNW": "RIGHT",
+            "F1-X-N": "BACK",
             "F1-J-PM": "FORWARD",
-            "F1-X-N": "BACK"
+            "F1-J-LNW": "RIGHT"
           }
         }
       ]
@@ -4956,10 +5514,10 @@
           },
           "default_next_node_id": "F1-J-PN",
           "next_node_to_display": {
-            "F1-J-LM": "LEFT",
             "F1-J-PN": "FORWARD",
             "F1-J-PS": "BACK",
-            "F1-S-B": "RIGHT"
+            "F1-S-B": "RIGHT",
+            "F1-J-LM": "LEFT"
           }
         },
         {
@@ -4971,10 +5529,10 @@
           },
           "default_next_node_id": "F1-J-PN",
           "next_node_to_display": {
-            "F1-J-LM": "RIGHT",
             "F1-J-PN": "BACK",
             "F1-J-PS": "FORWARD",
-            "F1-S-B": "LEFT"
+            "F1-S-B": "LEFT",
+            "F1-J-LM": "RIGHT"
           }
         }
       ]
@@ -4992,10 +5550,10 @@
           },
           "default_next_node_id": "F1-X-S",
           "next_node_to_display": {
-            "F1-D-R101": "LEFT",
-            "F1-J-LS": "RIGHT",
             "F1-J-PM": "BACK",
-            "F1-X-S": "FORWARD"
+            "F1-X-S": "FORWARD",
+            "F1-D-R101": "LEFT",
+            "F1-J-LS": "RIGHT"
           }
         },
         {
@@ -5007,10 +5565,10 @@
           },
           "default_next_node_id": "F1-X-S",
           "next_node_to_display": {
-            "F1-D-R101": "RIGHT",
-            "F1-J-LS": "LEFT",
             "F1-J-PM": "FORWARD",
-            "F1-X-S": "BACK"
+            "F1-X-S": "BACK",
+            "F1-D-R101": "RIGHT",
+            "F1-J-LS": "LEFT"
           }
         }
       ]
@@ -5022,29 +5580,29 @@
         {
           "face_id": "FRONT",
           "view_direction": {
-            "x": 1.0,
+            "x": 0.0,
             "y": 0.0,
-            "z": 0.0
+            "z": -1.0
           },
-          "default_next_node_id": "F1-J-PN",
+          "default_next_node_id": "F1-X-NW",
           "next_node_to_display": {
-            "F1-J-LE": "RIGHT",
-            "F1-J-PN": "FORWARD",
-            "F1-X-NW": "LEFT"
+            "F1-X-NW": "FORWARD",
+            "F1-J-LE": "BACK",
+            "F1-J-PN": "RIGHT"
           }
         },
         {
           "face_id": "REAR",
           "view_direction": {
-            "x": -1.0,
+            "x": 0.0,
             "y": 0.0,
-            "z": 0.0
+            "z": 1.0
           },
-          "default_next_node_id": "F1-J-PN",
+          "default_next_node_id": "F1-X-NW",
           "next_node_to_display": {
-            "F1-J-LE": "LEFT",
-            "F1-J-PN": "BACK",
-            "F1-X-NW": "RIGHT"
+            "F1-X-NW": "BACK",
+            "F1-J-LE": "FORWARD",
+            "F1-J-PN": "LEFT"
           }
         }
       ]
@@ -5062,10 +5620,10 @@
           },
           "default_next_node_id": "F1-J-LE",
           "next_node_to_display": {
-            "F1-D-CONF-N": "BACK",
-            "F1-D-NURSING": "BACK",
+            "F1-J-LE": "FORWARD",
             "F1-D-R102": "LEFT",
-            "F1-J-LE": "FORWARD"
+            "F1-D-NURSING": "BACK",
+            "F1-D-CONF-N": "BACK"
           }
         },
         {
@@ -5077,10 +5635,10 @@
           },
           "default_next_node_id": "F1-J-LE",
           "next_node_to_display": {
-            "F1-D-CONF-N": "FORWARD",
-            "F1-D-NURSING": "FORWARD",
+            "F1-J-LE": "BACK",
             "F1-D-R102": "RIGHT",
-            "F1-J-LE": "BACK"
+            "F1-D-NURSING": "FORWARD",
+            "F1-D-CONF-N": "FORWARD"
           }
         }
       ]
@@ -5098,10 +5656,10 @@
           },
           "default_next_node_id": "F1-J-LNW",
           "next_node_to_display": {
-            "F1-J-LA": "BACK",
-            "F1-J-LC": "RIGHT",
             "F1-J-LNW": "FORWARD",
-            "F1-J-LW": "LEFT"
+            "F1-J-LW": "LEFT",
+            "F1-J-LC": "RIGHT",
+            "F1-J-LA": "BACK"
           }
         },
         {
@@ -5113,10 +5671,10 @@
           },
           "default_next_node_id": "F1-J-LNW",
           "next_node_to_display": {
-            "F1-J-LA": "FORWARD",
-            "F1-J-LC": "LEFT",
             "F1-J-LNW": "BACK",
-            "F1-J-LW": "RIGHT"
+            "F1-J-LW": "RIGHT",
+            "F1-J-LC": "LEFT",
+            "F1-J-LA": "FORWARD"
           }
         }
       ]
@@ -5128,29 +5686,29 @@
         {
           "face_id": "FRONT",
           "view_direction": {
-            "x": 1.0,
+            "x": -1.0,
             "y": 0.0,
             "z": 0.0
           },
-          "default_next_node_id": "F1-J-LM",
+          "default_next_node_id": "F1-J-LE",
           "next_node_to_display": {
-            "F1-J-LE": "BACK",
-            "F1-J-LM": "FORWARD",
-            "F1-S-C": "RIGHT"
+            "F1-J-LE": "FORWARD",
+            "F1-J-LM": "BACK",
+            "F1-S-C": "LEFT"
           }
         },
         {
           "face_id": "REAR",
           "view_direction": {
-            "x": -1.0,
+            "x": 1.0,
             "y": 0.0,
             "z": 0.0
           },
-          "default_next_node_id": "F1-J-LM",
+          "default_next_node_id": "F1-J-LE",
           "next_node_to_display": {
-            "F1-J-LE": "FORWARD",
-            "F1-J-LM": "BACK",
-            "F1-S-C": "LEFT"
+            "F1-J-LE": "BACK",
+            "F1-J-LM": "FORWARD",
+            "F1-S-C": "RIGHT"
           }
         }
       ]
@@ -5169,9 +5727,9 @@
           "default_next_node_id": "F1-J-PM",
           "next_node_to_display": {
             "F1-J-LC": "BACK",
-            "F1-J-LS": "RIGHT",
+            "F1-S-C": "BACK",
             "F1-J-PM": "FORWARD",
-            "F1-S-C": "BACK"
+            "F1-J-LS": "RIGHT"
           }
         },
         {
@@ -5184,9 +5742,9 @@
           "default_next_node_id": "F1-J-PM",
           "next_node_to_display": {
             "F1-J-LC": "FORWARD",
-            "F1-J-LS": "LEFT",
+            "F1-S-C": "FORWARD",
             "F1-J-PM": "BACK",
-            "F1-S-C": "FORWARD"
+            "F1-J-LS": "LEFT"
           }
         }
       ]
@@ -5266,29 +5824,29 @@
         {
           "face_id": "FRONT",
           "view_direction": {
-            "x": 1.0,
+            "x": -1.0,
             "y": 0.0,
             "z": 0.0
           },
-          "default_next_node_id": "F2-J-N4",
+          "default_next_node_id": "F2-J-N2",
           "next_node_to_display": {
-            "F2-D-R201": "LEFT",
-            "F2-J-N2": "BACK",
-            "F2-J-N4": "FORWARD"
+            "F2-J-N2": "FORWARD",
+            "F2-D-R201": "RIGHT",
+            "F2-J-N4": "BACK"
           }
         },
         {
           "face_id": "REAR",
           "view_direction": {
-            "x": -1.0,
+            "x": 1.0,
             "y": 0.0,
             "z": 0.0
           },
-          "default_next_node_id": "F2-J-N4",
+          "default_next_node_id": "F2-J-N2",
           "next_node_to_display": {
-            "F2-D-R201": "RIGHT",
-            "F2-J-N2": "FORWARD",
-            "F2-J-N4": "BACK"
+            "F2-J-N2": "BACK",
+            "F2-D-R201": "LEFT",
+            "F2-J-N4": "FORWARD"
           }
         }
       ]
@@ -5306,9 +5864,9 @@
           },
           "default_next_node_id": "F2-J-N6",
           "next_node_to_display": {
-            "F2-J-E1": "RIGHT",
             "F2-J-N3": "BACK",
-            "F2-J-N6": "FORWARD"
+            "F2-J-N6": "FORWARD",
+            "F2-J-E1": "RIGHT"
           }
         },
         {
@@ -5320,9 +5878,9 @@
           },
           "default_next_node_id": "F2-J-N6",
           "next_node_to_display": {
-            "F2-J-E1": "LEFT",
             "F2-J-N3": "FORWARD",
-            "F2-J-N6": "BACK"
+            "F2-J-N6": "BACK",
+            "F2-J-E1": "LEFT"
           }
         }
       ]
@@ -5340,9 +5898,9 @@
           },
           "default_next_node_id": "F2-J-E4",
           "next_node_to_display": {
-            "F2-J-E4": "FORWARD",
             "F2-J-N4": "RIGHT",
-            "F2-J-N7": "LEFT"
+            "F2-J-N7": "LEFT",
+            "F2-J-E4": "FORWARD"
           }
         },
         {
@@ -5354,9 +5912,9 @@
           },
           "default_next_node_id": "F2-J-E4",
           "next_node_to_display": {
-            "F2-J-E4": "BACK",
             "F2-J-N4": "LEFT",
-            "F2-J-N7": "RIGHT"
+            "F2-J-N7": "RIGHT",
+            "F2-J-E4": "BACK"
           }
         }
       ]
@@ -5374,8 +5932,8 @@
           },
           "default_next_node_id": "F2-J-R1",
           "next_node_to_display": {
-            "F2-D-R202": "BACK",
             "F2-J-N6": "RIGHT",
+            "F2-D-R202": "BACK",
             "F2-J-R1": "FORWARD"
           }
         },
@@ -5388,8 +5946,8 @@
           },
           "default_next_node_id": "F2-J-R1",
           "next_node_to_display": {
-            "F2-D-R202": "FORWARD",
             "F2-J-N6": "LEFT",
+            "F2-D-R202": "FORWARD",
             "F2-J-R1": "BACK"
           }
         }
@@ -5408,8 +5966,8 @@
           },
           "default_next_node_id": "F2-J-R2",
           "next_node_to_display": {
-            "F2-D-R203": "LEFT",
             "F2-J-N7": "BACK",
+            "F2-D-R203": "LEFT",
             "F2-J-R2": "FORWARD"
           }
         },
@@ -5422,8 +5980,8 @@
           },
           "default_next_node_id": "F2-J-R2",
           "next_node_to_display": {
-            "F2-D-R203": "RIGHT",
             "F2-J-N7": "FORWARD",
+            "F2-D-R203": "RIGHT",
             "F2-J-R2": "BACK"
           }
         }
@@ -5476,8 +6034,8 @@
           },
           "default_next_node_id": "F2-J-R2",
           "next_node_to_display": {
-            "F2-D-ADMIN": "RIGHT",
             "F2-J-R2": "FORWARD",
+            "F2-D-ADMIN": "RIGHT",
             "F2-J-R3": "BACK"
           }
         },
@@ -5490,9 +6048,43 @@
           },
           "default_next_node_id": "F2-J-R2",
           "next_node_to_display": {
-            "F2-D-ADMIN": "LEFT",
             "F2-J-R2": "BACK",
+            "F2-D-ADMIN": "LEFT",
             "F2-J-R3": "FORWARD"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F2-J-R3",
+      "node_id": "F2-J-R3",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-R2B",
+          "next_node_to_display": {
+            "F2-J-R2B": "FORWARD",
+            "F2-D-DIRECTOR": "RIGHT",
+            "F2-D-INDUSTRY-E": "LEFT"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-R2B",
+          "next_node_to_display": {
+            "F2-J-R2B": "BACK",
+            "F2-D-DIRECTOR": "LEFT",
+            "F2-D-INDUSTRY-E": "RIGHT"
           }
         }
       ]
@@ -5511,8 +6103,8 @@
           "default_next_node_id": "F2-S-A",
           "next_node_to_display": {
             "F2-J-N2": "RIGHT",
-            "F2-J-W2": "LEFT",
-            "F2-S-A": "FORWARD"
+            "F2-S-A": "FORWARD",
+            "F2-J-W2": "LEFT"
           }
         },
         {
@@ -5525,8 +6117,8 @@
           "default_next_node_id": "F2-S-A",
           "next_node_to_display": {
             "F2-J-N2": "LEFT",
-            "F2-J-W2": "RIGHT",
-            "F2-S-A": "BACK"
+            "F2-S-A": "BACK",
+            "F2-J-W2": "RIGHT"
           }
         }
       ]
@@ -5544,10 +6136,10 @@
           },
           "default_next_node_id": "F2-J-E3",
           "next_node_to_display": {
-            "F2-J-E1": "LEFT",
             "F2-J-E3": "FORWARD",
+            "F2-S-D": "FORWARD",
             "F2-S-C": "RIGHT",
-            "F2-S-D": "FORWARD"
+            "F2-J-E1": "LEFT"
           }
         },
         {
@@ -5559,10 +6151,10 @@
           },
           "default_next_node_id": "F2-J-E3",
           "next_node_to_display": {
-            "F2-J-E1": "RIGHT",
             "F2-J-E3": "BACK",
+            "F2-S-D": "BACK",
             "F2-S-C": "LEFT",
-            "F2-S-D": "BACK"
+            "F2-J-E1": "RIGHT"
           }
         }
       ]
@@ -5580,9 +6172,9 @@
           },
           "default_next_node_id": "F2-S-B",
           "next_node_to_display": {
-            "F2-J-E3": "RIGHT",
+            "F2-S-B": "FORWARD",
             "F2-J-N6": "LEFT",
-            "F2-S-B": "FORWARD"
+            "F2-J-E3": "RIGHT"
           }
         },
         {
@@ -5594,9 +6186,9 @@
           },
           "default_next_node_id": "F2-S-B",
           "next_node_to_display": {
-            "F2-J-E3": "LEFT",
+            "F2-S-B": "BACK",
             "F2-J-N6": "RIGHT",
-            "F2-S-B": "BACK"
+            "F2-J-E3": "LEFT"
           }
         }
       ]
@@ -5638,6 +6230,40 @@
             "F2-J-E4": "BACK",
             "F2-J-R2": "FORWARD",
             "F3-S-B": "STAIRS_UP"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-N1",
+      "node_id": "F3-J-N1",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N2",
+          "next_node_to_display": {
+            "F3-D-R308": "BACK",
+            "F3-J-N2": "FORWARD",
+            "F3-D-R307-N": "BACK"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-N2",
+          "next_node_to_display": {
+            "F3-D-R308": "FORWARD",
+            "F3-J-N2": "BACK",
+            "F3-D-R307-N": "FORWARD"
           }
         }
       ]
@@ -5690,8 +6316,8 @@
           "default_next_node_id": "F3-J-N4",
           "next_node_to_display": {
             "F3-J-N2": "BACK",
-            "F3-J-N4": "FORWARD",
-            "F3-S-D": "RIGHT"
+            "F3-S-D": "RIGHT",
+            "F3-J-N4": "FORWARD"
           }
         },
         {
@@ -5704,8 +6330,8 @@
           "default_next_node_id": "F3-J-N4",
           "next_node_to_display": {
             "F3-J-N2": "FORWARD",
-            "F3-J-N4": "BACK",
-            "F3-S-D": "LEFT"
+            "F3-S-D": "LEFT",
+            "F3-J-N4": "BACK"
           }
         }
       ]
@@ -5723,9 +6349,9 @@
           },
           "default_next_node_id": "F3-J-E1",
           "next_node_to_display": {
-            "F3-J-E1": "FORWARD",
             "F3-J-N3": "RIGHT",
-            "F3-J-N6": "LEFT"
+            "F3-J-N6": "LEFT",
+            "F3-J-E1": "FORWARD"
           }
         },
         {
@@ -5737,9 +6363,9 @@
           },
           "default_next_node_id": "F3-J-E1",
           "next_node_to_display": {
-            "F3-J-E1": "BACK",
             "F3-J-N3": "LEFT",
-            "F3-J-N6": "RIGHT"
+            "F3-J-N6": "RIGHT",
+            "F3-J-E1": "BACK"
           }
         }
       ]
@@ -5757,8 +6383,8 @@
           },
           "default_next_node_id": "F3-J-N5",
           "next_node_to_display": {
-            "F3-D-ROOM-NE": "LEFT",
             "F3-J-N4": "BACK",
+            "F3-D-ROOM-NE": "LEFT",
             "F3-J-N5": "FORWARD"
           }
         },
@@ -5771,8 +6397,8 @@
           },
           "default_next_node_id": "F3-J-N5",
           "next_node_to_display": {
-            "F3-D-ROOM-NE": "RIGHT",
             "F3-J-N4": "FORWARD",
+            "F3-D-ROOM-NE": "RIGHT",
             "F3-J-N5": "BACK"
           }
         }
@@ -5825,8 +6451,8 @@
           },
           "default_next_node_id": "F3-J-R2",
           "next_node_to_display": {
-            "F3-D-R301": "LEFT",
             "F3-J-N5": "BACK",
+            "F3-D-R301": "LEFT",
             "F3-J-R2": "FORWARD"
           }
         },
@@ -5839,8 +6465,8 @@
           },
           "default_next_node_id": "F3-J-R2",
           "next_node_to_display": {
-            "F3-D-R301": "RIGHT",
             "F3-J-N5": "FORWARD",
+            "F3-D-R301": "RIGHT",
             "F3-J-R2": "BACK"
           }
         }
@@ -5859,10 +6485,11 @@
           },
           "default_next_node_id": "F3-S-B",
           "next_node_to_display": {
-            "F3-D-R302": "BACK",
             "F3-J-R1": "RIGHT",
+            "F3-D-R302": "BACK",
+            "F3-S-B": "FORWARD",
             "F3-J-R3": "LEFT",
-            "F3-S-B": "FORWARD"
+            "F3-J-R4": "LEFT"
           }
         },
         {
@@ -5874,10 +6501,45 @@
           },
           "default_next_node_id": "F3-S-B",
           "next_node_to_display": {
-            "F3-D-R302": "FORWARD",
             "F3-J-R1": "LEFT",
+            "F3-D-R302": "FORWARD",
+            "F3-S-B": "BACK",
             "F3-J-R3": "RIGHT",
-            "F3-S-B": "BACK"
+            "F3-J-R4": "RIGHT"
+          }
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-R3",
+      "node_id": "F3-J-R3",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-R2": "FORWARD",
+            "F3-D-R303": "RIGHT",
+            "F3-J-R4": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-R2": "BACK",
+            "F3-D-R303": "LEFT",
+            "F3-J-R4": "BACK"
           }
         }
       ]
@@ -5895,9 +6557,9 @@
           },
           "default_next_node_id": "F3-S-B",
           "next_node_to_display": {
-            "F3-J-E2": "RIGHT",
             "F3-J-N4": "LEFT",
-            "F3-S-B": "FORWARD"
+            "F3-S-B": "FORWARD",
+            "F3-J-E2": "RIGHT"
           }
         },
         {
@@ -5909,9 +6571,9 @@
           },
           "default_next_node_id": "F3-S-B",
           "next_node_to_display": {
-            "F3-J-E2": "LEFT",
             "F3-J-N4": "RIGHT",
-            "F3-S-B": "BACK"
+            "F3-S-B": "BACK",
+            "F3-J-E2": "LEFT"
           }
         }
       ]
@@ -5930,8 +6592,8 @@
           "default_next_node_id": "F3-S-A",
           "next_node_to_display": {
             "F3-J-N2": "RIGHT",
-            "F3-J-W2": "LEFT",
-            "F3-S-A": "FORWARD"
+            "F3-S-A": "FORWARD",
+            "F3-J-W2": "LEFT"
           }
         },
         {
@@ -5944,8 +6606,8 @@
           "default_next_node_id": "F3-S-A",
           "next_node_to_display": {
             "F3-J-N2": "LEFT",
-            "F3-J-W2": "RIGHT",
-            "F3-S-A": "BACK"
+            "F3-S-A": "BACK",
+            "F3-J-W2": "RIGHT"
           }
         }
       ]
@@ -5963,9 +6625,9 @@
           },
           "default_next_node_id": "F3-J-W1",
           "next_node_to_display": {
+            "F3-J-W1": "FORWARD",
             "F3-D-R305": "LEFT",
-            "F3-J-SW": "LEFT",
-            "F3-J-W1": "FORWARD"
+            "F3-J-SW": "LEFT"
           }
         },
         {
@@ -5977,9 +6639,9 @@
           },
           "default_next_node_id": "F3-J-W1",
           "next_node_to_display": {
+            "F3-J-W1": "BACK",
             "F3-D-R305": "RIGHT",
-            "F3-J-SW": "RIGHT",
-            "F3-J-W1": "BACK"
+            "F3-J-SW": "RIGHT"
           }
         }
       ]
@@ -5997,10 +6659,10 @@
           },
           "default_next_node_id": "F3-J-W2",
           "next_node_to_display": {
-            "F3-D-COMMUNITY": "FORWARD",
-            "F3-D-R306": "BACK",
+            "F3-J-W2": "FORWARD",
             "F3-D-R307": "LEFT",
-            "F3-J-W2": "FORWARD"
+            "F3-D-R306": "BACK",
+            "F3-D-COMMUNITY": "FORWARD"
           }
         },
         {
@@ -6012,10 +6674,10 @@
           },
           "default_next_node_id": "F3-J-W2",
           "next_node_to_display": {
-            "F3-D-COMMUNITY": "BACK",
-            "F3-D-R306": "FORWARD",
+            "F3-J-W2": "BACK",
             "F3-D-R307": "RIGHT",
-            "F3-J-W2": "BACK"
+            "F3-D-R306": "FORWARD",
+            "F3-D-COMMUNITY": "BACK"
           }
         }
       ]
@@ -6058,6 +6720,40 @@
           }
         }
       ]
+    },
+    {
+      "sign_id": "SIGN-F3-J-R4",
+      "node_id": "F3-J-R4",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-D-R304-E": "LEFT",
+            "F3-J-R3": "BACK",
+            "F3-J-R2": "FORWARD"
+          }
+        },
+        {
+          "face_id": "REAR",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-D-R304-E": "RIGHT",
+            "F3-J-R3": "FORWARD",
+            "F3-J-R2": "BACK"
+          }
+        }
+      ]
     }
   ],
   "assumptions": [
@@ -6088,13 +6784,13 @@
     {
       "item": "A05 기본 출구",
       "basis": "1F 블록 사이 통로 양 끝의 외곽 벽 끊김",
-      "description": "EXIT-N·EXIT-S만 활성. EXIT-NW·EXIT-SE는 비활성으로 남긴다. 통로를 남북 구역으로 나눠 한쪽 경보 시 반대편 출구가 남게 했다(M03)",
+      "description": "EXIT-N·EXIT-S만 활성. EXIT-NW·EXIT-SE는 비활성으로 남긴다. 통로를 남북 구역으로 나눠 한쪽 경보 시 반대편 출구가 남게 했다(M03) (버전 5에서 A10으로 대체: 네 곳 모두 사용)",
       "reviewer": null
     },
     {
       "item": "A06 문 위치 근사",
       "basis": "안내도의 벽 끊김",
-      "description": "방문 노드는 벽 끊김 가운데에 두었고 실제 문 위치와 다를 수 있다",
+      "description": "방문 노드는 벽 끊김 가운데에 두었고 실제 문 위치와 다를 수 있다 버전 5: 307호 북쪽, 304호 동쪽, 산업부 동쪽 진입부를 더했고, 문이 둘인 방과 101호에는 방 안 이동 지점을 두었다",
       "reviewer": null
     },
     {
@@ -6114,11 +6810,23 @@
       "basis": "C02 샘플의 값",
       "description": "연기감지기 required true, 카메라·스프링클러 false, freshness 3000 ms. 2번이 상태 규칙에 맞춰 확정한다",
       "reviewer": null
+    },
+    {
+      "item": "A10 1층 출구 4곳 사용 (시뮬레이션 가정)",
+      "basis": "공개 층별 안내도의 외곽 벽 끊김 4곳. 현장 확인이나 비상구 지정 자료는 없음",
+      "description": "EXIT-N·EXIT-S·EXIT-NW·EXIT-SE를 모두 대피 출구로 계산한다. 시뮬레이션을 위한 명시적 가정이며 현장에서 확인된 비상구가 아니다. EXIT-SE는 101호 안을 지나야 닿는다",
+      "reviewer": null
+    },
+    {
+      "item": "A11 방 안 이동은 다른 길이 없을 때만",
+      "basis": "방은 통로가 아니라는 기존 원칙(10.2절)과 안내도의 두 진입부",
+      "description": "문이 둘인 방(컨퍼런스룸·산업부·304호·307호) 안을 가로지르는 구간 cost에 일반 통로 전체 합계를 더한다. 복도 길이 남아 있으면 방을 지름길로 쓰지 않고, 자기 방의 한쪽 문 앞이 막혔을 때만 방 안을 지나 다른 문으로 나간다",
+      "reviewer": null
     }
   ],
   "provenance": {
     "source_url": "https://wfi.or.kr/communication/?b=B_1_4",
-    "checked_on": "2026-11-08",
+    "checked_on": "2026-11-11",
     "author": "담당 4",
     "description": "원주미래산업진흥원 창업지원허브 공개 층별 안내도(1F·2F·3F)를 판독해 만든 시연용 근사 모델. 실측 아님"
   }

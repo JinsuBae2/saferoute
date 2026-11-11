@@ -122,7 +122,8 @@ def test_zone_blocks_its_own_nodes_and_their_edges():
 
 
 def test_every_node_reaches_an_enabled_exit_in_normal_mode():
-    assert {e.exit_id for e in BUILDING.exits if e.enabled} == {"EXIT-N", "EXIT-S"}
+    # 버전 5(A10): 1층 출구 후보 네 곳을 모두 쓴다. 시뮬레이션 가정이며 현장 확인된 비상구가 아니다.
+    assert {e.exit_id for e in BUILDING.exits if e.enabled} == {"EXIT-N", "EXIT-S", "EXIT-NW", "EXIT-SE"}
     assert set(DIST) == set(NODES)
 
 
@@ -146,14 +147,15 @@ def test_one_zone_alarm_never_closes_both_exits():
 
 @pytest.mark.parametrize("zone_id", sorted(ZONES))
 def test_single_zone_alarm_only_strands_dead_end_room_doors(zone_id):
-    """경보 구역 밖에서 출구를 잃는 노드는 문이 그 구역 쪽에만 있는 방 문(또는 비활성 출구)뿐이어야 한다."""
+    """경보 구역 밖에서 출구를 잃는 노드는 진입부가 그 구역 쪽에만 있는 방의 문과 그 방 안 지점뿐이어야 한다."""
     zone = ZONES[zone_id]
     blocked = set(zone.blocked_edge_ids)
     dist = shortest_to_exit([e for e in BUILDING.edges if e.traversable and e.edge_id not in blocked
                              and e.from_node_id not in zone.blocked_node_ids
                              and e.to_node_id not in zone.blocked_node_ids])
     lost = set(NODES) - set(zone.blocked_node_ids) - set(dist)
-    assert all(NODES[n].kind in ("DOOR", "EXIT") and n not in ENABLED_EXITS for n in lost), sorted(lost)
+    circulation = ("CORR", "LOBBY", "PASSAGE", "STAIR")
+    assert all(not any(part in NODES[n].zone_id for part in circulation) and n not in ENABLED_EXITS for n in lost), sorted(lost)
 
 
 def test_sign_defaults_follow_normal_shortest_route():
