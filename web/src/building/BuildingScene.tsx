@@ -18,7 +18,7 @@ import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeT
 import { insidePolygon, visibleWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
-import { EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
+import { doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
@@ -74,6 +74,8 @@ const FOV = 50;
 
 /** 대피 인원이 걷는 속도(m/s). 보통 걸음에 가깝게 두어 연기가 번지는 동안 경로가 바뀌는 것이 보이게 한다. */
 const PEOPLE_SPEED = 1.2;
+/** 1인칭에서 계단을 걸을 때 시선이 향하는 앞쪽 거리(m). 계단참 폭(약 2m)보다 조금 길어야 꺾이기 전에 다음 줄이 보인다. */
+const STAIR_LOOK_AHEAD = 2.4;
 
 /** 출구에서 미끄럼틀을 타고 빠져나가는 시간(초)과 미끄럼틀의 길이·낙차(m). */
 const SLIDE_SECONDS = 1.8;
@@ -615,6 +617,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         seconds * PEOPLE_SPEED,
       );
       let sliding = false;
+      let gazeYaw: number | null = null;
       people.list.forEach((person, index) => {
         const figure = people.figures[index];
         const marker = people.markers[index];
@@ -642,7 +645,15 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         } else if (person.to !== null) {
           const path = stairPath(person.from, person.to);
           const to = at(person.to);
-          if (path !== null) ({ point, heading } = alongStair(path, person.progress));
+          if (path !== null) {
+            ({ point, heading } = alongStair(path, person.progress));
+            if (index === live.follow) {
+              // 계단에서는 발밑 구간이 아니라 두어 걸음 앞을 본다. 계단참에 닿기 전에 미리 돌기 시작해
+              // 꺾이는 동안 정면 벽만 보이는 시간을 줄인다. 걷는 길과 벽은 그대로다.
+              const ahead = alongStair(path, person.progress + STAIR_LOOK_AHEAD / Math.max(path.length, 0.01)).point.sub(point);
+              if (ahead.x * ahead.x + ahead.z * ahead.z > 0.04) gazeYaw = Math.atan2(ahead.x, ahead.z);
+            }
+          }
           else if (to !== null) {
             heading = to.clone().sub(from);
             point = from.clone().lerp(to, person.progress);
@@ -699,8 +710,9 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         if (other !== figure && other.group.visible && other.group.position.distanceTo(figure.group.position) < 1.1) other.group.visible = false;
       }
       // 가까운 쪽으로 천천히 돌아 갈림길에서 화면이 홱 꺾이지 않게 한다.
-      const turn = Math.atan2(Math.sin(people.yaw[live.follow] - viewYaw), Math.cos(people.yaw[live.follow] - viewYaw));
-      viewYaw += turn * Math.min(1, seconds * 4);
+      const wanted = gazeYaw ?? people.yaw[live.follow];
+      const turn = Math.atan2(Math.sin(wanted - viewYaw), Math.cos(wanted - viewYaw));
+      viewYaw += turn * Math.min(1, seconds * (gazeYaw === null ? 4 : 6));
       // 계단에서는 발 디딜 쪽을 본다. 내려갈 때는 아래를, 올라갈 때는 위를 향하고, 미끄럼틀에서는 내려다본다.
       const slope = Math.max(-0.75, Math.min(0.5, people.slope[live.follow]));
       const pitch = sliding ? -0.35 : -0.05 + slope * 0.9;
@@ -835,7 +847,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
     const facing = list.map((person) => {
       const here = nodes.get(person.from);
-      const ahead = nodes.get(building.edges.find((edge) => edge.from_node_id === person.from)?.to_node_id ?? "");
+      const ahead = nodes.get(doorFacing(building).get(person.from) ?? "");
       return here === undefined || ahead === undefined ? 0 : Math.atan2(ahead.position.x - here.position.x, ahead.position.z - here.position.z);
     });
     peopleRef.current = { list, group, figures, markers, yaw: facing, slope: list.map(() => 0), slide: list.map(() => 0), key: "" };
@@ -871,7 +883,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     clearGroup(handles.smokeGroup);
     handles.smokePuffs = [];
     handles.signFaces = new Map();
-    const edgeByDoor = new Map(building.edges.filter((edge) => edge.kind === "DOOR").map((edge) => [edge.from_node_id, edge.to_node_id]));
+    const edgeByDoor = doorFacing(building);
 
     // 1인칭에서는 벽을 천장까지 올려 옆방이 넘겨다보이지 않게 한다. 평소에는 위에서 들여다보도록 낮게 둔다.
     const wallHeight = firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height;
@@ -972,6 +984,8 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         [facade.glass, new THREE.MeshLambertMaterial({ color: COLOR.glass, transparent: true, opacity: 0.32, depthWrite: false })],
         [facade.frames, new THREE.MeshLambertMaterial({ color: COLOR.frame })],
         [facade.band, concrete()],
+        // 대피 출구로 쓰지 않는 외부 문 후보. 문은 있되 닫혀 있다. 실제 출입문인지는 미확인(U06)이다.
+        [facade.closedDoors, new THREE.MeshLambertMaterial({ color: COLOR.door })],
       ] as const) {
         const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, parts.length);
         parts.forEach((part, index) => {
