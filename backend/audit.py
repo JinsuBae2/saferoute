@@ -2,11 +2,15 @@
 
 import hashlib
 import json
+import logging
 from math import isfinite
 import os
 from pathlib import Path
 import platform
 import subprocess
+import time
+
+LOGGER = logging.getLogger(__name__)
 
 
 def json_evidence(value):
@@ -71,8 +75,30 @@ class AuditLog:
             raise ValueError("run is closed")
         sequence = self.sequences[run_id] + 1
         record = record | {"record_sequence": sequence}
-        with (self.root / run_id / f"{category}.jsonl").open("a", encoding="utf-8") as stream:
-            stream.write(json.dumps(json_evidence(record), ensure_ascii=True, allow_nan=False) + "\n")
-            stream.flush()
-            os.fsync(stream.fileno())
+        started, cpu = time.perf_counter(), time.thread_time()
+        serialize_ms = write_flush_ms = fsync_ms = 0
+        try:
+            try:
+                encoded = json.dumps(json_evidence(record), ensure_ascii=True, allow_nan=False) + "\n"
+            finally:
+                serialize_ms = (time.perf_counter() - started) * 1000
+            writing = time.perf_counter()
+            with (self.root / run_id / f"{category}.jsonl").open("a", encoding="utf-8") as stream:
+                try:
+                    stream.write(encoded)
+                    stream.flush()
+                finally:
+                    write_flush_ms = (time.perf_counter() - writing) * 1000
+                syncing = time.perf_counter()
+                try:
+                    os.fsync(stream.fileno())
+                finally:
+                    fsync_ms = (time.perf_counter() - syncing) * 1000
+        finally:
+            elapsed = time.perf_counter() - started
+            if elapsed >= .25:
+                LOGGER.warning("slow_audit_write run_id=%s category=%s elapsed_ms=%.1f "
+                    "serialize_ms=%.1f write_flush_ms=%.1f fsync_ms=%.1f thread_cpu_ms=%.1f",
+                    run_id, category, elapsed * 1000, serialize_ms, write_flush_ms, fsync_ms,
+                    (time.thread_time() - cpu) * 1000)
         self.sequences[run_id] = sequence

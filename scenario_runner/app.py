@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from backend.contracts.messages import SimulationState
-from .runner import Runner
+from .runner import Runner, SimulationUnavailable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +37,11 @@ def create_app(building, scenario, *, controller_url, runs_dir, clock=None):
 
     app = FastAPI(title="saferoute simulation evidence",version="0.1.0",lifespan=lifespan)
 
+    @app.exception_handler(SimulationUnavailable)
+    async def unavailable(request, error):
+        return JSONResponse(status_code=503, headers={"Retry-After": "1"},
+            content={"error":{"code":"CONTROLLER_UNAVAILABLE","message":str(error),"field":None}})
+
     @app.middleware("http")
     async def no_cache(request, call_next):
         response = await call_next(request)
@@ -53,7 +58,7 @@ def create_app(building, scenario, *, controller_url, runs_dir, clock=None):
     @app.post("/sim/restart",response_model=SimulationState)
     def restart():
         try: app.state.runner.restart()
-        except (httpx.HTTPError,ValueError) as error:
+        except (httpx.HTTPError,ValueError,OSError) as error:
             return JSONResponse(status_code=503,content={"error":{"code":"CONTROLLER_UNAVAILABLE","message":str(error),"field":None}})
         return app.state.runner.state()
 
