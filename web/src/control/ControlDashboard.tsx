@@ -31,6 +31,7 @@ import { CameraPreviewPanel } from "./CameraPreviewPanel";
 import { AiDemoSummary } from "./AiDemoSummary";
 import { AlarmSoundBar } from "./AlarmSoundBar";
 import { useBuildingData } from "../building/useBuildingData";
+import type { PeopleCount } from "../building/people";
 
 // three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
 const BuildingPanel = lazy(() => import("../building/BuildingPanel"));
@@ -184,6 +185,8 @@ export function ControlDashboard() {
   const [onlyUnavailable, setOnlyUnavailable] = useState(false);
   const [presentation, setPresentation] = useState(false);
   // 고른 카메라는 미리보기와 3D 강조가 함께 쓴다.
+  // 3D가 세어 준 대피 인원. 「대피 현황」을 크게 보여 주려고 받아 둔다(이슈 #21).
+  const [people, setPeople] = useState<PeopleCount | null>(null);
   const [camera, setCamera] = useState<{ sourceId: string | null; locate: number }>({
     sourceId: null,
     locate: 0,
@@ -351,6 +354,7 @@ export function ControlDashboard() {
               highlightSourceId={camera.sourceId}
               locateRequest={camera.locate}
               stale={stale}
+              onPeopleCount={setPeople}
               demo={(startPicker, hasStart) => space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
                 building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null}
                 startPicker={startPicker} hasStart={hasStart} />}
@@ -358,7 +362,31 @@ export function ControlDashboard() {
           </Suspense>
         </div>
 
-        <div className="control__camera">
+        <div className="control__side">
+          <section className="panel evac">
+            <header className="panel__head">
+              <h2>대피 현황</h2>
+              <span className="panel__note">시연용 인원입니다. 실제 재실 인원이 아닙니다</span>
+            </header>
+            {people === null ? (
+              <p className="panel__empty">3D에서 「대피 인원」을 켜면 표시됩니다.</p>
+            ) : (
+              <>
+                <div className="evac__counts">
+                  <div><span>이동</span><strong>{people.moving}</strong></div>
+                  <div><span>탈출</span><strong className="evac__out">{people.out}</strong></div>
+                  <div><span>대기</span><strong>{people.waiting}</strong></div>
+                  <div><span>멈춤</span><strong className={people.stuck > 0 ? "evac__stuck" : undefined}>{people.stuck}</strong></div>
+                </div>
+                <p className="panel__note">
+                  전체 {people.total}명
+                  {people.done && " · 전원 탈출"}
+                  {people.stuck > 0 && " · 멈춘 사람은 서버가 안내할 출구를 찾지 못한 자리입니다"}
+                </p>
+              </>
+            )}
+          </section>
+
           <CameraPreviewPanel
             key={`${state.run_id}/${state.building_id}/${state.building_version}`}
             state={state}
@@ -370,8 +398,6 @@ export function ControlDashboard() {
               setCamera((previous) => ({ sourceId, locate: previous.locate + 1 }))
             }
           />
-        </div>
-      </div>
 
       <Panel
         title="상황 설명"
@@ -410,8 +436,7 @@ export function ControlDashboard() {
         )}
       </Panel>
 
-      <div className="columns">
-        <Panel title="감지 정보" note="정보를 받고 있는지만 보여 줍니다. 최신 정보를 받아도 그 내용이 경보일 수 있습니다" folding>
+      <Panel title="감지 정보" note="정보를 받고 있는지만 보여 줍니다. 최신 정보를 받아도 그 내용이 경보일 수 있습니다" folding>
           <table className="grid">
             <thead>
               <tr>
@@ -442,10 +467,9 @@ export function ControlDashboard() {
           </table>
         </Panel>
 
-        <Panel title="활성 경보" note="화재·연기 모두 원인별로 확인한 뒤 해제합니다">
+      <Panel title="활성 경보" note="화재·연기 모두 원인별로 확인한 뒤 해제합니다" folding>
           <AlarmPanel key={`${state.run_id}/${state.building_id}/${state.building_version}`} state={state} building={space.building} display={display} connected={!stale} />
         </Panel>
-      </div>
 
       <Panel
         title="차단 구간"
@@ -634,6 +658,9 @@ export function ControlDashboard() {
           </>
         )}
       </Panel>
+
+        </div>
+      </div>
 
       <footer className="control__footer">
         시험 조작 패널 외에는 조회만 합니다. 화면을 닫아도 활성 경보와 제어기·유도등 단말은 그대로 유지됩니다.
