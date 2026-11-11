@@ -228,3 +228,32 @@ def test_simultaneous_producers_detect_initial_sequence_conflict(building, scena
         assert sorted(r.status for r in runners) == ["FAILED", "WAITING_FOR_ARM"]
         assert next(r for r in runners if r.status=="FAILED").error_code == "SOURCE_CONFLICT"
         for runner in runners: runner.close()
+
+
+def test_transient_controller_outage_pauses_then_resumes_without_using_old_observations(setup, clock, monkeypatch):
+    import httpx
+    client, runner = setup
+    arm(client)
+    runner.tick()
+    advance(runner, clock, 1000)
+    real_post = client.post
+    def timed_out(*args, **kwargs): raise httpx.ReadTimeout("timed out")
+    monkeypatch.setattr(client, "post", timed_out)
+    advance(runner, clock, 3000)
+    # 한 번의 시간 초과로 실행이 끝나지 않는다. 끊긴 사실만 알리고 보내지 못한 관측은 들고 있는다.
+    assert runner.state().status == "RUNNING" and runner.state().error_code == "CONTROLLER_UNAVAILABLE"
+    assert runner.queue
+    clock.advance(4000)
+    # 그동안 제어기는 관측이 끊겨 스스로 안내를 멈춘다.
+    assert client.get("/api/state").json()["controller_mode"] == "DEGRADED"
+    monkeypatch.setattr(client, "post", real_post)
+    for _ in range(30):
+        clock.advance(100)
+        runner.tick()
+    assert runner.state().status == "RUNNING" and runner.state().error_code is None
+    evidence = [json.loads(line) for line in runner.log_path.read_text(encoding="utf-8").splitlines()]
+    operations = [r["operation"] for r in evidence]
+    assert operations.count("controller_unreachable") == 1 and operations.count("controller_recovered") == 1
+    # 끊긴 동안 밀린 옛 관측은 제어기가 거부하고, 새 관측으로만 다시 안내한다.
+    assert any(r.get("error_code") == "STALE_OBSERVATION" for r in evidence)
+    assert client.get("/api/state").json()["controller_mode"] in {"NORMAL", "EMERGENCY"}
