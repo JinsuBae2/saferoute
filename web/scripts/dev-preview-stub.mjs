@@ -25,7 +25,7 @@
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 
-import { fireZones, smokeAt } from "./dev-smoke-model.mjs";
+import { fireAt, fireZones, smokeAt } from "./dev-smoke-model.mjs";
 
 const CONTROL = process.env.SAFEROUTE_API ?? "http://127.0.0.1:8000";
 const PREVIEW = process.env.SAFEROUTE_PREVIEW_API ?? "http://127.0.0.1:8003";
@@ -94,27 +94,29 @@ const box = (x1, y1, x2, y2) => [round(x1), round(y1), round(x2), round(y2)];
 /**
  * 그 카메라가 지금 볼 만한 검출. 정규화 xyxy(0~1)다.
  *
- * 카메라마다 다르게 나와야 한다. 불이 난 구역을 보는 카메라에만 불꽃이 잡히고,
+ * 카메라마다 다르게 나와야 한다. 불꽃도 연기처럼 불난 곳에서 번져 나가므로,
+ * 가까운 카메라가 먼저 약하게 잡고 시간이 갈수록 세진다. 먼 카메라는 늦게,
  * 연기는 공용 모형(dev-smoke-model)이 그 구역까지 번졌을 때부터 잡힌다.
  * 그래서 3D에 차오르는 연기와 카메라가 말하는 퍼센트가 서로 맞는다.
  *
  * 불이 없으면 빈 목록이다. 검출이 없는 것도 정상 상태다.
  */
 function detections(camera, building, started, nowMs, step) {
-  const burning = started.has(camera.zone_id);
+  const fire = fireAt(building, started, camera.zone_id, nowMs);
   const smoke = smokeAt(building, started, camera.zone_id, nowMs);
   const found = [];
   const drift = Math.sin(step / 6) * 0.05;
 
-  if (burning) {
-    // 불난 구역을 보는 카메라. 시간이 지날수록 또렷해진다.
-    const age = (nowMs - started.get(camera.zone_id)) / 20_000;
+  if (fire >= 0.05) {
+    // 불꽃이 셀수록 또렷해지고 상자도 바닥에서 위로 커진다.
     // 흔들림은 아주 작게 둔다. 크게 흔들면 값이 떨어지는 것처럼 읽힌다.
-    const confidence = 0.55 + Math.min(0.35, Math.max(0, age) * 0.35) + Math.sin(step / 9) * 0.015;
+    const confidence = fire + Math.sin(step / 9) * 0.015;
+    const halfWidth = 0.06 + fire * 0.08;
+    const height = 0.12 + fire * 0.16;
     found.push({
       hazard_type: "FIRE",
       confidence: round(confidence),
-      xyxy: box(0.56 + drift, 0.58, 0.80 + drift, 0.82),
+      xyxy: box(0.68 - halfWidth + drift, 0.82 - height, 0.68 + halfWidth + drift, 0.82),
     });
   }
 

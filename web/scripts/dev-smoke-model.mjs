@@ -24,6 +24,23 @@ export const SLOWDOWN_M = 25;
 /** 다른 층은 끝까지 차도 여기까지만. 불난 층보다는 늘 옅다. */
 export const OTHER_FLOOR_CAP = 0.85;
 
+/** 불꽃이 그 구역에 "옮겨붙기까지". 연기보다 한참 느리게 번진다. */
+export const FIRE_SPREAD_MS_PER_M = 1200;
+/** 옮겨붙은 뒤 세지는 속도. 연기보다 천천히 커진다. */
+export const FIRE_RISE_MS = 22000;
+/** 멀수록 느리게 커진다. 이 거리마다 커지는 데 걸리는 시간이 한 배씩 늘어난다(m). */
+export const FIRE_SLOWDOWN_M = 10;
+/** 이 거리를 넘으면 불꽃은 보이지 않는다(m). 연기와 달리 좁게 잡는다. */
+export const FIRE_REACH_M = 20;
+/** 위·아래층으로 옮겨붙는 데 더 걸리는 시간. 연기보다 훨씬 늦다. */
+export const FIRE_FLOOR_DELAY_MS = 25000;
+/** 불난 구역 바로 그곳의 최대 세기. */
+export const FIRE_NEAR_CAP = 0.9;
+/** 닿는 끝자락의 최대 세기. 멀수록 이 값으로 수렴한다. */
+export const FIRE_FAR_CAP = 0.45;
+/** 다른 층의 불꽃은 같은 거리라도 이 비율까지만 보인다. */
+export const FIRE_OTHER_FLOOR_SCALE = 0.6;
+
 export function centroid(zone) {
   const points = zone.polygon;
   const sum = points.reduce(
@@ -83,6 +100,44 @@ export function smokeAt(building, started, zoneId, nowMs) {
     smoke = Math.max(smoke, Math.min(ceiling, progress * ceiling));
   }
   return smoke;
+}
+
+/**
+ * 한 구역에서 지금 보이는 불꽃의 세기(0~1).
+ *
+ * 연기와 같은 거리 모형을 쓰되 더 좁고 느리다. 불난 구역은 처음부터 또렷하고,
+ * 옆 구역은 옮겨붙기를 기다린 뒤 서서히 세진다. 멀수록 늦게 붙고 끝내 약하게
+ * 머문다. 그래서 "방에 난 불이 앞 복도 카메라에 먼저, 반대편에 나중에" 잡힌다.
+ *
+ * 불이 없거나 닿는 거리 밖이면 0이다.
+ */
+export function fireAt(building, started, zoneId, nowMs) {
+  const byId = new Map(building.zones.map((zone) => [zone.zone_id, zone]));
+  const zone = byId.get(zoneId);
+  if (zone === undefined || started.size === 0) return 0;
+
+  const here = centroid(zone);
+  let fire = 0;
+  for (const [fireZoneId, firedAt] of started) {
+    const source = byId.get(fireZoneId);
+    if (source === undefined) continue;
+    const there = centroid(source);
+    const metres = Math.hypot(here.x - there.x, here.z - there.z);
+    if (metres > FIRE_REACH_M) continue;
+    const sameFloor = zone.floor_id === source.floor_id;
+    const reach = metres / FIRE_REACH_M;
+    // 옮겨붙기까지. 다른 층은 계단을 타야 해서 한참 늦다.
+    const begins = metres * FIRE_SPREAD_MS_PER_M + (sameFloor ? 0 : FIRE_FLOOR_DELAY_MS);
+    const rise = FIRE_RISE_MS * (1 + metres / FIRE_SLOWDOWN_M);
+    // 가까울수록 세게 탄다. 끝자락은 약한 채로 머문다.
+    const near = FIRE_NEAR_CAP - (FIRE_NEAR_CAP - FIRE_FAR_CAP) * reach;
+    const ceiling = sameFloor ? near : near * FIRE_OTHER_FLOOR_SCALE;
+    // 붙자마자 조금은 보인다. 0에서 시작하면 한참 "불 없음"으로 읽힌다.
+    const base = sameFloor ? Math.max(0, 1 - reach) * 0.55 : 0;
+    const progress = Math.min(1, Math.max(0, (nowMs - firedAt - begins) / rise));
+    fire = Math.max(fire, Math.min(ceiling, base + progress * Math.max(0, ceiling - base)));
+  }
+  return fire;
 }
 
 /** 연기가 조금이라도 있는 구역만. 0인 구역은 보내지 않는다. */
