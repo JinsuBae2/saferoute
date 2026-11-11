@@ -187,6 +187,13 @@ export function ControlDashboard() {
   // 고른 카메라는 미리보기와 3D 강조가 함께 쓴다.
   // 3D가 세어 준 대피 인원. 「대피 현황」을 크게 보여 주려고 받아 둔다(이슈 #21).
   const [people, setPeople] = useState<PeopleCount | null>(null);
+  /**
+   * 시연에서 고른 화재 위치. 도면 클릭과 목록이 같은 값을 써야 해서 여기에 둔다(이슈 #21).
+   * 실행이 바뀌면 고른 것도 버린다. 실행 번호를 함께 담아 두면 효과 없이 저절로 비워진다.
+   */
+  const [fire, setFire] = useState<{ readonly runId: string; readonly zoneId: string } | null>(null);
+  /** 3D를 누르면 무엇이 정해지는지. 시연은 화재 위치부터 고르므로 구역으로 시작한다. */
+  const [pickTarget, setPickTarget] = useState<"NODE" | "ZONE">("ZONE");
   const [camera, setCamera] = useState<{ sourceId: string | null; locate: number }>({
     sourceId: null,
     locate: 0,
@@ -355,9 +362,18 @@ export function ControlDashboard() {
               locateRequest={camera.locate}
               stale={stale}
               onPeopleCount={setPeople}
+              pickTarget={pickTarget}
+              onPickZone={(zoneId) => {
+                setFire({ runId: state.run_id, zoneId });
+                // 화재 위치를 정했으면 다음은 내 위치다. 한 번 더 누르면 바로 이어진다.
+                setPickTarget("NODE");
+              }}
               demo={(startPicker, hasStart) => space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
                 building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null}
-                startPicker={startPicker} hasStart={hasStart} />}
+                startPicker={startPicker} hasStart={hasStart}
+                zoneId={fire !== null && fire.runId === state.run_id ? fire.zoneId : ""}
+                onZoneId={(zoneId) => setFire(zoneId === "" ? null : { runId: state.run_id, zoneId })}
+                pickTarget={pickTarget} onPickTarget={setPickTarget} />}
             />
           </Suspense>
         </div>

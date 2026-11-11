@@ -49,6 +49,10 @@ type Props = {
    * 세는 일은 그대로 3D 안에서 한다. 여기서는 결과를 전달만 한다.
    */
   readonly onPeopleCount?: (count: PeopleCount | null) => void;
+  /** 도면에서 구역(방·복도)을 눌렀을 때. 시연의 화재 위치를 3D에서 바로 고른다(이슈 #21). */
+  readonly onPickZone?: (zoneId: string) => void;
+  /** 한 번 누를 때 고를 대상. "ZONE"이면 지점 대신 구역을 고른다. */
+  readonly pickTarget?: "NODE" | "ZONE";
 };
 
 const MISMATCH_LABEL = {
@@ -57,7 +61,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, demo, onPeopleCount }: Props) {
+export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, demo, onPeopleCount, onPickZone, pickTarget = "NODE" }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   // 전체 안내(초록 화살표·선). 현재 위치를 고르면 그 경로만 보이게 끄고, 버튼으로 다시 켤 수 있다.
@@ -311,6 +315,8 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             highlightSourceId={highlightSourceId}
             journey={sceneJourney}
             onPickNode={chooseStart}
+            onPickZone={onPickZone}
+            pickTarget={pickTarget}
           />
 
           {demo?.(<StartPicker building={building} display={display} startId={startId} onStart={chooseStart} />, startId !== null)}

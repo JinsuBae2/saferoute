@@ -9,14 +9,20 @@ type Props = {
   building: Building; display: BuildingDisplay | null; state: StateSnapshot; connected: boolean;
   /** 3D 패널이 넘겨주는 출발점 고르기와 골랐는지 여부. 화재 위치와 함께 정한 뒤 시작한다. */
   startPicker: ReactNode; hasStart: boolean;
+  /**
+   * 화재 위치. 도면을 눌러서도, 목록에서도 고를 수 있어 두 곳이 같은 값을 봐야 한다.
+   * 그래서 관제가 들고 있고 여기서는 보여 주기만 한다(이슈 #21).
+   */
+  zoneId: string; onZoneId: (zoneId: string) => void;
+  /** 지금 3D를 누르면 무엇이 정해지는지. 화재 위치를 고르면 내 위치 차례로 넘어간다. */
+  pickTarget: "NODE" | "ZONE"; onPickTarget: (target: "NODE" | "ZONE") => void;
 };
 
 /** Keyed by run in the dashboard: reset drops selection and previous receipts. */
-export function ManualFirePanel({ building, display, state, connected, startPicker, hasStart }: Props) {
+export function ManualFirePanel({ building, display, state, connected, startPicker, hasStart, zoneId, onZoneId, pickTarget, onPickTarget }: Props) {
   const control = useMemo(() => new ManualFireControl(building, state.run_id), [building, state.run_id]);
   const mounted = useRef(false);
   const busy = useRef(false);
-  const [zoneId, setZoneId] = useState("");
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<{ text: string; result: ManualResult | null; failed: boolean } | null>(null);
   const sources = useMemo(() => manualFireSources(building), [building]);
@@ -69,19 +75,28 @@ export function ManualFirePanel({ building, display, state, connected, startPick
   return (
     <div className="manual-fire">
       <h3>시연 · 화재 위치와 내 위치를 정하고 시작합니다</h3>
+      <p className="manual-fire__aim" role="status">
+        지금 3D 도면을 누르면 <strong>{pickTarget === "ZONE" ? "화재 위치" : "내 위치"}</strong>가 정해집니다.
+      </p>
       <ol className="manual-fire__steps">
         <li>
           <label className="manual-fire__zone">화재 위치
-            <select value={zoneId} disabled={disabled} onChange={(event) => setZoneId(event.target.value)}>
-              <option value="">구역을 선택하세요</option>
+            <select value={zoneId} disabled={disabled} onChange={(event) => onZoneId(event.target.value)}>
+              <option value="">도면을 누르거나 여기서 고르세요</option>
               {building.zones.map((zone) => <option key={zone.zone_id} value={zone.zone_id} disabled={!sources.some((item) => item.zone_id === zone.zone_id)}>
                 {name(zone.zone_id)}{sources.some((item) => item.zone_id === zone.zone_id) ? "" : " · 시험 입력 미등록"}
               </option>)}
             </select>
           </label>
-          <p className="panel__note">{source ? <>{name(source.zone_id)} · 시험 전용 입력 <code>{source.source_id}</code> · {active.has(source.source_id) ? "화재 활성" : "활성 화재 없음"}</> : "감지기가 있는 복도·로비·통로만 고를 수 있습니다. AI 감지와 별도의 시험 입력입니다."}</p>
+          <button type="button" className="manual-fire__aim-btn" aria-pressed={pickTarget === "ZONE"} disabled={disabled}
+            onClick={() => onPickTarget("ZONE")}>도면에서 고르기</button>
+          <p className="panel__note">{source ? <>{name(source.zone_id)} · 시험 전용 입력 <code>{source.source_id}</code> · {active.has(source.source_id) ? "화재 활성" : "활성 화재 없음"}</> : "3D에서 방이나 복도를 누르면 그 자리가 화재 위치가 됩니다. AI 감지와 별도의 시험 입력입니다."}</p>
         </li>
-        <li>{startPicker}</li>
+        <li>
+          {startPicker}
+          <button type="button" className="manual-fire__aim-btn" aria-pressed={pickTarget === "NODE"} disabled={disabled}
+            onClick={() => onPickTarget("NODE")}>도면에서 고르기</button>
+        </li>
         <li>
           <div className="manual-fire__actions">
             <button type="button" className="manual-fire__start" disabled={disabled || !source || !hasStart || active.has(source.source_id)} onClick={() => void act({ kind: "ignite", zoneId })}>시연 시작</button>
