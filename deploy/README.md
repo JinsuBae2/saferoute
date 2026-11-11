@@ -201,7 +201,13 @@ curl -s http://127.0.0.1/api/health; curl -s http://127.0.0.1/api/rooms/availabi
 
 ### 8.3 운영 중 볼 것
 
-- 디스크: 실행 기록이 `/home/ubuntu/saferoute-runs`에 쌓인다. PC 부하 확인에서 방 5개를 30분 계속 쓰면 약 2.3GB였다. `df -h /`로 지켜보고, 부족해지면 서비스를 멈춘 뒤 필요한 기록을 S3로 옮기고 지운다.
+- 디스크: 실행 기록이 `/home/ubuntu/saferoute-runs`에 쌓인다. 거의 전부 `decisions.jsonl`이며, 2026-11-11 서버에서 방 2개가 쓰이는 동안 20초에 약 11MB(방 하나당 시간당 약 1GB)였다. PC 부하 확인의 방 5개 30분 약 2.3GB와 같은 속도다. `df -h /`로 지켜본다.
+- 기록 정리: [saferoute-clean-runs.sh](saferoute-clean-runs.sh)를 10분마다 실행해, 30분 동안 아무 파일도 바뀌지 않은 방 폴더(끝난 방)만 지운다. 살아 있는 방은 계속 기록하므로 지워지지 않는다. 지운 기록은 복구할 수 없으니 남길 실행 증거는 방이 끝난 뒤 30분 안에 옮긴다. **켜 둔 채 방치된 방의 기록 증가는 막지 못한다.** 설치는 다음과 같다. 스크립트를 저장소 폴더 밖에 두는 것은 웹 빌드가 미커밋 변경을 거부하기 때문이다.
+
+  ```sh
+  mkdir -p ~/bin && cp ~/saferoute/deploy/saferoute-clean-runs.sh ~/bin/ && chmod +x ~/bin/saferoute-clean-runs.sh
+  echo "*/10 * * * * /home/ubuntu/bin/saferoute-clean-runs.sh >> /home/ubuntu/saferoute-clean-runs.log 2>&1" | crontab -
+  ```
 - 로그: `journalctl -u saferoute-controller -n 100`, `/var/log/nginx/error.log`.
 - 다시 시작: `sudo systemctl restart saferoute-controller`. 진행 중이던 방은 사라지고 화면은 종료 안내를 보여 준다.
 - 새 버전: `cd ~/saferoute && git fetch && git checkout <COMMIT>`, `(cd web && npm ci && npm run build)`, `sudo rm -rf /var/www/saferoute && sudo cp -r web/dist /var/www/saferoute`, `sudo systemctl restart saferoute-controller` 순서로 한다. 의존성 잠금 파일이 바뀌었으면 `.venv/bin/python -m pip install -r requirements-core.lock.txt`도 다시 실행한다.
