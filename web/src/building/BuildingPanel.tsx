@@ -4,7 +4,6 @@
  * 버전이 다르면 3D를 그리지 않고, 경로·유도등 안내는 서버 결과로 계속 표시한다.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 
 import type { Building, BuildingDisplay, Position, SimulationState, StateSnapshot } from "@contracts";
 
@@ -17,7 +16,7 @@ import { matchesBuilding } from "./geometry";
 import type { JourneyTrack } from "./journey";
 import type { PeopleCount } from "./people";
 import { advanceTrack, describeJourney, trackContext } from "./journey";
-import { JourneyPanel, StartPicker } from "./JourneyPanel";
+import { JourneyPanel } from "./JourneyPanel";
 import { useBuildingGeometry } from "./useBuildingGeometry";
 import type { ViewMode } from "./view";
 import { SPREAD_MAX, SPREAD_MIN } from "./view";
@@ -44,8 +43,8 @@ type Props = {
   readonly locateRequest: number;
   /** 제어 상태 조회가 끊기거나 늦은지. 그동안 선택 경로를 현재 안내로 보여 주지 않는다(M06). */
   readonly stale?: boolean;
-  /** 시연 조작을 3D 바로 아래에 그린다. 출발점 고르기와 골랐는지 여부를 넘겨받아 한 패널로 묶는다. */
-  readonly demo?: (startPicker: ReactNode, hasStart: boolean) => ReactNode;
+  /** 내 위치를 골랐는지 바깥에 알린다. 머리말의 「시연 시작」이 이것으로 열린다(이슈 #21). */
+  readonly onStartNode?: (nodeId: string | null) => void;
   /**
    * 대피 인원 수를 바깥으로 알린다. 관제가 이것으로 「대피 현황」을 크게 보여 준다(이슈 #21).
    * 세는 일은 그대로 3D 안에서 한다. 여기서는 결과를 전달만 한다.
@@ -55,6 +54,8 @@ type Props = {
   readonly onPickZone?: (zoneId: string) => void;
   /** 한 번 누를 때 고를 대상. "ZONE"이면 지점 대신 구역을 고른다. */
   readonly pickTarget?: "NODE" | "ZONE";
+  /** 고를 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 때 쓴다(이슈 #189). */
+  readonly onPickTarget?: (target: "NODE" | "ZONE") => void;
 };
 
 const MISMATCH_LABEL = {
@@ -63,7 +64,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, demo, onPeopleCount, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE", onPickTarget }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   // 전체 안내(초록 화살표·선). 현재 위치를 고르면 그 경로만 보이게 끄고, 버튼으로 다시 켤 수 있다.
@@ -124,6 +125,8 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
     setShowGuidance(nodeId === null);
     setSelectedSign(null);
   };
+
+  useEffect(() => { onStartNode?.(startId); }, [startId, onStartNode]);
 
   const journey = useMemo(
     () => (building === null || startId === null ? null : describeJourney(building, display, state, startId)),
@@ -193,6 +196,24 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
     <section className="panel">
       <header className="panel__head">
         <h2>건물 3D</h2>
+        {/* 고르는 칸을 지웠으므로(이슈 #21) 지금 무엇을 고르는 중인지 여기서 알린다.
+            누르면 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 길이 이것뿐이다(이슈 #189). */}
+        <span className="panel__aim" role="status">
+          지금 도면을 누르면{" "}
+          {onPickTarget === undefined ? (
+            <strong>{pickTarget === "ZONE" ? "화재 위치" : "내 위치"}</strong>
+          ) : (
+            <button
+              type="button"
+              className="panel__aim-btn"
+              title="눌러서 화재 위치와 내 위치를 바꿔 가며 고릅니다"
+              onClick={() => onPickTarget(pickTarget === "ZONE" ? "NODE" : "ZONE")}
+            >
+              {pickTarget === "ZONE" ? "화재 위치" : "내 위치"}
+            </button>
+          )}
+          가 정해집니다
+        </span>
         <span className="panel__note">
           형상은 표시 전용입니다. 경로와 방향은 서버 결과를 그대로 그립니다
         </span>
@@ -336,13 +357,11 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             pose={phonePose?.personIndex === follow && phonePose.runId === state.run_id ? phonePose : null} />}
           </div>
 
-          {demo?.(<StartPicker building={building} display={display} startId={startId} onStart={chooseStart} />, startId !== null)}
-
           {/* 경로 위 유도등 표가 길어 화면을 밀어낸다. 평소에는 접어 두고 필요할 때 펼친다(이슈 #21). */}
           <details className="fold">
             <summary className="fold__head">경로 상세 · 경로 위 유도등</summary>
           <JourneyPanel
-            picker={demo === undefined}
+            picker
             building={building}
             display={display}
             startId={startId}
