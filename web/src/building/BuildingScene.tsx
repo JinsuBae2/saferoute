@@ -23,6 +23,8 @@ import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
 import { countPeople, spawnPeople, stepPeople } from "./people";
+import { loadPeople, savePeople } from "./peopleStore";
+import { storageScope } from "../api/scope";
 import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
 import type { ViewBox, ViewMode } from "./view";
 import { clampTarget, displayY, fitPose, floorLift, planYaw, pointBox, visibleBox } from "./view";
@@ -835,7 +837,11 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
   useEffect(() => {
     const handles = handlesRef.current;
     if (handles === null) return;
-    const list = spawnPeople(building);
+    // 새로고침으로 다시 열렸으면 같은 방·같은 실행의 대피 상태를 이어 간다. 초기화된 실행이나 다른 방의 것은 쓰지 않는다.
+    const scope = storageScope();
+    let saved: ReturnType<typeof loadPeople> = null;
+    try { saved = loadPeople(localStorage, scope, state.run_id, building); } catch { /* 저장소를 못 쓰면 처음 상태로 시작한다 */ }
+    const list = saved?.people ?? spawnPeople(building);
     if (list.length === 0) return;
     const group = new THREE.Group();
     const figures = list.map((_, index) => {
@@ -861,8 +867,18 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       const ahead = nodes.get(doorFacing(building).get(person.from) ?? "");
       return here === undefined || ahead === undefined ? 0 : Math.atan2(ahead.position.x - here.position.x, ahead.position.z - here.position.z);
     });
-    peopleRef.current = { list, group, figures, markers, yaw: facing, slope: list.map(() => 0), slide: list.map(() => 0), key: "" };
+    // 이미 탈출한 사람이 새로고침 뒤에 미끄럼틀을 다시 타지 않게 한다.
+    peopleRef.current = { list, group, figures, markers, yaw: facing, slope: list.map(() => 0),
+      slide: list.map((person) => (person.status === "OUT" && saved !== null ? SLIDE_SECONDS : 0)), key: "" };
+    if (saved !== null && saved.follow !== null && list[saved.follow].status !== "OUT") liveRef.current.onFollow?.(saved.follow);
+    const store = () => {
+      try { savePeople(localStorage, scope, state.run_id, building, list, liveRef.current.follow); } catch { /* 저장 실패는 복원만 빠진다 */ }
+    };
+    const saver = setInterval(store, 1000);
+    window.addEventListener("pagehide", store);
     return () => {
+      clearInterval(saver);
+      window.removeEventListener("pagehide", store);
       handles.scene.remove(group);
       disposeTree(group);
       for (const marker of markers) marker.material.dispose();
