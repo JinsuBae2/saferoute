@@ -237,6 +237,13 @@ export function ControlDashboard() {
   const simulation = simulationMatchesRun(view.simulation, state) ? view.simulation : null;
   const signChanges = summarizeSignChanges(state, defaults);
   const stale = health.stale || view.stateError !== null;
+  const fireZone = fire !== null && fire.runId === state.run_id ? fire.zoneId : "";
+  /**
+   * 지금 도면을 누르면 무엇이 정해지는지. 화재 위치가 비어 있으면 거기부터 고른다.
+   * 「처음부터」로 실행이 바뀌면 고른 화재 위치가 버려지므로, 내 위치에 갇히지 않고
+   * 저절로 화재 위치로 돌아온다(이슈 #189).
+   */
+  const aim = fireZone === "" ? "ZONE" : pickTarget;
   const visibleRoutes = onlyUnavailable
     ? state.routes.filter((route) => route.reason_codes.length > 0)
     : state.routes;
@@ -258,7 +265,7 @@ export function ControlDashboard() {
             display={display}
             state={state}
             connected={!health.stale && view.stateError === null}
-            zoneId={fire !== null && fire.runId === state.run_id ? fire.zoneId : ""}
+            zoneId={fireZone}
             hasStart={startNode !== null}
           />
         )}
@@ -370,7 +377,8 @@ export function ControlDashboard() {
               stale={stale}
               onPeopleCount={setPeople}
               onStartNode={setStartNode}
-              pickTarget={pickTarget}
+              pickTarget={aim}
+              onPickTarget={setPickTarget}
               onPickZone={(zoneId) => {
                 setFire({ runId: state.run_id, zoneId });
                 // 화재 위치를 정했으면 다음은 내 위치다. 한 번 더 누르면 바로 이어진다.

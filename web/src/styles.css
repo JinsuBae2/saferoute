@@ -687,6 +687,22 @@ code {
 .control__demo button:disabled { opacity: 0.45; cursor: not-allowed; }
 .control__demo-note { margin: 0; max-width: 34ch; font-size: 12px; color: var(--muted); line-height: 1.5; }
 
+/* 「건물 3D」 제목 옆 — 지금 무엇을 고르는 중인지. 눌러서 대상을 바꾼다(이슈 #189). */
+.panel__aim { font-size: 13px; color: var(--muted); }
+
+.panel__aim-btn {
+  padding: 3px 10px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  background: #263442;
+  border: 1px solid #6d7c8d;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.panel__aim-btn:hover { border-color: #9fb0c2; }
+
 .face__note {
   margin: 4px 0 0;
   max-width: 34ch;

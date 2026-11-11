@@ -54,6 +54,8 @@ type Props = {
   readonly onPickZone?: (zoneId: string) => void;
   /** 한 번 누를 때 고를 대상. "ZONE"이면 지점 대신 구역을 고른다. */
   readonly pickTarget?: "NODE" | "ZONE";
+  /** 고를 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 때 쓴다(이슈 #189). */
+  readonly onPickTarget?: (target: "NODE" | "ZONE") => void;
 };
 
 const MISMATCH_LABEL = {
@@ -62,7 +64,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE", onPickTarget }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   // 전체 안내(초록 화살표·선). 현재 위치를 고르면 그 경로만 보이게 끄고, 버튼으로 다시 켤 수 있다.
@@ -194,9 +196,23 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
     <section className="panel">
       <header className="panel__head">
         <h2>건물 3D</h2>
-        {/* 고르는 칸을 지웠으므로(이슈 #21) 지금 무엇을 고르는 중인지 여기서 알린다. */}
+        {/* 고르는 칸을 지웠으므로(이슈 #21) 지금 무엇을 고르는 중인지 여기서 알린다.
+            누르면 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 길이 이것뿐이다(이슈 #189). */}
         <span className="panel__aim" role="status">
-          지금 도면을 누르면 <strong>{pickTarget === "ZONE" ? "화재 위치" : "내 위치"}</strong>가 정해집니다
+          지금 도면을 누르면{" "}
+          {onPickTarget === undefined ? (
+            <strong>{pickTarget === "ZONE" ? "화재 위치" : "내 위치"}</strong>
+          ) : (
+            <button
+              type="button"
+              className="panel__aim-btn"
+              title="눌러서 화재 위치와 내 위치를 바꿔 가며 고릅니다"
+              onClick={() => onPickTarget(pickTarget === "ZONE" ? "NODE" : "ZONE")}
+            >
+              {pickTarget === "ZONE" ? "화재 위치" : "내 위치"}
+            </button>
+          )}
+          가 정해집니다
         </span>
         <span className="panel__note">
           형상은 표시 전용입니다. 경로와 방향은 서버 결과를 그대로 그립니다
