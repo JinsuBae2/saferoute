@@ -57,7 +57,8 @@ def publish_loop(queue, terminal, url, identity):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     import cv2
     sequence = 0
-    with httpx.Client(timeout=0.5, trust_env=False, follow_redirects=False) as client:
+    from .events import room_headers
+    with httpx.Client(timeout=0.5, trust_env=False, follow_redirects=False, headers=room_headers()) as client:
         def post(value):
             nonlocal sequence
             sequence += 1

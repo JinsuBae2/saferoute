@@ -2,6 +2,7 @@ from collections import deque
 from datetime import datetime, timezone
 import json
 import math
+import os
 import time
 from uuid import uuid4
 
@@ -10,6 +11,12 @@ import httpx
 from backend.client import ControllerBusy, raise_for_controller_status
 from backend.contracts import parse_contract
 from backend.contracts.messages import ObservationEvent
+
+
+def room_headers():
+    """When started for a personal room, name that room with the server's internal credential."""
+    room, token = os.environ.get("SAFEROUTE_ROOM_ID"), os.environ.get("SAFEROUTE_INTERNAL_TOKEN")
+    return {"X-Saferoute-Room": room, "X-Saferoute-Internal": token} if room and token else {}
 
 
 class WorkerError(RuntimeError):

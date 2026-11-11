@@ -21,7 +21,7 @@ import type {
 import type { Explanation } from "../control/explanation";
 import { explanationDeadline } from "../control/explanationTiming";
 
-const BASE = "/api";
+import { apiBase, simBase } from "./scope";
 
 /** 서버가 05번 명세 6.1절 형식으로 돌려준 오류. code는 본문이 없으면 null이다. */
 export class ApiError extends Error {
@@ -68,7 +68,7 @@ async function requestAt<T>(url: string, init: RequestInit): Promise<T> {
 }
 
 function request<T>(path: string, init: RequestInit): Promise<T> {
-  return requestAt<T>(`${BASE}${path}`, init);
+  return requestAt<T>(`${apiBase()}${path}`, init);
 }
 
 export function fetchSession(signal?: AbortSignal): Promise<Session> {
@@ -108,7 +108,7 @@ export async function fetchExplanation(signal?: AbortSignal): Promise<{
   expiresAtMs: number | null;
 }> {
   const started = performance.now();
-  const response = await fetch(`${BASE}/explanations/current`, {
+  const response = await fetch(`${apiBase()}/explanations/current`, {
     method: "GET", cache: "no-store",
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(2000)]) : AbortSignal.timeout(2000),
   });
@@ -124,7 +124,52 @@ export async function fetchExplanation(signal?: AbortSignal): Promise<{
  * 관제가 이 값을 경로나 방향 계산에 쓰지 않는다.
  */
 export function fetchSimulationState(signal?: AbortSignal): Promise<SimulationState> {
-  return requestAt<SimulationState>("/sim/state", { method: "GET", signal });
+  return requestAt<SimulationState>(`${simBase()}/state`, { method: "GET", signal });
+}
+
+/** 초기화: 지금 화면이 속한 실행(공동 시연 또는 내 방)만 새 실행으로 다시 시작한다. */
+export function restartSimulation(signal?: AbortSignal): Promise<SimulationState> {
+  return requestAt<SimulationState>(`${simBase()}/restart`, { method: "POST", signal });
+}
+
+export type RoomInfo = {
+  readonly room_id: string;
+  readonly run_id: string;
+  readonly status: "READY" | "FAILED";
+  readonly capacity: number;
+  readonly in_use: number;
+  readonly idle_seconds: number;
+};
+
+/** 개인 체험방 입장. 이 브라우저에 유효한 방이 있으면 그 방으로 돌아가고, 없으면 빈자리에 새로 만든다. */
+export function enterRoom(signal?: AbortSignal): Promise<RoomInfo> {
+  return requestAt<RoomInfo>("/api/rooms", { method: "POST", signal });
+}
+
+/** 이 브라우저의 방. 없으면 401(ROOM_NOT_FOUND)이다. */
+export function fetchRoom(signal?: AbortSignal): Promise<RoomInfo> {
+  return requestAt<RoomInfo>("/api/room", { method: "GET", signal });
+}
+
+export type RoomAi = {
+  readonly state: "UNAVAILABLE" | "IDLE" | "QUEUED" | "RUNNING" | "DONE" | "FAILED";
+  /** 대기 중일 때 내 순서(1부터). */
+  readonly position: number | null;
+  readonly run_id: string | null;
+};
+
+export function fetchRoomAi(signal?: AbortSignal): Promise<RoomAi> {
+  return requestAt<RoomAi>("/api/room/ai", { method: "GET", signal });
+}
+
+/** 내 방의 현재 실행에 대한 영상 AI 분석을 요청한다. 이미 요청했으면 같은 작업의 상태가 돌아온다. */
+export function requestRoomAi(signal?: AbortSignal): Promise<RoomAi> {
+  return requestAt<RoomAi>("/api/room/ai", { method: "POST", signal });
+}
+
+export async function leaveRoom(signal?: AbortSignal): Promise<void> {
+  const response = await fetch("/api/room", { method: "DELETE", cache: "no-store", signal });
+  if (!response.ok && response.status !== 401) throw await toApiError(response);
 }
 
 /** Registered manual test inputs use the same boundary as other observations. */
@@ -172,7 +217,7 @@ export async function fetchPreviewFrame(
 ): Promise<PreviewImage> {
   const query = new URLSearchParams({ run_id: runId, source_id: sourceId });
   const response = await fetch(
-    `${BASE}/preview-frames/${encodeURIComponent(frameId)}.jpg?${query.toString()}`,
+    `${apiBase()}/preview-frames/${encodeURIComponent(frameId)}.jpg?${query.toString()}`,
     { method: "GET", cache: "no-store", signal },
   );
   if (!response.ok) throw await toApiError(response);
