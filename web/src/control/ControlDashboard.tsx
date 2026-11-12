@@ -408,6 +408,7 @@ export function ControlDashboard() {
                 전체 {people.total}명
                 {people.done && " · 전원 탈출"}
                 {people.stuck > 0 && " · 멈춘 사람은 서버가 안내할 출구를 찾지 못한 자리입니다"}
+                {people.lostSeconds > 0 && ` · 화면이 멈춰 있던 ${people.lostSeconds}초는 이동에 반영되지 않았습니다`}
               </p>
             </>
           )}

@@ -111,6 +111,23 @@ export function stepPeople(
   }
 }
 
+/**
+ * 한 번에 따라잡는 실제 시간의 상한(초). 상태 조회를 최신으로 치는 시간(2초)과 같다.
+ * 이보다 오래 멈춰 있었다면 그 사이의 서버 경로를 모르므로, 밀린 시간을 지금 경로로 한꺼번에 걷지 않는다.
+ */
+export const MAX_CATCH_UP_SECONDS = 2;
+
+/**
+ * 지난 실제 시간 중 이번에 걸을 시간과 반영하지 못하는 시간.
+ * 화면을 그리는 횟수와 무관하게 실제 지난 시간만큼 걷는다. 전에는 한 프레임을 0.2초로 묶어,
+ * 1fps에서는 10초 동안 2초 분량만 걸었고 그 사이 서버의 화재만 진행했다(#202).
+ */
+export function walkTime(elapsedSeconds: number): { walk: number; lost: number } {
+  const elapsed = Number.isFinite(elapsedSeconds) ? Math.max(0, elapsedSeconds) : 0;
+  const walk = Math.min(elapsed, MAX_CATCH_UP_SECONDS);
+  return { walk, lost: elapsed - walk };
+}
+
 export type PeopleCount = {
   readonly total: number;
   readonly moving: number;
@@ -119,10 +136,12 @@ export type PeopleCount = {
   readonly waiting: number;
   /** 전원이 탈출했다. 초기화 전까지 유지된다. */
   readonly done: boolean;
+  /** 화면이 오래 멈춰 대피 중 이동에 반영하지 못한 시간(초). 0이면 실제 시간과 맞는다. */
+  readonly lostSeconds: number;
 };
 
-export function countPeople(people: readonly Person[]): PeopleCount {
+export function countPeople(people: readonly Person[], lostSeconds = 0): PeopleCount {
   const count = (status: PersonStatus) => people.filter((person) => person.status === status).length;
   const out = count("OUT");
-  return { total: people.length, moving: count("MOVING"), out, stuck: count("STUCK"), waiting: count("WAITING"), done: people.length > 0 && out === people.length };
+  return { total: people.length, moving: count("MOVING"), out, stuck: count("STUCK"), waiting: count("WAITING"), done: people.length > 0 && out === people.length, lostSeconds: Math.floor(lostSeconds) };
 }
