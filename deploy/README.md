@@ -270,3 +270,10 @@ sudo certbot certificates                          # 만료일 확인
 - HTTP로 되돌리기: 적용 전 설정을 `/etc/nginx/saferoute-backup/`에 보관했다(`saferoute.http-only.20261112`). 그 파일을 `/etc/nginx/sites-available/saferoute`로 복사하고 `sudo nginx -t && sudo systemctl reload nginx` 한다.
 
 2026-11-12 서버 적용 결과: 발급자 Let's Encrypt(YE1), 만료 2026-11-18 20:18 UTC. `http://<HOST>/some/path?x=1` → 301 `https://<HOST>/some/path?x=1`, `https://<HOST>/` 200(인증서 검증 통과), 공동 시연 조작 POST 403 유지, 제어 서버(8000) 바깥 접속 불가 유지, `certbot renew --dry-run --run-deploy-hooks` 성공. 실제 갱신(약 3일 뒤 첫 자동 갱신)이 일어나는 것은 아직 보지 못했다.
+
+
+### 발표용 영상과 설명 서비스
+
+개인방 제어기는 `SAFEROUTE_EXPLANATION_CONFIG=configs/explanation.example.json`과 설명용 잠금 파일로 만든 Python 환경을 사용한다. `SAFEROUTE_AI_PYTHON`을 AI 가상환경의 Python 절대 경로로 지정하면 영상 작업기는 별도 환경에서 실행된다. 모델·원본 영상은 서버의 `SAFEROUTE_AI_CONFIG_FILE`, `SAFEROUTE_AI_VIDEO_FILE`로 지정한다.
+
+공동 관제의 설명은 같은 설명용 환경에서 `python -m uvicorn explanation_worker.app:create_app --factory --host 127.0.0.1 --port 8002`로 실행한다. 공개 시연에서는 `SAFEROUTE_EXPLANATION_ON_DEMAND=1`로 설정해 화면에서 조회할 때만 설명을 갱신한다.

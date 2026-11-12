@@ -375,6 +375,7 @@ class RoomManager:
         if reason == "reset":
             with room.extras_lock:
                 room.extras.pop("preview", None)
+                room.extras.pop("ai_demo", None)
 
     def _notify(self, room, reason):
         for listener in self.listeners:

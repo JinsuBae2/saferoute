@@ -3,7 +3,6 @@ import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 import { inRoom } from "../api/scope";
 import { cctvPose } from "../building/cctv";
 import { RoomAiPanel } from "../room/RoomAiPanel";
-import { CameraPreviewPanel } from "./CameraPreviewPanel";
 import { cameraSources } from "./previewModel";
 
 type Props = {
@@ -12,13 +11,11 @@ type Props = {
   display: BuildingDisplay | null;
   selectedSourceId: string | null;
   onSelect: (id: string | null) => void;
-  onLocate: (id: string) => void;
 };
 
-export function CameraStation({ state, building, display, selectedSourceId, onSelect, onLocate }: Props) {
+export function CameraStation({ state, building, display, selectedSourceId, onSelect }: Props) {
   const cameras = cameraSources(building);
   const [analysis, setAnalysis] = useState(false);
-  const [input, setInput] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
@@ -27,14 +24,9 @@ export function CameraStation({ state, building, display, selectedSourceId, onSe
     return () => element.close();
   }, [analysis]);
 
-  function openAnalysis(sourceId: string | null) {
-    setInput(sourceId ?? cameras[0]?.source_id ?? null);
-    setAnalysis(true);
-  }
-
   return <>
     <section className="panel cctv-station">
-    <header className="panel__head"><h2>CCTV</h2><span className="panel__note">3D 시뮬레이션</span></header>
+    <header className="panel__head"><h2>CCTV</h2><span className="panel__note">3D 시뮬레이션 · 가상 카메라</span></header>
     <div className="camera__picker">
       {cameras.map(source => {
         const id = source.source_id;
@@ -46,12 +38,10 @@ export function CameraStation({ state, building, display, selectedSourceId, onSe
     </div>
     {selectedSourceId && !cctvPose(building, display, selectedSourceId) &&
       <p className="panel__note">이 카메라에는 3D 시점 설정이 없습니다.</p>}
-    {selectedSourceId && <button className="chip analysis-open" type="button"
-      onClick={() => openAnalysis(selectedSourceId)}>이 카메라의 AI 분석 보기</button>}
     </section>
     <section className="panel">
       <header className="panel__head"><h2>불꽃·연기 AI 분석</h2>
-        <button className="chip" type="button" onClick={() => openAnalysis(selectedSourceId)}>AI 분석 열기</button>
+        <button className="chip" type="button" onClick={() => setAnalysis(true)}>예시 영상으로 AI 분석 보기</button>
       </header>
     </section>
     {analysis && <dialog className="camera-analysis" ref={dialog} aria-labelledby="camera-analysis-title"
@@ -59,10 +49,9 @@ export function CameraStation({ state, building, display, selectedSourceId, onSe
       <header className="panel__head"><h2 id="camera-analysis-title">불꽃·연기 AI 분석</h2>
         <button type="button" className="chip" onClick={() => setAnalysis(false)}>닫기</button>
       </header>
-      <p className="panel__note">준비된 실제 영상을 AI가 분석한 결과입니다. 위의 3D CCTV 시점과는 별개입니다.</p>
-      {inRoom() && <RoomAiPanel />}
-      <CameraPreviewPanel key={input} state={state} building={building} display={display}
-        selectedSourceId={input} onSelect={setInput} onLocate={id => { setAnalysis(false); onLocate(id); }} />
+      <p className="panel__note">예시 영상에서 실제 모델이 찾은 불꽃과 연기를 표시합니다.</p>
+      {inRoom() ? <RoomAiPanel state={state} /> :
+        <a className="chip" href="#/room">개인 체험에서 예시 영상 분석하기</a>}
       <a href={`https://github.com/JinsuBae2/saferoute/blob/${__SOURCE_COMMIT__}/docs/ai/final-evaluation-closeout.md`}
         target="_blank" rel="noopener noreferrer">모델 평가 보고서 보기</a>
     </dialog>}
