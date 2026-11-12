@@ -330,21 +330,22 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
                 if demo or attempt:
                     if not demo or (update.preview.run_id, attempt, update.preview.source_id) != demo:
                         raise RoomError(409, "PREVIEW_UPDATE_REJECTED", "다른 영상 분석의 프레임입니다")
-                store = preview_store(room)
-            preview_call(store.accept, update, room.controller.snapshot(), room.controller.building)
+                preview_call(preview_store(room).accept, update, room.controller.snapshot(), room.controller.building)
         await asyncio.to_thread(accept)
         return Response(status_code=204)
 
     @app.get("/api/room/previews/{source_id}")
     def room_preview(request: Request, source_id: str, run_id: str):
         room = own_room(request)
-        value = preview_call(preview_store(room).current, room.controller.snapshot(), room.controller.building, run_id, source_id)
+        with room.extras_lock:
+            value = preview_call(preview_store(room).current, room.controller.snapshot(), room.controller.building, run_id, source_id)
         return value.model_dump(mode="json")
 
     @app.get("/api/room/preview-frames/{frame_id}.jpg")
     def room_preview_image(request: Request, frame_id: str, run_id: str, source_id: str):
         room = own_room(request)
-        jpeg = preview_call(preview_store(room).image, room.controller.snapshot(), room.controller.building, run_id, source_id, frame_id)
+        with room.extras_lock:
+            jpeg = preview_call(preview_store(room).image, room.controller.snapshot(), room.controller.building, run_id, source_id, frame_id)
         return Response(jpeg, media_type="image/jpeg", headers={"X-Preview-Frame-Id": frame_id})
 
     @app.get("/api/room/explanations/current")
