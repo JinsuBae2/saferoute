@@ -321,6 +321,7 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
                   <span className="key key--person" /> 사람 {people.total}명 (이동 {people.moving} · 탈출 {people.out} · 대기 {people.waiting})
                   {people.done && <strong className="badge badge--route" role="status">대피 완료 · 전원 {people.total}명 탈출</strong>}
                   <span className="key key--person-stuck" /> 멈춤 {people.stuck}
+                  {people.lostSeconds > 0 && <strong role="status"> · 화면이 멈춰 있던 {people.lostSeconds}초는 이동에 반영되지 않았습니다(화재는 그동안 진행)</strong>}
                   <small> · 사람을 누르면 1인칭</small>
                 </>
               )}
