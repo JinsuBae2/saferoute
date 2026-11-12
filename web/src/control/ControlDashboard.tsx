@@ -471,6 +471,7 @@ export function ControlDashboard() {
             building={space.building}
             display={display}
             selectedSourceId={sourceId}
+            stale={stale}
             onSelect={selectCamera}
           />
 

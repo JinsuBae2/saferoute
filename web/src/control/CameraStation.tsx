@@ -12,11 +12,15 @@ type Props = {
   building: Building | null;
   display: BuildingDisplay | null;
   selectedSourceId: string | null;
+  stale: boolean;
   onSelect: (id: string | null) => void;
 };
 
-export function CameraStation({ state, building, display, selectedSourceId, onSelect }: Props) {
+export function CameraStation({ state, building, display, selectedSourceId, onSelect, stale }: Props) {
   const cameras = cameraSources(building);
+  const selected = cameras.find(source => source.source_id === selectedSourceId);
+  const zoneFire = selected && state.active_causes.some(cause => cause.hazard_type === "FIRE" &&
+    building?.sources.some(source => source.source_id === cause.source_id && source.zone_id === selected.zone_id));
   const [analysis, setAnalysis] = useState<"replay" | "live" | null>(null);
   const [replayError, setReplayError] = useState(false);
   const open = analysis !== null;
@@ -40,6 +44,9 @@ export function CameraStation({ state, building, display, selectedSourceId, onSe
         </button>;
       })}
     </div>
+    {selected && <p role="status" className={zoneFire && !stale ? "badge badge--fire" : "panel__note"}>
+      {stale ? "구역 상태 갱신 대기" : zoneFire ? "시나리오상 화재 감지" : "선택 구역의 활성 화재 경보 없음"}
+    </p>}
     {selectedSourceId && !cctvPose(building, display, selectedSourceId) &&
       <p className="panel__note">이 카메라에는 3D 시점 설정이 없습니다.</p>}
     </section>
