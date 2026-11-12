@@ -58,7 +58,7 @@ export function AiDemoSummary({ state, building, display, sourceId, stale }: Pro
       <p className="ai-demo__note">
         검출 상자의 %는 모델 신뢰도이며 정확도가 아닙니다. 3D·대피 인원·연기는 가상 표현입니다.{" "}
         <a href="https://github.com/JinsuBae2/saferoute/blob/5e059f610b46cfffce93b6b3a6580809c1f8d4cd/docs/ai/final-evaluation-closeout.md" target="_blank" rel="noreferrer">
-          별도 설정의 평가 결과·한계 보기 (기준 미달)
+          모델 평가 보고서 보기
         </a>
       </p>
     </section>
