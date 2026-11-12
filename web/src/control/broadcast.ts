@@ -53,7 +53,7 @@ function placePhrase(places: Places | null, zoneIds: readonly string[]): string 
  */
 function originZones(state: StateSnapshot, places: Places | null, level: AlarmLevel): string[] {
   if (level === "NONE") return [];
-  const causes = level === "FIRE" ? state.active_causes.filter((cause) => cause.hazard_type === "FIRE") : state.active_causes;
+  const causes = level === "FIRE" ? state.active_causes.filter((cause) => cause.hazard_type === "FIRE" || cause.ignition_position != null) : state.active_causes;
   const simulated = new Map((state.fire_simulation?.fires ?? []).map((fire) => [fire.source_id, fire.zone_id]));
   const zones = causes.map((cause) => simulated.get(cause.source_id)
     ?? places?.building?.sources.find((source) => source.source_id === cause.source_id)?.zone_id);
@@ -88,7 +88,7 @@ export function broadcastKey(state: StateSnapshot, stale: boolean, places: Place
 
 /** 화재가 하나라도 있으면 화재, 연기·스프링클러만 있으면 연기 방송이다. */
 export function alarmLevel(state: StateSnapshot): AlarmLevel {
-  if (state.active_causes.some((cause) => cause.hazard_type === "FIRE")) return "FIRE";
+  if (state.active_causes.some((cause) => cause.hazard_type === "FIRE" || cause.ignition_position != null)) return "FIRE";
   return state.active_causes.length > 0 ? "SMOKE" : "NONE";
 }
 

@@ -178,16 +178,23 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
 
   // 새 화재가 나면 그 층을 켠다. 다른 층만 보고 있으면 불이 화면에 없다. 화재마다 한 번만 하므로 그 뒤에는 다시 끌 수 있다.
   const seenFires = useRef<ReadonlySet<string>>(new Set());
+  const seenIgnition = useRef<string | null>(null);
+  const ignition = simulation?.demo_ignition;
   useEffect(() => {
     if (building === null) return;
     const fresh = newFireFloors(building, state.active_causes, seenFires.current);
     seenFires.current = fresh.seen;
+    if (ignition && ignition.event_id !== seenIgnition.current) {
+      const zone = building.zones.find(item => item.zone_id === ignition.zone_id);
+      if (zone) fresh.floors.add(zone.floor_id);
+      seenIgnition.current = ignition.event_id;
+    }
     if (fresh.floors.size === 0) return;
     setHiddenFloors((previous) => {
       const next = new Set([...previous].filter((id) => !fresh.floors.has(id)));
       return next.size === previous.size ? previous : next;
     });
-  }, [building, state.active_causes]);
+  }, [building, state.active_causes, ignition]);
 
   /** 한 층만 보기. 다른 층은 모두 숨긴다. */
   const onlyFloor = (floorId: string) => {
@@ -370,6 +377,7 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
               if (index === null) requestView(view.mode);
             }}
             state={state}
+            ignition={simulation?.demo_ignition}
             smokeByZone={smokeByZone}
             visibleFloors={firstPerson || cctv ? allFloors : visibleFloors}
             spread={firstPerson || cctv ? 0 : spread}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, DemoIgnition, StateSnapshot } from "@contracts";
 import { inRoom } from "../api/scope";
 import { cctvPose } from "../building/cctv";
 import { RoomAiPanel } from "../room/RoomAiPanel";
@@ -11,16 +11,19 @@ type Props = {
   state: StateSnapshot;
   building: Building | null;
   display: BuildingDisplay | null;
+  ignition?: DemoIgnition | null;
   selectedSourceId: string | null;
   stale: boolean;
   onSelect: (id: string | null) => void;
 };
 
-export function CameraStation({ state, building, display, selectedSourceId, onSelect, stale }: Props) {
+export function CameraStation({ state, building, display, selectedSourceId, ignition, onSelect, stale }: Props) {
   const cameras = cameraSources(building);
   const selected = cameras.find(source => source.source_id === selectedSourceId);
   const zoneFire = selected && state.active_causes.some(cause => cause.hazard_type === "FIRE" &&
     building?.sources.some(source => source.source_id === cause.source_id && source.zone_id === selected.zone_id));
+  const witness = ignition?.device === "CCTV" && ignition.source_id === selectedSourceId ? ignition : null;
+  const detected = witness?.phase === "ACCEPTED" && state.active_causes.some(cause => cause.first_event_id === witness.event_id);
   const [analysis, setAnalysis] = useState<"replay" | "live" | null>(null);
   const [replayError, setReplayError] = useState(false);
   const open = analysis !== null;
@@ -45,7 +48,8 @@ export function CameraStation({ state, building, display, selectedSourceId, onSe
       })}
     </div>
     {selected && <p role="status" className={zoneFire && !stale ? "badge badge--fire" : "panel__note"}>
-      {stale ? "구역 상태 갱신 대기" : zoneFire ? "시나리오상 화재 감지" : "선택 구역의 활성 화재 경보 없음"}
+      {stale ? "구역 상태 갱신 대기" : detected ? "CCTV 불꽃 모의 감지 · 경보 접수" :
+        witness?.phase === "WAITING" ? "CCTV 감지 대기" : zoneFire ? "시나리오상 화재 감지" : "선택 구역의 활성 화재 경보 없음"}
     </p>}
     {selectedSourceId && !cctvPose(building, display, selectedSourceId) &&
       <p className="panel__note">이 카메라에는 3D 시점 설정이 없습니다.</p>}

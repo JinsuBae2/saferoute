@@ -101,6 +101,16 @@ export type CoordinateSystem = {
   "floor_transforms": Array<FloorTransform>;
 };
 
+export type DemoIgnition = {
+  "run_id": string;
+  "event_id": string;
+  "zone_id": string;
+  "position": Position;
+  "device": "CCTV" | "SPRINKLER" | "MANUAL";
+  "source_id": string;
+  "phase": "WAITING" | "ACCEPTED" | "FAILED";
+};
+
 export type Edge = {
   "edge_id": string;
   "from_node_id": string;
@@ -354,6 +364,7 @@ export type SimulationState = {
   "schema_version": 1;
   "building_id": string;
   "building_version": number;
+  "demo_ignition"?: DemoIgnition | null;
   "scenario_id": string;
   "run_id": string;
   "simulation_time_ms": number;

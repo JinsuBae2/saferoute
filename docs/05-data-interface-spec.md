@@ -464,3 +464,10 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 ### 개인 체험의 예시 영상
 
 `GET/POST /api/room/ai`는 분석 상태를 반환한다. 서버가 예시 영상을 실행 중이면 응답에 미리보기 조회용 `source_id`를 포함한다. 이 식별자는 관객이 선택한 가상 CCTV와 독립적이다. 실행 중·대기 중 요청은 기존 작업을 반환한다. 완료 후 POST는 같은 방·실행에서 새 분석을 대기열 끝에 추가한다. 각 분석의 미리보기와 기록을 분리하며 제어기 관측을 전송하지 않는다. 운영용 AI 작업기의 기존 관측 계약은 유지한다.
+
+
+### 개인 체험의 발화와 설비 신호 (#217)
+
+`POST /api/room/sim/ignition`은 현재 방의 `run_id`, 요청 UUID `event_id`, `zone_id`, 해당 층 바닥의 `position`을 받는다. 서버는 같은 구역의 가상 CCTV가 있으면 발화 2초 뒤 모의 감지하고, 스프링클러만 있으면 3초 뒤 작동 신호를 보낸다. 두 시간은 시연용 설정값이다. 두 설비가 모두 없으면 수동 신고로 접수한다. 응답과 `GET /api/room/sim/state`의 선택 필드 `demo_ignition`에는 위치·요청 식별자, `device`(CCTV/SPRINKLER/MANUAL), `source_id`와 단계(WAITING/ACCEPTED/FAILED)가 있다. WAITING은 시나리오의 발화만 나타낸다. 제어는 수락된 관측으로만 대피를 시작한다.
+
+CCTV 모의 감지는 기존 구역의 MANUAL_TEST/FIRE 시험 입력으로 전달하며 실제 VIDEO_AI의 시각·신뢰도를 만들지 않는다. 기본 시연의 스프링클러는 설치된 SIM_SPRINKLER/SPRINKLER로 전달한다. 사용자 시나리오가 해당 스프링클러의 주기 관측을 이미 소유하면 별도 발화 시연은 구역 시험 입력을 사용하고 설비 ID를 기록한다. 주기 관측의 순번·지연·장애 규칙은 실행기가 계속 소유한다. 시연 발화 좌표는 두 입력에서 모두 같은 구역·바닥 검사를 적용한다. 수락 이벤트 로그의 `demo_detector_id`와 발화 요청의 `event_id`로 관측 설비를 대조한다.
