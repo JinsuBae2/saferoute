@@ -35,7 +35,7 @@ class DemoIgnition(DemoIgnitionRequest):
 
 
 class SimulationState(BuildingIdentity):
-    demo_ignition: DemoIgnition | None = None
+    demo_ignition: DemoIgnition | None = Field(default=None, exclude_if=lambda value: value is None)
     scenario_id: Identifier
     run_id: UUIDString
     simulation_time_ms: NonnegativeInt

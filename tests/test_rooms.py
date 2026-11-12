@@ -164,7 +164,7 @@ def test_reset_cancels_pending_detector(setup):
     clock.advance(2500)
     manager.step_all()
     assert not causes(client, who)
-    assert client.get("/api/room/sim/state", headers=who).json()["demo_ignition"] is None
+    assert "demo_ignition" not in client.get("/api/room/sim/state", headers=who).json()
     assert client.post("/api/room/sim/ignition", headers=who, json=payload).status_code == 409
 
 
