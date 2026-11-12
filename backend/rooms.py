@@ -20,7 +20,9 @@ import httpx
 from scenario_runner.runner import Runner
 
 from .contracts import ContractError
-from .controller import Controller
+from .contracts.messages import DemoIgnition
+from .contracts.validation import check_ignition_position
+from .controller import Controller, utc_text
 
 LOGGER = logging.getLogger(__name__)
 COOKIE = "saferoute_room"
@@ -88,12 +90,92 @@ class Room:
         # Per-room extras created on demand by the HTTP layer (preview store, explanation service).
         self.extras_lock = RLock()
         self.extras = {}
+        self.demo_ignition = None
+        self.detect_at_ms = 0
+
+    def simulation(self):
+        view = self.runner.state()
+        ignition = self.demo_ignition
+        if ignition and ignition.run_id == view.run_id:
+            view.demo_ignition = ignition
+        return view
+
+    def ignite(self, request):
+        c = self.controller
+        with c.lock:
+            if self.closed or request.run_id != c.run_id:
+                raise RoomError(409, "RUN_MISMATCH", "현재 체험 실행을 다시 확인하세요")
+            if self.error or not c.armed or self.runner.status != "RUNNING":
+                raise RoomError(409, "SIMULATION_NOT_RUNNING", "실행 중인 시연에서 화재를 시작할 수 있습니다")
+            old = self.demo_ignition
+            if old and old.run_id == c.run_id and old.event_id == request.event_id:
+                if old.zone_id != request.zone_id or old.position != request.position:
+                    raise RoomError(409, "EVENT_ID_CONFLICT", "같은 요청에 다른 화재 위치가 있습니다")
+                return old
+            if old and old.run_id == c.run_id and old.phase == "WAITING":
+                raise RoomError(409, "DETECTION_PENDING", "이전 발화 지점의 감지를 기다리고 있습니다")
+            devices = [s for s in c.building.sources if s.zone_id == request.zone_id]
+            manual = next((s for s in devices if s.source_type == "MANUAL_TEST" and not s.required
+                           and "FIRE" in s.allowed_hazard_types), None)
+            if not manual:
+                raise RoomError(400, "INVALID_FIRE_ZONE", "이 구역에는 시연 화재를 설정할 수 없습니다")
+            check_ignition_position(c.building, request.zone_id, request.position)
+            if request.event_id in c.seen_events or any(c.source_config[sid].zone_id == request.zone_id
+                    and hazard in {"FIRE", "SPRINKLER"} for sid, hazard in c.active_causes):
+                raise RoomError(409, "FIRE_ALREADY_REPORTED", "이미 이 화재 요청이나 구역의 경보를 처리했습니다")
+            camera = next((s for s in devices if s.source_type == "VIDEO_AI" and "FIRE" in s.allowed_hazard_types), None)
+            sprinkler = next((s for s in devices if s.source_type == "SIM_SPRINKLER"), None)
+            device = "CCTV" if camera else "SPRINKLER" if sprinkler else "MANUAL"
+            source = camera or sprinkler or manual
+            staged = DemoIgnition(**request.model_dump(), device=device, source_id=source.source_id, phase="WAITING")
+            c._write("events", operation="demo_ignition", outcome="staged", payload=staged.model_dump(mode="json"))
+            self.demo_ignition = staged
+            # Zone coverage and dwell time simulate seeing flames / a sprinkler head operating.
+            self.detect_at_ms = c.clock.monotonic_ms() + {"CCTV": 2000, "SPRINKLER": 3000, "MANUAL": 0}[device]
+            self._detect_fire()
+            return self.demo_ignition
+
+    def _detect_fire(self):
+        c = self.controller
+        with c.lock:
+            fire = self.demo_ignition
+            if not fire or fire.phase != "WAITING" or fire.run_id != c.run_id or self.closed:
+                return
+            if self.runner.status != "RUNNING":
+                self.demo_ignition = fire.model_copy(update={"phase": "FAILED"})
+                return
+            if c.clock.monotonic_ms() < self.detect_at_ms:
+                return
+            # A simulated camera never publishes a VIDEO_AI event or fabricated model confidence.
+            source = c.source_config[fire.source_id]
+            # A scenario with its own periodic sprinkler producer owns its sequences and fault rules.
+            # Route the separate staged demonstration via the zone's test source in that configuration.
+            if fire.device == "CCTV" or source.source_id in self.runner.source_sequences:
+                source = next(s for s in c.building.sources if s.zone_id == fire.zone_id
+                              and s.source_type == "MANUAL_TEST" and not s.required and "FIRE" in s.allowed_hazard_types)
+            hazard = "SPRINKLER" if source.source_type == "SIM_SPRINKLER" else "FIRE"
+            event = dict(schema_version=1, run_id=fire.run_id, building_id=c.building.building_id,
+                         building_version=c.building.building_version, event_id=fire.event_id,
+                         source_id=source.source_id, source_type=source.source_type,
+                         source_sequence=c.last_sequences.get(source.source_id, 0) + 1,
+                         event_kind="ALARM", hazard_type=hazard, validity="VALID", observed_at=utc_text(c.clock.utcnow()),
+                         media_time_ms=None, confidence=None, reason_code=None, ignition_position=fire.position)
+            try:
+                if (source.source_id, hazard) in c.active_causes:
+                    self.demo_ignition = fire.model_copy(update={"phase": "FAILED"})
+                    return
+                c.receive(event, demo_detector_id=fire.source_id if fire.device != "MANUAL" else None)
+            except ContractError:
+                self.demo_ignition = fire.model_copy(update={"phase": "FAILED"})
+                return
+            self.demo_ignition = fire.model_copy(update={"phase": "ACCEPTED"})
 
     def step(self):
         """One simulation tick and observation expiry. Called only by the server, never extends the room."""
         if self.closed or self.error: return
         try:
             self.runner.tick()
+            self._detect_fire()
             self.controller.expire()
         except Exception as error:  # one room's failure must stay in that room
             LOGGER.exception("Room %s stopped", self.room_id)

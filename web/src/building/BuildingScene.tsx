@@ -8,6 +8,7 @@
  */
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import type { DemoIgnition } from "@contracts";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import type { Building, BuildingDisplay, HazardCell, Position, StateSnapshot } from "@contracts";
@@ -120,6 +121,7 @@ type Props = {
   readonly showGuidance?: boolean;
   readonly state: StateSnapshot;
   /** 시나리오 실행기의 구역별 연기 정답. 제어 판단과 분리된 시험값이다. */
+  readonly ignition?: DemoIgnition | null;
   readonly smokeByZone: ReadonlyMap<string, number> | null;
   readonly visibleFloors: ReadonlySet<string>;
   /** 층 사이를 더 벌리는 간격(m). 실제 좌표는 바꾸지 않고 그리는 높이만 바꾼다. */
@@ -401,7 +403,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ cctv, onCamera, geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingScene({ cctv, onCamera, geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, state, ignition, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -1760,6 +1762,11 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         x:zone.polygon.reduce((s,p)=>s+p.x,0)/zone.polygon.length,
         y:building.floors.find(f=>f.floor_id===zone.floor_id)!.elevation,
         z:zone.polygon.reduce((s,p)=>s+p.z,0)/zone.polygon.length},floorId:zone.floor_id,intensity:1}))];
+    if (ignition?.phase === "WAITING" && ignition.run_id === state.run_id) {
+      const zone = zoneById.get(ignition.zone_id);
+      if (zone && visibleFloors.has(zone.floor_id)) desired.push({key: ignition.event_id,
+        position: ignition.position, floorId: zone.floor_id, intensity: .6});
+    }
     const fireIds = new Set(desired.map(c=>c.key));
     for (const [key,fire] of handles.fireObjects) {
       if (!fireIds.has(key)) { handles.fireGroup.remove(fire.object); disposeTree(fire.object); handles.fireObjects.delete(key); }
@@ -1920,7 +1927,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         dynamicGroup.add(halo);
       }
     }
-  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, spread, highlightSourceId, journey, showGuidance, firstPersonView]);
+  }, [state, ignition, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, spread, highlightSourceId, journey, showGuidance, firstPersonView]);
 
   return <div className="scene" ref={mountRef} />;
 }
