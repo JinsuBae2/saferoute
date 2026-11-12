@@ -178,7 +178,11 @@ class _Replay:
             data["signs"] = record["signs"]
         else:
             before = self.key()
-            if operation == "expire":
+            if operation == "fire_spread":
+                _require(any(self.seen_events[first].ignition_position is not None
+                             for first, _ in self.causes.values()),
+                         "fire_spread has no active positioned fire")
+            elif operation == "expire":
                 source_ids = record["source_ids"]
                 _require(isinstance(source_ids, list) and source_ids and all(isinstance(item, str) for item in source_ids)
                          and len(set(source_ids)) == len(source_ids), "invalid expired sources")
@@ -188,7 +192,7 @@ class _Replay:
             else:
                 _require(operation in {"event", "arm", "clear"}, "unknown decision operation")
                 self.apply_pending(operation, record)
-            if self.key() != before: self.guidance_version += 1
+            if self.key() != before or operation == "fire_spread": self.guidance_version += 1
             data = {key: record[key] for key in SNAPSHOT_FIELDS}
         _require(type(data["guidance_version"]) is int and data["guidance_version"] == self.guidance_version,
                  "guidance_version disagrees with ordered decisions")
@@ -199,6 +203,8 @@ class _Replay:
                  "snapshot sources disagree with accepted evidence")
         _require({(cause.source_id, cause.hazard_type): (cause.first_event_id, cause.last_event_id)
                   for cause in snapshot.active_causes} == self.causes, "snapshot causes disagree with accepted evidence")
+        _require(all(cause.ignition_position == self.seen_events[cause.first_event_id].ignition_position
+                     for cause in snapshot.active_causes), "snapshot ignition position differs from first accepted event")
         if operation != "command_expire":
             _require({route.node_id for route in snapshot.routes} == {node.node_id for node in self.building.nodes},
                      "snapshot routes do not cover configured nodes")

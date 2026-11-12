@@ -5,17 +5,17 @@ import type * as Contracts from "./types.generated";
 
 export const session = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "controller_mode": "INITIALIZING"
 } satisfies Contracts.Session;
 
 export const fire = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "22222222-2222-4222-8222-222222222222",
   "source_id": "CAM-A",
   "source_type": "VIDEO_AI",
@@ -26,14 +26,15 @@ export const fire = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": 4200,
   "confidence": 0.82,
-  "reason_code": null
+  "reason_code": null,
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
 
 export const smoke = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "55555555-5555-4555-8555-555555555555",
   "source_id": "CAM-A",
   "source_type": "VIDEO_AI",
@@ -44,14 +45,15 @@ export const smoke = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": 4200,
   "confidence": 0.82,
-  "reason_code": null
+  "reason_code": null,
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
 
 export const normal = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "22222222-2222-4222-8222-222222222222",
   "source_id": "CAM-A",
   "source_type": "VIDEO_AI",
@@ -62,14 +64,15 @@ export const normal = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": 4200,
   "confidence": null,
-  "reason_code": null
+  "reason_code": null,
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
 
 export const unavailable = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "22222222-2222-4222-8222-222222222222",
   "source_id": "CAM-A",
   "source_type": "VIDEO_AI",
@@ -80,14 +83,15 @@ export const unavailable = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": null,
   "confidence": null,
-  "reason_code": "EOF"
+  "reason_code": "EOF",
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
 
 export const heartbeat = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "22222222-2222-4222-8222-222222222222",
   "source_id": "CAM-A",
   "source_type": "VIDEO_AI",
@@ -98,14 +102,15 @@ export const heartbeat = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": null,
   "confidence": null,
-  "reason_code": null
+  "reason_code": null,
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
 
 export const detector = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "22222222-2222-4222-8222-222222222222",
   "source_id": "DETECTOR-A",
   "source_type": "SIM_SMOKE_DETECTOR",
@@ -116,14 +121,15 @@ export const detector = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": null,
   "confidence": null,
-  "reason_code": null
+  "reason_code": null,
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
 
 export const sprinkler = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "22222222-2222-4222-8222-222222222222",
   "source_id": "SPRINKLER-A",
   "source_type": "SIM_SPRINKLER",
@@ -134,14 +140,15 @@ export const sprinkler = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": null,
   "confidence": null,
-  "reason_code": null
+  "reason_code": null,
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
 
 export const command = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "guidance_version": 3,
   "sign_id": "SIGN-S",
   "command_id": "33333333-3333-4333-8333-333333333333",
@@ -170,9 +177,9 @@ export const command = {
 
 export const no_route_command = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "guidance_version": 3,
   "sign_id": "SIGN-S",
   "command_id": "33333333-3333-4333-8333-333333333333",
@@ -224,7 +231,7 @@ export const ack = {
       "display": "LEFT"
     }
   ],
-  "client_apply_duration_ms": 8,
+  "client_apply_duration_ms": 8.0,
   "error_code": null
 } satisfies Contracts.SignAck;
 
@@ -307,7 +314,7 @@ export const route = {
     "B",
     "Y"
   ],
-  "cost": 4,
+  "cost": 4.0,
   "reason_codes": []
 } satisfies Contracts.Route;
 
@@ -318,7 +325,7 @@ export const exit_route = {
   "path_node_ids": [
     "Y"
   ],
-  "cost": 0,
+  "cost": 0.0,
   "reason_codes": []
 } satisfies Contracts.Route;
 
@@ -335,9 +342,9 @@ export const no_route = {
 
 export const state = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "guidance_version": 0,
   "generated_at": "2026-11-10T01:00:00.000Z",
   "controller_mode": "INITIALIZING",
@@ -483,14 +490,15 @@ export const state = {
       "application_status": "NOT_ISSUED",
       "terminals": []
     }
-  ]
+  ],
+  "fire_simulation": null
 } satisfies Contracts.StateSnapshot;
 
 export const emergency_state = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "guidance_version": 3,
   "generated_at": "2026-11-10T01:00:00.300Z",
   "controller_mode": "EMERGENCY",
@@ -530,7 +538,8 @@ export const emergency_state = {
       "hazard_type": "FIRE",
       "first_event_id": "22222222-2222-4222-8222-222222222222",
       "last_event_id": "22222222-2222-4222-8222-222222222222",
-      "activated_at": "2026-11-10T01:00:00.000Z"
+      "activated_at": "2026-11-10T01:00:00.000Z",
+      "ignition_position": null
     }
   ],
   "blocked_nodes": [
@@ -592,7 +601,7 @@ export const emergency_state = {
         "B",
         "Y"
       ],
-      "cost": 4,
+      "cost": 4.0,
       "reason_codes": []
     },
     {
@@ -613,7 +622,7 @@ export const emergency_state = {
         "B",
         "Y"
       ],
-      "cost": 2,
+      "cost": 2.0,
       "reason_codes": []
     },
     {
@@ -623,7 +632,7 @@ export const emergency_state = {
       "path_node_ids": [
         "X"
       ],
-      "cost": 0,
+      "cost": 0.0,
       "reason_codes": []
     },
     {
@@ -633,7 +642,7 @@ export const emergency_state = {
       "path_node_ids": [
         "Y"
       ],
-      "cost": 0,
+      "cost": 0.0,
       "reason_codes": []
     },
     {
@@ -670,9 +679,9 @@ export const emergency_state = {
       ],
       "latest_command": {
         "schema_version": 1,
-        "run_id": "11111111-1111-4111-8111-111111111111",
         "building_id": "TWO_ROUTE",
         "building_version": 1,
+        "run_id": "11111111-1111-4111-8111-111111111111",
         "guidance_version": 3,
         "sign_id": "SIGN-S",
         "command_id": "33333333-3333-4333-8333-333333333333",
@@ -723,7 +732,7 @@ export const emergency_state = {
                 "display": "LEFT"
               }
             ],
-            "client_apply_duration_ms": 8,
+            "client_apply_duration_ms": 8.0,
             "error_code": null
           },
           "received_at": "2026-11-10T01:00:00.300Z",
@@ -747,7 +756,8 @@ export const emergency_state = {
       "application_status": "NOT_ISSUED",
       "terminals": []
     }
-  ]
+  ],
+  "fire_simulation": null
 } satisfies Contracts.StateSnapshot;
 
 export const simulation_state = {
@@ -774,9 +784,9 @@ export const simulation_state = {
 
 export const explanation_pending = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "guidance_version": 3,
   "status": "PENDING",
   "basis_generated_at": "2026-11-10T01:00:00.300Z",
@@ -791,9 +801,9 @@ export const explanation_pending = {
 
 export const explanation_ready = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "guidance_version": 3,
   "status": "READY",
   "basis_generated_at": "2026-11-10T01:00:00.300Z",
@@ -812,9 +822,9 @@ export const explanation_ready = {
 
 export const explanation_unavailable = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "guidance_version": 3,
   "status": "UNAVAILABLE",
   "basis_generated_at": "2026-11-10T01:00:00.300Z",
@@ -829,9 +839,9 @@ export const explanation_unavailable = {
 
 export const preview_ready = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "source_id": "CAM-A",
   "generated_at": "2026-11-10T01:00:00.200Z",
   "freshness_ms": 3000,
@@ -873,9 +883,9 @@ export const preview_ready = {
 
 export const preview_initializing = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "source_id": "CAM-A",
   "generated_at": "2026-11-10T01:00:00.200Z",
   "freshness_ms": 3000,
@@ -886,9 +896,9 @@ export const preview_initializing = {
 
 export const preview_stale = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "source_id": "CAM-A",
   "generated_at": "2026-11-10T01:00:00.200Z",
   "freshness_ms": 3000,
@@ -899,9 +909,9 @@ export const preview_stale = {
 
 export const preview_eof = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "source_id": "CAM-A",
   "generated_at": "2026-11-10T01:00:00.200Z",
   "freshness_ms": 3000,
@@ -912,9 +922,9 @@ export const preview_eof = {
 
 export const preview_unavailable = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "source_id": "CAM-A",
   "generated_at": "2026-11-10T01:00:00.200Z",
   "freshness_ms": 3000,
@@ -925,9 +935,9 @@ export const preview_unavailable = {
 
 export const preview_no_detections = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "source_id": "CAM-A",
   "generated_at": "2026-11-10T01:00:00.200Z",
   "freshness_ms": 3000,
@@ -995,9 +1005,9 @@ export const building_display = {
       "installation": {
         "floor_id": "F1",
         "position": {
-          "x": 0,
-          "y": 2,
-          "z": 0
+          "x": 0.0,
+          "y": 2.0,
+          "z": 0.0
         },
         "basis": "SIMULATED"
       }
@@ -1029,9 +1039,9 @@ export const building_display = {
 
 export const manual_fire = {
   "schema_version": 1,
-  "run_id": "11111111-1111-4111-8111-111111111111",
   "building_id": "TWO_ROUTE",
   "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
   "event_id": "22222222-2222-4222-8222-222222222222",
   "source_id": "MANUAL-A",
   "source_type": "MANUAL_TEST",
@@ -1042,8 +1052,331 @@ export const manual_fire = {
   "observed_at": "2026-11-10T01:00:00.000Z",
   "media_time_ms": null,
   "confidence": null,
-  "reason_code": null
+  "reason_code": null,
+  "ignition_position": null
 } satisfies Contracts.ObservationEvent;
+
+export const progressive_manual_fire = {
+  "schema_version": 1,
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "event_id": "22222222-2222-4222-8222-222222222222",
+  "source_id": "MANUAL-A",
+  "source_type": "MANUAL_TEST",
+  "source_sequence": 17,
+  "event_kind": "ALARM",
+  "hazard_type": "FIRE",
+  "validity": "VALID",
+  "observed_at": "2026-11-10T01:00:00.000Z",
+  "media_time_ms": null,
+  "confidence": null,
+  "reason_code": null,
+  "ignition_position": {
+    "x": 5.0,
+    "y": 0.0,
+    "z": 0.0
+  }
+} satisfies Contracts.ObservationEvent;
+
+export const progressive_fire_state = {
+  "schema_version": 1,
+  "building_id": "TWO_ROUTE",
+  "building_version": 1,
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  "guidance_version": 3,
+  "generated_at": "2026-11-10T01:00:00.300Z",
+  "controller_mode": "EMERGENCY",
+  "sources": [
+    {
+      "source_id": "CAM-A",
+      "validity": "VALID",
+      "last_event_id": "22222222-2222-4222-8222-222222222222",
+      "last_observed_at": "2026-11-10T01:00:00.000Z",
+      "last_source_sequence": 17
+    },
+    {
+      "source_id": "DETECTOR-A",
+      "validity": "VALID",
+      "last_event_id": "88888888-8888-4888-8888-888888888888",
+      "last_observed_at": "2026-11-10T01:00:00.000Z",
+      "last_source_sequence": 17
+    },
+    {
+      "source_id": "SPRINKLER-A",
+      "validity": "VALID",
+      "last_event_id": "99999999-9999-4999-8999-999999999999",
+      "last_observed_at": "2026-11-10T01:00:00.000Z",
+      "last_source_sequence": 17
+    },
+    {
+      "source_id": "DETECTOR-B",
+      "validity": "VALID",
+      "last_event_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "last_observed_at": "2026-11-10T01:00:00.000Z",
+      "last_source_sequence": 17
+    }
+  ],
+  "active_causes": [
+    {
+      "source_id": "MANUAL-A",
+      "hazard_type": "FIRE",
+      "first_event_id": "22222222-2222-4222-8222-222222222222",
+      "last_event_id": "22222222-2222-4222-8222-222222222222",
+      "activated_at": "2026-11-10T01:00:00.000Z",
+      "ignition_position": {
+        "x": 5.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "blocked_nodes": [
+    {
+      "node_id": "A",
+      "source_ids": [
+        "CAM-A"
+      ],
+      "reason_codes": [
+        "ACTIVE_ALARM"
+      ]
+    }
+  ],
+  "blocked_edges": [
+    {
+      "edge_id": "S-A",
+      "source_ids": [
+        "CAM-A"
+      ],
+      "reason_codes": [
+        "ACTIVE_ALARM"
+      ]
+    },
+    {
+      "edge_id": "A-S",
+      "source_ids": [
+        "CAM-A"
+      ],
+      "reason_codes": [
+        "ACTIVE_ALARM"
+      ]
+    },
+    {
+      "edge_id": "A-X",
+      "source_ids": [
+        "CAM-A"
+      ],
+      "reason_codes": [
+        "ACTIVE_ALARM"
+      ]
+    },
+    {
+      "edge_id": "X-A",
+      "source_ids": [
+        "CAM-A"
+      ],
+      "reason_codes": [
+        "ACTIVE_ALARM"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "node_id": "S",
+      "next_node_id": "B",
+      "exit_id": "EXIT-Y",
+      "path_node_ids": [
+        "S",
+        "B",
+        "Y"
+      ],
+      "cost": 4.0,
+      "reason_codes": []
+    },
+    {
+      "node_id": "A",
+      "next_node_id": null,
+      "exit_id": null,
+      "path_node_ids": [],
+      "cost": null,
+      "reason_codes": [
+        "ORIGIN_BLOCKED"
+      ]
+    },
+    {
+      "node_id": "B",
+      "next_node_id": "Y",
+      "exit_id": "EXIT-Y",
+      "path_node_ids": [
+        "B",
+        "Y"
+      ],
+      "cost": 2.0,
+      "reason_codes": []
+    },
+    {
+      "node_id": "X",
+      "next_node_id": null,
+      "exit_id": "EXIT-X",
+      "path_node_ids": [
+        "X"
+      ],
+      "cost": 0.0,
+      "reason_codes": []
+    },
+    {
+      "node_id": "Y",
+      "next_node_id": null,
+      "exit_id": "EXIT-Y",
+      "path_node_ids": [
+        "Y"
+      ],
+      "cost": 0.0,
+      "reason_codes": []
+    },
+    {
+      "node_id": "I",
+      "next_node_id": null,
+      "exit_id": null,
+      "path_node_ids": [],
+      "cost": null,
+      "reason_codes": [
+        "NO_REACHABLE_EXIT"
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "sign_id": "SIGN-S",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "mode": "DYNAMIC",
+          "display": "RIGHT",
+          "next_node_id": "B",
+          "exit_id": "EXIT-Y",
+          "reason_codes": []
+        },
+        {
+          "face_id": "REAR",
+          "mode": "DYNAMIC",
+          "display": "LEFT",
+          "next_node_id": "B",
+          "exit_id": "EXIT-Y",
+          "reason_codes": []
+        }
+      ],
+      "latest_command": {
+        "schema_version": 1,
+        "building_id": "TWO_ROUTE",
+        "building_version": 1,
+        "run_id": "11111111-1111-4111-8111-111111111111",
+        "guidance_version": 3,
+        "sign_id": "SIGN-S",
+        "command_id": "33333333-3333-4333-8333-333333333333",
+        "command_sequence": 19,
+        "issued_at": "2026-11-10T01:00:00.200Z",
+        "valid_for_ms": 3000,
+        "faces": [
+          {
+            "face_id": "FRONT",
+            "mode": "DYNAMIC",
+            "display": "RIGHT",
+            "next_node_id": "B",
+            "exit_id": "EXIT-Y",
+            "reason_codes": []
+          },
+          {
+            "face_id": "REAR",
+            "mode": "DYNAMIC",
+            "display": "LEFT",
+            "next_node_id": "B",
+            "exit_id": "EXIT-Y",
+            "reason_codes": []
+          }
+        ]
+      },
+      "application_status": "APPLIED",
+      "terminals": [
+        {
+          "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+          "last_ack": {
+            "schema_version": 1,
+            "run_id": "11111111-1111-4111-8111-111111111111",
+            "sign_id": "SIGN-S",
+            "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+            "command_id": "33333333-3333-4333-8333-333333333333",
+            "command_sequence": 19,
+            "guidance_version": 3,
+            "status": "APPLIED",
+            "faces": [
+              {
+                "face_id": "FRONT",
+                "mode": "DYNAMIC",
+                "display": "RIGHT"
+              },
+              {
+                "face_id": "REAR",
+                "mode": "DYNAMIC",
+                "display": "LEFT"
+              }
+            ],
+            "client_apply_duration_ms": 8.0,
+            "error_code": null
+          },
+          "received_at": "2026-11-10T01:00:00.300Z",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "sign_id": "SIGN-B",
+      "faces": [
+        {
+          "face_id": "FRONT",
+          "mode": "DYNAMIC",
+          "display": "FORWARD",
+          "next_node_id": "Y",
+          "exit_id": "EXIT-Y",
+          "reason_codes": []
+        }
+      ],
+      "latest_command": null,
+      "application_status": "NOT_ISSUED",
+      "terminals": []
+    }
+  ],
+  "fire_simulation": {
+    "model": "DEMO_GRAPH_V1",
+    "cell_size_m": 2.0,
+    "fires": [
+      {
+        "source_id": "MANUAL-A",
+        "zone_id": "Z-A",
+        "position": {
+          "x": 5.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "elapsed_ms": 1000
+      }
+    ],
+    "cells": [
+      {
+        "cell_id": "origin:MANUAL-A",
+        "zone_id": "Z-A",
+        "floor_id": "F1",
+        "position": {
+          "x": 5.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "fire": 0.23,
+        "smoke": 0.083
+      }
+    ]
+  }
+} satisfies Contracts.StateSnapshot;
 
 export const building = {
   "schema_version": 1,
