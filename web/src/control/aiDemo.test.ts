@@ -55,6 +55,8 @@ describe("AI 시연 요약", () => {
     expect(html).toContain("관측 오래됨");
     expect(html).toContain("경보 1");
     expect(html).toContain("정확도가 아닙니다");
-    expect(html).toContain("기준 미달");
+    expect(html).toContain("모델 평가 보고서 보기");
+    expect(html).toContain("docs/ai/final-evaluation-closeout.md");
+    expect(html).not.toContain("기준 미달");
   });
 });
