@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Building, ClearRequest, ObservationEvent, StateSnapshot } from "@contracts";
 import { state as sample } from "@samples";
 import buildingData from "@space/wfi-v1.json";
-import { ManualFireControl, manualFireSources } from "./manualFire";
+import { demoMessage, fireSelectable, ManualFireControl, manualFireSources } from "./manualFire";
 
 const building = buildingData as Building;
 const north = "MANUAL-F1-PASSAGE-N";
@@ -25,6 +25,15 @@ function setup(state = snapshot()) {
 }
 
 describe("manual fire controls", () => {
+  it("sends the exact picked ignition point and gives dropdown selections an in-zone point", async () => {
+    const { control, api } = setup();
+    const position = { x:28, y:8, z:27 };
+    await control.run({ kind:"ignite", zoneId:"F3-R304", position });
+    expect(api.ignite.mock.calls[0][0].ignition_position).toEqual(position);
+    const another = setup();
+    await another.control.run({ kind:"ignite", zoneId:"F3-R304" });
+    expect(another.api.ignite.mock.calls[0][0].ignition_position).toMatchObject({ y:8 });
+  });
   // 도면 아무 데나 눌러 불을 낼 수 있어야 하므로 모든 구역에 시험 입력이 있어야 한다(이슈 #21).
   // 하나라도 빠지면 그 방은 눌러도 불이 나지 않는다.
   it("registers one optional FIRE input for every zone", () => {
@@ -49,7 +58,7 @@ describe("manual fire controls", () => {
   it("does not write on selection and rejects unsupported zones", async () => {
     const { control, api } = setup();
     expect(api.state).not.toHaveBeenCalled();
-    await expect(control.run({ kind: "ignite", zoneId: "F9" })).rejects.toThrow("등록된 시험");
+    await expect(control.run({ kind: "ignite", zoneId: "F9" })).rejects.toThrow("시험 화재를 낼 수 없는");
     expect(api.ignite).not.toHaveBeenCalled();
   });
 
@@ -127,5 +136,23 @@ describe("manual fire controls", () => {
     const { control, api } = setup();
     api.ignite.mockResolvedValueOnce({ accepted: true, duplicate: false, event_id: sample.run_id, run_id: "different", guidance_version: 10 });
     await expect(control.run({ kind: "ignite", zoneId: "F1-PASSAGE-N" })).rejects.toThrow("응답");
+  });
+});
+
+describe("fireSelectable", () => {
+  it("refuses only the zones where a fire cannot change any route", () => {
+    const refused = building.zones.filter((zone) => !fireSelectable(building, zone.zone_id)).map((zone) => zone.zone_id).sort();
+    expect(refused).toEqual(["F2-ROOM-W", "F3-CENTER", "F3-VOID-N"]);
+    expect(fireSelectable(building, "F2-VOID")).toBe(true);
+  });
+});
+
+describe("demoMessage", () => {
+  it("shows the refusal reason even after a successful start left its result on screen", () => {
+    const refused = "이름 없는 방은(는) 통로와 이어진 근거가 없어 화재 위치로 쓸 수 없습니다. 다른 곳을 누르세요";
+    expect(demoMessage(false, refused, "2층 203호 · 발생 1건 서버 수락", "3/3")).toBe(refused);
+    expect(demoMessage(false, null, "2층 203호 · 발생 1건 서버 수락", "3/3")).toBe("2층 203호 · 발생 1건 서버 수락");
+    expect(demoMessage(false, null, null, "1/3")).toBe("1/3");
+    expect(demoMessage(true, refused, null, "1/3")).toBe("서버 응답을 확인하고 있습니다…");
   });
 });

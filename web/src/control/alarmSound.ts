@@ -4,6 +4,7 @@
  * - 관제 화면이 여러 창이어도 한 창만 소리를 낸다(Web Locks). 유도등 화면은 이 모듈을 쓰지 않는다.
  * - 자막은 음소거와 무관하게 항상 갱신한다.
  */
+import { storageScope } from "../api/scope";
 import type { Announcement, ExitCall, Listener } from "./broadcast";
 import { BROADCAST_TEXT, exitSound } from "./broadcast";
 import { SpeechQueue } from "./speechQueue";
@@ -175,7 +176,7 @@ export function enableSound(port: SpeechPort | null = browserSpeech(), exclusive
     set({ silencedByOtherWindow: true });
     const request = new AbortController();
     ownershipRequest = request;
-    void navigator.locks.request("saferoute-alarm-sound", { signal: request.signal }, () => {
+    void navigator.locks.request(`saferoute-alarm-sound-${storageScope()}`, { signal: request.signal }, () => {
       owner = true;
       set({ silencedByOtherWindow: false });
       return new Promise<void>((resolve) => { releaseOwnership = resolve; });

@@ -241,7 +241,7 @@ class Runner:
                 if self.scenario.spread is not None and now >= self.next_fire_poll:
                     # 제어기가 확정한 FIRE 원인만 불로 본다. 실행기 자신의 연기 경보를 불로 세면 스스로 번진다.
                     burning = {self.sources[c.source_id].zone_id for c in self._get("/api/state","StateSnapshot").active_causes
-                               if c.hazard_type == "FIRE"}
+                               if c.hazard_type == "FIRE" and c.ignition_position is None}
                     self.fires = {zone: self.fires.get(zone, self.time_ms) for zone in burning}
                     self.next_fire_poll = now + 1000
                 for rule in self.scenario.observation_rules:

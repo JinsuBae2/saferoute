@@ -6,9 +6,9 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SourceNotice } from "../SourceNotice";
 import { inRoom, signPath } from "../api/scope";
-import { RoomAiPanel } from "../room/RoomAiPanel";
+import { cctvPose } from "../building/cctv";
 
-import type { StateSnapshot } from "@contracts";
+import type { Position, StateSnapshot } from "@contracts";
 
 
 import {
@@ -28,8 +28,9 @@ import { agoText, AlarmPanel, SOURCE_STATUS_LABEL, SOURCE_STATUS_TONE } from "./
 import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
-import { ManualFirePanel } from "./ManualFirePanel";
-import { CameraPreviewPanel } from "./CameraPreviewPanel";
+import { DemoControls } from "./DemoControls";
+import { fireSelectable } from "./manualFire";
+import { CameraStation } from "./CameraStation";
 import { AiDemoSummary } from "./AiDemoSummary";
 import { AlarmSoundBar } from "./AlarmSoundBar";
 import { useBuildingData } from "../building/useBuildingData";
@@ -104,11 +105,52 @@ function Badge({ tone, children }: { tone: string; children: React.ReactNode }) 
   return <span className={`badge badge--${tone}`}>{children}</span>;
 }
 
-function Tile({ label, value, note, tone }: { label: string; value: string; note?: string; tone?: string }) {
+/** 0–1 밖의 값이나 0으로 나눈 결과가 와도 막대가 깨지지 않게 가둔다. */
+function bar(part: number, whole: number): number {
+  if (!Number.isFinite(part) || !Number.isFinite(whole) || whole <= 0) return 0;
+  return Math.min(1, Math.max(0, part / whole));
+}
+
+/**
+ * 막대 그래프의 칸 높이. 시안에서 가져온 모양 그대로다.
+ *
+ * 지나온 값을 기록해 그리지 않고 모양을 고정한 것은, 전체 23명을 꼭대기로 재면
+ * 서너 명이 빠져나간 동안 막대가 전부 바닥에 깔려 움직이지 않는 것처럼 보이기
+ * 때문이다. 높이는 눈금이 아니라 모양이고, 진행은 색으로 읽는다.
+ */
+const EVAC_SHAPE = [2, 6, 13, 23, 18, 9] as const;
+const BLOCKED_SHAPE = [4, 7, 11, 9, 5, 3] as const;
+
+/** filled(0~1)만큼 왼쪽 칸부터 채운다. 채운 칸이 지금까지의 진행이다. */
+function Gauge({ shape, filled, className }: { shape: readonly number[]; filled: number; className: string }) {
+  const top = Math.max(...shape);
+  const safe = Number.isFinite(filled) ? Math.min(1, Math.max(0, filled)) : 0;
+  const lit = Math.round(safe * shape.length);
   return (
-    <div className="tile">
+    <span className={className} aria-hidden="true">
+      {shape.map((height, index) => (
+        <span
+          key={index}
+          className={index < lit ? "trail__bar trail__bar--now" : "trail__bar"}
+          style={{ height: `${Math.round((height / top) * 100)}%` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function Tile({ label, value, note, tone, ratio, lead = false, gauge }: { label: string; value: string; note?: string; tone?: string; ratio?: number; lead?: boolean; gauge?: number }) {
+  return (
+    <div className={lead ? "tile tile--lead" : "tile"}>
       <span className="tile__label">{label}</span>
       <strong className={tone === undefined ? "tile__value" : `tile__value tile__value--${tone}`}>{value}</strong>
+      {/* 수치를 한눈에 가늠하라고 덧댄 장식이다. 값은 바로 위 글자가 전하므로 보조기기에서는 숨긴다. */}
+      {ratio !== undefined && (
+        <span className={tone === undefined ? "tile__bar" : `tile__bar tile__bar--${tone}`} aria-hidden="true">
+          <span className="tile__bar-fill" style={{ width: `${Math.round(ratio * 100)}%` }} />
+        </span>
+      )}
+      {gauge !== undefined && <Gauge shape={BLOCKED_SHAPE} filled={gauge} className="tile__trail" />}
       {note !== undefined && <span className="tile__note">{note}</span>}
     </div>
   );
@@ -193,16 +235,33 @@ export function ControlDashboard() {
    * 시연에서 고른 화재 위치. 도면 클릭과 목록이 같은 값을 써야 해서 여기에 둔다(이슈 #21).
    * 실행이 바뀌면 고른 것도 버린다. 실행 번호를 함께 담아 두면 효과 없이 저절로 비워진다.
    */
-  const [fire, setFire] = useState<{ readonly runId: string; readonly zoneId: string } | null>(null);
+  const [fire, setFire] = useState<{ readonly runId: string; readonly zoneId: string; readonly position?: Position } | null>(null);
+  /** 화재 위치로 쓸 수 없어 거절한 구역. 이유를 「시연 시작」 옆에 보여 준다. */
+  const [refused, setRefused] = useState<{ readonly runId: string; readonly zoneId: string } | null>(null);
   /** 3D를 누르면 무엇이 정해지는지. 시연은 화재 위치부터 고르므로 구역으로 시작한다. */
   const [pickTarget, setPickTarget] = useState<"NODE" | "ZONE">("ZONE");
-  const [camera, setCamera] = useState<{ sourceId: string | null; locate: number }>({
-    sourceId: null,
-    locate: 0,
-  });
+  // 머리말(시연 시작)은 화면 위에 붙어 있다. 그 높이만큼 3D 칸을 내려 붙이도록 CSS에 알린다.
+  const mainRef = useRef<HTMLElement>(null);
+  const loaded = view.state !== null;
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (header === null) return;
+    const observer = new ResizeObserver(() => mainRef.current?.style.setProperty("--control-header", `${header.offsetHeight}px`));
+    observer.observe(header);
+    return () => observer.disconnect();
+    // 머리말은 첫 상태를 받은 뒤에야 그려진다.
+  }, [loaded]);
+  /** 3D에서 고른 내 위치. 머리말의 「시연 시작」이 이것까지 있어야 열린다(이슈 #21). */
+  const [startNode, setStartNode] = useState<string | null>(null);
+  const [selectedCamera, setCamera] = useState<{ runId: string; sourceId: string | null; fixed: boolean; locate: number } | null>(null);
   const state = view.state;
   const space = useBuildingData(state);
   const display = space.display;
+  const camera = selectedCamera && selectedCamera.runId === state?.run_id ? selectedCamera : null;
+  const sourceId = camera?.sourceId ?? null;
+  const fixedId = camera?.fixed ? sourceId : null;
+  const cctv = useMemo(() => cctvPose(space.building, display, fixedId), [space.building, display, fixedId]);
 
   const health = connectionHealth(view.lastStateSuccessAtMs, view.nowMs, view.pollIntervalMs * 3);
 
@@ -220,7 +279,7 @@ export function ControlDashboard() {
           <p className="panel__empty">
             {view.stateError ?? "상태를 기다리는 중입니다."}
             <br />
-            제어 백엔드가 떠 있는지 확인하세요.
+            서버가 실행 중인지 확인하세요.
           </p>
         </Panel>
         <footer className="control__footer"><SourceNotice /></footer>
@@ -228,6 +287,9 @@ export function ControlDashboard() {
     );
   }
 
+  const selectCamera = (id: string | null) => setCamera({
+    runId: state.run_id, sourceId: id, fixed: id !== null, locate: camera?.locate ?? 0,
+  });
   const signs = summarizeSigns(state);
   const routes = summarizeRoutes(state);
   const sources = summarizeSources(state);
@@ -235,27 +297,50 @@ export function ControlDashboard() {
   const simulation = simulationMatchesRun(view.simulation, state) ? view.simulation : null;
   const signChanges = summarizeSignChanges(state, defaults);
   const stale = health.stale || view.stateError !== null;
+  /** 경보는 해제됐지만 시작한 대피가 끝나지 않았다. 정상 복구(평상시)와 구분해 보여 준다. */
+  const finishing = state.controller_mode === "NORMAL" && people !== null && people.moving + people.stuck > 0;
+  const fireZone = fire !== null && fire.runId === state.run_id ? fire.zoneId : "";
+  /**
+   * 지금 도면을 누르면 무엇이 정해지는지. 화재 위치가 비어 있으면 거기부터 고른다.
+   * 「처음부터」로 실행이 바뀌면 고른 화재 위치가 버려지므로, 내 위치에 갇히지 않고
+   * 저절로 화재 위치로 돌아온다(이슈 #189).
+   */
+  const aim = fireZone === "" ? "ZONE" : pickTarget;
   const visibleRoutes = onlyUnavailable
     ? state.routes.filter((route) => route.reason_codes.length > 0)
     : state.routes;
 
   return (
-    <main className={presentation ? "control control--presentation" : "control"}>
-      <header className="control__header">
+    <main ref={mainRef} className={presentation ? "control control--presentation" : "control"}>
+      <header ref={headerRef} className="control__header">
         <div>
-          <h1>saferoute 관제</h1>
-          <p className="control__ids">
+          <h1>saferoute 관제{!inRoom() && <small className="control__shared"> · 공동 시연 (조작이 모든 사람에게 적용됩니다)</small>}</h1>
+          <details className="control__ids">
+            <summary>기술 정보</summary>
             실행 <code>{state.run_id}</code> · {state.building_id} v{state.building_version} · 안내 버전{" "}
             <strong>{state.guidance_version}</strong> · 기준 시각 {state.generated_at}
-          </p>
+          </details>
         </div>
+        {space.building !== null && (
+          <DemoControls
+            key={`${state.run_id}/${state.building_id}/${state.building_version}`}
+            building={space.building}
+            display={display}
+            state={state}
+            connected={!health.stale && view.stateError === null}
+            zoneId={fireZone}
+            ignitionPosition={fire?.runId === state.run_id ? fire.position : null}
+            hasStart={startNode !== null}
+            refusedZoneId={refused?.runId === state.run_id ? refused.zoneId : null}
+          />
+        )}
         <div className="control__actions">
           {!inRoom() && <Link className="chip" to="/room">개인 체험 시작</Link>}
           <button type="button" className={presentation ? "chip chip--on" : "chip"}
             aria-pressed={presentation} onClick={() => setPresentation((previous) => !previous)}>
             {presentation ? "기본 관제로 돌아가기" : "AI 시연 보기"}
           </button>
-          <Badge tone={MODE_TONE[state.controller_mode]}>{MODE_LABEL[state.controller_mode]}</Badge>
+          <Badge tone={finishing ? "warn" : MODE_TONE[state.controller_mode]}>{finishing ? "경보 해제 · 대피 마무리 중" : MODE_LABEL[state.controller_mode]}</Badge>
         </div>
       </header>
 
@@ -268,7 +353,7 @@ export function ControlDashboard() {
         </p>
       )}
 
-      <AlarmSoundBar state={state} stale={stale} />
+      <AlarmSoundBar state={state} stale={stale} finishing={finishing} />
 
       {simulationLost && (
         <p className="control__alert" role="alert">
@@ -284,55 +369,49 @@ export function ControlDashboard() {
       {simulation?.status === "FAILED" && (
         <p className="control__alert" role="alert">
           시뮬레이션이 멈췄습니다. {SIMULATION_FAILURE_LABEL[simulation.error_code ?? ""] ?? "원인을 확인하지 못했습니다"}
-          {simulation.error_code !== null && <> (<code>{simulation.error_code}</code>)</>}. 새 감지 정보가 오지 않아 경로 안내가 멈춥니다. 시연 패널의 초기화로 다시 시작하세요.
+          {simulation.error_code !== null && <> (<code>{simulation.error_code}</code>)</>}. 새 감지 정보가 오지 않아 경로 안내가 멈춥니다. 위의 「처음부터」로 다시 시작하세요.
         </p>
       )}
 
       <div className="tiles control__overview">
         <Tile
           label="활성 경보"
+          lead
           value={`${state.active_causes.length}건`}
-          tone={state.active_causes.length > 0 ? "fire" : undefined}
           note={state.active_causes.length === 0 ? "원인별 해제만 가능" : "확인 해제 전까지 유지"}
         />
         <Tile
           label="차단"
           value={`지점 ${state.blocked_nodes.length} · 통로 ${state.blocked_edges.length}`}
           tone={state.blocked_nodes.length > 0 ? "warn" : undefined}
+          gauge={bar(state.blocked_nodes.length, routes.total)}
         />
-        <Tile
-          label="경로 안내 가능 위치"
-          value={`${routes.guided} / ${routes.total}곳`}
-          tone={routes.unavailable > 0 ? "warn" : "route"}
-          note={(() => {
-            // 그 자리가 차단된 곳과, 자리는 멀쩡하지만 출구에 닿지 못하는 곳은 성격이 다르다. 사람이 있는지는 알 수 없다.
-            const count = Object.fromEntries(routes.reasons);
-            const inside = count.ORIGIN_BLOCKED ?? 0;
-            const cutOff = count.NO_REACHABLE_EXIT ?? 0;
-            return inside + cutOff > 0
-              ? `안내 불가 ${routes.unavailable}곳 (차단 구역 안 ${inside} · 고립 가능 ${cutOff})`
-              : `안내 불가 ${routes.unavailable}곳`;
-          })()}
-        />
-        <Tile
-          label="감지 정보"
-          value={`${sources.total}개 중 ${sources.valid}개`}
-          tone={sources.anyUnconfirmed ? "warn" : "route"}
-          note={`최신 정보 수신 ${sources.valid}개 · 받지 못함 ${sources.initializing} · 만료 ${sources.stale} · 관측 불가 ${sources.unavailable} · 최신 정보가 위험 없음을 뜻하지는 않습니다`}
-        />
-        <Tile
-          label="유도등 반영 확인"
-          value={`${signs.total}개 중 ${signs.confirmedCurrent}개`}
-          tone={signs.unconfirmed > 0 ? "warn" : "route"}
-          note={signs.mixedVersion ? "서로 다른 안내 버전 표시 중" : `응답 없어 미확인 ${signs.unconfirmed}대`}
-        />
-        <Tile
-          label="방향 변경 확인"
-          value={signChanges === null ? "확인 불가" : `${signChanges.changedConfirmed}대`}
-          tone={signChanges !== null && signChanges.changed > signChanges.changedConfirmed ? "warn" : undefined}
-          note={signChanges === null ? "건물 자료를 읽지 못했습니다"
-            : `평상시와 방향이 달라진 유도등 ${signChanges.changed}대 중 반영 응답 ${signChanges.changedConfirmed}대 · 안내 중단 ${signChanges.stopped}대(응답 ${signChanges.stoppedConfirmed}대)`}
-        />
+        {/* 시연에서 제일 많이 보는 수치라 나머지 넷이 비운 자리를 다 쓴다(이슈 #21). */}
+        <section className="panel evac tile--wide">
+          <header className="panel__head">
+            <h2>대피 현황</h2>
+            <span className="panel__note">시연용 인원입니다. 실제 재실 인원이 아닙니다</span>
+          </header>
+          {people === null ? (
+            <p className="panel__empty">3D에서 「대피 인원」을 켜면 표시됩니다.</p>
+          ) : (
+            <>
+              <div className="evac__counts">
+                <div><span>이동</span><strong>{people.moving}</strong></div>
+                <div><span>탈출</span><strong className="evac__out">{people.out}</strong></div>
+                <div><span>대기</span><strong>{people.waiting}</strong></div>
+                <div><span>멈춤</span><strong className={people.stuck > 0 ? "evac__stuck" : undefined}>{people.stuck}</strong></div>
+                {/* 전체 인원 중 얼마나 빠져나갔는지. 왼쪽 칸부터 채워진다. */}
+                <Gauge shape={EVAC_SHAPE} filled={bar(people.out, people.total)} className="evac__trail" />
+              </div>
+              <p className="panel__note">
+                전체 {people.total}명
+                {people.done && " · 전원 탈출"}
+                {people.stuck > 0 && " · 멈춘 사람은 서버가 안내할 출구를 찾지 못한 자리입니다"}
+              </p>
+            </>
+          )}
+        </section>
       </div>
 
       {signs.mixedVersion && (
@@ -344,7 +423,7 @@ export function ControlDashboard() {
       {space.displayError !== null && <p className="panel__note">위치 이름 표시: {space.displayError} · 기본 ID로 표시합니다.</p>}
 
       {presentation && <AiDemoSummary state={state} building={space.building} display={display}
-        sourceId={camera.sourceId} stale={stale} />}
+        sourceId={sourceId} stale={stale} />}
 
       <div className="control__visuals">
         <div className="control__building">
@@ -361,68 +440,45 @@ export function ControlDashboard() {
               building={space.building}
               display={display}
               buildingError={space.buildingError}
-              highlightSourceId={camera.sourceId}
-              locateRequest={camera.locate}
+              highlightSourceId={sourceId}
+              cctv={cctv}
+              onCamera={selectCamera}
+              locateRequest={camera?.locate ?? 0}
               stale={stale}
               onPeopleCount={setPeople}
-              pickTarget={pickTarget}
-              onPickZone={(zoneId) => {
-                setFire({ runId: state.run_id, zoneId });
+              onStartNode={setStartNode}
+              pickTarget={aim}
+              onPickTarget={setPickTarget}
+              onPickZone={(zoneId, position) => {
+                if (space.building !== null && !fireSelectable(space.building, zoneId)) {
+                  setRefused({ runId: state.run_id, zoneId });
+                  return;
+                }
+                setRefused(null);
+                setFire({ runId: state.run_id, zoneId, position });
                 // 화재 위치를 정했으면 다음은 내 위치다. 한 번 더 누르면 바로 이어진다.
                 setPickTarget("NODE");
               }}
-              demo={(startPicker, hasStart) => space.building !== null && <ManualFirePanel key={`${state.run_id}/${state.building_id}/${state.building_version}`}
-                building={space.building} display={display} state={state} connected={!health.stale && view.stateError === null}
-                startPicker={startPicker} hasStart={hasStart}
-                zoneId={fire !== null && fire.runId === state.run_id ? fire.zoneId : ""}
-                onZoneId={(zoneId) => setFire(zoneId === "" ? null : { runId: state.run_id, zoneId })}
-                pickTarget={pickTarget} onPickTarget={setPickTarget} />}
             />
           </Suspense>
         </div>
 
         <div className="control__side">
-          <section className="panel evac">
-            <header className="panel__head">
-              <h2>대피 현황</h2>
-              <span className="panel__note">시연용 인원입니다. 실제 재실 인원이 아닙니다</span>
-            </header>
-            {people === null ? (
-              <p className="panel__empty">3D에서 「대피 인원」을 켜면 표시됩니다.</p>
-            ) : (
-              <>
-                <div className="evac__counts">
-                  <div><span>이동</span><strong>{people.moving}</strong></div>
-                  <div><span>탈출</span><strong className="evac__out">{people.out}</strong></div>
-                  <div><span>대기</span><strong>{people.waiting}</strong></div>
-                  <div><span>멈춤</span><strong className={people.stuck > 0 ? "evac__stuck" : undefined}>{people.stuck}</strong></div>
-                </div>
-                <p className="panel__note">
-                  전체 {people.total}명
-                  {people.done && " · 전원 탈출"}
-                  {people.stuck > 0 && " · 멈춘 사람은 서버가 안내할 출구를 찾지 못한 자리입니다"}
-                </p>
-              </>
-            )}
-          </section>
-
-          <CameraPreviewPanel
-            key={`${state.run_id}/${state.building_id}/${state.building_version}`}
+          <CameraStation
+            key={state.run_id}
             state={state}
             building={space.building}
             display={display}
-            selectedSourceId={camera.sourceId}
-            onSelect={(sourceId) => setCamera((previous) => ({ ...previous, sourceId }))}
-            onLocate={(sourceId) =>
-              setCamera((previous) => ({ sourceId, locate: previous.locate + 1 }))
-            }
+            selectedSourceId={sourceId}
+            onSelect={selectCamera}
+            onLocate={(id) => setCamera(previous => ({
+              runId: state.run_id, sourceId: id, fixed: false, locate: (previous?.locate ?? 0) + 1,
+            }))}
           />
-
-      {inRoom() && <RoomAiPanel />}
 
       <Panel
         title="상황 설명"
-        note="Bedrock 작성 · 제어 판단과 별개이며 새 행동 지시를 만들지 않습니다"
+        note="AI(Amazon Bedrock)가 쓴 설명 · 제어 판단과 별개이며 새 행동 지시를 만들지 않습니다"
       >
         {explanation.usable ? (
           <div className="explanation">
@@ -443,7 +499,7 @@ export function ControlDashboard() {
           <p className="panel__empty">
             {/* 연결 실패·실행 대기·생성 실패를 나눠 말한다. HTTP 상태값만 보여 주지 않는다. */}
             {view.explanationError !== null ? (
-              <span title={view.explanationError}>연결 실패 · 상황 설명 서버에 연결하지 못했습니다. 서버가 실행 중인지 확인하세요.</span>
+              <span title={view.explanationError}>상황 설명 미연결 · 설명 서버가 연결되지 않았습니다. 경로·방향 안내에는 영향이 없습니다.</span>
             ) : view.explanation?.status === "PENDING" ? (
               "실행 대기 · 현재 안내에 대한 설명을 만들고 있습니다."
             ) : view.explanation?.error_code != null ? (
@@ -602,7 +658,7 @@ export function ControlDashboard() {
 
       <Panel
         title="경로"
-        note="cost는 경로 선택용 모델 비용입니다. 거리나 피난 시간이 아닙니다"
+        note="경로 점수는 경로를 고르는 데 쓰는 값입니다. 거리나 피난 시간이 아닙니다"
         folding
       >
         <label className="filter">
@@ -627,7 +683,7 @@ export function ControlDashboard() {
                 <th>지점</th>
                 <th>다음</th>
                 <th>목적지</th>
-                <th>모델 비용</th>
+                <th>경로 점수</th>
                 <th>사유</th>
               </tr>
             </thead>
@@ -683,8 +739,51 @@ export function ControlDashboard() {
         </div>
       </div>
 
+      {/* 첫 화면에서는 3D와 CCTV를 먼저 본다. 확인용 수치는 내려서 본다(이슈 #21). */}
+      <div className="tiles control__metrics">
+        <Tile
+          label="경로 안내 가능 위치"
+          value={`${routes.guided} / ${routes.total}곳`}
+          ratio={bar(routes.guided, routes.total)}
+          tone={routes.unavailable > 0 ? "warn" : "route"}
+          note={(() => {
+            // 그 자리가 차단된 곳과, 자리는 멀쩡하지만 출구에 닿지 못하는 곳은 성격이 다르다. 사람이 있는지는 알 수 없다.
+            const count = Object.fromEntries(routes.reasons);
+            const inside = count.ORIGIN_BLOCKED ?? 0;
+            const cutOff = count.NO_REACHABLE_EXIT ?? 0;
+            return inside + cutOff > 0
+              ? `안내 불가 ${routes.unavailable}곳 (차단 구역 안 ${inside} · 고립 가능 ${cutOff})`
+              : `안내 불가 ${routes.unavailable}곳`;
+          })()}
+        />
+        <Tile
+          label="감지 정보"
+          value={`${sources.total}개 중 ${sources.valid}개`}
+          ratio={bar(sources.valid, sources.total)}
+          tone={sources.anyUnconfirmed ? "warn" : "route"}
+          note={`최신 정보 수신 ${sources.valid}개 · 아직 입력 없음 ${sources.initializing}개(시험 입력·카메라는 쓸 때만 보냅니다) · 만료 ${sources.stale}개 · 감지 불가 ${sources.unavailable}개 · 최신 정보가 위험 없음을 뜻하지는 않습니다`}
+        />
+        <Tile
+          label="유도등 반영 확인"
+          value={`${signs.total}대 중 ${signs.confirmedCurrent}대`}
+          ratio={bar(signs.confirmedCurrent, signs.total)}
+          tone={signs.confirmedCurrent === 0 ? undefined : signs.unconfirmed > 0 ? "warn" : "route"}
+          note={signs.mixedVersion ? "서로 다른 안내 버전 표시 중"
+            : signs.confirmedCurrent === 0 ? "열려 있는 유도등 화면이 없습니다. 유도등 화면을 열어야 응답을 셉니다. 3D의 방향 안내에는 영향이 없습니다"
+            : `응답 없어 미확인 ${signs.unconfirmed}대`}
+        />
+        <Tile
+          label="방향 변경 확인"
+          value={signChanges === null ? "확인 불가" : `${signChanges.changed}대 중 ${signChanges.changedConfirmed}대`}
+          ratio={signChanges === null ? undefined : bar(signChanges.changedConfirmed, signChanges.changed)}
+          tone={signChanges !== null && signChanges.changed > signChanges.changedConfirmed ? "warn" : undefined}
+          note={signChanges === null ? "건물 자료를 읽지 못했습니다"
+            : `평상시와 방향이 달라진 유도등 ${signChanges.changed}대 중 반영 응답 ${signChanges.changedConfirmed}대 · 안내 중단 ${signChanges.stopped}대(응답 ${signChanges.stoppedConfirmed}대)`}
+        />
+      </div>
+
       <footer className="control__footer">
-        시험 조작 패널 외에는 조회만 합니다. 화면을 닫아도 활성 경보와 제어기·유도등 단말은 그대로 유지됩니다.
+        시험 조작 패널 외에는 조회만 합니다. 화면을 닫아도 활성 경보와 제어기·유도등 화면은 그대로 유지됩니다.
         <SourceNotice />
       </footer>
     </main>

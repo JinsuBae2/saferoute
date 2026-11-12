@@ -46,7 +46,7 @@ type Guidance =
 export function phoneGuidance(building: Building, display: BuildingDisplay | null, state: StateSnapshot, pose: FollowPose, stale: boolean): Guidance {
   if (stale || state.run_id !== pose.runId || !Number.isFinite(pose.progress)) return { kind: "UNAVAILABLE", instruction: "안내 연결 확인 중", detail: "최신 경로를 받을 때까지 기다려 주세요" };
   const journey = describeJourney(building, display, state, pose.routeNodeId);
-  if (journey.kind !== "ROUTE") return { kind: "BLOCKED", instruction: "이동 가능한 경로 없음", detail: journey.kind === "NO_ROUTE" ? journey.reasons.map(reason => ROUTE_REASON_LABEL[reason]).join(" · ") : "현재 위치의 안내를 확인할 수 없습니다" };
+  if (journey.kind !== "ROUTE") return { kind: "BLOCKED", instruction: "경로 차단 · 구조를 기다리세요", detail: journey.kind === "NO_ROUTE" ? `${journey.reasons.map(reason => ROUTE_REASON_LABEL[reason]).join(" · ")} · 연기가 없는 쪽에서 문을 닫고 119에 위치를 알리세요` : "현재 위치의 안내를 확인할 수 없습니다" };
   const node = building.nodes.find(n => n.node_id === pose.routeNodeId)!;
   const returning = pose.routeNodeId !== pose.nodeId;
   const targetId = returning ? pose.routeNodeId : journey.path[1] ?? journey.path[0];

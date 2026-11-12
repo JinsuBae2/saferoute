@@ -10,8 +10,10 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, HazardCell, Position, StateSnapshot } from "@contracts";
+import { localSmoke, simulationFireCells } from "./firePresentation";
 
+import { cctvSmoke, type CctvPose } from "./cctv";
 import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
 import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseFigure, signFaceTexture, softDotTexture } from "./assets";
@@ -90,6 +92,8 @@ const SLIDE_DROP = 0.9;
 const FOCUS_REACH = 9;
 
 type Props = {
+  readonly cctv: CctvPose | null;
+  readonly onCamera: (id: string) => void;
   readonly geometry: BuildingGeometry;
   readonly building: Building;
   readonly display: BuildingDisplay | null;
@@ -147,7 +151,7 @@ type Props = {
    * 3D에서 구역(방·복도)을 눌렀을 때. 도면에서 바로 화재 위치를 고르는 데 쓴다(이슈 #21).
    * 구역 판은 모든 구역에 깔려 있으므로 목록에 없는 방도 누를 수 있다.
    */
-  readonly onPickZone?: (zoneId: string) => void;
+  readonly onPickZone?: (zoneId: string, position: Position) => void;
   /**
    * 한 번 누를 때 무엇을 고를지. 지점과 구역은 같은 자리에 겹쳐 있어 하나만 받는다.
    * "ZONE"이면 지점 구를 지나쳐 그 아래 구역을 고른다.
@@ -166,12 +170,13 @@ type Handles = {
   /** 연기 입자. 구역마다 천장 아래에 흩어 두고 농도에 따라 보이게 한다. */
   smokeGroup: THREE.Group;
   smokePuffs: SmokePuff[];
+  fieldPuffs: Map<string, { puff: SmokePuff; smoke: number }>;
   /** 천장 표지판의 면. 서버 표시값이 바뀌면 그림만 바꾼다. */
   signFaces: Map<string, Map<string, SignFaceMesh>>;
   /** 화재 경보 구역의 불꽃. */
   fireGroup: THREE.Group;
   fires: Fire[];
-  fireKey: string;
+  fireObjects: Map<string, Fire>;
   /** 1인칭에서 연기 속을 뿌옇게 하는 안개. */
   fog: THREE.FogExp2;
   /** 위아래 색이 다른 주변광. 1인칭에서는 천장 아랫면이 검게 죽지 않게 아래쪽 색을 밝힌다. */
@@ -187,7 +192,7 @@ type Handles = {
   /** 눌러서 고를 수 있는 지점 표시와 그 순서의 node_id. */
   pick: { mesh: THREE.InstancedMesh; ids: readonly string[] } | null;
   /** CCTV 아이콘과 그 이름표. 이름표는 평소 숨기고 아이콘에 커서를 올렸을 때만 보인다. */
-  cameraIcons: { icon: THREE.Sprite; label: THREE.Sprite | null }[];
+  cameraIcons: { sourceId: string; icon: THREE.Sprite; label: THREE.Sprite | null }[];
   /** 출구 유도등 아이콘(안내 상태에 따라 다시 그림)과 출구 이름표. CCTV와 같은 방식으로 커서를 올렸을 때만 보인다. */
   exitIcons: { icon: THREE.Sprite; nodeId: string }[];
   exitLabels: Map<string, THREE.Sprite>;
@@ -396,7 +401,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingScene({ cctv, onCamera, geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, state, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -409,7 +414,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     zoneRef.current = { pick: onPickZone, target: pickTarget };
   }, [onPickZone, pickTarget]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
-  const firstPersonView = followIndex !== null;
+  const firstPersonView = followIndex !== null || cctv !== null;
   const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string } | null>(null);
 
   const nodeById = useMemo(
@@ -425,10 +430,18 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     [building],
   );
 
+  const hazardByZone = useMemo(() => {
+    const zones = new Map<string, HazardCell[]>();
+    for (const cell of state.fire_simulation?.cells ?? []) {
+      const list = zones.get(cell.zone_id) ?? [];
+      list.push(cell); zones.set(cell.zone_id,list);
+    }
+    return zones;
+  }, [state.fire_simulation]);
   // 그리기 반복은 한 번만 만들어지므로, 매번 바뀌는 값은 참조로 넘긴다.
-  const liveRef = useRef({ state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
+  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
   useEffect(() => {
-    liveRef.current = { state, nodeById, lift, visibleFloors, onPeople, smokeByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: followIndex !== null ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
+    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
   });
 
   // 1) 렌더러·카메라·조작. 한 번만 만든다.
@@ -504,10 +517,11 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       zoneMeshes: new Map(),
       smokeGroup,
       smokePuffs: [],
+      fieldPuffs: new Map(),
       signFaces: new Map(),
       fireGroup,
       fires: [],
-      fireKey: "",
+      fireObjects: new Map(),
       fog: new THREE.FogExp2(0x2b2f36, 0.012),
       hemisphere,
       uplight,
@@ -539,7 +553,13 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       );
       raycaster.setFromCamera(pointer, camera);
       // 1인칭으로 걷는 동안에는 도면을 고르지 않는다. 걷는 사람 눈에는 지점 구도 구역 판도 없다.
-      if (liveRef.current.follow !== null) return;
+      if (liveRef.current.follow !== null || liveRef.current.cctv) return;
+      const cameraHit = raycaster.intersectObjects(handles.cameraIcons.map(item => item.icon), false)[0];
+      const source = cameraHit && handles.cameraIcons.find(item => item.icon === cameraHit.object);
+      if (source) {
+        liveRef.current.onCamera(source.sourceId);
+        return;
+      }
       const zone = zoneRef.current;
       if (zone.target === "ZONE") {
         // 도면에서 바로 화재 위치를 고른다(이슈 #21).
@@ -554,7 +574,11 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         const entries = [...handles.zoneMeshes.entries()];
         const hitZone = raycaster.intersectObjects(entries.map(([, mesh]) => mesh), false)[0];
         const zoneId = entries.find(([, mesh]) => mesh === hitZone?.object)?.[0];
-        if (zoneId !== undefined) zone.pick(zoneId);
+        if (zoneId !== undefined && hitZone) {
+          const area = liveRef.current.building.zones.find(z=>z.zone_id===zoneId)!;
+          const elevation = liveRef.current.building.floors.find(f=>f.floor_id===area.floor_id)!.elevation;
+          zone.pick(zoneId,{x:hitZone.point.x,y:elevation,z:hitZone.point.z});
+        }
         return;
       }
       // 사람을 누르면 그 사람의 1인칭 시점으로 들어간다. 지점보다 먼저 본다.
@@ -564,14 +588,34 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         let picked: THREE.Object3D | null = raycaster.intersectObjects(targets, true)[0]?.object ?? null;
         while (picked !== null && picked.userData.personIndex === undefined) picked = picked.parent;
         if (picked !== null) {
-          liveRef.current.onFollow?.(picked.userData.personIndex as number);
+          const index = picked.userData.personIndex as number;
+          // 사람을 누르면 그 사람이 선 지점이 내 위치가 된다. 이것이 없으면 1인칭으로 들어가도 「시연 시작」이 열리지 않는다.
+          pickRef.current?.(people.list[index].from);
+          liveRef.current.onFollow?.(index);
           return;
         }
       }
       if (handles.pick === null || pickRef.current === undefined) return;
       const hit = raycaster.intersectObject(handles.pick.mesh, false)[0];
       const nodeId = hit?.instanceId === undefined ? undefined : handles.pick.ids[hit.instanceId];
-      if (nodeId !== undefined) pickRef.current(nodeId);
+      if (nodeId !== undefined) {
+        pickRef.current(nodeId);
+        return;
+      }
+      // 지점 점은 작아서 빗나가기 쉽다. 바닥을 누르면 같은 층에서 가장 가까운 지점을 고른다.
+      const entries = [...handles.zoneMeshes.entries()];
+      const floorHit = raycaster.intersectObjects(entries.map(([, mesh]) => mesh), false)[0];
+      const floorId = liveRef.current.building.zones.find((z) => z.zone_id === entries.find(([, mesh]) => mesh === floorHit?.object)?.[0])?.floor_id;
+      if (floorHit === undefined || floorId === undefined) return;
+      const shown = new Set(handles.pick.ids);
+      let nearest: string | null = null;
+      let best = Infinity;
+      for (const node of liveRef.current.building.nodes) {
+        if (node.floor_id !== floorId || !shown.has(node.node_id)) continue;
+        const d = Math.hypot(node.position.x - floorHit.point.x, node.position.z - floorHit.point.z);
+        if (d < best) { best = d; nearest = node.node_id; }
+      }
+      if (nearest !== null) pickRef.current(nearest);
     };
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointerup", onUp);
@@ -672,7 +716,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         const shown = live.showPeople && from !== null && floorId !== undefined && live.visibleFloors.has(floorId) && (person.status !== "OUT" || exiting);
         // 따라가는 사람 자신은 그리지 않는다. 눈앞에 자기 몸이 걸린다.
         figure.group.visible = shown && index !== live.follow;
-        marker.visible = shown && live.follow === null;
+        marker.visible = shown && live.follow === null && live.cctv === null;
         if (!shown || from === null) return;
         let point = from;
         let heading = new THREE.Vector3();
@@ -771,13 +815,15 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
           evacuating: followed.started === true && followed.status !== "OUT" });
       }
       const zoneId = live.nodeById.get(followed.from)?.zone_id;
-      handles.fog.density = 0.012 + 0.11 * (zoneId === undefined ? 0 : live.smokeByZone?.get(zoneId) ?? 0);
+      const smoke = zoneId === undefined ? 0 : Math.max(live.smokeByZone?.get(zoneId) ?? 0,
+        localSmoke(live.hazardByZone.get(zoneId) ?? [],zoneId,camera.position.x,camera.position.z));
+      handles.fog.density = 0.012 + 0.11 * smoke;
     };
 
     let frame = 0;
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      const following = liveRef.current.follow !== null;
+      const following = liveRef.current.follow !== null || liveRef.current.cctv !== null;
       // 1인칭에서는 궤도 조작이 카메라를 되돌리지 않게 건너뛴다.
       if (!following) controls.update();
       camera.updateMatrixWorld();
@@ -829,6 +875,11 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       });
       const live = liveRef.current;
       for (const puff of handles.smokePuffs) placeSmoke(puff, live.smokeByZone?.get(puff.zoneId) ?? 0, live.wallHeight, time);
+      if (live.cctv) handles.fog.density = 0.012 + 0.11 * cctvSmoke(live.cctv, live.smokeByZone, live.hazardByZone.get(live.cctv.zoneId) ?? []);
+      for (const {puff,smoke} of handles.fieldPuffs.values()) {
+        placeSmoke(puff,smoke,live.wallHeight,time);
+        puff.sprite.scale.multiplyScalar(.55);
+      }
       renderer.render(scene, camera);
     };
     animate();
@@ -938,7 +989,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
   useEffect(() => {
     const handles = handlesRef.current;
     if (handles === null) return;
-    const firstPerson = followIndex !== null;
+    const firstPerson = firstPersonView;
     handles.controls.enabled = !firstPerson;
     handles.camera.fov = firstPerson ? 72 : FOV;
     handles.camera.near = firstPerson ? 0.1 : 0.5;
@@ -946,7 +997,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     handles.scene.fog = firstPerson ? handles.fog : null;
     handles.hemisphere.groundColor.setHex(firstPerson ? 0xb9c2cf : 0x1a2230);
     handles.uplight.intensity = firstPerson ? 1.4 : 0;
-  }, [followIndex]);
+  }, [firstPersonView]);
 
   // 2) 정적 형상: 바닥·벽·계단·구역 판. 형상이나 층 표시가 바뀔 때만 다시 만든다.
   useEffect(() => {
@@ -957,6 +1008,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     handles.zoneMeshes.clear();
     clearGroup(handles.smokeGroup);
     handles.smokePuffs = [];
+    handles.fieldPuffs.clear();
     handles.signFaces = new Map();
     const edgeByDoor = doorFacing(building);
 
@@ -1398,13 +1450,13 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         }
         staticGroup.add(sprite);
       }
-      if (label.camera) {
+      if (label.camera && label.sourceId) {
         // CCTV 아이콘. 고른 카메라는 아래 동적 표시에서 더 큰 아이콘으로 덮는다.
         const icon = iconSprite(handles, "CAMERA", true);
         if (icon !== null) {
           icon.position.set(label.position.x, y + 0.5, label.position.z);
           staticGroup.add(icon);
-          handles.cameraIcons.push({ icon, label: sprite });
+          handles.cameraIcons.push({ sourceId: label.sourceId, icon, label: sprite });
         } else {
           const camera = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 8), new THREE.MeshBasicMaterial({ color: COLOR.camera }));
           camera.position.set(label.position.x, y, label.position.z);
@@ -1422,6 +1474,12 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     const box = visibleBox(geometry, visibleFloors, lift);
     handles.box = box;
     if (box === null) return;
+    if (cctv) {
+      const { eye, target } = cctv;
+      handles.camera.position.set(eye.x, eye.y, eye.z);
+      handles.camera.lookAt(target.x, target.y, target.z);
+      return;
+    }
     const focus = view.focus ?? null;
     if (focus === undefined || focus === null) {
       applyPose(handles, box, view.mode);
@@ -1436,7 +1494,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       ),
       view.mode,
     );
-  }, [geometry, visibleFloors, lift, view]);
+  }, [geometry, visibleFloors, lift, view, cctv]);
 
   // 3) 서버 결과: 지점 상태·다음 이동 방향·유도등·관측 위험·연기 정답.
   useEffect(() => {
@@ -1448,7 +1506,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     // 출발점을 고르면 전체 안내는 흐리게 두고 그 지점의 경로만 또렷하게 그린다.
     const focused = journey !== null;
     // 1인칭에서는 지점 구·바닥 화살표·기둥 아이콘·선택 경로를 그리지 않는다. 걷는 사람 눈에는 실제 표지판만 보인다.
-    const firstPerson = followIndex !== null;
+    const firstPerson = firstPersonView;
 
     const blockedReason = new Map(state.blocked_nodes.map((node) => [node.node_id, node.reason_codes]));
     const routeByNode = new Map(state.routes.map((route) => [route.node_id, route]));
@@ -1647,6 +1705,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
     // 관측 위험 구역: 활성 경보 원인의 담당 구역을 바닥 판으로 칠한다.
     for (const mesh of handles.zoneMeshes.values()) mesh.visible = false;
     for (const cause of state.active_causes) {
+      if (cause.ignition_position) continue;
       const source = sourceById.get(cause.source_id);
       if (source === undefined) continue;
       const mesh = handles.zoneMeshes.get(source.zone_id);
@@ -1669,34 +1728,54 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
       }
     }
 
-    // 불꽃. 활성 FIRE 원인이 있는 구역 가운데에 세운다. 구역이 바뀔 때만 다시 만든다.
-    const burning = [...new Set(state.active_causes.filter((cause) => cause.hazard_type === "FIRE").map((cause) => sourceById.get(cause.source_id)?.zone_id))]
+    // 실제 경보는 구역 표시, 위치 지정 시험은 서버가 보낸 작은 칸별 화염을 표시한다.
+    const burning = [...new Set(state.active_causes.filter((cause) => cause.hazard_type === "FIRE" && !cause.ignition_position).map((cause) => sourceById.get(cause.source_id)?.zone_id))]
       .flatMap((zoneId) => {
         const zone = zoneId === undefined ? undefined : zoneById.get(zoneId);
         return zone !== undefined && visibleFloors.has(zone.floor_id) ? [zone] : [];
       });
-    const fireKey = `${burning.map((zone) => zone.zone_id).join(",")}@${spread}`;
-    if (fireKey !== handles.fireKey) {
-      handles.fireKey = fireKey;
-      clearGroup(handles.fireGroup);
-      handles.fires = burning.map((zone) => {
-        const fire = createFire();
-        const elevation = geometry.floors.find((floor) => floor.floor_id === zone.floor_id)?.elevation ?? 0;
-        fire.object.position.set(
-          zone.polygon.reduce((sum, point) => sum + point.x, 0) / zone.polygon.length,
-          displayY(elevation, zone.floor_id, lift),
-          zone.polygon.reduce((sum, point) => sum + point.z, 0) / zone.polygon.length,
-        );
-        handles.fireGroup.add(fire.object);
-        return fire;
-      });
+    const flameCells = simulationFireCells(state.fire_simulation,visibleFloors);
+    const desired = [...flameCells.map(c=>({key:`${state.run_id}/${c.cell_id}`,position:c.position,floorId:c.floor_id,intensity:c.fire})),
+      ...burning.map(zone=>({key:`${state.run_id}/zone:${zone.zone_id}`,position:{
+        x:zone.polygon.reduce((s,p)=>s+p.x,0)/zone.polygon.length,
+        y:building.floors.find(f=>f.floor_id===zone.floor_id)!.elevation,
+        z:zone.polygon.reduce((s,p)=>s+p.z,0)/zone.polygon.length},floorId:zone.floor_id,intensity:1}))];
+    const fireIds = new Set(desired.map(c=>c.key));
+    for (const [key,fire] of handles.fireObjects) {
+      if (!fireIds.has(key)) { handles.fireGroup.remove(fire.object); disposeTree(fire.object); handles.fireObjects.delete(key); }
     }
+    for (const cell of desired) {
+      let fire = handles.fireObjects.get(cell.key);
+      if (!fire) { fire=createFire(); handles.fireObjects.set(cell.key,fire); handles.fireGroup.add(fire.object); }
+      fire.object.position.set(cell.position.x,displayY(cell.position.y,cell.floorId,lift),cell.position.z);
+      fire.object.scale.setScalar(.2+.8*cell.intensity);
+    }
+    handles.fires = [...handles.fireObjects.values()];
+    const smokeCells = (state.fire_simulation?.cells ?? []).filter(c=>c.smoke>.02 && visibleFloors.has(c.floor_id)
+      && !c.cell_id.startsWith("node:") && !c.cell_id.startsWith("edge:"));
+    const smokeIds = new Set(smokeCells.map(c=>`${state.run_id}/${c.cell_id}`));
+    for (const [key,{puff}] of handles.fieldPuffs) {
+      if (!smokeIds.has(key)) { handles.smokeGroup.remove(puff.sprite); puff.sprite.material.dispose(); handles.fieldPuffs.delete(key); }
+    }
+    smokeCells.forEach((cell,index)=>{
+      const key = `${state.run_id}/${cell.cell_id}`;
+      const baseY = displayY(cell.position.y,cell.floor_id,lift);
+      let entry = handles.fieldPuffs.get(key);
+      if (!entry) {
+        const sprite = createSmokeSprite(); handles.smokeGroup.add(sprite);
+        entry = {puff:{sprite,zoneId:cell.zone_id,baseY,x:cell.position.x,z:cell.position.z,seed:(index*.3819+.2)%1},smoke:cell.smoke};
+        handles.fieldPuffs.set(key,entry);
+      } else {
+        entry.smoke=cell.smoke;
+        entry.puff={...entry.puff,baseY,x:cell.position.x,z:cell.position.z,zoneId:cell.zone_id};
+      }
+    });
 
     // 고른 카메라의 설치 위치 강조(이슈 #74). 관측 구역(바닥 판)과 달리 설치 지점만 가리킨다.
     const installation = highlightSourceId === null
       ? null
       : display?.sources[highlightSourceId]?.installation ?? null;
-    if (installation !== null && visibleFloors.has(installation.floor_id)) {
+    if (!firstPerson && installation !== null && visibleFloors.has(installation.floor_id)) {
       const y = displayY(installation.position.y, installation.floor_id, lift);
       const { x, z } = installation.position;
       const mark = (mesh: THREE.Mesh, height: number) => {
@@ -1821,7 +1900,7 @@ export function BuildingScene({ geometry, building, display, showNames = true, s
         dynamicGroup.add(halo);
       }
     }
-  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, spread, highlightSourceId, journey, showGuidance, followIndex]);
+  }, [state, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, spread, highlightSourceId, journey, showGuidance, firstPersonView]);
 
   return <div className="scene" ref={mountRef} />;
 }

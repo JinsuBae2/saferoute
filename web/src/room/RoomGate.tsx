@@ -18,7 +18,7 @@ type Phase =
   | { readonly kind: "READY"; readonly room: RoomInfo };
 
 const MESSAGE: Record<"NONE" | "FULL" | "ENDED" | "LEFT" | "UNAVAILABLE", string> = {
-  NONE: "나만 쓰는 체험방에서 화재를 내고, 해제하고, 초기화해 볼 수 있습니다. 다른 사람의 화면에는 영향을 주지 않습니다.",
+  NONE: "나만 쓰는 체험방입니다. 화재를 내고, 해제하고, 처음부터 다시 해 볼 수 있습니다. 다른 사람의 화면에는 영향을 주지 않습니다.",
   FULL: "현재 체험방이 모두 사용 중입니다. 자리가 나면 다시 확인해 주세요.",
   ENDED: "체험이 종료되었습니다. 새 체험을 시작해 주세요.",
   LEFT: "체험을 종료했습니다. 자리를 반환했습니다.",
@@ -105,9 +105,9 @@ export function RoomGate({ children }: { children: ReactNode }) {
         <div className="room-bar">
           <strong>개인 체험방</strong>
           <span>
-            이 방의 화재·해제·초기화는 나에게만 적용됩니다 · 사용 중 {phase.room.in_use}/{phase.room.capacity}
-            {" "}· 모든 화면을 닫고 {Math.round(phase.room.idle_seconds / 60)}분이 지나면 자동 종료
-            {phase.room.status === "FAILED" && " · 이 방의 시뮬레이션이 멈췄습니다. 초기화하거나 종료 후 다시 시작해 주세요"}
+            이 방의 화재·해제·처음부터는 나에게만 적용됩니다 · 체험방 {phase.room.capacity}개 중 {phase.room.in_use}개 사용 중
+            {" "}· 모든 화면을 닫고 {Math.max(1, Math.round(phase.room.idle_seconds / 60))}분이 지나면 자동 종료
+            {phase.room.status === "FAILED" && " · 이 방의 시뮬레이션이 멈췄습니다. 「처음부터」를 누르거나 종료 후 다시 시작해 주세요"}
           </span>
           <span className="room-bar__actions">
             <Link className="chip" to="/shared">공동 시연 보기</Link>
@@ -123,7 +123,13 @@ export function RoomGate({ children }: { children: ReactNode }) {
   return (
     <main className="control">
       <section className="panel room-entry" aria-live="polite">
-        <header className="panel__head"><h2>개인 체험</h2></header>
+        <header className="panel__head"><h2>SafeRoute 화재 대피 안내 · 개인 체험</h2></header>
+        <p>건물에 불이 났을 때 불과 연기를 피해 가는 대피 경로를 유도등과 휴대폰으로 안내하는 시연입니다.</p>
+        <ol className="room-entry__steps">
+          <li>3D 도면에서 <strong>화재 위치</strong>를 누릅니다.</li>
+          <li>한 번 더 눌러 <strong>내 위치</strong>를 정합니다.</li>
+          <li><strong>시연 시작</strong>을 누르고 1인칭·휴대폰 안내로 탈출까지 따라갑니다.</li>
+        </ol>
         <p className="panel__empty">
           {phase.kind === "CHECKING" ? "체험방을 확인하는 중입니다." : phase.kind === "ERROR" ? phase.message : MESSAGE[phase.kind]}
         </p>

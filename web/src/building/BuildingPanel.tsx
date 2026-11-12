@@ -4,20 +4,21 @@
  * 버전이 다르면 3D를 그리지 않고, 경로·유도등 안내는 서버 결과로 계속 표시한다.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 
 import type { Building, BuildingDisplay, Position, SimulationState, StateSnapshot } from "@contracts";
 
+import type { CctvPose } from "./cctv";
 import { setExitGuide } from "../control/alarmSound";
 import { exitCall } from "../control/broadcast";
 import { BuildingScene } from "./BuildingScene";
+import { newFireFloors } from "./firePresentation";
 import { PhoneGuide } from "./EvacuationPhone";
 import type { FollowPose } from "./phoneGuide";
 import { matchesBuilding } from "./geometry";
 import type { JourneyTrack } from "./journey";
 import type { PeopleCount } from "./people";
 import { advanceTrack, describeJourney, trackContext } from "./journey";
-import { JourneyPanel, StartPicker } from "./JourneyPanel";
+import { JourneyPanel } from "./JourneyPanel";
 import { useBuildingGeometry } from "./useBuildingGeometry";
 import type { ViewMode } from "./view";
 import { SPREAD_MAX, SPREAD_MIN } from "./view";
@@ -37,6 +38,8 @@ type Props = {
   readonly simulation: SimulationState | null;
   /** 관제에서 고른 카메라. 3D에서 설치 위치를 강조한다(이슈 #74). */
   readonly highlightSourceId: string | null;
+  readonly cctv: CctvPose | null;
+  readonly onCamera: (id: string | null) => void;
   /**
    * 그 카메라를 찾아 달라는 요청. 값이 바뀔 때마다 숨긴 층을 열고 설치 위치를 비춘다.
    * 고르기만 해서는 시점을 움직이지 않는다. 보던 화면이 멋대로 돌아가면 더 헷갈린다.
@@ -44,17 +47,19 @@ type Props = {
   readonly locateRequest: number;
   /** 제어 상태 조회가 끊기거나 늦은지. 그동안 선택 경로를 현재 안내로 보여 주지 않는다(M06). */
   readonly stale?: boolean;
-  /** 시연 조작을 3D 바로 아래에 그린다. 출발점 고르기와 골랐는지 여부를 넘겨받아 한 패널로 묶는다. */
-  readonly demo?: (startPicker: ReactNode, hasStart: boolean) => ReactNode;
+  /** 내 위치를 골랐는지 바깥에 알린다. 머리말의 「시연 시작」이 이것으로 열린다(이슈 #21). */
+  readonly onStartNode?: (nodeId: string | null) => void;
   /**
    * 대피 인원 수를 바깥으로 알린다. 관제가 이것으로 「대피 현황」을 크게 보여 준다(이슈 #21).
    * 세는 일은 그대로 3D 안에서 한다. 여기서는 결과를 전달만 한다.
    */
   readonly onPeopleCount?: (count: PeopleCount | null) => void;
   /** 도면에서 구역(방·복도)을 눌렀을 때. 시연의 화재 위치를 3D에서 바로 고른다(이슈 #21). */
-  readonly onPickZone?: (zoneId: string) => void;
+  readonly onPickZone?: (zoneId: string, position: Position) => void;
   /** 한 번 누를 때 고를 대상. "ZONE"이면 지점 대신 구역을 고른다. */
   readonly pickTarget?: "NODE" | "ZONE";
+  /** 고를 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 때 쓴다(이슈 #189). */
+  readonly onPickTarget?: (target: "NODE" | "ZONE") => void;
 };
 
 const MISMATCH_LABEL = {
@@ -63,7 +68,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, demo, onPeopleCount, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingPanel({ cctv, onCamera, state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE", onPickTarget }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   // 전체 안내(초록 화살표·선). 현재 위치를 고르면 그 경로만 보이게 끄고, 버튼으로 다시 켤 수 있다.
@@ -78,7 +83,8 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
   const [followRequest, setFollowRequest] = useState<{ nodeId: string; nonce: number } | null>(null);
   const [followMessage, setFollowMessage] = useState<{ runId: string; text: string } | null>(null);
   const [phonePose, setPhonePose] = useState<FollowPose | null>(null);
-  const firstPerson = follow !== null && showPeople;
+  const firstPerson = follow !== null && showPeople && cctv === null;
+  useEffect(() => { if (cctv) setFollow(null); }, [cctv]);
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
   // 층 간격은 처음부터 조금 벌려 위층 바닥이 아래층 복도를 덮지 않게 한다.
   const [spread, setSpread] = useState(6);
@@ -88,19 +94,21 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
 
   // "3D에서 찾기"를 누르면 그 층을 열고 설치 위치를 비춘다.
   // 요청 번호를 기억해 두어, 표시 자료가 늦게 와도 같은 요청으로 두 번 움직이지 않는다.
-  const handledLocate = useRef(0);
+  const handledLocate = useRef("");
   // 장면의 매 프레임 콜백이 최신 서버 상태를 읽게 한다.
   const guideRef = useRef({ state, building, stale });
   useEffect(() => { guideRef.current = { state, building, stale }; }, [state, building, stale]);
   // 1인칭에서 나오거나 화면이 닫히면 출구 유도음을 끈다.
   useEffect(() => () => setExitGuide(null, null), []);
   useEffect(() => {
-    if (locateRequest === 0 || locateRequest === handledLocate.current) return;
+    const request = state.run_id + "/" + locateRequest;
+    if (locateRequest === 0 || request === handledLocate.current) return;
     const installation = highlightSourceId === null
       ? null
       : display?.sources[highlightSourceId]?.installation ?? null;
     if (installation === null) return;
-    handledLocate.current = locateRequest;
+    handledLocate.current = request;
+    setFollow(null);
     setHiddenFloors((previous) => {
       if (!previous.has(installation.floor_id)) return previous;
       const next = new Set(previous);
@@ -112,7 +120,7 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
       nonce: previous.nonce + 1,
       focus: { position: installation.position, floorId: installation.floor_id },
     }));
-  }, [locateRequest, highlightSourceId, display]);
+  }, [locateRequest, highlightSourceId, display, state.run_id]);
 
   // M06 출발점. 실행·건물이 바뀌면 이전 선택을 쓰지 않는다(같은 node_id라도 다른 실행의 위치다).
   const runKey = `${state.run_id}/${state.building_id}/${state.building_version}`;
@@ -124,6 +132,10 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
     setShowGuidance(nodeId === null);
     setSelectedSign(null);
   };
+
+  useEffect(() => { onStartNode?.(startId); }, [startId, onStartNode]);
+  // 「처음부터」로 실행이 바뀌면 이전 실행에서 따라가던 사람과 꺼 둔 전체 안내를 남기지 않는다.
+  useEffect(() => { setFollow(null); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
 
   const journey = useMemo(
     () => (building === null || startId === null ? null : describeJourney(building, display, state, startId)),
@@ -164,14 +176,18 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
     return new Set(all.filter((id) => !hiddenFloors.has(id)));
   }, [geometry, hiddenFloors]);
 
-  const toggleFloor = (floorId: string) => {
+  // 새 화재가 나면 그 층을 켠다. 다른 층만 보고 있으면 불이 화면에 없다. 화재마다 한 번만 하므로 그 뒤에는 다시 끌 수 있다.
+  const seenFires = useRef<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    if (building === null) return;
+    const fresh = newFireFloors(building, state.active_causes, seenFires.current);
+    seenFires.current = fresh.seen;
+    if (fresh.floors.size === 0) return;
     setHiddenFloors((previous) => {
-      const next = new Set(previous);
-      if (next.has(floorId)) next.delete(floorId);
-      else next.add(floorId);
-      return next;
+      const next = new Set([...previous].filter((id) => !fresh.floors.has(id)));
+      return next.size === previous.size ? previous : next;
     });
-  };
+  }, [building, state.active_causes]);
 
   /** 한 층만 보기. 다른 층은 모두 숨긴다. */
   const onlyFloor = (floorId: string) => {
@@ -192,7 +208,28 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
   return (
     <section className="panel">
       <header className="panel__head">
-        <h2>건물 3D</h2>
+        <h2>{cctv ? "3D CCTV 시점" : "건물 3D"}</h2>
+        {/* 고르는 칸을 지웠으므로(이슈 #21) 지금 무엇을 고르는 중인지 여기서 알린다.
+            누르면 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 길이 이것뿐이다(이슈 #189). */}
+        {cctv ? <>
+          <strong>{display?.sources[highlightSourceId ?? ""]?.label ?? highlightSourceId}</strong>
+          <button className="chip" type="button" onClick={() => { setHiddenFloors(new Set()); requestView("ANGLE"); onCamera(null); }}>전체 보기로 돌아가기</button>
+        </> : <span className="panel__aim" role="status">
+          지금 도면을 누르면{" "}
+          {onPickTarget === undefined ? (
+            <strong>{pickTarget === "ZONE" ? "화재 위치" : "내 위치"}</strong>
+          ) : (
+            <button
+              type="button"
+              className="panel__aim-btn"
+              title="눌러서 화재 위치와 내 위치를 바꿔 가며 고릅니다"
+              onClick={() => onPickTarget(pickTarget === "ZONE" ? "NODE" : "ZONE")}
+            >
+              {pickTarget === "ZONE" ? "화재 위치" : "내 위치"}
+            </button>
+          )}
+          가 정해집니다
+        </span>}
         <span className="panel__note">
           형상은 표시 전용입니다. 경로와 방향은 서버 결과를 그대로 그립니다
         </span>
@@ -206,15 +243,15 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
         </p>
       ) : (
         <>
-          <div className="scene__bar">
-            <span className="scene__floors" title="누르면 층을 켜고 끕니다. 두 번 누르면 그 층만 봅니다">
+          {!cctv && <div className="scene__bar">
+            <span className="scene__floors" title="누르면 그 층만 봅니다. 「전체」로 모든 층을 다시 봅니다">
               {geometry.floors.map((floor) => (
                 <button
                   key={floor.floor_id}
                   type="button"
-                  className={visibleFloors.has(floor.floor_id) ? "chip chip--on" : "chip"}
-                  onClick={() => toggleFloor(floor.floor_id)}
-                  onDoubleClick={() => onlyFloor(floor.floor_id)}
+                  className={visibleFloors.size === 1 && visibleFloors.has(floor.floor_id) ? "chip chip--on" : "chip"}
+                  aria-pressed={visibleFloors.size === 1 && visibleFloors.has(floor.floor_id)}
+                  onClick={() => onlyFloor(floor.floor_id)}
                 >
                   {floorLabel.get(floor.floor_id) ?? floor.floor_id}
                 </button>
@@ -294,11 +331,21 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
                 </>
               )}
             </span>
-          </div>
+          </div>}
 
+          {state.fire_simulation && <p role="status" className="panel__note">
+            {stale ? "확산 상태 연결 확인 중" : "불·연기 확산 중"} · 발화 후 {Math.floor(Math.max(...state.fire_simulation.fires.map(f=>f.elapsed_ms))/1000)}초
+            {" · "}불이 도달한 지점 {state.fire_simulation.cells.filter(c=>c.fire>0).length}곳 · 차단 통로 {state.blocked_edges.length}개
+            {" · 시연용 확산 / 빨간 바닥은 감지 구역"}
+          </p>}
+          {stale && <p role="status" className="control__alert control__alert--warn">
+            연결이 늦어지고 있습니다. 아래 3D의 유도등 방향·불·연기는 마지막으로 받은 상태이며 지금과 다를 수 있습니다.
+          </p>}
           {followMessage?.runId === state.run_id && <p role="status" className="panel__note">{followMessage.text}</p>}
           <div className={`first-person-stage${firstPerson ? " first-person-stage--active" : ""}`}>
           <BuildingScene
+            cctv={cctv}
+            onCamera={onCamera}
             geometry={geometry}
             building={building}
             display={display}
@@ -323,8 +370,8 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             }}
             state={state}
             smokeByZone={smokeByZone}
-            visibleFloors={firstPerson ? allFloors : visibleFloors}
-            spread={firstPerson ? 0 : spread}
+            visibleFloors={firstPerson || cctv ? allFloors : visibleFloors}
+            spread={firstPerson || cctv ? 0 : spread}
             view={view}
             highlightSourceId={highlightSourceId}
             journey={sceneJourney}
@@ -336,13 +383,11 @@ export function BuildingPanel({ state, simulation, building, display, buildingEr
             pose={phonePose?.personIndex === follow && phonePose.runId === state.run_id ? phonePose : null} />}
           </div>
 
-          {demo?.(<StartPicker building={building} display={display} startId={startId} onStart={chooseStart} />, startId !== null)}
-
           {/* 경로 위 유도등 표가 길어 화면을 밀어낸다. 평소에는 접어 두고 필요할 때 펼친다(이슈 #21). */}
           <details className="fold">
             <summary className="fold__head">경로 상세 · 경로 위 유도등</summary>
           <JourneyPanel
-            picker={demo === undefined}
+            picker
             building={building}
             display={display}
             startId={startId}

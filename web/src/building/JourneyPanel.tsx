@@ -81,7 +81,7 @@ export function StartPicker({ building, display, startId, onStart }: PickerProps
         </label>
         {startId !== null && (
           <button type="button" className="chip" onClick={() => onStart(null)}>
-            선택 해제
+            내 위치 지우기
           </button>
         )}
         <small className="journey__hint">

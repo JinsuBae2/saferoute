@@ -13,6 +13,7 @@ from .contracts.messages import (
 )
 from .guidance import sign_faces
 from .routing import calculate_routes, unavailable_routes, validate_default_routes
+from .progressive_fire import ProgressiveFire
 
 
 class Clock:
@@ -37,6 +38,7 @@ class Controller:
         self.source_config = {s.source_id: s for s in self.building.sources}
         self.zones = {z.zone_id: z for z in self.building.zones}
         self.sign_config = {s.sign_id: s for s in self.building.signs}
+        self.fire_model = ProgressiveFire(self.building)
         self._start_run(str(uuid4()))
 
     def _start_run(self, run_id):
@@ -49,6 +51,8 @@ class Controller:
                         for s in self.building.sources}
         self.deadlines = {}
         self.active_causes = {}
+        self.fire_model.reset()
+        self._fire_result = self.fire_model.evaluate(self.clock.monotonic_ms())
         self.seen_events = {}
         self.last_sequences = {}
         self.commands = {}
@@ -89,7 +93,7 @@ class Controller:
     def _decision_key(self):
         return (self._mode(), tuple(sorted(self.active_causes)),
                 tuple((s.source_id, self.sources[s.source_id].validity == "VALID")
-                      for s in self.building.sources if s.required))
+                      for s in self.building.sources if s.required), self._fire_result.key())
 
     def _publish(self, before, operation, **evidence):
         if before != self._decision_key(): self.guidance_version += 1
@@ -116,13 +120,17 @@ class Controller:
         for source in self.building.sources:
             zone = self.zones[source.zone_id]
             reasons = []
-            if any(key[0] == source.source_id for key in self.active_causes): reasons.append("ACTIVE_ALARM")
+            if any(key[0] == source.source_id and not (key[1] == "FIRE" and self.fire_model.spreads(source.source_id))
+                   for key in self.active_causes): reasons.append("ACTIVE_ALARM")
             if source.required and self.sources[source.source_id].validity != "VALID":
                 reasons.append("REQUIRED_OBSERVATION_UNKNOWN")
             for reason in reasons:
                 block(blocked_nodes, zone.blocked_node_ids, reason, source.source_id)
                 block(blocked_edges, zone.blocked_edge_ids, reason, source.source_id)
         block(blocked_edges, [e.edge_id for e in self.building.edges if not e.traversable], "NOT_TRAVERSABLE")
+        for target, values in [(blocked_nodes,self._fire_result.nodes),(blocked_edges,self._fire_result.edges)]:
+            for item, sources in values.items():
+                for source_id in sources: block(target,[item],"ACTIVE_ALARM",source_id)
 
         def blocked_list(items, key):
             return [{key: item_id, "source_ids": sorted(value["source_ids"]), "reason_codes": sorted(value["reason_codes"])}
@@ -144,7 +152,7 @@ class Controller:
             active_causes=[self.active_causes[key].model_copy(deep=True) for key in sorted(self.active_causes)],
             blocked_nodes=node_blocks, blocked_edges=edge_blocks,
             routes=self._routes,
-            signs=self._sign_states())
+            signs=self._sign_states(), fire_simulation=self._fire_result.state)
 
     def _sign_states(self):
         routes = {r.node_id: r for r in self._routes}
@@ -171,6 +179,9 @@ class Controller:
 
     def _expire_locked(self):
         self._ensure_ready()
+        before = self._decision_key()
+        self._fire_result = self.fire_model.evaluate(self.clock.monotonic_ms())
+        if before != self._decision_key(): self._publish(before,"fire_spread")
         while True:
             expired = [source for source, deadline in self.deadlines.items() if self.clock.monotonic_ms() >= deadline]
             if expired:
@@ -335,7 +346,12 @@ class Controller:
                         self.active_causes[key].last_event_id = event.event_id
                     else:
                         self.active_causes[key] = ActiveCause(source_id=event.source_id,hazard_type=event.hazard_type,
-                            first_event_id=event.event_id,last_event_id=event.event_id,activated_at=utc_text(self.clock.utcnow()))
+                            first_event_id=event.event_id,last_event_id=event.event_id,activated_at=utc_text(self.clock.utcnow()),
+                            ignition_position=event.ignition_position)
+                        if event.ignition_position is not None:
+                            self.fire_model.ignite(event.source_id,self.source_config[event.source_id].zone_id,
+                                                   event.ignition_position,received_monotonic)
+                            self._fire_result = self.fire_model.evaluate(self.clock.monotonic_ms())
                 self._publish(before,"event",event_id=event.event_id)
             return EventReceipt(accepted=True,duplicate=result.duplicate,event_id=event.event_id,
                                 run_id=self.run_id,guidance_version=self.guidance_version)
@@ -379,6 +395,9 @@ class Controller:
                 self.armed = True
             else:
                 del self.active_causes[(request.source_id,request.hazard_type)]
+                if request.hazard_type == "FIRE":
+                    self.fire_model.remove(request.source_id)
+                    self._fire_result = self.fire_model.evaluate(self.clock.monotonic_ms())
                 evidence.update(source_id=request.source_id,hazard_type=request.hazard_type)
             self._publish(before,operation,**evidence)
             if operation == "arm": return ArmReceipt(run_id=self.run_id,controller_mode=self._mode(),armed=True)

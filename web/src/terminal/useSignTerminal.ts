@@ -141,6 +141,8 @@ export function useSignTerminal(signId: string): TerminalView {
 
   useEffect(() => {
     const abort = new AbortController();
+    // 응답 없이 걸린 요청 하나가 조회 전체를 멈추지 않게 한다. 관제 조회(poll.ts)와 같은 2초다.
+    const limited = () => AbortSignal.any([abort.signal, AbortSignal.timeout(2000)]);
     let stopped = false;
     let pollTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -209,7 +211,7 @@ export function useSignTerminal(signId: string): TerminalView {
         const signState = await postSignAck(
           signId,
           buildAppliedAck(command, terminalInstanceId, clientApplyDurationMs),
-          abort.signal,
+          limited(),
         );
         lastAck = {
           commandSequence: command.command_sequence,
@@ -270,7 +272,7 @@ export function useSignTerminal(signId: string): TerminalView {
 
       if (session === null) {
         try {
-          session = await fetchSession(abort.signal);
+          session = await fetchSession(limited());
           notice = null;
         } catch (error) {
           if (isAbort(error)) return;
@@ -284,7 +286,7 @@ export function useSignTerminal(signId: string): TerminalView {
       const requestStartedAtMs = performance.now();
       let command: SignCommand;
       try {
-        command = await fetchSignCommand(signId, abort.signal);
+        command = await fetchSignCommand(signId, limited());
       } catch (error) {
         if (isAbort(error)) return;
         handleCommandError(error);
