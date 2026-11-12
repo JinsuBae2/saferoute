@@ -4,6 +4,8 @@
  */
 import type {
   Building,
+  DemoIgnition,
+  Position,
   ClearReceipt,
   ClearRequest,
   EventReceipt,
@@ -130,6 +132,14 @@ export function fetchSimulationState(signal?: AbortSignal): Promise<SimulationSt
 /** 초기화: 지금 화면이 속한 실행(공동 시연 또는 내 방)만 새 실행으로 다시 시작한다. */
 export function restartSimulation(signal?: AbortSignal): Promise<SimulationState> {
   return requestAt<SimulationState>(`${simBase()}/restart`, { method: "POST", signal });
+}
+
+export function igniteRoom(runId: string, eventId: string, zoneId: string, position: Position): Promise<DemoIgnition> {
+  return requestAt<DemoIgnition>("/api/room/sim/ignition", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ run_id: runId, event_id: eventId, zone_id: zoneId, position }),
+    signal: AbortSignal.timeout(8000),
+  });
 }
 
 export type RoomInfo = {

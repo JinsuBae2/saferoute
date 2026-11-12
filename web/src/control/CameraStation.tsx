@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, DemoIgnition, StateSnapshot } from "@contracts";
 import { inRoom } from "../api/scope";
 import { cctvPose } from "../building/cctv";
 import { RoomAiPanel } from "../room/RoomAiPanel";
@@ -11,6 +11,7 @@ type Props = {
   state: StateSnapshot;
   building: Building | null;
   display: BuildingDisplay | null;
+  ignition?: DemoIgnition | null;
   selectedSourceId: string | null;
   stale: boolean;
   onSelect: (id: string | null) => void;

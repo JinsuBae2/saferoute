@@ -79,6 +79,19 @@ def check_identity(message, session: Session, building: Building):
         raise ContractError("BUILDING_MISMATCH", "건물 또는 자료 버전이 일치하지 않습니다", "building_version")
 
 
+def check_ignition_position(building, zone_id, position):
+    from backend.progressive_fire import contains, in_wall, walls_for
+    zone = next(z for z in building.zones if z.zone_id == zone_id)
+    floor = next(f for f in building.floors if f.floor_id == zone.floor_id)
+    # 지점도 차단 대상도 없는 구역은 불을 내도 경로가 바뀌지 않는다(공간 자료에 연결 근거 없음, U04·U05).
+    if not (zone.blocked_node_ids or zone.blocked_edge_ids or any(n.zone_id == zone.zone_id for n in building.nodes)):
+        raise ContractError("INVALID_EVENT_COMBINATION", "통로와 이어진 근거가 없는 구역이라 시연 화재 위치로 쓸 수 없습니다. 다른 곳을 선택하세요", "ignition_position")
+    p = position
+    walls = walls_for(building.building_id,building.building_version).get(zone.floor_id,[])
+    if abs(p.y-floor.elevation) > .01 or not contains(zone.polygon,p.x,p.z) or in_wall(walls,p):
+        raise ContractError("INVALID_EVENT_COMBINATION", "발화 위치가 구역·층 밖이거나 벽 안입니다. 바닥의 다른 지점을 선택하세요", "ignition_position")
+
+
 def check_event(event: ObservationEvent, context: EventContext) -> EventCheck:
     check_identity(event, context.session, context.building)
     source = next((s for s in context.building.sources if s.source_id == event.source_id), None)
@@ -87,16 +100,7 @@ def check_event(event: ObservationEvent, context: EventContext) -> EventCheck:
     if source.source_type != event.source_type or (event.hazard_type and event.hazard_type not in source.allowed_hazard_types):
         raise ContractError("INVALID_EVENT_COMBINATION", "관측원 설정과 입력 유형이 다릅니다", "source_type")
     if event.ignition_position is not None:
-        from backend.progressive_fire import contains, in_wall, walls_for
-        zone = next(z for z in context.building.zones if z.zone_id == source.zone_id)
-        floor = next(f for f in context.building.floors if f.floor_id == zone.floor_id)
-        # 지점도 차단 대상도 없는 구역은 불을 내도 경로가 바뀌지 않는다(공간 자료에 연결 근거 없음, U04·U05).
-        if not (zone.blocked_node_ids or zone.blocked_edge_ids or any(n.zone_id == zone.zone_id for n in context.building.nodes)):
-            raise ContractError("INVALID_EVENT_COMBINATION", "통로와 이어진 근거가 없는 구역이라 시연 화재 위치로 쓸 수 없습니다. 다른 곳을 선택하세요", "ignition_position")
-        p = event.ignition_position
-        walls = walls_for(context.building.building_id,context.building.building_version).get(zone.floor_id,[])
-        if abs(p.y-floor.elevation) > .01 or not contains(zone.polygon,p.x,p.z) or in_wall(walls,p):
-            raise ContractError("INVALID_EVENT_COMBINATION", "발화 위치가 구역·층 밖이거나 벽 안입니다. 바닥의 다른 지점을 선택하세요", "ignition_position")
+        check_ignition_position(context.building, source.zone_id, event.ignition_position)
     previous = context.seen_events.get(event.event_id)
     if previous is not None:
         if previous != event:

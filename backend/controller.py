@@ -313,7 +313,7 @@ class Controller:
             self._expire_locked()
             return self._sign(sign_id).model_copy(deep=True)
 
-    def receive(self, payload):
+    def receive(self, payload, *, demo_detector_id=None):
         with self.lock:
             self._expire_locked()
             try:
@@ -325,7 +325,8 @@ class Controller:
                 self.record_rejection(payload,error)
                 raise
             self._write("events", operation="event", outcome="duplicate" if result.duplicate else "accepted",
-                        payload=event.model_dump(mode="json"), error_code=None)
+                        payload=event.model_dump(mode="json"), error_code=None,
+                        **({"demo_detector_id": demo_detector_id} if demo_detector_id else {}))
             if not result.duplicate:
                 before = self._decision_key()
                 self.seen_events[event.event_id] = event.model_copy(deep=True)
@@ -394,8 +395,8 @@ class Controller:
             if operation == "arm":
                 self.armed = True
             else:
-                del self.active_causes[(request.source_id,request.hazard_type)]
-                if request.hazard_type == "FIRE":
+                cause = self.active_causes.pop((request.source_id,request.hazard_type))
+                if request.hazard_type == "FIRE" or cause.ignition_position is not None:
                     self.fire_model.remove(request.source_id)
                     self._fire_result = self.fire_model.evaluate(self.clock.monotonic_ms())
                 evidence.update(source_id=request.source_id,hazard_type=request.hazard_type)

@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import threading
 import time
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -54,6 +55,80 @@ def ignite(client, who, clock, source_id):
 
 def causes(client, who):
     return {cause["source_id"] for cause in state(client, who)["active_causes"]}
+
+
+def ignition_request(client, who, manager, zone_id):
+    from backend.contracts.validation import check_ignition_position
+    nodes = [n for n in manager.building.nodes if n.zone_id == zone_id]
+    for n in nodes:
+        try:
+            check_ignition_position(manager.building, zone_id, n.position)
+        except ValueError:
+            continue
+        return dict(run_id=state(client, who)["run_id"], event_id=str(uuid4()), zone_id=zone_id,
+                    position=n.position.model_dump())
+    raise AssertionError(f"no valid test ignition for {zone_id}")
+
+
+@pytest.mark.parametrize("zone,device,source,hazard,delay", [
+    ("F3-CORR-W", "CCTV", "MANUAL-F3-CORR-W", "FIRE", 2000),
+    ("F1-PASSAGE-N", "SPRINKLER", "SPK-F1-PASSAGE-N", "SPRINKLER", 3000),
+])
+def test_room_device_signal_starts_evacuation_only_after_detection(setup, zone, device, source, hazard, delay):
+    client, manager, clock = setup
+    who = enter(client)
+    body = ignition_request(client, who, manager, zone)
+    def stage():
+        return client.post("/api/room/sim/ignition", headers=who, json=body)
+    staged = stage()
+    assert staged.status_code == 200, staged.text
+    assert staged.json()["phase"] == "WAITING" and staged.json()["device"] == device
+    assert stage().json() == staged.json()
+    clock.advance(delay - 1)
+    manager.step_all()
+    assert state(client, who)["controller_mode"] == "NORMAL"
+    assert client.get("/api/room/sim/state", headers=who).json()["demo_ignition"]["position"] == body["position"]
+    clock.advance(1)
+    manager.step_all()
+    detected = state(client, who)
+    assert detected["controller_mode"] == "EMERGENCY"
+    assert [(v["source_id"], v["hazard_type"], v["first_event_id"]) for v in detected["active_causes"]] == [
+        (source, hazard, body["event_id"])]
+    assert detected["fire_simulation"]["fires"][0]["zone_id"] == zone
+    assert stage().json()["phase"] == "ACCEPTED"
+    assert client.get("/api/state").json()["active_causes"] == []
+    cleared = client.post("/api/room/control/clear", headers=who, json=dict(schema_version=1,
+        run_id=body["run_id"], source_id=source, hazard_type=hazard, reason="시험 종료"))
+    assert cleared.status_code == 200, cleared.text
+    assert not state(client, who)["fire_simulation"]
+
+
+def test_uninstrumented_zone_uses_manual_report_and_rejects_outside_position(setup):
+    client, manager, _ = setup
+    who = enter(client)
+    zone = next(n.zone_id for n in manager.building.nodes if n.zone_id and
+                {s.source_type for s in manager.building.sources if s.zone_id == n.zone_id} == {"MANUAL_TEST"})
+    payload = ignition_request(client, who, manager, zone)
+    invalid = {**payload, "position": {**payload["position"], "y": 999}}
+    assert client.post("/api/room/sim/ignition", headers=who, json=invalid).status_code == 400
+    assert not causes(client, who)
+    manual = client.post("/api/room/sim/ignition", headers=who, json=payload)
+    assert manual.status_code == 200, manual.text
+    assert (manual.json()["device"], manual.json()["phase"]) == ("MANUAL", "ACCEPTED")
+    assert causes(client, who) == {manual.json()["source_id"]}
+
+
+def test_reset_cancels_pending_detector(setup):
+    client, manager, clock = setup
+    who = enter(client)
+    payload = ignition_request(client, who, manager, "F2-CORR-W")
+    assert client.post("/api/room/sim/ignition", headers=who, json=payload).json()["phase"] == "WAITING"
+    assert client.post("/api/room/sim/restart", headers=who).status_code == 200
+    clock.advance(2500)
+    manager.step_all()
+    assert not causes(client, who)
+    assert client.get("/api/room/sim/state", headers=who).json()["demo_ignition"] is None
+    assert client.post("/api/room/sim/ignition", headers=who, json=payload).status_code == 409
 
 
 def test_two_rooms_change_only_their_own_state(setup):

@@ -21,7 +21,21 @@ class ZoneSmoke(WireModel):
     smoke: Annotated[float, Field(ge=0, le=1)]
 
 
+class DemoIgnitionRequest(WireModel):
+    run_id: UUIDString
+    event_id: UUIDString
+    zone_id: Identifier
+    position: Position
+
+
+class DemoIgnition(DemoIgnitionRequest):
+    device: Literal["CCTV", "SPRINKLER", "MANUAL"]
+    source_id: Identifier
+    phase: Literal["WAITING", "ACCEPTED", "FAILED"]
+
+
 class SimulationState(BuildingIdentity):
+    demo_ignition: DemoIgnition | None = None
     scenario_id: Identifier
     run_id: UUIDString
     simulation_time_ms: NonnegativeInt
@@ -52,8 +66,9 @@ class ObservationEvent(RunIdentity):
                 raise PydanticCustomError("invalid_event_combination", message)
 
         alarm = self.event_kind == "ALARM"
-        require(self.ignition_position is None or (self.source_type == "MANUAL_TEST" and alarm and self.hazard_type == "FIRE"),
-                "ignition_position is only allowed for a manual FIRE alarm")
+        positioned = (self.source_type, self.hazard_type) in {("MANUAL_TEST", "FIRE"), ("SIM_SPRINKLER", "SPRINKLER")}
+        require(self.ignition_position is None or (positioned and alarm),
+                "ignition_position requires a simulated fire or sprinkler alarm")
         unavailable = self.event_kind == "UNAVAILABLE"
         require(alarm == (self.hazard_type is not None), "hazard_type is required only for ALARM")
         require(self.validity == ("UNAVAILABLE" if unavailable else "VALID"), "event_kind and validity disagree")

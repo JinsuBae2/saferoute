@@ -10,8 +10,10 @@
  * 접어 둔 「활성 경보」에서 한다.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contracts";
-import { ApiError, restartSimulation } from "../api/client";
+import type { Building, BuildingDisplay, DemoIgnition, Position, StateSnapshot } from "@contracts";
+import { ApiError, igniteRoom, restartSimulation } from "../api/client";
+import { defaultIgnition } from "../building/firePresentation";
+import { newId } from "../api/id";
 import { inRoom } from "../api/scope";
 import { enableSound } from "./alarmSound";
 import { demoMessage, ManualFireControl, manualFireSources } from "./manualFire";
@@ -22,6 +24,7 @@ type Props = {
   readonly display: BuildingDisplay | null;
   readonly state: StateSnapshot;
   readonly connected: boolean;
+  readonly ignition?: DemoIgnition | null;
   /** 도면에서 고른 화재 위치. 비어 있으면 시작할 수 없다. */
   readonly zoneId: string;
   readonly ignitionPosition?: Position | null;
@@ -31,7 +34,7 @@ type Props = {
   readonly refusedZoneId?: string | null;
 };
 
-export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, hasStart, refusedZoneId = null }: Props) {
+export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, ignition, hasStart, refusedZoneId = null }: Props) {
   const control = useMemo(() => new ManualFireControl(building, state.run_id), [building, state.run_id]);
   const mounted = useRef(false);
   const busy = useRef(false);
@@ -39,7 +42,8 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
   const [notice, setNotice] = useState<{ text: string; result: ManualResult | null; failed: boolean } | null>(null);
   const sources = useMemo(() => manualFireSources(building), [building]);
   const source = sources.find((item) => item.zone_id === zoneId);
-  const active = new Set(state.active_causes.filter((cause) => cause.hazard_type === "FIRE").map((cause) => cause.source_id));
+  const zoneActive = state.active_causes.some(cause => (cause.hazard_type === "FIRE" || cause.hazard_type === "SPRINKLER")
+    && building.sources.some(item => item.source_id === cause.source_id && item.zone_id === zoneId));
   const name = (id: string) => display?.zone_labels[id] ?? building.zones.find((zone) => zone.zone_id === id)?.label ?? id;
   const disabled = pending || !connected;
 
@@ -56,6 +60,12 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
     setPending(true); setNotice(null);
     const target = action.kind === "clear_all" ? "모든 시험 화재" : name(action.zoneId);
     try {
+      if (inRoom() && action.kind === "ignite") {
+        const pos = action.position ?? defaultIgnition(building, action.zoneId);
+        if (!pos) throw new Error("도면에서 화재 위치를 선택하세요");
+        await igniteRoom(state.run_id, newId(), action.zoneId, pos);
+        return;
+      }
       const result = await control.run(action);
       if (mounted.current) setNotice({ text: `${target} · 발생 ${result.completed}건 서버 수락`, result, failed: false });
     } catch (error) {
@@ -96,10 +106,13 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
     ? "1/3 · 3D 도면에서 화재 위치를 누르세요"
     : !hasStart
       ? "2/3 · 도면을 한 번 더 눌러 내 위치를 정하세요"
-      : active.has(source.source_id)
-        ? "고른 자리에 이미 시험 화재가 있습니다"
-        : null);
+      : ignition?.phase === "WAITING" ? "설비가 발화 지점을 확인하고 있습니다"
+      : zoneActive ? "이 구역에 이미 경보가 있습니다" : null);
 
+  const device = ignition?.device === "CCTV" ? "CCTV 불꽃 모의 감지" :
+    ignition?.device === "SPRINKLER" ? "스프링클러 모의 작동" : "수동 화재 신고";
+  const lastDetection = ignition && ignition.phase === "ACCEPTED" &&
+    state.active_causes.some(cause => cause.first_event_id === ignition.event_id);
   return (
     <div className="control__demo">
       <div className="control__demo-buttons">
@@ -122,7 +135,12 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
           처음부터
         </button>
       </div>
-      <p className="control__demo-note">경보·대피는 즉시 시작하고 불·연기는 점차 퍼집니다. 시연용 확산입니다. 시작하면 경보음이 켜집니다.</p>
+      {ignition && (ignition.phase !== "ACCEPTED" || lastDetection) ? (
+        <p className={lastDetection ? "badge badge--fire" : "control__demo-note"} role="status">
+          {name(ignition.zone_id)} · {ignition.phase === "WAITING" ? `발화 · ${device} 대기` :
+            ignition.phase === "FAILED" ? "감지 신호 전달 실패" : `${device} · 경보 접수 · 대피 시작`}
+        </p>
+      ) : <p className="control__demo-note">{inRoom() ? "화재 위치의 설비가 감지하면 대피가 시작됩니다. 설비가 없는 구역은 수동 신고로 시작합니다." : "수동 화재 신고로 대피를 시작합니다."}</p>}
       <p className="control__demo-note" role="status" aria-live="polite">
         {demoMessage(pending, refused, notice?.text ?? null, blocked ?? "3/3 · 「시연 시작」을 누르면 고른 자리에 화재가 납니다")}
         {!pending && refused === null && notice?.result && (state.guidance_version >= notice.result.guidanceVersion ? " · 반영 확인" : " · 반영 대기")}

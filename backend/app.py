@@ -21,7 +21,7 @@ from .contracts.messages import (
     ObservationEvent, ResetReceipt, Session, SignAck, SignCommand, SignState, StateSnapshot,
 )
 from .contracts.building import Building
-from .contracts.messages import SimulationState
+from .contracts.messages import DemoIgnition, DemoIgnitionRequest, SimulationState
 from .controller import Controller
 from .reader import SnapshotReader
 from .rooms import COOKIE, INTERNAL_HEADER, ROOM_HEADER, RoomError, RoomManager
@@ -261,7 +261,11 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
         return response
 
     @app.get("/api/room/sim/state", response_model=SimulationState)
-    def room_simulation(request: Request): return own_room(request).runner.state()
+    def room_simulation(request: Request): return own_room(request).simulation()
+
+    @app.post("/api/room/sim/ignition", response_model=DemoIgnition)
+    def room_ignition(request: Request, ignition: DemoIgnitionRequest):
+        return own_room(request).ignite(ignition)
 
     @app.post("/api/room/sim/restart", response_model=SimulationState)
     def room_restart(request: Request):

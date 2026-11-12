@@ -370,6 +370,7 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
               if (index === null) requestView(view.mode);
             }}
             state={state}
+            ignition={simulation?.demo_ignition}
             smokeByZone={smokeByZone}
             visibleFloors={firstPerson || cctv ? allFloors : visibleFloors}
             spread={firstPerson || cctv ? 0 : spread}

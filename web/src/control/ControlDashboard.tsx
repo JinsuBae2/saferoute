@@ -329,6 +329,7 @@ export function ControlDashboard() {
             state={state}
             connected={!health.stale && view.stateError === null}
             zoneId={fireZone}
+            ignition={simulation?.demo_ignition}
             ignitionPosition={fire?.runId === state.run_id ? fire.position : null}
             hasStart={startNode !== null}
             refusedZoneId={refused?.runId === state.run_id ? refused.zoneId : null}
