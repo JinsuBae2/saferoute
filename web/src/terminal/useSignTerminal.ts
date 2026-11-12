@@ -3,6 +3,7 @@
  * 명세 5.2 적용 순서를 그대로 따른다. 판단은 commandGuard의 순수 함수가 하고
  * 여기서는 네트워크·타이머·화면 반영 시점만 다룬다.
  */
+import { newId } from "../api/id";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
@@ -103,7 +104,7 @@ function waitForPaint(): Promise<void> {
 
 export function useSignTerminal(signId: string): TerminalView {
   const instanceRef = useRef<string | null>(null);
-  instanceRef.current ??= crypto.randomUUID();
+  instanceRef.current ??= newId();
   const terminalInstanceId = instanceRef.current;
 
   const offlineRef = useRef(false);
