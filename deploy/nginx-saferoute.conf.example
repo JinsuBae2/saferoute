@@ -1,10 +1,25 @@
 # D02(#28): 웹 정적 파일과 API를 한 주소로 내보낸다(동일 오리진, 설계 04번 9.1절).
 # /etc/nginx/sites-available/saferoute 로 복사해 sites-enabled 에 연결한다. 기본 사이트(default)는 끈다.
+# HTTP(80)는 인증서 확인 요청만 직접 답하고, 나머지는 경로를 유지한 채 HTTPS로 보낸다.
 server {
-    # 공인 주소로 공개한다(2026-11-11 결정). 로그인이 없으므로 조작은 개인 체험방에만 허용한다.
-    # SSH 터널 전용으로 되돌리려면 `listen 127.0.0.1:8080;` 으로 바꾼다.
     listen 80;
     server_name _;
+
+    # 인증서 발급·갱신 확인용(Let's Encrypt http-01). 갱신 때마다 쓰므로 지우지 않는다.
+    location ^~ /.well-known/acme-challenge/ { root /var/www/acme; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    # 공인 주소로 공개한다(2026-11-11 결정). 로그인이 없으므로 조작은 개인 체험방에만 허용한다.
+    # SSH 터널 전용으로 되돌리려면 위 80 서버를 지우고 `listen 127.0.0.1:8080;` 으로 바꾼다.
+    listen 443 ssl;
+    server_name _;
+
+    # 도메인이 없어 공인 IP 인증서를 쓴다(유효기간 약 6일, certbot이 자동 갱신). SAFEROUTE_HOST 를 서버의 공인 IP로 바꾼다.
+    # 개인키는 서버에만 둔다. 발급·갱신 절차는 deploy/README.md 8.5절.
+    ssl_certificate /etc/letsencrypt/live/SAFEROUTE_HOST/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/SAFEROUTE_HOST/privkey.pem;
 
     # 홈 폴더는 다른 계정이 읽지 못한다(0750). 빌드한 web/dist 를 여기로 복사해 쓴다.
     root /var/www/saferoute;
