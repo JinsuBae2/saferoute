@@ -132,6 +132,29 @@ def test_room_detector_still_runs_if_wall_clock_lags_two_ms(setup):
     assert state(client, who)["controller_mode"] == "NORMAL"
 
 
+def test_periodic_sprinkler_keeps_its_sequence_when_room_stages_a_fire(setup):
+    from scenario_runner.config import InitialObservation, ObservationRule
+    client, manager, clock = setup
+    sid = "SPK-F1-PASSAGE-N"
+    manager.scenario = manager.scenario.model_copy(update={
+        "initial_observations": [*manager.scenario.initial_observations,
+            InitialObservation(source_id=sid, event_kind="OBSERVATION", hazard_type=None)],
+        "observation_rules": [*manager.scenario.observation_rules,
+            ObservationRule(source_id=sid, threshold=.5, interval_ms=1000, delay_ms=500)]})
+    who = enter(client)
+    request = ignition_request(client, who, manager, "F1-PASSAGE-N")
+    stage = client.post("/api/room/sim/ignition", headers=who, json=request)
+    assert stage.json()["source_id"] == sid
+    for _ in range(10):
+        clock.advance(500)
+        manager.step_all()
+    observed = state(client, who)
+    assert [c["source_id"] for c in observed["active_causes"]] == ["MANUAL-F1-PASSAGE-N"]
+    assert next(s for s in observed["sources"] if s["source_id"] == sid)["validity"] == "VALID"
+    assert client.get("/api/room/sim/state", headers=who).json()["demo_ignition"]["phase"] == "ACCEPTED"
+    assert all("STALE_SEQUENCE" not in f.read_text(encoding="utf-8") for f in manager.runs_dir.rglob("events.jsonl"))
+
+
 def test_reset_cancels_pending_detector(setup):
     client, manager, clock = setup
     who = enter(client)

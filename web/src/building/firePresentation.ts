@@ -36,7 +36,7 @@ export function simulationFireCells(field: FireSimulation | null | undefined, fl
  * seen에 없는 화재만 돌려주므로 주기적인 상태 갱신으로는 숨긴 층이 다시 켜지지 않는다.
  */
 export function newFireFloors(building: Building, causes: readonly ActiveCause[], seen: ReadonlySet<string>) {
-  const fires = causes.filter((cause) => cause.hazard_type === "FIRE" || cause.ignition_position != null);
+  const fires = causes.filter((cause) => cause.hazard_type === "FIRE");
   const floors = new Set<string>();
   for (const cause of fires) {
     if (seen.has(cause.first_event_id)) continue;

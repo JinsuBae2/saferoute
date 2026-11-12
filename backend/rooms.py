@@ -148,10 +148,12 @@ class Room:
                 return
             # A simulated camera never publishes a VIDEO_AI event or fabricated model confidence.
             source = c.source_config[fire.source_id]
-            if fire.device == "CCTV":
+            # A scenario with its own periodic sprinkler producer owns its sequences and fault rules.
+            # Route the separate staged demonstration via the zone's test source in that configuration.
+            if fire.device == "CCTV" or source.source_id in self.runner.source_sequences:
                 source = next(s for s in c.building.sources if s.zone_id == fire.zone_id
                               and s.source_type == "MANUAL_TEST" and not s.required and "FIRE" in s.allowed_hazard_types)
-            hazard = "SPRINKLER" if fire.device == "SPRINKLER" else "FIRE"
+            hazard = "SPRINKLER" if source.source_type == "SIM_SPRINKLER" else "FIRE"
             event = dict(schema_version=1, run_id=fire.run_id, building_id=c.building.building_id,
                          building_version=c.building.building_version, event_id=fire.event_id,
                          source_id=source.source_id, source_type=source.source_type,
