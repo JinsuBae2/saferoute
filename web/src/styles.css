@@ -1447,3 +1447,19 @@ code {
   gap: 12px;
   align-items: flex-start;
 }
+
+.camera-analysis {
+  box-sizing: border-box;
+  width: min(54rem, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 1.25rem;
+  background: var(--panel, #161a20);
+  color: inherit;
+  border: 1px solid var(--line, #4b5260);
+}
+.camera-analysis::backdrop { background: rgb(0 0 0 / 70%); }
+.camera-analysis > .panel { margin-block: 1rem; }
+.cctv-station .analysis-open { margin-top: .75rem; }
+
+.control__side > .cctv-station:first-child { flex: 0 0 auto; }

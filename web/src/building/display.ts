@@ -68,7 +68,7 @@ export function parseDisplay(value: unknown, building: Building): BuildingDispla
 }
 
 /** nodeId는 지점 이름표의 지점 ID, 카메라 이름표면 null. 출구 이름표를 출구 아이콘과 잇는 데 쓴다. */
-export type SceneLabel = { text: string; floorId: string; position: Position; camera: boolean; priority: number; nodeId: string | null };
+export type SceneLabel = { text: string; floorId: string; position: Position; sourceId?: string; camera: boolean; priority: number; nodeId: string | null };
 
 /** All floors show landmarks; one floor also shows room entrances. */
 export function sceneLabels(building: Building, display: BuildingDisplay | null, visibleFloors: ReadonlySet<string>): SceneLabel[] {
@@ -81,7 +81,7 @@ export function sceneLabels(building: Building, display: BuildingDisplay | null,
     const source = display.sources[registered.source_id];
     const installation = source.installation;
     if (installation === null || !visibleFloors.has(installation.floor_id)) continue;
-    labels.push({ text: source.label + (installation.basis === "SIMULATED" ? " (가상)" : ""), floorId: installation.floor_id, position: installation.position, camera: true, priority: 0, nodeId: null });
+    labels.push({ text: source.label + (installation.basis === "SIMULATED" ? " (가상)" : ""), floorId: installation.floor_id, position: installation.position, camera: true, sourceId: registered.source_id, priority: 0, nodeId: null });
   }
   return labels;
 }

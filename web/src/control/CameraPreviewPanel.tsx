@@ -57,9 +57,9 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
   return (
     <section className="panel">
       <header className="panel__head">
-        <h2>CCTV 추론 미리보기</h2>
+        <h3>입력 영상의 검출 결과</h3>
         <span className="panel__note">
-          AI 분석 프레임입니다. 검출 신뢰도는 정확도가 아니며 경보·경로는 제어기 판단을 따릅니다
+          검출 상자의 %는 해당 프레임에서 모델이 보고한 신뢰도입니다.
         </span>
       </header>
 
@@ -98,7 +98,9 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
                   <p className="camera__blank">
                     {check.usable
                       ? "프레임을 받는 중입니다."
-                      : PREVIEW_BLOCK_LABEL[check.reason]}
+                      : check.reason === "NOT_READY" && view.preview
+                        ? PREVIEW_STATUS_LABEL[view.preview.status]
+                        : PREVIEW_BLOCK_LABEL[check.reason]}
                     {view.preview?.error_code != null && ` — ${PREVIEW_ERROR_LABEL[view.preview.error_code]}`}
                     {view.error !== null && ` (${view.error})`}
                   </p>
