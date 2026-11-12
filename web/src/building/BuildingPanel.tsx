@@ -54,7 +54,7 @@ type Props = {
    */
   readonly onPeopleCount?: (count: PeopleCount | null) => void;
   /** 도면에서 구역(방·복도)을 눌렀을 때. 시연의 화재 위치를 3D에서 바로 고른다(이슈 #21). */
-  readonly onPickZone?: (zoneId: string) => void;
+  readonly onPickZone?: (zoneId: string, position: Position) => void;
   /** 한 번 누를 때 고를 대상. "ZONE"이면 지점 대신 구역을 고른다. */
   readonly pickTarget?: "NODE" | "ZONE";
   /** 고를 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 때 쓴다(이슈 #189). */
@@ -326,6 +326,11 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             </span>
           </div>}
 
+          {state.fire_simulation && <p role="status" className="panel__note">
+            {stale ? "확산 상태 연결 확인 중" : "불·연기 확산 중"} · 발화 후 {Math.floor(Math.max(...state.fire_simulation.fires.map(f=>f.elapsed_ms))/1000)}초
+            {" · "}불이 도달한 지점 {state.fire_simulation.cells.filter(c=>c.fire>0).length}곳 · 차단 통로 {state.blocked_edges.length}개
+            {" · 시연용 확산 / 빨간 바닥은 감지 구역"}
+          </p>}
           {followMessage?.runId === state.run_id && <p role="status" className="panel__note">{followMessage.text}</p>}
           <div className={`first-person-stage${firstPerson ? " first-person-stage--active" : ""}`}>
           <BuildingScene

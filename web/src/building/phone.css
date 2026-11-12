@@ -1,5 +1,7 @@
 .first-person-stage { position:relative; overflow:hidden; border-radius:10px; }
 .first-person-stage--active .scene { height:clamp(540px,72vh,760px); }
+/* 관제의 고정 높이 배치에서도 휴대폰 위쪽 안내가 잘리지 않게 한다. */
+.control__building .first-person-stage--active { min-height:540px; }
 .phone-overlay { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
 .phone-handset { position:absolute; width:310px; height:560px; right:9px; bottom:-35px; transform:translateY(105%) rotate(-7deg); transform-origin:65% 100%; transition:transform .35s ease; }
 .phone-overlay--open .phone-handset { transform:translateY(0) rotate(-7deg); }

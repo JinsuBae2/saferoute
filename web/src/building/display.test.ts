@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { Building } from "@contracts";
+import type { Building, HazardCell } from "@contracts";
 import buildingData from "@space/wfi-v1.json";
 import displayData from "@space/wfi-display-v1.json";
 import { parseDisplay, sceneLabels, visibleLabelIndexes } from "./display";
 
-import { cctvPose } from "./cctv";
+import { cctvPose, cctvSmoke } from "./cctv";
 
 const building = buildingData as Building;
 
@@ -90,4 +90,19 @@ it("aims each WFI camera from its installation into its observed corridor", () =
   }
   expect(cctvPose(building, null, cameras[0].source_id)).toBeNull();
   expect(cctvPose(building, display, "UNKNOWN")).toBeNull();
+});
+
+it("obscures each CCTV only when local spread reaches its lens and clears with the field", () => {
+  const display = parseDisplay(displayData, building);
+  for (const source of building.sources.filter(s => s.source_type === "VIDEO_AI")) {
+    const pose = cctvPose(building, display, source.source_id)!;
+    const cell: HazardCell = { cell_id: "near-lens", zone_id: pose.zoneId,
+      floor_id: display.sources[source.source_id].installation!.floor_id,
+      position: pose.eye, fire: 0, smoke: 1 };
+    expect(cctvSmoke(pose, new Map(), [cell])).toBe(1);
+    expect(cctvSmoke(pose, new Map(), [{ ...cell, position: { ...cell.position, x: cell.position.x + 10 } }])).toBe(0);
+    expect(cctvSmoke(pose, new Map(), [{ ...cell, zone_id: "OTHER" }])).toBe(0);
+    expect(cctvSmoke(pose, new Map(), [])).toBe(0);
+    expect(cctvSmoke(pose, new Map([[pose.zoneId, .7]]), [])).toBe(.7);
+  }
 });

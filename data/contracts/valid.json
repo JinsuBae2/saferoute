@@ -3,9 +3,9 @@
     "model": "Session",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "controller_mode": "INITIALIZING"
     }
   },
@@ -13,9 +13,9 @@
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "22222222-2222-4222-8222-222222222222",
       "source_id": "CAM-A",
       "source_type": "VIDEO_AI",
@@ -26,16 +26,17 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": 4200,
       "confidence": 0.82,
-      "reason_code": null
+      "reason_code": null,
+      "ignition_position": null
     }
   },
   "smoke": {
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "55555555-5555-4555-8555-555555555555",
       "source_id": "CAM-A",
       "source_type": "VIDEO_AI",
@@ -46,16 +47,17 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": 4200,
       "confidence": 0.82,
-      "reason_code": null
+      "reason_code": null,
+      "ignition_position": null
     }
   },
   "normal": {
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "22222222-2222-4222-8222-222222222222",
       "source_id": "CAM-A",
       "source_type": "VIDEO_AI",
@@ -66,16 +68,17 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": 4200,
       "confidence": null,
-      "reason_code": null
+      "reason_code": null,
+      "ignition_position": null
     }
   },
   "unavailable": {
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "22222222-2222-4222-8222-222222222222",
       "source_id": "CAM-A",
       "source_type": "VIDEO_AI",
@@ -86,16 +89,17 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": null,
       "confidence": null,
-      "reason_code": "EOF"
+      "reason_code": "EOF",
+      "ignition_position": null
     }
   },
   "heartbeat": {
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "22222222-2222-4222-8222-222222222222",
       "source_id": "CAM-A",
       "source_type": "VIDEO_AI",
@@ -106,16 +110,17 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": null,
       "confidence": null,
-      "reason_code": null
+      "reason_code": null,
+      "ignition_position": null
     }
   },
   "detector": {
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "22222222-2222-4222-8222-222222222222",
       "source_id": "DETECTOR-A",
       "source_type": "SIM_SMOKE_DETECTOR",
@@ -126,16 +131,17 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": null,
       "confidence": null,
-      "reason_code": null
+      "reason_code": null,
+      "ignition_position": null
     }
   },
   "sprinkler": {
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "22222222-2222-4222-8222-222222222222",
       "source_id": "SPRINKLER-A",
       "source_type": "SIM_SPRINKLER",
@@ -146,16 +152,17 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": null,
       "confidence": null,
-      "reason_code": null
+      "reason_code": null,
+      "ignition_position": null
     }
   },
   "command": {
     "model": "SignCommand",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "guidance_version": 3,
       "sign_id": "SIGN-S",
       "command_id": "33333333-3333-4333-8333-333333333333",
@@ -186,9 +193,9 @@
     "model": "SignCommand",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "guidance_version": 3,
       "sign_id": "SIGN-S",
       "command_id": "33333333-3333-4333-8333-333333333333",
@@ -242,7 +249,7 @@
           "display": "LEFT"
         }
       ],
-      "client_apply_duration_ms": 8,
+      "client_apply_duration_ms": 8.0,
       "error_code": null
     }
   },
@@ -345,7 +352,7 @@
         "B",
         "Y"
       ],
-      "cost": 4,
+      "cost": 4.0,
       "reason_codes": []
     }
   },
@@ -358,7 +365,7 @@
       "path_node_ids": [
         "Y"
       ],
-      "cost": 0,
+      "cost": 0.0,
       "reason_codes": []
     }
   },
@@ -379,9 +386,9 @@
     "model": "StateSnapshot",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "guidance_version": 0,
       "generated_at": "2026-11-10T01:00:00.000Z",
       "controller_mode": "INITIALIZING",
@@ -527,16 +534,17 @@
           "application_status": "NOT_ISSUED",
           "terminals": []
         }
-      ]
+      ],
+      "fire_simulation": null
     }
   },
   "emergency_state": {
     "model": "StateSnapshot",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "guidance_version": 3,
       "generated_at": "2026-11-10T01:00:00.300Z",
       "controller_mode": "EMERGENCY",
@@ -576,7 +584,8 @@
           "hazard_type": "FIRE",
           "first_event_id": "22222222-2222-4222-8222-222222222222",
           "last_event_id": "22222222-2222-4222-8222-222222222222",
-          "activated_at": "2026-11-10T01:00:00.000Z"
+          "activated_at": "2026-11-10T01:00:00.000Z",
+          "ignition_position": null
         }
       ],
       "blocked_nodes": [
@@ -638,7 +647,7 @@
             "B",
             "Y"
           ],
-          "cost": 4,
+          "cost": 4.0,
           "reason_codes": []
         },
         {
@@ -659,7 +668,7 @@
             "B",
             "Y"
           ],
-          "cost": 2,
+          "cost": 2.0,
           "reason_codes": []
         },
         {
@@ -669,7 +678,7 @@
           "path_node_ids": [
             "X"
           ],
-          "cost": 0,
+          "cost": 0.0,
           "reason_codes": []
         },
         {
@@ -679,7 +688,7 @@
           "path_node_ids": [
             "Y"
           ],
-          "cost": 0,
+          "cost": 0.0,
           "reason_codes": []
         },
         {
@@ -716,9 +725,9 @@
           ],
           "latest_command": {
             "schema_version": 1,
-            "run_id": "11111111-1111-4111-8111-111111111111",
             "building_id": "TWO_ROUTE",
             "building_version": 1,
+            "run_id": "11111111-1111-4111-8111-111111111111",
             "guidance_version": 3,
             "sign_id": "SIGN-S",
             "command_id": "33333333-3333-4333-8333-333333333333",
@@ -769,7 +778,7 @@
                     "display": "LEFT"
                   }
                 ],
-                "client_apply_duration_ms": 8,
+                "client_apply_duration_ms": 8.0,
                 "error_code": null
               },
               "received_at": "2026-11-10T01:00:00.300Z",
@@ -793,7 +802,8 @@
           "application_status": "NOT_ISSUED",
           "terminals": []
         }
-      ]
+      ],
+      "fire_simulation": null
     }
   },
   "simulation_state": {
@@ -824,9 +834,9 @@
     "model": "Explanation",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "guidance_version": 3,
       "status": "PENDING",
       "basis_generated_at": "2026-11-10T01:00:00.300Z",
@@ -843,9 +853,9 @@
     "model": "Explanation",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "guidance_version": 3,
       "status": "READY",
       "basis_generated_at": "2026-11-10T01:00:00.300Z",
@@ -866,9 +876,9 @@
     "model": "Explanation",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "guidance_version": 3,
       "status": "UNAVAILABLE",
       "basis_generated_at": "2026-11-10T01:00:00.300Z",
@@ -885,9 +895,9 @@
     "model": "Preview",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "source_id": "CAM-A",
       "generated_at": "2026-11-10T01:00:00.200Z",
       "freshness_ms": 3000,
@@ -931,9 +941,9 @@
     "model": "Preview",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "source_id": "CAM-A",
       "generated_at": "2026-11-10T01:00:00.200Z",
       "freshness_ms": 3000,
@@ -946,9 +956,9 @@
     "model": "Preview",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "source_id": "CAM-A",
       "generated_at": "2026-11-10T01:00:00.200Z",
       "freshness_ms": 3000,
@@ -961,9 +971,9 @@
     "model": "Preview",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "source_id": "CAM-A",
       "generated_at": "2026-11-10T01:00:00.200Z",
       "freshness_ms": 3000,
@@ -976,9 +986,9 @@
     "model": "Preview",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "source_id": "CAM-A",
       "generated_at": "2026-11-10T01:00:00.200Z",
       "freshness_ms": 3000,
@@ -991,9 +1001,9 @@
     "model": "Preview",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "source_id": "CAM-A",
       "generated_at": "2026-11-10T01:00:00.200Z",
       "freshness_ms": 3000,
@@ -1067,9 +1077,9 @@
           "installation": {
             "floor_id": "F1",
             "position": {
-              "x": 0,
-              "y": 2,
-              "z": 0
+              "x": 0.0,
+              "y": 2.0,
+              "z": 0.0
             },
             "basis": "SIMULATED"
           }
@@ -1103,9 +1113,9 @@
     "model": "ObservationEvent",
     "payload": {
       "schema_version": 1,
-      "run_id": "11111111-1111-4111-8111-111111111111",
       "building_id": "TWO_ROUTE",
       "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
       "event_id": "22222222-2222-4222-8222-222222222222",
       "source_id": "MANUAL-A",
       "source_type": "MANUAL_TEST",
@@ -1116,7 +1126,334 @@
       "observed_at": "2026-11-10T01:00:00.000Z",
       "media_time_ms": null,
       "confidence": null,
-      "reason_code": null
+      "reason_code": null,
+      "ignition_position": null
+    }
+  },
+  "progressive_manual_fire": {
+    "model": "ObservationEvent",
+    "payload": {
+      "schema_version": 1,
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "event_id": "22222222-2222-4222-8222-222222222222",
+      "source_id": "MANUAL-A",
+      "source_type": "MANUAL_TEST",
+      "source_sequence": 17,
+      "event_kind": "ALARM",
+      "hazard_type": "FIRE",
+      "validity": "VALID",
+      "observed_at": "2026-11-10T01:00:00.000Z",
+      "media_time_ms": null,
+      "confidence": null,
+      "reason_code": null,
+      "ignition_position": {
+        "x": 5.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  },
+  "progressive_fire_state": {
+    "model": "StateSnapshot",
+    "payload": {
+      "schema_version": 1,
+      "building_id": "TWO_ROUTE",
+      "building_version": 1,
+      "run_id": "11111111-1111-4111-8111-111111111111",
+      "guidance_version": 3,
+      "generated_at": "2026-11-10T01:00:00.300Z",
+      "controller_mode": "EMERGENCY",
+      "sources": [
+        {
+          "source_id": "CAM-A",
+          "validity": "VALID",
+          "last_event_id": "22222222-2222-4222-8222-222222222222",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        },
+        {
+          "source_id": "DETECTOR-A",
+          "validity": "VALID",
+          "last_event_id": "88888888-8888-4888-8888-888888888888",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        },
+        {
+          "source_id": "SPRINKLER-A",
+          "validity": "VALID",
+          "last_event_id": "99999999-9999-4999-8999-999999999999",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        },
+        {
+          "source_id": "DETECTOR-B",
+          "validity": "VALID",
+          "last_event_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "last_observed_at": "2026-11-10T01:00:00.000Z",
+          "last_source_sequence": 17
+        }
+      ],
+      "active_causes": [
+        {
+          "source_id": "MANUAL-A",
+          "hazard_type": "FIRE",
+          "first_event_id": "22222222-2222-4222-8222-222222222222",
+          "last_event_id": "22222222-2222-4222-8222-222222222222",
+          "activated_at": "2026-11-10T01:00:00.000Z",
+          "ignition_position": {
+            "x": 5.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        }
+      ],
+      "blocked_nodes": [
+        {
+          "node_id": "A",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        }
+      ],
+      "blocked_edges": [
+        {
+          "edge_id": "S-A",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        },
+        {
+          "edge_id": "A-S",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        },
+        {
+          "edge_id": "A-X",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        },
+        {
+          "edge_id": "X-A",
+          "source_ids": [
+            "CAM-A"
+          ],
+          "reason_codes": [
+            "ACTIVE_ALARM"
+          ]
+        }
+      ],
+      "routes": [
+        {
+          "node_id": "S",
+          "next_node_id": "B",
+          "exit_id": "EXIT-Y",
+          "path_node_ids": [
+            "S",
+            "B",
+            "Y"
+          ],
+          "cost": 4.0,
+          "reason_codes": []
+        },
+        {
+          "node_id": "A",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "ORIGIN_BLOCKED"
+          ]
+        },
+        {
+          "node_id": "B",
+          "next_node_id": "Y",
+          "exit_id": "EXIT-Y",
+          "path_node_ids": [
+            "B",
+            "Y"
+          ],
+          "cost": 2.0,
+          "reason_codes": []
+        },
+        {
+          "node_id": "X",
+          "next_node_id": null,
+          "exit_id": "EXIT-X",
+          "path_node_ids": [
+            "X"
+          ],
+          "cost": 0.0,
+          "reason_codes": []
+        },
+        {
+          "node_id": "Y",
+          "next_node_id": null,
+          "exit_id": "EXIT-Y",
+          "path_node_ids": [
+            "Y"
+          ],
+          "cost": 0.0,
+          "reason_codes": []
+        },
+        {
+          "node_id": "I",
+          "next_node_id": null,
+          "exit_id": null,
+          "path_node_ids": [],
+          "cost": null,
+          "reason_codes": [
+            "NO_REACHABLE_EXIT"
+          ]
+        }
+      ],
+      "signs": [
+        {
+          "sign_id": "SIGN-S",
+          "faces": [
+            {
+              "face_id": "FRONT",
+              "mode": "DYNAMIC",
+              "display": "RIGHT",
+              "next_node_id": "B",
+              "exit_id": "EXIT-Y",
+              "reason_codes": []
+            },
+            {
+              "face_id": "REAR",
+              "mode": "DYNAMIC",
+              "display": "LEFT",
+              "next_node_id": "B",
+              "exit_id": "EXIT-Y",
+              "reason_codes": []
+            }
+          ],
+          "latest_command": {
+            "schema_version": 1,
+            "building_id": "TWO_ROUTE",
+            "building_version": 1,
+            "run_id": "11111111-1111-4111-8111-111111111111",
+            "guidance_version": 3,
+            "sign_id": "SIGN-S",
+            "command_id": "33333333-3333-4333-8333-333333333333",
+            "command_sequence": 19,
+            "issued_at": "2026-11-10T01:00:00.200Z",
+            "valid_for_ms": 3000,
+            "faces": [
+              {
+                "face_id": "FRONT",
+                "mode": "DYNAMIC",
+                "display": "RIGHT",
+                "next_node_id": "B",
+                "exit_id": "EXIT-Y",
+                "reason_codes": []
+              },
+              {
+                "face_id": "REAR",
+                "mode": "DYNAMIC",
+                "display": "LEFT",
+                "next_node_id": "B",
+                "exit_id": "EXIT-Y",
+                "reason_codes": []
+              }
+            ]
+          },
+          "application_status": "APPLIED",
+          "terminals": [
+            {
+              "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+              "last_ack": {
+                "schema_version": 1,
+                "run_id": "11111111-1111-4111-8111-111111111111",
+                "sign_id": "SIGN-S",
+                "terminal_instance_id": "44444444-4444-4444-8444-444444444444",
+                "command_id": "33333333-3333-4333-8333-333333333333",
+                "command_sequence": 19,
+                "guidance_version": 3,
+                "status": "APPLIED",
+                "faces": [
+                  {
+                    "face_id": "FRONT",
+                    "mode": "DYNAMIC",
+                    "display": "RIGHT"
+                  },
+                  {
+                    "face_id": "REAR",
+                    "mode": "DYNAMIC",
+                    "display": "LEFT"
+                  }
+                ],
+                "client_apply_duration_ms": 8.0,
+                "error_code": null
+              },
+              "received_at": "2026-11-10T01:00:00.300Z",
+              "verified": true
+            }
+          ]
+        },
+        {
+          "sign_id": "SIGN-B",
+          "faces": [
+            {
+              "face_id": "FRONT",
+              "mode": "DYNAMIC",
+              "display": "FORWARD",
+              "next_node_id": "Y",
+              "exit_id": "EXIT-Y",
+              "reason_codes": []
+            }
+          ],
+          "latest_command": null,
+          "application_status": "NOT_ISSUED",
+          "terminals": []
+        }
+      ],
+      "fire_simulation": {
+        "model": "DEMO_GRAPH_V1",
+        "cell_size_m": 2.0,
+        "fires": [
+          {
+            "source_id": "MANUAL-A",
+            "zone_id": "Z-A",
+            "position": {
+              "x": 5.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "elapsed_ms": 1000
+          }
+        ],
+        "cells": [
+          {
+            "cell_id": "origin:MANUAL-A",
+            "zone_id": "Z-A",
+            "floor_id": "F1",
+            "position": {
+              "x": 5.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "fire": 0.23,
+            "smoke": 0.083
+          }
+        ]
+      }
     }
   }
 }

@@ -25,6 +25,15 @@ function setup(state = snapshot()) {
 }
 
 describe("manual fire controls", () => {
+  it("sends the exact picked ignition point and gives dropdown selections an in-zone point", async () => {
+    const { control, api } = setup();
+    const position = { x:28, y:8, z:27 };
+    await control.run({ kind:"ignite", zoneId:"F3-R304", position });
+    expect(api.ignite.mock.calls[0][0].ignition_position).toEqual(position);
+    const another = setup();
+    await another.control.run({ kind:"ignite", zoneId:"F3-R304" });
+    expect(another.api.ignite.mock.calls[0][0].ignition_position).toMatchObject({ y:8 });
+  });
   // 도면 아무 데나 눌러 불을 낼 수 있어야 하므로 모든 구역에 시험 입력이 있어야 한다(이슈 #21).
   // 하나라도 빠지면 그 방은 눌러도 불이 나지 않는다.
   it("registers one optional FIRE input for every zone", () => {

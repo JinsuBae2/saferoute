@@ -1,4 +1,5 @@
-import type { Building, BuildingDisplay, Position } from "@contracts";
+import type { Building, BuildingDisplay, HazardCell, Position } from "@contracts";
+import { localSmoke } from "./firePresentation";
 
 // WFI v5 가상 카메라의 조준점. 위치는 표시 자료, 시야 방향은 복도 안의 시연 지점이다.
 const targets: Readonly<Record<string, string>> = {
@@ -9,6 +10,11 @@ const targets: Readonly<Record<string, string>> = {
 };
 
 export type CctvPose = { eye: Position; target: Position; zoneId: string };
+
+export function cctvSmoke(pose: CctvPose, smokeByZone: ReadonlyMap<string, number> | null | undefined, cells: readonly HazardCell[]): number {
+  return Math.max(smokeByZone?.get(pose.zoneId) ?? 0,
+    localSmoke(cells, pose.zoneId, pose.eye.x, pose.eye.z));
+}
 
 export function cctvPose(building: Building | null, display: BuildingDisplay | null, id: string | null): CctvPose | null {
   if (!id || building?.building_id !== "WFI" || building.building_version !== 5 || !display) return null;

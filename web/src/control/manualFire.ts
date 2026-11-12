@@ -1,4 +1,5 @@
-import type { Building, ClearReceipt, ClearRequest, EventReceipt, ObservationEvent, StateSnapshot } from "@contracts";
+import type { Building, ClearReceipt, ClearRequest, EventReceipt, ObservationEvent, Position, StateSnapshot } from "@contracts";
+import { defaultIgnition } from "../building/firePresentation";
 import { ApiError, clearCause, fetchState, postObservation } from "../api/client";
 
 export function manualFireSources(building: Building) {
@@ -6,7 +7,7 @@ export function manualFireSources(building: Building) {
     && source.allowed_hazard_types.includes("FIRE"));
 }
 
-export type ManualAction = { kind: "ignite" | "clear"; zoneId: string } | { kind: "clear_all" };
+export type ManualAction = { kind: "ignite" | "clear"; zoneId: string; position?: Position | null } | { kind: "clear_all" };
 export type ManualResult = { completed: number; guidanceVersion: number };
 type ManualApi = {
   state: (signal: AbortSignal) => Promise<StateSnapshot>;
@@ -47,6 +48,7 @@ export class ManualFireControl {
           event_id: crypto.randomUUID(), source_id: source.source_id, source_type: "MANUAL_TEST",
           source_sequence: (latest.last_source_sequence ?? 0) + 1, event_kind: "ALARM", hazard_type: "FIRE",
           validity: "VALID", observed_at: state.generated_at, media_time_ms: null, confidence: null, reason_code: null,
+          ignition_position: action.position ?? defaultIgnition(this.building, action.zoneId),
         };
         const receipt = await this.api.ignite(event, signal);
         signal.throwIfAborted();

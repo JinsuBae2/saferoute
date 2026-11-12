@@ -10,7 +10,7 @@
  * 접어 둔 「활성 경보」에서 한다.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contracts";
 import { ApiError, restartSimulation } from "../api/client";
 import { enableSound } from "./alarmSound";
 import { ManualFireControl, manualFireSources } from "./manualFire";
@@ -23,11 +23,12 @@ type Props = {
   readonly connected: boolean;
   /** 도면에서 고른 화재 위치. 비어 있으면 시작할 수 없다. */
   readonly zoneId: string;
+  readonly ignitionPosition?: Position | null;
   /** 내 위치를 골랐는지. 3D가 알려 준다. 경로가 보여야 시작한다. */
   readonly hasStart: boolean;
 };
 
-export function DemoControls({ building, display, state, connected, zoneId, hasStart }: Props) {
+export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, hasStart }: Props) {
   const control = useMemo(() => new ManualFireControl(building, state.run_id), [building, state.run_id]);
   const mounted = useRef(false);
   const busy = useRef(false);
@@ -99,7 +100,7 @@ export function DemoControls({ building, display, state, connected, zoneId, hasS
           className="control__demo-start"
           disabled={disabled || blocked !== null}
           title={blocked ?? "고른 자리에 시험 화재를 냅니다"}
-          onClick={() => void act({ kind: "ignite", zoneId })}
+          onClick={() => void act({ kind: "ignite", zoneId, position: ignitionPosition })}
         >
           시연 시작
         </button>
@@ -113,6 +114,7 @@ export function DemoControls({ building, display, state, connected, zoneId, hasS
           처음부터
         </button>
       </div>
+      <p className="control__demo-note">경보·대피는 즉시 시작하고 불·연기는 점차 퍼집니다. 시연용 확산입니다.</p>
       <p className="control__demo-note" role="status" aria-live="polite">
         {pending ? "서버 응답을 확인하고 있습니다…" : notice?.text ?? blocked ?? "누르면 고른 자리에 화재가 납니다"}
         {notice?.result && (state.guidance_version >= notice.result.guidanceVersion ? " · 반영 확인" : " · 반영 대기")}
