@@ -62,7 +62,8 @@ export function CameraStation({ state, building, display, selectedSourceId, onSe
       {inRoom() && <RoomAiPanel />}
       <CameraPreviewPanel key={input} state={state} building={building} display={display}
         selectedSourceId={input} onSelect={setInput} onLocate={id => { setAnalysis(false); onLocate(id); }} />
-      <p>별도 성능 평가 · 동결 ONNX 모델 · 영상 5개</p>
+      <p>별도 성능 평가 · 동결 ONNX 모델 · 영상 5개<br />
+        <strong>전체 판정 · 기준 미달 (FAIL)</strong> · 목표 정밀도 80% 이상 · 재현율 90% 이상</p>
       <p>불꽃 정밀도 4.55% · 재현율 66.67%<br />연기 정밀도 5.88% · 재현율 100%</p>
       <a href={`https://github.com/JinsuBae2/saferoute/blob/${__SOURCE_COMMIT__}/docs/ai/final-evaluation-closeout.md`}
         target="_blank" rel="noopener noreferrer">평가 조건과 판정 보기</a>
