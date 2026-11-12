@@ -681,7 +681,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         const shown = live.showPeople && from !== null && floorId !== undefined && live.visibleFloors.has(floorId) && (person.status !== "OUT" || exiting);
         // 따라가는 사람 자신은 그리지 않는다. 눈앞에 자기 몸이 걸린다.
         figure.group.visible = shown && index !== live.follow;
-        marker.visible = shown && live.follow === null;
+        marker.visible = shown && live.follow === null && live.cctv === null;
         if (!shown || from === null) return;
         let point = from;
         let heading = new THREE.Vector3();
