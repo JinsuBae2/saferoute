@@ -472,6 +472,7 @@ export function ControlDashboard() {
             building={space.building}
             display={display}
             selectedSourceId={sourceId}
+            ignition={simulation?.demo_ignition}
             stale={stale}
             onSelect={selectCamera}
           />
