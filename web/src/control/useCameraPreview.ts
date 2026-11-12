@@ -102,7 +102,15 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
 
     async function readPair(signal: AbortSignal) {
       const started = performance.now();
-      const current = await fetchPreview(sourceId!, runId!, signal);
+      let current: Preview;
+      try {
+        current = await fetchPreview(sourceId!, runId!, signal);
+      } catch (reason) {
+        usable = false;
+        error = messageOf(reason);
+        publish();
+        return;
+      }
       if (stopped || signal.aborted) return;
       preview = current;
       error = null;
@@ -136,10 +144,8 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
       (signal) => readLatestPreview(() => readPair(signal)),
       () => {},
       (reason) => {
-        // Two replacements in one poll: keep the previous matched pair only until its own deadline.
-        if (replacedFrame(reason)) { publish(); return; }
-        error = messageOf(reason);
-        usable = false;
+        // 최신 이미지 조회·디코딩이 실패해도 직전 그림과 상자는 자체 기한까지 유효하다.
+        if (!replacedFrame(reason)) error = messageOf(reason);
         publish();
       },
       POLL_INTERVAL_MS,
