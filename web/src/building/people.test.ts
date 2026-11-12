@@ -5,7 +5,7 @@ import type { Building, Route } from "@contracts";
 import rawBuilding from "@space/wfi-v1.json";
 
 import type { Person } from "./people";
-import { countPeople, spawnPeople, stepPeople } from "./people";
+import { countPeople, spawnPeople, stepPeople, MAX_CATCH_UP_SECONDS, walkTime } from "./people";
 
 const route = (node: string, next: string | null, reasons: Route["reason_codes"] = []): Route => ({
   node_id: node,
@@ -68,7 +68,7 @@ describe("대피 인원 이동", () => {
     stepPeople(people, blocked, false, TEN_METRES, 5);
     expect(countPeople(people)).toMatchObject({ moving: 0, stuck: 2, out: 0, done: false });
     stepPeople(people, open, false, TEN_METRES, 10);
-    expect(countPeople(people)).toEqual({ total: 2, moving: 0, out: 2, stuck: 0, waiting: 0, done: true });
+    expect(countPeople(people)).toEqual({ total: 2, moving: 0, out: 2, stuck: 0, waiting: 0, done: true, lostSeconds: 0 });
     // 대피 완료는 그대로 남는다.
     stepPeople(people, open, false, TEN_METRES, 10);
     expect(countPeople(people).done).toBe(true);
@@ -81,7 +81,7 @@ describe("대피 인원 이동", () => {
     expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.5, status: "MOVING" });
     stepPeople(people, map, true, TEN_METRES, 20);
     expect(people[0].status).toBe("OUT");
-    expect(countPeople(people)).toEqual({ total: 1, moving: 0, out: 1, stuck: 0, waiting: 0, done: true });
+    expect(countPeople(people)).toEqual({ total: 1, moving: 0, out: 1, stuck: 0, waiting: 0, done: true, lostSeconds: 0 });
   });
 
   it("걷는 중에 안내가 바뀌면 다음 지점에서 바뀐 방향으로 간다", () => {
@@ -179,5 +179,43 @@ describe("대피 인원 배치는 문 목록과 분리돼 있다", () => {
   it("배치 목록이 없는 건물은 예전처럼 방 입구마다 한 명이다", () => {
     const other = { ...wfi, building_id: "OTHER" };
     expect(spawnPeople(other)).toHaveLength(26);
+  });
+});
+
+describe("walkTime (#202)", () => {
+  it("화면을 드물게 그려도 실제 지난 시간이 걷는 시간에서 빠지지 않는다", () => {
+    // 전에는 한 프레임을 0.2초로 묶어 1fps에서 10초 동안 2초만 걸었다.
+    let walked = 0;
+    for (let frame = 0; frame < 10; frame += 1) walked += walkTime(1).walk;
+    expect(walked).toBeCloseTo(10);
+    expect(walkTime(0.1)).toEqual({ walk: 0.1, lost: 0 });
+  });
+
+  it("오래 멈췄다 돌아오면 상한까지만 걷고 나머지는 반영하지 못한 시간으로 돌려준다", () => {
+    expect(walkTime(60)).toEqual({ walk: MAX_CATCH_UP_SECONDS, lost: 60 - MAX_CATCH_UP_SECONDS });
+    expect(walkTime(MAX_CATCH_UP_SECONDS)).toEqual({ walk: MAX_CATCH_UP_SECONDS, lost: 0 });
+  });
+
+  it("시계가 뒤로 가거나 값이 이상해도 뒤로 걷지 않는다", () => {
+    expect(walkTime(-5)).toEqual({ walk: 0, lost: 0 });
+    expect(walkTime(Number.NaN)).toEqual({ walk: 0, lost: 0 });
+  });
+
+  it("같은 시간을 한 번에 걷든 잘게 나눠 걷든 같은 자리에 선다", () => {
+    const table = routes(route("A", "B"), route("B", "C"), route("C", null));
+    const coarse = [person("A")];
+    const fine = [person("A")];
+    for (let i = 0; i < 4; i += 1) stepPeople(coarse, table, true, TEN_METRES, walkTime(1).walk * 3);
+    for (let i = 0; i < 40; i += 1) stepPeople(fine, table, true, TEN_METRES, walkTime(0.1).walk * 3);
+    expect(coarse[0]).toMatchObject({ from: fine[0].from, to: fine[0].to, status: fine[0].status });
+    expect(coarse[0].progress).toBeCloseTo(fine[0].progress);
+  });
+
+  it("돌아온 직후 상태가 오래됐으면 따라잡는 시간도 걷지 않는다", () => {
+    const people = [person("A")];
+    stepPeople(people, routes(route("A", "B"), route("B", null)), true, TEN_METRES, 5);
+    stepPeople(people, routes(route("A", "B"), route("B", null)), true, TEN_METRES, walkTime(60).walk * 3, false);
+    expect(people[0]).toMatchObject({ from: "A", to: "B", progress: 0.5, status: "STUCK" });
+    expect(countPeople(people, 58.7).lostSeconds).toBe(58);
   });
 });

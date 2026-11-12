@@ -1,11 +1,12 @@
 /** 방송 문장·사이렌·출구 호출 판단이 서버 상태만 따르는지 확인한다. */
 import { describe, expect, it } from "vitest";
 
-import type { Building, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 import { emergency_state as emergencySample } from "@samples";
 import rawBuilding from "@space/wfi-v1.json";
+import rawDisplay from "@space/wfi-display-v1.json";
 
-import { alarmLevel, announce, BROADCAST_TEXT, exitCall, exitSound } from "./broadcast";
+import { alarmLevel, alarmPlace, announce, BROADCAST_TEXT, broadcastKey, exitCall, exitSound, LOCATED_TEXT } from "./broadcast";
 
 const BASE: StateSnapshot = emergencySample;
 const cause = (source: string, hazard: "FIRE" | "SMOKE") => ({ ...BASE.active_causes[0], source_id: source, hazard_type: hazard });
@@ -48,6 +49,68 @@ describe("재난 방송", () => {
     const lost = announce(active.memory, withCauses(cause("B", "FIRE")), true);
     expect(lost.announcement).toMatchObject({ siren: true, loop: BROADCAST_TEXT.STALE, once: null });
     expect(lost.memory).toBe(active.memory);
+  });
+});
+
+describe("자리를 부르는 재난 방송", () => {
+  const places = { building: rawBuilding as unknown as Building, display: rawDisplay as unknown as BuildingDisplay };
+  /** 도면에서 고른 시험 화재. 구역 F3-R307의 표시 이름이 그대로 방송에 나와야 한다. */
+  const R307 = "MANUAL-F3-R307";
+  const cell = (zoneId: string, floorId: string, fire: number) => ({
+    cell_id: `cell:${zoneId}`, zone_id: zoneId, floor_id: floorId, position: { x: 0, y: 0, z: 0 }, fire, smoke: 0,
+  });
+  const burning = (zones: readonly (readonly [string, string])[]): StateSnapshot => ({
+    ...withCauses(cause(R307, "FIRE")),
+    fire_simulation: {
+      fires: [{ source_id: R307, zone_id: "F3-R307", position: { x: 0, y: 0, z: 0 }, elapsed_ms: 1000 }],
+      cells: [cell("F3-R307", "F3", 0.2), ...zones.map(([zoneId, floorId]) => cell(zoneId, floorId, 0.2))],
+    },
+  });
+
+  it("도면에서 고른 자리를 불러 준다. 표시 자료가 없으면 예전 문장으로 돌아간다", () => {
+    const located = announce(null, burning([]), false, places).announcement;
+    expect(located.once).toBe(LOCATED_TEXT.fireOnce("3층 307호"));
+    expect(located.loop).toBe(LOCATED_TEXT.fireLoop("3층 307호"));
+    expect(located.loop).toContain("QR");
+    expect(announce(null, burning([]), false).announcement).toMatchObject({ loop: BROADCAST_TEXT.FIRE, once: null });
+    expect(alarmPlace(burning([]), places)).toBe("3층 307호");
+  });
+
+  it("같은 자리를 되풀이해 부르지 않는다", () => {
+    const first = announce(null, burning([]), false, places);
+    expect(announce(first.memory, burning([]), false, places).announcement.once).toBeNull();
+  });
+
+  it("불이 다른 구역에 닿으면 번졌다고 한 번 알린다", () => {
+    const start = announce(null, burning([]), false, places);
+    const spread = announce(start.memory, burning([["F3-CORR-W", "F3"]]), false, places);
+    expect(spread.announcement.once).toBe(LOCATED_TEXT.spread("3층 좌측 복도"));
+    // 같은 구역으로는 다시 알리지 않고, 새 구역이 생기면 그 구역만 부른다.
+    expect(announce(spread.memory, burning([["F3-CORR-W", "F3"]]), false, places).announcement.once).toBeNull();
+    const more = announce(spread.memory, burning([["F3-CORR-W", "F3"], ["F3-STAIR-A", "F3"]]), false, places);
+    expect(more.announcement.once).toBe(LOCATED_TEXT.spread("3층 좌측 계단 A"));
+  });
+
+  it("여러 곳이면 한 곳만 부르고 나머지는 센다", () => {
+    const start = announce(null, burning([]), false, places);
+    const spread = announce(start.memory, burning([["F3-CORR-W", "F3"], ["F3-STAIR-A", "F3"]]), false, places);
+    expect(spread.announcement.once).toBe(LOCATED_TEXT.spread("3층 좌측 복도 외 1곳"));
+  });
+
+  it("해제 안내가 발화·확산 안내보다 먼저다", () => {
+    const start = announce(null, burning([]), false, places);
+    const cleared = announce(start.memory, { ...withCauses(), fire_simulation: null }, false, places);
+    expect(cleared.announcement.once).toBe(BROADCAST_TEXT.ALL_CLEAR);
+    // 모두 풀리면 기억도 비운다. 같은 실행에서 다시 불이 나면 처음처럼 부른다.
+    expect(announce(cleared.memory, burning([]), false, places).announcement.once).toBe(LOCATED_TEXT.fireOnce("3층 307호"));
+  });
+
+  it("불이 닿은 구역이 늘면 방송을 다시 정한다", () => {
+    const key = broadcastKey(burning([]), false, places);
+    expect(broadcastKey(burning([]), false, places)).toBe(key);
+    expect(broadcastKey(burning([["F3-CORR-W", "F3"]]), false, places)).not.toBe(key);
+    // 연결이 끊기면 자리 대신 끊김을 알리므로 열쇠도 달라야 한다.
+    expect(broadcastKey(burning([]), true, places)).not.toBe(key);
   });
 });
 

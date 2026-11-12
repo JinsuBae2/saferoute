@@ -191,13 +191,13 @@ sudo nginx -t && sudo systemctl reload nginx
 curl -s http://127.0.0.1/api/health; curl -s http://127.0.0.1/api/rooms/availability
 ```
 
-브라우저에서 `http://<HOST>`를 열어 개인 체험 시작·화재·해제·초기화·종료를 확인한다. curl 성공만으로 브라우저 확인을 대신하지 않는다.
+브라우저에서 `https://<HOST>`를 열어 개인 체험 시작·화재·해제·초기화·종료를 확인한다. curl 성공만으로 브라우저 확인을 대신하지 않는다.
 
 ### 8.2 공개 범위
 
-2026-11-11에 공인 주소(`http://<HOST>`, 포트 80)로 공개하기로 정했다. Nginx 설정은 로그인 없는 방문자가 자기 개인 체험방만 조작하게 하고, 공동 시연 API(`/api/…`, `/sim/…`)는 읽기만 허용한다. 제어 서버(8000)는 계속 127.0.0.1에만 둔다. 서버 안내문상 1024 이상 포트가 바깥에 열려 있으므로 `--host 0.0.0.0`으로 띄우지 않는다. SSH 터널 전용으로 되돌리려면 `listen 127.0.0.1:8080;`으로 바꾼다.
+2026-11-11에 공인 주소로 공개하기로 정했고, 2026-11-12에 HTTPS(`https://<HOST>`, 포트 443)로 바꿨다(#207). HTTP(포트 80)로 오면 경로를 유지한 채 HTTPS로 보낸다. Nginx 설정은 로그인 없는 방문자가 자기 개인 체험방만 조작하게 하고, 공동 시연 API(`/api/…`, `/sim/…`)는 읽기만 허용한다. 제어 서버(8000)는 계속 127.0.0.1에만 둔다. 서버 안내문상 1024 이상 포트가 바깥에 열려 있으므로 `--host 0.0.0.0`으로 띄우지 않는다. SSH 터널 전용으로 되돌리려면 80 서버를 지우고 `listen 127.0.0.1:8080;`으로 바꾼다.
 
-공개 상태의 한계: HTTPS가 아니다. 한 사람이 쿠키를 지우며 반복 입장해 다섯 자리를 모두 차지하는 것을 막지 않는다(자리는 10분 뒤 반환). 공동 시연 화면(`/#/shared`)은 조작할 수 없는 관람용이 된다. 다른 PC·휴대폰 접속 검수는 D03에서 한다.
+공개 상태의 한계: 도메인이 없어 공인 IP 인증서를 쓰며, 유효기간이 약 6일이라 자동 갱신이 멈추면 며칠 안에 브라우저 경고가 뜬다(8.5절). 한 사람이 쿠키를 지우며 반복 입장해 다섯 자리를 모두 차지하는 것을 막지 않는다(자리는 10분 뒤 반환). 공동 시연 화면(`/#/shared`)은 조작할 수 없는 관람용이 된다. 다른 PC·휴대폰 접속 검수는 D03에서 한다.
 
 ### 8.3 운영 중 볼 것
 
@@ -230,3 +230,43 @@ Homebrew Nginx 두 벌(터널 전용으로 제한을 뺀 설정, 공개용인 �
 | 설명 작업자가 꺼졌을 때 `/api/explanations/current` | 502 | 502 |
 
 확인하지 않은 것: 서버의 실제 설치·systemd 서비스 동작·재부팅 뒤 유지, 다른 PC 브라우저 접속, 뭄바이 왕복 지연, 영상 AI와 Bedrock 설명 연결, 장시간 부하.
+
+### 8.5 HTTPS 인증서 — 공인 IP용, 자동 갱신 (#207)
+
+도메인이 없어 Let's Encrypt의 IP 주소 인증서를 쓴다. `shortlived` 프로필만 IP를 허용하고 유효기간은 160시간(약 6일)이다. 확인은 http-01(포트 80)로 한다. 개인키는 서버의 `/etc/letsencrypt`에만 두고 저장소에 넣지 않는다. 계정은 이메일 없이 등록했고 Let's Encrypt 가입자 약관에 동의한 상태다.
+
+처음 설치할 때의 순서다. Ubuntu 24.04의 apt certbot은 IP 인증서를 지원하지 않는 옛 버전이라 pip로 별도 가상환경에 설치한다(5.4 이상 필요, 2026-11-12 서버는 5.10.0).
+
+```sh
+sudo python3 -m venv /opt/certbot && sudo /opt/certbot/bin/pip install --upgrade pip certbot
+sudo ln -sf /opt/certbot/bin/certbot /usr/local/bin/certbot
+sudo mkdir -p /var/www/acme
+```
+
+Nginx의 80 서버에 `/.well-known/acme-challenge/` 경로가 있어야 한다([nginx-saferoute.conf.example](nginx-saferoute.conf.example)에 들어 있다). 인증서가 아직 없으면 443 서버 때문에 `nginx -t`가 실패하므로, 처음에는 80 서버만 켜고 발급한 뒤 443 서버를 넣는다. `<HOST>`는 서버의 공인 IP다.
+
+```sh
+# 시험 발급(스테이징). 실제 발급 한도를 쓰지 않는다.
+sudo certbot certonly --staging --non-interactive --agree-tos --register-unsafely-without-email \
+  --required-profile shortlived --webroot --webroot-path /var/www/acme --ip-address <HOST>
+# 실제 발급. 갱신되면 Nginx를 다시 읽도록 hook을 함께 저장한다.
+sudo certbot certonly --non-interactive --agree-tos --register-unsafely-without-email \
+  --required-profile shortlived --webroot --webroot-path /var/www/acme --ip-address <HOST> \
+  --cert-name <HOST> --force-renewal --deploy-hook "systemctl reload nginx"
+```
+
+설정 예시의 `SAFEROUTE_HOST`를 공인 IP로 바꿔 설치하고 `sudo nginx -t && sudo systemctl reload nginx`로 반영한다. 다시 읽기는 제어 서버를 건드리지 않아 진행 중인 체험방이 끊기지 않는다.
+
+자동 갱신은 `/etc/cron.d/saferoute-certbot`이 6시간마다 `certbot renew`를 실행한다. certbot은 유효기간이 10일 이하인 인증서를 수명의 절반이 지나면 갱신하므로 약 3일마다 새 인증서를 받는다.
+
+```sh
+printf '%s\n' '17 */6 * * * root /usr/local/bin/certbot renew -q >> /var/log/letsencrypt/saferoute-renew.log 2>&1' | sudo tee /etc/cron.d/saferoute-certbot
+sudo certbot renew --dry-run --run-deploy-hooks   # 갱신 절차 시험(스테이징, 인증서를 바꾸지 않음)
+sudo certbot certificates                          # 만료일 확인
+```
+
+- 발급 한도: 같은 주소는 7일에 5장이다. 정상 갱신만으로 주 2~3장을 쓰므로 `--force-renewal`을 반복하지 않는다. 시험은 `--staging`이나 `--dry-run`으로 한다.
+- 경고가 뜨면 `sudo certbot certificates`로 만료일을, `/var/log/letsencrypt/saferoute-renew.log`와 `letsencrypt.log`로 갱신 실패 이유를 본다. 포트 80이 바깥에서 닿아야 갱신된다.
+- HTTP로 되돌리기: 적용 전 설정을 `/etc/nginx/saferoute-backup/`에 보관했다(`saferoute.http-only.20261112`). 그 파일을 `/etc/nginx/sites-available/saferoute`로 복사하고 `sudo nginx -t && sudo systemctl reload nginx` 한다.
+
+2026-11-12 서버 적용 결과: 발급자 Let's Encrypt(YE1), 만료 2026-11-18 20:18 UTC. `http://<HOST>/some/path?x=1` → 301 `https://<HOST>/some/path?x=1`, `https://<HOST>/` 200(인증서 검증 통과), 공동 시연 조작 POST 403 유지, 제어 서버(8000) 바깥 접속 불가 유지, `certbot renew --dry-run --run-deploy-hooks` 성공. 실제 갱신(약 3일 뒤 첫 자동 갱신)이 일어나는 것은 아직 보지 못했다.

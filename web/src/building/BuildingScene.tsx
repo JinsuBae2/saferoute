@@ -24,7 +24,7 @@ import { doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facad
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
-import { countPeople, spawnPeople, stepPeople } from "./people";
+import { countPeople, spawnPeople, stepPeople, walkTime } from "./people";
 import { loadPeople, savePeople } from "./peopleStore";
 import { nearestPerson } from "./phoneGuide";
 import type { FollowPose } from "./phoneGuide";
@@ -415,7 +415,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
   }, [onPickZone, pickTarget]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
   const firstPersonView = followIndex !== null || cctv !== null;
-  const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string } | null>(null);
+  const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string; lost: number } | null>(null);
 
   const nodeById = useMemo(
     () => new Map(building.nodes.map((node) => [node.node_id, node])),
@@ -661,31 +661,39 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     let lastFollow: number | null = null;
     let lastListenerAt = 0;
     const stairCache: { lift: unknown; geometry: unknown; building: unknown; paths: Map<string, StairTravel | null> } = { lift: null, geometry: null, building: null, paths: new Map() };
-    const movePeople = (seconds: number, time: number) => {
-      const people = peopleRef.current;
-      if (people === null) return;
+    // 층을 오르내리는 구간은 계단 디딤판을 따라 걷는다. 두 지점을 곧게 이으면 허공으로 떨어지는 것처럼 보인다.
+    const stairPath = (fromId: string, toId: string): StairTravel | null => {
       const live = liveRef.current;
-      const at = (nodeId: string) => {
-        const node = live.nodeById.get(nodeId);
-        return node === undefined ? null : new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, live.lift), node.position.z);
-      };
-      // 층을 오르내리는 구간은 계단 디딤판을 따라 걷는다. 두 지점을 곧게 이으면 허공으로 떨어지는 것처럼 보인다.
       if (stairCache.lift !== live.lift || stairCache.geometry !== live.geometry || stairCache.building !== live.building) {
         stairCache.lift = live.lift;
         stairCache.geometry = live.geometry;
         stairCache.building = live.building;
         stairCache.paths.clear();
       }
-      const stairPath = (fromId: string, toId: string): StairTravel | null => {
-        const key = `${fromId}>${toId}`;
-        const cached = stairCache.paths.get(key);
-        if (cached !== undefined) return cached;
-        const a = live.nodeById.get(fromId);
-        const b = live.nodeById.get(toId);
-        const path = a === undefined || b === undefined ? null : stairTravel(live.building, live.geometry, live.lift, a, b);
-        stairCache.paths.set(key, path);
-        return path;
-      };
+      const key = `${fromId}>${toId}`;
+      const cached = stairCache.paths.get(key);
+      if (cached !== undefined) return cached;
+      const a = live.nodeById.get(fromId);
+      const b = live.nodeById.get(toId);
+      const path = a === undefined || b === undefined ? null : stairTravel(live.building, live.geometry, live.lift, a, b);
+      stairCache.paths.set(key, path);
+      return path;
+    };
+    // 사람은 화면을 그리는 횟수가 아니라 실제 지난 시간만큼 걷는다(#202). 화면 갱신과 타이머 양쪽에서 부르며,
+    // 같은 시계를 쓰므로 겹쳐 세지 않는다. 탭이 가려져 화면 갱신이 멈춰도 타이머가 이어 간다.
+    let lastWalk = performance.now();
+    const walkPeople = () => {
+      const now = performance.now();
+      const { walk, lost } = walkTime((now - lastWalk) / 1000);
+      lastWalk = now;
+      const people = peopleRef.current;
+      if (people === null) return;
+      const live = liveRef.current;
+      // 대피 중에 반영하지 못한 시간만 센다. 연결이 끊긴 동안은 원래 서 있으므로 세지 않는다.
+      if (lost > 0 && !live.stale && people.list.some((person) => person.started === true && person.status !== "OUT")) people.lost += lost;
+      people.list.forEach((person, index) => {
+        if (person.status === "OUT" && people.slide[index] < SLIDE_SECONDS && !live.stale) people.slide[index] += walk;
+      });
       const routes = new Map(live.state.routes.map((route) => [route.node_id, route]));
       stepPeople(
         people.list,
@@ -699,10 +707,28 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
           const b = live.nodeById.get(to)?.position;
           return a === undefined || b === undefined ? 1 : Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
         },
-        seconds * PEOPLE_SPEED,
+        walk * PEOPLE_SPEED,
         // 연결이 끊겨 상태가 오래됐으면 옛 경로로 걷지 않고 선다.
         !live.stale,
       );
+      const count = countPeople(people.list, people.lost);
+      const key = `${count.moving}/${count.out}/${count.stuck}/${count.waiting}/${count.lostSeconds}`;
+      if (key !== people.key) {
+        people.key = key;
+        live.onPeople?.(count);
+      }
+    };
+    const walker = setInterval(walkPeople, 250);
+
+    const movePeople = (seconds: number, time: number) => {
+      walkPeople();
+      const people = peopleRef.current;
+      if (people === null) return;
+      const live = liveRef.current;
+      const at = (nodeId: string) => {
+        const node = live.nodeById.get(nodeId);
+        return node === undefined ? null : new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, live.lift), node.position.z);
+      };
       let sliding = false;
       let gazeYaw: number | null = null;
       people.list.forEach((person, index) => {
@@ -712,7 +738,6 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         const floorId = live.nodeById.get(person.from)?.floor_id;
         // 출구에 닿으면 바로 사라지지 않고 미끄럼틀을 타고 밖으로 빠져나간다.
         const exiting = person.status === "OUT" && people.slide[index] < SLIDE_SECONDS;
-        if (exiting && !live.stale) people.slide[index] += seconds;
         const shown = live.showPeople && from !== null && floorId !== undefined && live.visibleFloors.has(floorId) && (person.status !== "OUT" || exiting);
         // 따라가는 사람 자신은 그리지 않는다. 눈앞에 자기 몸이 걸린다.
         figure.group.visible = shown && index !== live.follow;
@@ -765,12 +790,6 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         marker.position.set(point.x, point.y + 2.4, point.z);
         marker.material.color.setHex(person.status === "STUCK" ? COLOR.personStuck : COLOR.person);
       });
-      const count = countPeople(people.list);
-      const key = `${count.moving}/${count.out}/${count.stuck}/${count.waiting}`;
-      if (key !== people.key) {
-        people.key = key;
-        live.onPeople?.(count);
-      }
       // 1인칭: 고른 사람의 눈높이에서 걷는 방향을 본다.
       const justPicked = live.follow !== lastFollow;
       if (live.follow === null && lastFollow !== null) live.onListener?.(null);
@@ -856,7 +875,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       const visible = visibleLabelIndexes(labels.map((label) => label.box));
       labels.forEach((label, index) => { label.sprite.visible = visible.has(index); });
       const now = performance.now();
-      // 탭이 숨었다 돌아오면 한 번에 멀리 뛰지 않게 한 프레임의 시간을 묶는다.
+      // 불꽃·시점 같은 화면 효과만 한 프레임의 시간을 묶는다. 사람의 이동 시간은 walkPeople이 따로 센다.
       const seconds = Math.min((now - lastFrame) / 1000, 0.2);
       const time = now / 1000;
       lastFrame = now;
@@ -903,6 +922,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
 
     return () => {
       cancelAnimationFrame(frame);
+      clearInterval(walker);
       observer.disconnect();
       controls.removeEventListener("change", keepInside);
       renderer.domElement.removeEventListener("pointerdown", onDown);
@@ -959,7 +979,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     });
     // 이미 탈출한 사람이 새로고침 뒤에 미끄럼틀을 다시 타지 않게 한다.
     peopleRef.current = { list, group, figures, markers, yaw: facing, slope: list.map(() => 0),
-      slide: list.map((person) => (person.status === "OUT" && saved !== null ? SLIDE_SECONDS : 0)), key: "" };
+      slide: list.map((person) => (person.status === "OUT" && saved !== null ? SLIDE_SECONDS : 0)), key: "", lost: 0 };
     if (saved !== null && saved.follow !== null && list[saved.follow].status !== "OUT") liveRef.current.onFollow?.(saved.follow);
     const store = () => {
       try { savePeople(localStorage, scope, state.run_id, building, list, liveRef.current.follow); } catch { /* 저장 실패는 복원만 빠진다 */ }

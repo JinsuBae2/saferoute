@@ -2,7 +2,7 @@
  * 재난 방송에 무엇을 내보낼지 정하는 순수 로직. 소리를 내지 않고, 경로나 방향을 계산하지 않는다.
  * 서버가 확정한 경보와 경로만 말로 옮긴다. AI 상황 설명은 여기 들어오지 않는다.
  */
-import type { Building, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 
 export type AlarmLevel = "NONE" | "SMOKE" | "FIRE";
 
@@ -15,13 +15,89 @@ export const BROADCAST_TEXT = {
   EXIT: "이쪽 출구로 대피하십시오.",
 } as const;
 
+/**
+ * 자리를 아는 방송. 어디서 났는지 알 때만 쓰고, 모르면 위의 자리 없는 문장으로 돌아간다.
+ * 처음 한 번(once)은 짧게 알리고, 되풀이(loop)에서 QR 안내까지 말한다. 첫 문장이 길면 뒤따르는 확산 안내가 늦는다.
+ */
+export const LOCATED_TEXT = {
+  fireOnce: (place: string) => `${place}에서 화재가 발생하였습니다. 인근에 계신 분은 즉시 대피하십시오.`,
+  fireLoop: (place: string) => `${place}에서 화재가 발생하였습니다. 인근에 계신 분은 즉시 대피하시고, 거리가 있는 곳에 계신 분은 가까운 QR로 대피 경로를 확인해 주십시오.`,
+  smoke: (place: string) => `${place}에서 연기가 감지되었습니다. 대피 안내를 확인해 주십시오.`,
+  spread: (place: string) => `불이 ${place}까지 번졌습니다. 아직 대피하지 못하셨다면 즉시 대피하십시오.`,
+} as const;
+
+/** 경보가 난 자리를 말로 옮길 때 쓰는 이름표. 어느 한쪽이라도 없으면 자리를 부르지 않는다. */
+export type Places = { readonly building: Building | null; readonly display: BuildingDisplay | null };
+
+const unique = (values: readonly string[]) => [...new Set(values)];
+
+function zoneLabel(places: Places | null, zoneId: string): string | null {
+  const label = places?.display?.zone_labels[zoneId];
+  return typeof label === "string" && label.length > 0 ? label : null;
+}
+
+/**
+ * 여러 곳이면 한 곳만 부르고 나머지는 센다. 방송 문장이 길어지면 다음 안내가 그만큼 늦는다.
+ * 이름표를 모르는 구역은 말할 수 없으므로 뺀다.
+ */
+function placePhrase(places: Places | null, zoneIds: readonly string[]): string | null {
+  const labels = zoneIds.map((zoneId) => zoneLabel(places, zoneId)).filter((label): label is string => label !== null);
+  if (labels.length === 0) return null;
+  return labels.length === 1 ? labels[0] : `${labels[0]} 외 ${labels.length - 1}곳`;
+}
+
+/**
+ * 지금 경보가 난 구역. 화재면 화재 원인만, 연기 단계면 남은 원인 모두를 본다.
+ * 확산 자료가 있으면 그쪽이 정확하다(도면에서 고른 자리). 없으면 원인 설비가 맡은 구역으로 본다.
+ * 이름표를 모르는 구역은 빼므로, 표시 자료가 늦게 와도 그때 처음으로 부른다.
+ */
+function originZones(state: StateSnapshot, places: Places | null, level: AlarmLevel): string[] {
+  if (level === "NONE") return [];
+  const causes = level === "FIRE" ? state.active_causes.filter((cause) => cause.hazard_type === "FIRE") : state.active_causes;
+  const simulated = new Map((state.fire_simulation?.fires ?? []).map((fire) => [fire.source_id, fire.zone_id]));
+  const zones = causes.map((cause) => simulated.get(cause.source_id)
+    ?? places?.building?.sources.find((source) => source.source_id === cause.source_id)?.zone_id);
+  return unique(zones.filter((zoneId): zoneId is string => zoneId !== undefined && zoneLabel(places, zoneId) !== null));
+}
+
+/** 불이 닿은 구역 가운데 발화 구역이 아닌 곳. 번졌다고 알릴 대상이다. */
+function spreadZones(state: StateSnapshot, places: Places | null, origins: readonly string[]): string[] {
+  const reached = (state.fire_simulation?.cells ?? []).filter((cell) => cell.fire > 0).map((cell) => cell.zone_id);
+  return unique(reached).filter((zoneId) => !origins.includes(zoneId) && zoneLabel(places, zoneId) !== null);
+}
+
+const stateKey = (state: StateSnapshot, zones: readonly string[]) => [
+  state.run_id,
+  state.active_causes.map((cause) => `${cause.source_id}:${cause.hazard_type}`).sort().join(","),
+  [...zones].sort().join(","),
+].join("/");
+
+/**
+ * 방송을 다시 정해야 하는 때를 나타내는 열쇠. 경보 구성·연결 상태·불이 닿은 구역·이름표가 바뀔 때만 달라진다.
+ * 1초마다 오는 상태 갱신만으로 같은 문장이 처음부터 되풀이되지 않게 하는 것이 목적이다.
+ */
+/** 지금 경보가 난 자리를 한 마디로("3층 307호", "3층 307호 외 2곳"). 모르면 null이고 화면에서도 자리를 숨긴다. */
+export function alarmPlace(state: StateSnapshot, places: Places | null): string | null {
+  return placePhrase(places, originZones(state, places, alarmLevel(state)));
+}
+
+export function broadcastKey(state: StateSnapshot, stale: boolean, places: Places | null = null): string {
+  const origins = originZones(state, places, alarmLevel(state));
+  return `${stateKey(state, [...origins, ...spreadZones(state, places, origins)])}/${stale}`;
+}
+
 /** 화재가 하나라도 있으면 화재, 연기·스프링클러만 있으면 연기 방송이다. */
 export function alarmLevel(state: StateSnapshot): AlarmLevel {
   if (state.active_causes.some((cause) => cause.hazard_type === "FIRE")) return "FIRE";
   return state.active_causes.length > 0 ? "SMOKE" : "NONE";
 }
 
-export type BroadcastMemory = { readonly runId: string; readonly count: number };
+export type BroadcastMemory = {
+  readonly runId: string;
+  readonly count: number;
+  /** 자리를 이미 불러 준 구역. 같은 곳을 되풀이해 알리지 않는다. 경보가 모두 풀리면 비운다. */
+  readonly spoken?: readonly string[];
+};
 export type Announcement = {
   /**
    * 이 방송이 만들어진 경보 상태(실행 + 활성 경보 구성). 한 번짜리 문장은 이 상태에서만 유효하다.
@@ -40,17 +116,47 @@ export type Announcement = {
  * 직전 상태와 비교해 이번에 내보낼 방송을 정한다.
  * 화면이 다시 그려져도 경보 수가 그대로면 once가 없어 같은 문장이 처음부터 되풀이되지 않는다.
  * stale: 제어기 상태를 제때 읽지 못함. 마지막으로 확인한 경보는 유지하되 방향 대신 연결 끊김을 알린다.
+ *
+ * places를 주면 어디서 났는지까지 말한다. 순서는 해제 → 새 발화 → 확산이다.
+ * 해제가 먼저인 것은 이미 난 불보다 "안전해졌다"가 급하기 때문이고, 발화가 확산보다 먼저인 것은
+ * 불이 번지기 전에 어디서 났는지부터 알려야 하기 때문이다. 한 번 부른 구역은 기억해 두고 다시 부르지 않는다.
  */
-export function announce(previous: BroadcastMemory | null, state: StateSnapshot, stale: boolean): { memory: BroadcastMemory; announcement: Announcement } {
+export function announce(
+  previous: BroadcastMemory | null,
+  state: StateSnapshot,
+  stale: boolean,
+  places: Places | null = null,
+): { memory: BroadcastMemory; announcement: Announcement } {
   const count = state.active_causes.length;
   const level = alarmLevel(state);
-  const before = previous !== null && previous.runId === state.run_id ? previous.count : 0;
-  const once = stale || before <= count ? null : count === 0 ? BROADCAST_TEXT.ALL_CLEAR : BROADCAST_TEXT.PARTIAL;
+  const same = previous !== null && previous.runId === state.run_id;
+  const before = same ? previous.count : 0;
+
+  const origins = originZones(state, places, level);
+  const spread = spreadZones(state, places, origins);
+  const known = new Set(same ? previous.spoken ?? [] : []);
+  const freshOrigins = origins.filter((zoneId) => !known.has(zoneId));
+  const freshSpread = spread.filter((zoneId) => !known.has(zoneId));
+
+  const here = placePhrase(places, origins);
+  const loop = level === "NONE" ? null
+    : stale ? BROADCAST_TEXT.STALE
+    : here === null ? BROADCAST_TEXT[level]
+    : level === "FIRE" ? LOCATED_TEXT.fireLoop(here) : LOCATED_TEXT.smoke(here);
+
+  const startPlace = placePhrase(places, freshOrigins);
+  const spreadPlace = placePhrase(places, freshSpread);
+  const once = stale ? null
+    : before > count ? (count === 0 ? BROADCAST_TEXT.ALL_CLEAR : BROADCAST_TEXT.PARTIAL)
+    : startPlace !== null ? (level === "FIRE" ? LOCATED_TEXT.fireOnce(startPlace) : LOCATED_TEXT.smoke(startPlace))
+    : spreadPlace !== null ? LOCATED_TEXT.spread(spreadPlace)
+    : null;
+
   return {
     // 연결이 끊긴 동안에는 기억을 바꾸지 않는다. 다시 이어졌을 때의 변화를 놓치지 않기 위해서다.
-    memory: stale && previous !== null ? previous : { runId: state.run_id, count },
-    announcement: { key: `${state.run_id}/${state.active_causes.map((cause) => `${cause.source_id}:${cause.hazard_type}`).sort().join(",")}`,
-      siren: level !== "NONE", loop: level === "NONE" ? null : stale ? BROADCAST_TEXT.STALE : BROADCAST_TEXT[level], once },
+    memory: stale && previous !== null ? previous
+      : { runId: state.run_id, count, spoken: count === 0 ? [] : [...known, ...freshOrigins, ...freshSpread] },
+    announcement: { key: stateKey(state, [...origins, ...spread]), siren: level !== "NONE", loop, once },
   };
 }
 
