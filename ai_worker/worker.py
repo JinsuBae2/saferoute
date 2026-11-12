@@ -9,7 +9,7 @@ from .video import inspect_video
 
 
 def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=None,
-        video_probe=inspect_video, preview_url=None, publisher_factory=None):
+        video_probe=inspect_video, preview_url=None, publisher_factory=None, preview_only=False):
     clock = clock or Clock()
     if cv2_module is None:
         import cv2 as cv2_module
@@ -22,9 +22,11 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
     if state.run_id != session.run_id:
         raise WorkerError("RUN_OR_BUILDING_CHANGED")
     owned = next(s for s in state.sources if s.source_id == config.source_id)
-    if owned.last_source_sequence is not None:
+    if not preview_only and owned.last_source_sequence is not None:
         raise WorkerError("SOURCE_ALREADY_USED_RESET_REQUIRED")
     directory = runs_dir / session.run_id
+    if preview_only:
+        directory = directory / "video-demos" / str(uuid4())
     directory.mkdir(parents=True, exist_ok=True)
     # This producer owns only its own file, never the controller's events/manifest.
     with (directory / "ai-predictions.jsonl").open("x", encoding="utf-8") as stream:
@@ -38,7 +40,7 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
 
         builder = EventBuilder(config, session)
         sender = EventSender(client, config, session, source.freshness_ms, log, clock)
-        log("start", config=config.model_dump(mode="json"), video_sha256=video_sha256,
+        log("start", preview_only=preview_only, config=config.model_dump(mode="json"), video_sha256=video_sha256,
             video_name=video.name, mapped_zone_id=source.zone_id,
             runtime=getattr(detector, "metadata", None),
             model_status="development_candidate_A01_not_final")
@@ -53,6 +55,8 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                 preview = (publisher_factory or Publisher)(preview_url, session, source)
             except Exception as error:
                 log("preview_unavailable", error_type=type(error).__name__)
+                if preview_only:
+                    raise
         try:
             inspection = video_probe(video)
             log("video_preflight", **inspection)
@@ -71,8 +75,9 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                         failure_reason = "NO_ANALYZED_FRAMES"
                         raise WorkerError("NO_ANALYZED_FRAMES")
                     can_notify = False
-                    sender.send(builder.unavailable("EOF", clock.utcnow(), last_media))
-                    sent += 1
+                    if not preview_only:
+                        sender.send(builder.unavailable("EOF", clock.utcnow(), last_media))
+                        sent += 1
                     preview_reason = "EOF"
                     break
                 timestamp = cap.get(cv2_module.CAP_PROP_POS_MSEC)
@@ -88,6 +93,9 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                 if media_ms < next_due:
                     continue
                 next_due = (media_ms // config.interval_ms + 1) * config.interval_ms
+                # Pace a file demo before acquiring pixels so playback wait does not consume frame freshness.
+                if preview_only:
+                    clock.sleep(max(0.0, epoch + timestamp / 1000 - clock.monotonic()))
                 # Materialize pixels only for scheduled samples; still grab/count every frame.
                 ok, frame = cap.retrieve()
                 acquired_at, acquired_mono = clock.utcnow(), clock.monotonic()
@@ -99,13 +107,14 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
                     log("skip_late_frame", frame_index=frames-1, media_time_ms=media_ms,
                         lateness_ms=lateness_ms)
                     continue
-                clock.sleep(max(0.0, epoch + timestamp / 1000 - clock.monotonic()))
+                if not preview_only:
+                    clock.sleep(max(0.0, epoch + timestamp / 1000 - clock.monotonic()))
                 failure_reason = "INFERENCE_FAILED"
                 detections = detector.predict(frame)
                 completed_at = clock.utcnow()
                 last_media, samples = media_ms, samples + 1
                 failure_reason = "INVALID_DETECTION"
-                events = builder.observation(media_ms, acquired_at, detections)
+                events = [] if preview_only else builder.observation(media_ms, acquired_at, detections)
                 frame_id = str(uuid4()) if preview is not None else None
                 log("prediction", frame_index=frames-1, media_time_ms=media_ms,
                     preview_frame_id=frame_id,
@@ -142,7 +151,7 @@ def run(config, video, client, runs_dir, detector, *, clock=None, cv2_module=Non
             if reason == "INVALID_DETECTION":
                 preview_reason = "INFERENCE_FAILED"
             log("failed", reason_code=reason, error_type=type(error).__name__, detail=str(error))
-            if can_notify:
+            if can_notify and not preview_only:
                 try:
                     sender.send(builder.unavailable(reason, clock.utcnow(), last_media))
                 except Exception as delivery_error:

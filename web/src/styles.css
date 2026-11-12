@@ -1476,7 +1476,7 @@ code {
 }
 .camera-analysis::backdrop { background: rgb(0 0 0 / 70%); }
 .camera-analysis > .panel { margin-block: 1rem; }
-.cctv-station .analysis-open { margin-top: .75rem; }
+.demo-replay { display: block; width: 100%; aspect-ratio: 16 / 9; background: #111; margin-block: .75rem; }
 
 .control__side > .cctv-station:first-child { flex: 0 0 auto; }
 

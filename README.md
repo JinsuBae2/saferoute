@@ -4,9 +4,11 @@
 
 [2026 동북권 개발자 대상 오픈소스 아이디어 경진대회](https://hackathon.tbitcloud.com/northeast-oss)의 지정 주제 **AI 기반 재난 대응 행동요령 안내 서비스**를 건물 화재의 대피 방향 안내로 구체화합니다. 감지는 오픈소스 불꽃·연기 모델, 경로·유도등 판단은 제어 알고리즘, 상황 설명은 Amazon Bedrock이 담당합니다. 설명이 실패해도 제어는 계속 동작하도록 설계합니다. 공식 기준과 주제 대응은 [기획서 0절](docs/01-project-proposal.md#0-공식-대회-기준과-주제-대응)을 참고하세요.
 
-현재 develop에는 공통 계약·제어 API·경로·명령/ACK·시험 도구, 관제·단말·3D 화면, 실제 영상 AI 이벤트·장애 처리·영상별 평가 집계 도구와 별도 Bedrock 설명 API가 반영되어 있습니다. 평가5개 전체 실행과 AI 보조 설명 대조는 최종 기록에 정리했습니다. 성능 기준 미달과 담당5 사람의 독립 검수 미수행을 구분하며, WFI 전체 통합·지원 서버 배포 인수는 별도입니다. A01 #9에서 xiazh 0.25를 평가·향후 통합 시연 대상으로 선정하고 자체 코드 AGPL-3.0-only를 결정했습니다. 후속 #125의 선택형 개발 프로필은 연기 사건 정밀도와 저해상도 30분 처리 결과를 개선했지만 불꽃 정밀도 미달은 남습니다. 기존 선정 PT 설정의 마지막 지속 시험은 늦은 샘플 폐기3건으로 기준 미달이며, 새 프로필의 폐기0 결과로 대체하지 않습니다. 성능 합격·운영 배포 승인은 아닙니다. 초기 서버 CPU 실측·자체 API 전송 결과와 AV1 실패·샘플 누락·연기 EOF 전 STALE 한계는 [A01-2 기록](docs/ai/a01-server-validation.md)에 보존합니다.
+[공개 시연 시작 · 개인 체험](https://15.252.254.149/#/room) · [공동 관제](https://15.252.254.149/#/shared)
 
-현재 마감 평가와 담당1 종료 범위는 [A03·A04·A05 최종 기록](docs/ai/final-evaluation-closeout.md)을 기준으로 합니다. 평가 전 고정·5개 전체 실행 결과와 AI 보조 검수의 한계를 연결하며, 아래 이전 단계의 미정 표기는 당시 상태입니다. 담당5 사람의 독립 검수와 WFI 공동 인수는 별도입니다.
+개인 체험에서 화재 위치와 출발점을 선택해 대피 시나리오를 시작합니다. CCTV는 선택한 위치에서 3D 건물을 보여줍니다. **예시 영상으로 AI 분석 보기**를 누르면 각 브라우저에서 모델의 검출 결과 영상을 처음부터 재생합니다. **새로 추론하기**에서는 같은 예시 영상을 모델로 다시 분석할 수 있습니다.
+
+[모델 선정과 라이선스](docs/ai/a01-selection-acceptance.md) · [AI 평가 결과와 독립 검수 현황](docs/ai/final-evaluation-closeout.md) · [서버 추론 검증](docs/ai/a01-server-validation.md)
 
 ## 개발 문서
 
@@ -36,7 +38,7 @@ Bedrock 설명의 별도 계약·허용 근거는 [A05-1](docs/ai/a05-explanatio
 
 CCTV 표시용 계약·샘플은 [A06-1](docs/ai/a06-preview-contract.md), 실제 프레임/JPEG 송출·조회·장애 격리와 개발 검증은 [A06 실행 인계](docs/ai/a06-preview-delivery.md)에 있습니다. 관제·3D 화면 연결은 담당 3의 #74 / PR #115로 반영됐으며 공동 인수 검증과는 구분합니다.
 
-발표용 **AI 시연 보기**는 기존 관제 상단에서 전환합니다. 영상·검출 상자와 3D를 함께 보고 선택 카메라의 경보·차단, 건물 전체 경로·단말 상태를 구분합니다. [WFI 실행 방법과 실제 확인 범위](docs/ai/presentation-view.md)를 참고하세요. 미리보기 API와 AI 명령의 `--preview-url`이 모두 필요하며, 모델 신뢰도는 평가 정확도가 아닙니다.
+발표 순서와 운영용 영상 작업기의 실행 방법은 [AI·3D 시연 안내](docs/ai/presentation-view.md)에 있습니다.
 
 최신 [#125 개선 결과](docs/ai/a01-performance-improvement.md)는 별도 [OpenVINO/CLAHE/native 설정](configs/ai.xiazh.clahe.native.development.json)에서 개발 SMOKE 정밀도 2/3→2/2, FIRE 1/2 유지, 서버의 저해상도 정상 반복 30분20초에서 3,641/3,641 분석·폐기0·관측 만료0을 확인했습니다. 기존 선정 PT 설정과 평가 동결 제안서는 자동 교체하지 않았습니다. 개발 표본의 개선이며 고해상도 위험 영상 장시간 처리·다중 카메라·독립 평가 통과를 뜻하지 않습니다. [현재 인계·담당별 다음 작업](docs/ai/role1-handoff.md)을 기준으로 진행합니다.
 
@@ -171,7 +173,7 @@ python -m tools.verify_run runs/RUN_ID
 
 운영 도구의 다른 서버 접속은 `python -m tools.control --url http://127.0.0.1:8000 state`처럼 지정합니다. 직접 관측 전송은 `python -m tools.control event --file 관측.json`입니다. 설정 검사는 성공 0·오류 2, control은 성공 0·통신/서버 오류 1·입력 오류 2, 로그 검증은 PASS 0·FAIL 1·인자 오류 2를 반환합니다. 실행기는 잘못된 설정이면 2, 기동 실패면 비정상 종료합니다. 연결 실패·시간 초과·제어기 `CONTROLLER_BUSY` 응답은 `CONTROLLER_UNAVAILABLE`로 표시하고 1초 간격으로 재시도합니다. 연결되면 초기화 없이 이어 가며 오래된 관측은 제어기가 거부합니다. 그 밖의 HTTP 오류·잘못된 응답·실행 불일치·기록 실패 등은 `/sim/state`의 FAILED·error_code로 표시하며 자동 재시작하지 않습니다.
 
-제어기의 `/api/state`·`/api/session`과 개인 체험방의 `/api/room/state`·`/api/room/session` 조회는 250ms 안에 상태를 얻지 못하면 503 `CONTROLLER_BUSY`와 `Retry-After: 1`을 반환합니다. 조회 대기는 제어기별로 분리하며, 같은 방의 브라우저와 내부 작업기는 진행 중인 조회 하나를 공유합니다. 저장 중인 작업은 취소하지 않으며 앞선 조회 결과를 새 요청에 재사용하지 않습니다. 개인 체험방 실행기가 초기화 후 재연결 중이면 상태·방 정보 조회도 503 `CONTROLLER_UNAVAILABLE`로 응답합니다. `/sim/state`는 마지막 완료된 작업의 상태를 제공하고, 진행 중 작업이 250ms를 넘기면 `CONTROLLER_UNAVAILABLE`로 표시합니다. 아직 실행에 연결되지 않았거나 초기화 뒤 재연결 중이면 503을 반환합니다. OS나 이벤트 루프 자체가 멈춘 경우까지 250ms 응답을 보장하지는 않습니다. 250ms 이상 걸린 조회·감사 저장은 `slow_controller_snapshot`·`slow_audit_write` 로그로 남깁니다. 후자는 직렬화·쓰기/flush·fsync 시간과 스레드 CPU 시간을 구분하며 관측 내용은 포함하지 않습니다. 기존 감사 로그 순서·저장 완료 조건과 관측 만료 기준은 유지합니다.
+제어기의 `/api/state`·`/api/session`과 개인 체험방의 `/api/room/state`·`/api/room/session` 조회는 250ms 안에 상태를 얻지 못하면 503 `CONTROLLER_BUSY`와 `Retry-After: 1`을 반환합니다. 조회 대기는 제어기별로 분리하며, 같은 방의 브라우저와 내부 작업기는 진행 중인 조회 하나를 공유합니다. 저장 중인 작업은 취소하지 않으며 앞선 조회 결과를 새 요청에 재사용하지 않습니다. 개인 체험방 실행기가 초기화 후 재연결 중이면 상태·방 정보 조회도 503 `CONTROLLER_UNAVAILABLE`로 응답합니다. `/sim/state`는 마지막 완료된 작업의 상태를 제공하고, 진행 중 작업이 250ms를 넘겨도 `CONTROLLER_UNAVAILABLE`로 표시하므로 화면에서는 감지 상태 갱신 지연으로 안내합니다. 아직 실행에 연결되지 않았거나 초기화 뒤 재연결 중이면 503을 반환합니다. OS나 이벤트 루프 자체가 멈춘 경우까지 250ms 응답을 보장하지는 않습니다. 250ms 이상 걸린 조회·감사 저장은 `slow_controller_snapshot`·`slow_audit_write` 로그로 남깁니다. 후자는 직렬화·쓰기/flush·fsync 시간과 스레드 CPU 시간을 구분하며 관측 내용은 포함하지 않습니다. 기존 감사 로그 순서·저장 완료 조건과 관측 만료 기준은 유지합니다.
 
 B04 집중 검사: `python -m pytest tests/test_operating_tools.py tests/test_scenario_runner.py tests/test_audit_lifecycle.py tests/test_run_verification.py -q`. 초기화·지연·누락·역순·손상 로그와 기존 B01/B03의 오래된 입력·ACK 방어를 함께 확인합니다. 실제 화면 검수는 P01·I01에서 수행합니다.
 

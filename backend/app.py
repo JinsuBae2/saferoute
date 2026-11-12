@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from uuid import uuid4
 from weakref import WeakValueDictionary
 import httpx
 from fastapi import APIRouter, FastAPI, Request
@@ -59,9 +60,16 @@ def ai_launcher(manager, runs_root):
 
     def launch(room, run_id):
         # The worker names its room with the internal credential; it never holds a browser cookie.
-        environment = os.environ | {"SAFEROUTE_ROOM_ID": room.room_id, "SAFEROUTE_INTERNAL_TOKEN": manager.internal_token}
-        return subprocess.Popen([sys.executable, "-m", "ai_worker", "--config", config, "--video", video,
-                                 "--controller", origin, "--preview-url", origin,
+        source = json.loads(Path(config).read_text(encoding="utf-8"))["source_id"]
+        attempt = str(uuid4())
+        with room.extras_lock:
+            room.extras["ai_demo"] = (run_id, attempt, source)
+            room.extras.pop("preview", None)
+        environment = os.environ | {"SAFEROUTE_ROOM_ID": room.room_id, "SAFEROUTE_INTERNAL_TOKEN": manager.internal_token,
+                                    "SAFEROUTE_DEMO_ATTEMPT": attempt}
+        python = os.environ.get("SAFEROUTE_AI_PYTHON", sys.executable)
+        return subprocess.Popen([python, "-m", "ai_worker", "--config", config, "--video", video,
+                                 "--controller", origin, "--preview-url", origin, "--preview-only",
                                  "--runs-dir", str(Path(runs_root) / "rooms" / room.room_id)],
                                 cwd=ROOT, env=environment, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return launch
@@ -264,15 +272,25 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
             return JSONResponse(status_code=503,content={"error":{"code":"CONTROLLER_UNAVAILABLE","message":str(error),"field":None}})
         return room.runner.state()
 
+    def demo_status(room, status):
+        with room.extras_lock:
+            demo = room.extras.get("ai_demo")
+            if demo and demo[0] == status["run_id"] and status["state"] == "RUNNING":
+                return {**status, "source_id": demo[2]}
+        return status
+
     @app.get("/api/room/ai")
-    def room_ai(request: Request): return manager().ai.status(own_room(request))
+    def room_ai(request: Request):
+        room = own_room(request)
+        return demo_status(room, manager().ai.status(room))
 
     @app.post("/api/room/ai")
     def room_ai_request(request: Request):
         rooms = manager()
         with rooms.lock:
             live = dict(rooms.rooms)
-        return rooms.ai.request(own_room(request), live)
+        room = own_room(request)
+        return demo_status(room, rooms.ai.request(room, live))
 
     # Preview frames: written only by the room's AI worker (internal credential), read only by that room's browser.
     def preview_store(room):
@@ -305,20 +323,29 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
         try: update = Update.model_validate(json.loads(body))
         except (ValidationError, ValueError, UnicodeError):
             raise RoomError(422, "SCHEMA_VALIDATION_FAILED", "invalid preview update") from None
-        await asyncio.to_thread(lambda: preview_call(
-            preview_store(room).accept, update, room.controller.snapshot(), room.controller.building))
+        def accept():
+            with room.extras_lock:
+                demo = room.extras.get("ai_demo")
+                attempt = request.headers.get("X-Saferoute-Demo-Attempt")
+                if demo or attempt:
+                    if not demo or (update.preview.run_id, attempt, update.preview.source_id) != demo:
+                        raise RoomError(409, "PREVIEW_UPDATE_REJECTED", "다른 영상 분석의 프레임입니다")
+                preview_call(preview_store(room).accept, update, room.controller.snapshot(), room.controller.building)
+        await asyncio.to_thread(accept)
         return Response(status_code=204)
 
     @app.get("/api/room/previews/{source_id}")
     def room_preview(request: Request, source_id: str, run_id: str):
         room = own_room(request)
-        value = preview_call(preview_store(room).current, room.controller.snapshot(), room.controller.building, run_id, source_id)
+        with room.extras_lock:
+            value = preview_call(preview_store(room).current, room.controller.snapshot(), room.controller.building, run_id, source_id)
         return value.model_dump(mode="json")
 
     @app.get("/api/room/preview-frames/{frame_id}.jpg")
     def room_preview_image(request: Request, frame_id: str, run_id: str, source_id: str):
         room = own_room(request)
-        jpeg = preview_call(preview_store(room).image, room.controller.snapshot(), room.controller.building, run_id, source_id, frame_id)
+        with room.extras_lock:
+            jpeg = preview_call(preview_store(room).image, room.controller.snapshot(), room.controller.building, run_id, source_id, frame_id)
         return Response(jpeg, media_type="image/jpeg", headers={"X-Preview-Frame-Id": frame_id})
 
     @app.get("/api/room/explanations/current")

@@ -150,11 +150,11 @@ class Video:
     def release(self): self.released = True
 
 
-def execute(setup, video, predict, *, video_probe=None):
+def execute(setup, video, predict, *, video_probe=None, **options):
     path = setup.directory / "fake-video"
     path.write_bytes(b"fixture, not actual inference evidence")
     return run(setup.config, path, setup.client, setup.directory / "ai",
-               SimpleNamespace(predict=predict), clock=setup.clock, cv2_module=video,
+               SimpleNamespace(predict=predict), clock=setup.clock, cv2_module=video, **options,
                video_probe=video_probe or (lambda path: {"decoded_frames": len(video.timestamps),
                                                        "method": "test_fixture_only"}))
 
@@ -221,3 +221,24 @@ def test_decreasing_media_time_reports_unavailable_and_stops(setup):
     assert video.released
     assert next(s for s in setup.client.get("/api/state").json()["sources"]
                 if s["source_id"] == "CAM-A")["validity"] == "UNAVAILABLE"
+
+@pytest.mark.parametrize("times", [[0, 500], [500, 0]])
+def test_preview_only_replay_never_changes_controller_even_on_error(setup, times):
+    before = setup.client.get("/api/state").json()
+    for _ in range(2):
+        if times[0] == 0:
+            result = execute(setup, Video(times), lambda _: [detection()], preview_only=True)
+            assert result["analyzed_frames"] == 2 and result["accepted_events"] == 0
+        else:
+            with pytest.raises(WorkerError, match="INVALID_MEDIA_TIME"):
+                execute(setup, Video(times), lambda _: [detection()], preview_only=True)
+        after = setup.client.get("/api/state").json()
+        for field in ("run_id", "guidance_version", "active_causes", "sources"):
+            assert after[field] == before[field]
+    assert len(list((setup.directory / "ai").glob("*/video-demos/*/ai-predictions.jsonl"))) == 2
+
+def test_preview_playback_wait_precedes_frame_acquisition(setup):
+    execute(setup, Video([0, 500, 1000]), lambda _: [], preview_only=True)
+    evidence, = (setup.directory / "ai").glob("*/video-demos/*/ai-predictions.jsonl")
+    rows = [json.loads(line) for line in evidence.read_text(encoding="utf-8").splitlines()]
+    assert [row["read_to_completion_ms"] for row in rows if row["operation"] == "prediction"] == [0, 0, 0]

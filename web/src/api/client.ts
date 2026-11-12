@@ -152,6 +152,7 @@ export function fetchRoom(signal?: AbortSignal): Promise<RoomInfo> {
 }
 
 export type RoomAi = {
+  readonly source_id?: string;
   readonly state: "UNAVAILABLE" | "IDLE" | "QUEUED" | "RUNNING" | "DONE" | "FAILED";
   /** 대기 중일 때 내 순서(1부터). */
   readonly position: number | null;

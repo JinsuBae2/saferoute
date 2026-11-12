@@ -228,7 +228,7 @@ export function ControlDashboard() {
   const view = useControlSnapshot();
   const [onlyUnavailable, setOnlyUnavailable] = useState(false);
   const [presentation, setPresentation] = useState(false);
-  // 고른 카메라는 미리보기와 3D 강조가 함께 쓴다.
+  // 고른 카메라의 가상 설치 지점에서 3D를 본다.
   // 3D가 세어 준 대피 인원. 「대피 현황」을 크게 보여 주려고 받아 둔다(이슈 #21).
   const [people, setPeople] = useState<PeopleCount | null>(null);
   /**
@@ -338,7 +338,7 @@ export function ControlDashboard() {
           {!inRoom() && <Link className="chip" to="/room">개인 체험 시작</Link>}
           <button type="button" className={presentation ? "chip chip--on" : "chip"}
             aria-pressed={presentation} onClick={() => setPresentation((previous) => !previous)}>
-            {presentation ? "기본 관제로 돌아가기" : "AI 시연 보기"}
+            {presentation ? "기본 관제로 돌아가기" : "3D 대피 현황 보기"}
           </button>
           <Badge tone={finishing ? "warn" : MODE_TONE[state.controller_mode]}>{finishing ? "경보 해제 · 대피 마무리 중" : MODE_LABEL[state.controller_mode]}</Badge>
         </div>
@@ -357,13 +357,13 @@ export function ControlDashboard() {
 
       {simulationLost && (
         <p className="control__alert" role="alert">
-          시뮬레이션이 제어기에 감지 정보를 전달하지 못하고 있습니다. 1초마다 다시 시도하며, 연결되면 초기화 없이 이어집니다.
-          {" "}전달이 끊긴 동안 감지 정보가 만료되면 제어기는 해당 구간의 경로 안내를 멈춥니다.
+          감지 상태 갱신이 지연되고 있습니다. 마지막으로 확인한 상태를 표시합니다.
+          {" "}감지 정보가 만료되면 제어기는 해당 구간의 경로 안내를 멈춥니다.
         </p>
       )}
       {!simulationLost && recovered && (
         <p className="control__alert control__alert--ok" role="status">
-          시뮬레이션과 제어기의 연결이 복구됐습니다. 끊긴 동안 밀린 옛 감지 정보는 쓰지 않고 새 정보부터 반영합니다.
+          감지 상태가 다시 갱신되고 있습니다.
         </p>
       )}
       {simulation?.status === "FAILED" && (
@@ -471,10 +471,8 @@ export function ControlDashboard() {
             building={space.building}
             display={display}
             selectedSourceId={sourceId}
+            stale={stale}
             onSelect={selectCamera}
-            onLocate={(id) => setCamera(previous => ({
-              runId: state.run_id, sourceId: id, fixed: false, locate: (previous?.locate ?? 0) + 1,
-            }))}
           />
 
       <Panel

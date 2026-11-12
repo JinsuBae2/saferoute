@@ -19,7 +19,10 @@ def main():
     parser.add_argument("--controller", default="http://127.0.0.1:8000")
     parser.add_argument("--runs-dir", type=Path, default=ROOT / "runs")
     parser.add_argument("--preview-url", help="Optional local preview API origin, e.g. http://127.0.0.1:8003")
+    parser.add_argument("--preview-only", action="store_true", help="Analyze a demo video without sending controller events")
     args = parser.parse_args()
+    if args.preview_only and not args.preview_url:
+        parser.error("--preview-only requires --preview-url")
     try:
         url = urlsplit(args.controller)
         if url.scheme not in {"http", "https"} or not url.hostname or url.username or url.password or url.query or url.fragment or url.path not in {"", "/"}:
@@ -33,7 +36,8 @@ def main():
         detector = Detector(config)
         with httpx.Client(base_url=args.controller, timeout=config.request_timeout_ms / 1000,
                           trust_env=False, follow_redirects=False, headers=room_headers()) as client:
-            result = run(config, args.video, client, args.runs_dir, detector, preview_url=args.preview_url)
+            result = run(config, args.video, client, args.runs_dir, detector, preview_url=args.preview_url,
+                         preview_only=args.preview_only)
         print(json.dumps(result))
         return 0
     except KeyboardInterrupt:

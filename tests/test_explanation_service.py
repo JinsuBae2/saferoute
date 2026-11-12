@@ -12,7 +12,7 @@ import pytest
 from explanation_worker.app import create_app
 from explanation_worker.bedrock import Bedrock, OUTPUT_SCHEMA, PROMPT_VERSION, parse_response
 from explanation_worker.config import ExplanationConfig
-from explanation_worker.facts import extract_basis
+from explanation_worker.facts import extract_basis, presentation_basis
 from explanation_worker.journal import Journal
 from explanation_worker.service import Service
 from test_observation_state import building, clock, controller, control, payload, prepare
@@ -303,10 +303,24 @@ def test_converse_call_contains_only_facts_and_bounded_fixed_schema(controller):
     assert sent["inferenceConfig"] == {"maxTokens": 512, "temperature": 0}
     assert json.loads(sent["messages"][0]["content"][0]["text"]) == basis
     assert json.loads(sent["outputConfig"]["textFormat"]["structure"]["jsonSchema"]["schema"]) == OUTPUT_SCHEMA
-    assert PROMPT_VERSION == "a05-v2"
+    assert PROMPT_VERSION == "a05-v3"
 
 
 @pytest.mark.parametrize("setting", [{"timeout_seconds": 6}, {"min_interval_seconds": 1},
     {"max_tokens": 513}, {"ttl_seconds": 16}, {"controller_url": "http://user:secret@localhost:8000"}])
 def test_config_bounds(setting):
     with pytest.raises(ValueError): ExplanationConfig(**setting)
+
+def test_large_building_explanation_cites_only_the_facts_sent(monkeypatch):
+    facts = {"mode": {"controller_mode": "EMERGENCY"}}
+    for category in ("cause", "blocked-edge", "route"):
+        facts.update({f"{category}:{i}": {"value": i} for i in range(50)})
+    monkeypatch.setattr("explanation_worker.facts.extract_basis", lambda _: {"facts": facts, "run_id": "demo"})
+    result = presentation_basis(None)
+    assert result["run_id"] == "demo" and len(result["facts"]) == 10
+    assert result["facts"] == {key: facts[key] for key in result["facts"]}
+    assert all(f"{category}:2" in result["facts"] for category in ("cause", "blocked-edge", "route"))
+    with pytest.raises(ValueError, match="unknown fact reference"):
+        value = response()
+        value["output"]["message"]["content"][0]["text"] = json.dumps({"summary": "example", "fact_refs": ["route:49"]})
+        parse_response(value, result)

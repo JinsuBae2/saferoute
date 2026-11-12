@@ -39,3 +39,17 @@ def extract_basis(state: StateSnapshot) -> dict:
         "basis_generated_at": state.generated_at,
         "facts": facts,
     }
+
+def presentation_basis(state: StateSnapshot) -> dict:
+    """Keep a few actual examples per category in a building-wide two-sentence explanation."""
+    basis = extract_basis(state)
+    if len(basis["facts"]) <= 16:
+        return basis
+    counts, selected = {}, {}
+    for key, fact in basis["facts"].items():
+        category = key.partition(":")[0]
+        count = counts.get(category, 0)
+        if count < 3:
+            selected[key] = fact
+            counts[category] = count + 1
+    return {**basis, "facts": selected}

@@ -63,13 +63,15 @@ def create_app(*, config=None, provider=None, journal=None, read_state=None):
 
         app.state.current = current
         app.state.service = service
-        task = asyncio.create_task(poll())
+        # Public demos can generate on browser polling alone, including after a period without viewers.
+        task = None if os.environ.get("SAFEROUTE_EXPLANATION_ON_DEMAND") == "1" else asyncio.create_task(poll())
         try:
             yield
         finally:
-            task.cancel()
-            with suppress(asyncio.CancelledError):
-                await task
+            if task is not None:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
             await client.aclose()
             await asyncio.to_thread(service.close)
 

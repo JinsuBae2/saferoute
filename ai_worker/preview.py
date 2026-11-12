@@ -5,6 +5,7 @@ from datetime import timedelta
 import math
 import multiprocessing
 from queue import Empty, Full
+import os
 import signal
 import sys
 
@@ -58,7 +59,10 @@ def publish_loop(queue, terminal, url, identity):
     import cv2
     sequence = 0
     from .events import room_headers
-    with httpx.Client(timeout=0.5, trust_env=False, follow_redirects=False, headers=room_headers()) as client:
+    headers = room_headers()
+    if headers and os.environ.get("SAFEROUTE_DEMO_ATTEMPT"):
+        headers["X-Saferoute-Demo-Attempt"] = os.environ["SAFEROUTE_DEMO_ATTEMPT"]
+    with httpx.Client(timeout=0.5, trust_env=False, follow_redirects=False, headers=headers) as client:
         def post(value):
             nonlocal sequence
             sequence += 1

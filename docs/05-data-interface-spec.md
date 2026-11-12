@@ -459,3 +459,8 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 `Preview`는 기존 관측·제어 계약과 분리된 표시용 DTO다. 실행·건물·관측원, READY 프레임의 UUID·원본 크기·취득/추론/만료 시각, 정규화 xyxy·FIRE/SMOKE 검출 점수를 전달한다. INITIALIZING/STALE/EOF/UNAVAILABLE에서는 프레임을 포함하지 않는다. 현재 경보·안전성의 판정 근거로 사용하지 않는다.
 
 [A06-1 인계](ai/a06-preview-contract.md)에 수락/거부 샘플·좌표 변환·이미지 ID 결합·기한·동적 세션 검사 규칙이 있다. #73의 별도 HTTP·JPEG 송출/격리·실행은 [A06 실행 인계](ai/a06-preview-delivery.md)를 따른다. 미리보기 오류는 기존 ErrorResponse에 PREVIEW_FRAME_UNAVAILABLE(404)·PREVIEW_UPDATE_REJECTED(409)를 추가하며 다른 계약의 의미는 유지한다. 화면 연결은 #74에서 구현·검증한다.
+
+
+### 개인 체험의 예시 영상
+
+`GET/POST /api/room/ai`는 분석 상태를 반환한다. 서버가 예시 영상을 실행 중이면 응답에 미리보기 조회용 `source_id`를 포함한다. 이 식별자는 관객이 선택한 가상 CCTV와 독립적이다. 실행 중·대기 중 요청은 기존 작업을 반환한다. 완료 후 POST는 같은 방·실행에서 새 분석을 대기열 끝에 추가한다. 각 분석의 미리보기와 기록을 분리하며 제어기 관측을 전송하지 않는다. 운영용 AI 작업기의 기존 관측 계약은 유지한다.
