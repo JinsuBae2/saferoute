@@ -277,3 +277,6 @@ sudo certbot certificates                          # 만료일 확인
 개인방 제어기는 `SAFEROUTE_EXPLANATION_CONFIG=configs/explanation.example.json`과 설명용 잠금 파일로 만든 Python 환경을 사용한다. `SAFEROUTE_AI_PYTHON`을 AI 가상환경의 Python 절대 경로로 지정하면 영상 작업기는 별도 환경에서 실행된다. 모델·원본 영상은 서버의 `SAFEROUTE_AI_CONFIG_FILE`, `SAFEROUTE_AI_VIDEO_FILE`로 지정한다.
 
 공동 관제의 설명은 같은 설명용 환경에서 `python -m uvicorn explanation_worker.app:create_app --factory --host 127.0.0.1 --port 8002`로 실행한다. 공개 시연에서는 `SAFEROUTE_EXPLANATION_ON_DEMAND=1`로 설정해 화면에서 조회할 때만 설명을 갱신한다.
+
+
+프런트 빌드 시 `VITE_AI_DEMO_REPLAY_URL`에 서버에서 제공하는 분석 결과 MP4의 상대 경로를 지정한다. 같은 모델로 실제 검출한 상자를 그린 파일만 사용하며 원본과 파생 영상은 Git에 올리지 않는다. 예시 영상 재생은 모델 작업을 요청하지 않으며 재생 위치는 브라우저마다 독립적이다. 이 주소를 지정하지 않은 설치에서는 새 추론 화면을 바로 제공한다.
