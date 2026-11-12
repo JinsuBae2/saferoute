@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from backend.contracts.explanations import Explanation
 from .bedrock import PROMPT_VERSION, parse_response
-from .facts import extract_basis
+from .facts import presentation_basis
 
 
 def utc_text(value):
@@ -75,7 +75,7 @@ class Service:
                            prompt_version=PROMPT_VERSION, error_code=error)
 
     def tick(self, state):
-        basis = extract_basis(state)
+        basis = presentation_basis(state)
         now, mono = self.utcnow(), self.monotonic()
         basis_time = datetime.fromisoformat(basis["basis_generated_at"])
         error = None

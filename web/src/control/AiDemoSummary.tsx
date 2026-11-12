@@ -21,12 +21,12 @@ export function AiDemoSummary({ state, building, display, sourceId, stale }: Pro
   const waiting = camera === undefined;
 
   return (
-    <section className="ai-demo" aria-label="AI 시연 상태">
+    <section className="ai-demo" aria-label="3D 대피 현황">
       <header className="ai-demo__head">
         <div>
-          <p className="ai-demo__eyebrow">SAFE ROUTE · AI DEMO</p>
-          <h2>영상에서 대피 안내까지</h2>
-          <p>영상 AI 감지 · 제어기 경로 판단 · 유도등 화면 응답</p>
+          <p className="ai-demo__eyebrow">3D 시뮬레이션</p>
+          <h2>건물 대피 현황</h2>
+          <p>가상 CCTV 시점 · 제어기 경로 판단 · 유도등 화면 응답</p>
         </div>
         <span className={`badge badge--${stale ? "warn" : "muted"}`}>
           {stale ? "제어 연결 지연 · 현재 결과 확인 불가" : `제어 상태 수신 · 안내 v${state.guidance_version}`}
@@ -42,7 +42,7 @@ export function AiDemoSummary({ state, building, display, sourceId, stale }: Pro
           <span className="ai-demo__step">02 · 해당 카메라의 제어 결과</span>
           <strong>{stale ? "확인 불가" : waiting ? "—" : `경보 ${causes.length} · 차단 통로 ${blocks}`}</strong>
           <small>{camera === undefined ? "선택한 카메라 기준" : `관측 구역: ${display?.zone_labels[camera.zone_id] ?? camera.zone_id}`}</small>
-          <small>경보는 영상 종료 후에도 확인 해제 전까지 유지</small>
+          <small>경보는 해당 원인을 확인 해제할 때까지 유지</small>
         </li>
         <li>
           <span className="ai-demo__step">03 · 건물 전체 경로</span>

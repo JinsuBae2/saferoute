@@ -106,9 +106,8 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
       try {
         current = await fetchPreview(sourceId!, runId!, signal);
       } catch (reason) {
-        usable = false;
-        // 예전 응답을 두면 배지가 "표시 중"으로 남는다.
-        preview = null;
+        // 일시적인 조회 실패 중에도 이미 받은 그림은 원래 기한까지만 유지한다.
+        if (stopped || signal.aborted) return;
         error = messageOf(reason);
         publish();
         return;

@@ -765,3 +765,38 @@ def test_failed_room_restart_is_a_retryable_503(setup, monkeypatch):
     monkeypatch.setattr(manager, "restart", broken)
     response = client.post("/api/room/sim/restart", headers=a)
     assert response.status_code == 503 and response.json()["error"]["code"] == "CONTROLLER_UNAVAILABLE"
+
+def test_room_demo_replay_replaces_only_its_preview(setup, wfi, tmp_path, monkeypatch):
+    import json
+    from backend.app import ai_launcher
+
+    client, manager, clock = setup
+    who = enter(client)
+    info = client.get("/api/room", headers=who).json()
+    source, update = preview_update(info["run_id"], wfi)
+    config = tmp_path / "demo.json"
+    config.write_text(json.dumps({"source_id": source}), encoding="utf-8")
+    monkeypatch.setenv("SAFEROUTE_AI_CONFIG_FILE", str(config))
+    monkeypatch.setenv("SAFEROUTE_AI_VIDEO_FILE", str(config))
+    jobs, attempts = [], []
+
+    def spawn(argv, *, env, **kwargs):
+        assert "--preview-only" in argv
+        jobs.append(FakeJob(manager.rooms[info["room_id"]], info["run_id"]))
+        attempts.append({"X-Saferoute-Room": info["room_id"], "X-Saferoute-Internal": manager.internal_token,
+                         "X-Saferoute-Demo-Attempt": env["SAFEROUTE_DEMO_ATTEMPT"]})
+        return jobs[-1]
+
+    monkeypatch.setattr("backend.app.subprocess.Popen", spawn)
+    manager.ai.launch = ai_launcher(manager, tmp_path)
+    assert request_ai(client, who).json()["source_id"] == source
+    assert client.post("/internal/preview", headers=attempts[0], json=update).status_code == 204
+    jobs[0].code = 0
+    manager.step_all()
+    assert ai_state(client, who)["state"] == "DONE"
+    ignite(client, who, clock, "MANUAL-F1-PASSAGE-N")
+    assert request_ai(client, who).json()["run_id"] == info["run_id"]
+    assert request_ai(client, who).json()["state"] == "RUNNING" and len(jobs) == 2
+    assert client.post("/internal/preview", headers=attempts[0], json=update).status_code == 409
+    assert client.post("/internal/preview", headers=attempts[1], json=update).status_code == 204
+    assert causes(client, who) == {"MANUAL-F1-PASSAGE-N"}

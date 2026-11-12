@@ -270,3 +270,16 @@ sudo certbot certificates                          # 만료일 확인
 - HTTP로 되돌리기: 적용 전 설정을 `/etc/nginx/saferoute-backup/`에 보관했다(`saferoute.http-only.20261112`). 그 파일을 `/etc/nginx/sites-available/saferoute`로 복사하고 `sudo nginx -t && sudo systemctl reload nginx` 한다.
 
 2026-11-12 서버 적용 결과: 발급자 Let's Encrypt(YE1), 만료 2026-11-18 20:18 UTC. `http://<HOST>/some/path?x=1` → 301 `https://<HOST>/some/path?x=1`, `https://<HOST>/` 200(인증서 검증 통과), 공동 시연 조작 POST 403 유지, 제어 서버(8000) 바깥 접속 불가 유지, `certbot renew --dry-run --run-deploy-hooks` 성공. 실제 갱신(약 3일 뒤 첫 자동 갱신)이 일어나는 것은 아직 보지 못했다.
+
+
+### 발표용 영상과 설명 서비스
+
+개인방 제어기는 `SAFEROUTE_EXPLANATION_CONFIG=configs/explanation.example.json`과 설명용 잠금 파일로 만든 Python 환경을 사용한다. `SAFEROUTE_AI_PYTHON`을 AI 가상환경의 Python 절대 경로로 지정하면 영상 작업기는 별도 환경에서 실행된다. 모델·원본 영상은 서버의 `SAFEROUTE_AI_CONFIG_FILE`, `SAFEROUTE_AI_VIDEO_FILE`로 지정한다.
+
+공동 관제의 설명은 같은 설명용 환경에서 `python -m uvicorn explanation_worker.app:create_app --factory --host 127.0.0.1 --port 8002`로 실행한다. 공개 시연에서는 `SAFEROUTE_EXPLANATION_ON_DEMAND=1`로 설정해 화면에서 조회할 때만 설명을 갱신한다.
+
+
+프런트 빌드 시 `VITE_AI_DEMO_REPLAY_URL`에 서버에서 제공하는 분석 결과 MP4의 상대 경로를 지정한다. 같은 모델로 실제 검출한 상자를 그린 파일만 사용하며 원본과 파생 영상은 Git에 올리지 않는다. 예시 영상 재생은 모델 작업을 요청하지 않으며 재생 위치는 브라우저마다 독립적이다. 이 주소를 지정하지 않은 설치에서는 새 추론 화면을 바로 제공한다.
+
+
+현재 발표용 결과 영상은 서버의 `/home/ubuntu/saferoute-ai-demo/analysis-17d0ecdf.mp4`에 보관한다. 배포 체크아웃에서 `mkdir -p web/public/demo-media && cp /home/ubuntu/saferoute-ai-demo/analysis-17d0ecdf.mp4 web/public/demo-media/`로 준비한다. Git에서 제외되는 `web/.env.production.local`에 `VITE_AI_DEMO_REPLAY_URL=/demo-media/analysis-17d0ecdf.mp4`를 설정하면 다음 빌드에도 포함된다. SHA-256은 `17d0ecdf17cbe80d4e6d320a1c8a762f10c880cc089c779e0904d88c5d8eb12a`이다.
