@@ -95,6 +95,8 @@ def test_room_device_signal_starts_evacuation_only_after_detection(setup, zone, 
     assert [(v["source_id"], v["hazard_type"], v["first_event_id"]) for v in detected["active_causes"]] == [
         (source, hazard, body["event_id"])]
     assert detected["fire_simulation"]["fires"][0]["zone_id"] == zone
+    far_node = {"F3-CORR-W": "F3-J-SW", "F1-PASSAGE-N": "F1-J-PM"}[zone]
+    assert far_node not in {item["node_id"] for item in detected["blocked_nodes"]}
     assert stage().json()["phase"] == "ACCEPTED"
     assert client.get("/api/state").json()["active_causes"] == []
     cleared = client.post("/api/room/control/clear", headers=who, json=dict(schema_version=1,
@@ -116,6 +118,18 @@ def test_uninstrumented_zone_uses_manual_report_and_rejects_outside_position(set
     assert manual.status_code == 200, manual.text
     assert (manual.json()["device"], manual.json()["phase"]) == ("MANUAL", "ACCEPTED")
     assert causes(client, who) == {manual.json()["source_id"]}
+
+
+def test_room_detector_still_runs_if_wall_clock_lags_two_ms(setup):
+    from datetime import timedelta
+    client, manager, clock = setup
+    who = enter(client)
+    clock.wall -= timedelta(milliseconds=2)
+    for _ in range(4):
+        clock.advance(1000)
+        manager.step_all()
+    assert client.get("/api/room/sim/state", headers=who).json()["status"] == "RUNNING"
+    assert state(client, who)["controller_mode"] == "NORMAL"
 
 
 def test_reset_cancels_pending_detector(setup):

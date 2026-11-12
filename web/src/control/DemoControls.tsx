@@ -34,11 +34,17 @@ type Props = {
   readonly refusedZoneId?: string | null;
 };
 
-export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, ignition, hasStart, refusedZoneId = null }: Props) {
+export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, ignition: polled, hasStart, refusedZoneId = null }: Props) {
   const control = useMemo(() => new ManualFireControl(building, state.run_id), [building, state.run_id]);
   const mounted = useRef(false);
   const busy = useRef(false);
   const [pending, setPending] = useState(false);
+  // The POST acknowledges the ignition before the next simulation poll.
+  const [submitted, setSubmitted] = useState<{ stage: DemoIgnition; previousId?: string } | null>(null);
+  const ignition = submitted && polled?.event_id === submitted.previousId ? submitted.stage : polled;
+  useEffect(() => {
+    if (submitted && polled && polled.event_id !== submitted.previousId) setSubmitted(null);
+  }, [polled, submitted]);
   const [notice, setNotice] = useState<{ text: string; result: ManualResult | null; failed: boolean } | null>(null);
   const sources = useMemo(() => manualFireSources(building), [building]);
   const source = sources.find((item) => item.zone_id === zoneId);
@@ -63,7 +69,8 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
       if (inRoom() && action.kind === "ignite") {
         const pos = action.position ?? defaultIgnition(building, action.zoneId);
         if (!pos) throw new Error("도면에서 화재 위치를 선택하세요");
-        await igniteRoom(state.run_id, newId(), action.zoneId, pos);
+        const stage = await igniteRoom(state.run_id, newId(), action.zoneId, pos);
+        if (mounted.current) setSubmitted({ stage, previousId: polled?.event_id });
         return;
       }
       const result = await control.run(action);
@@ -107,7 +114,8 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
     : !hasStart
       ? "2/3 · 도면을 한 번 더 눌러 내 위치를 정하세요"
       : ignition?.phase === "WAITING" ? "설비가 발화 지점을 확인하고 있습니다"
-      : zoneActive ? "이 구역에 이미 경보가 있습니다" : null);
+      : zoneActive || (submitted?.stage.phase === "ACCEPTED" && submitted.stage.zone_id === zoneId)
+        ? "이 구역에 이미 경보가 있습니다" : null);
 
   const device = ignition?.device === "CCTV" ? "CCTV 불꽃 모의 감지" :
     ignition?.device === "SPRINKLER" ? "스프링클러 모의 작동" : "수동 화재 신고";

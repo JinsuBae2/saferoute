@@ -185,7 +185,10 @@ class Runner:
         fault = next((f for f in self.scenario.faults if f.source_id == rule.source_id and
                       f.start_ms <= sample_ms < f.end_ms),None)
         if fault and fault.kind == "UNAVAILABLE": kind, hazard = "UNAVAILABLE", None
-        event = self._event(rule.source_id,self.epoch_utc + timedelta(milliseconds=sample_ms),kind,hazard)
+        # The monotonic simulation clock can advance a few ms ahead of wall time.
+        # Preserve past sample timestamps on catch-up and never report a future observation.
+        sampled_at = min(self.epoch_utc + timedelta(milliseconds=sample_ms), self.clock.utcnow())
+        event = self._event(rule.source_id, sampled_at, kind, hazard)
         if fault and fault.kind == "DROP":
             self._log("drop",sample_time_ms=sample_ms,event=event)
             return
