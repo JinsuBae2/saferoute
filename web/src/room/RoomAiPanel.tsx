@@ -23,7 +23,11 @@ export function RoomAiPanel({ state }: { state: StateSnapshot }) {
   const [ai, setAi] = useState<RoomAi | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => startPolling(fetchRoomAi, (value) => { setAi(value); }, () => { setAi(null); }, 2000), []);
+  const [retrying, setRetrying] = useState(false);
+  useEffect(() => startPolling(fetchRoomAi, (value) => {
+    setAi(value);
+    setRetrying(false);
+  }, () => setRetrying(true), 2000), []);
 
   async function request() {
     if (busy) return;
@@ -43,7 +47,7 @@ export function RoomAiPanel({ state }: { state: StateSnapshot }) {
         <h2>영상 AI 분석</h2>
       </header>
       <p className="panel__empty" aria-live="polite">
-        {ai === null ? "상태를 확인하는 중입니다." : LABEL[ai.state]}
+        {retrying ? "분석 상태를 다시 확인하고 있습니다." : ai === null ? "상태를 확인하는 중입니다." : LABEL[ai.state]}
         {ai?.state === "QUEUED" && ai.position !== null && ` (내 순서 ${ai.position}번째)`}
         {error !== null && ` · ${error}`}
       </p>

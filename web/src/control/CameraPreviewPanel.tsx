@@ -8,7 +8,7 @@ export function CameraPreviewPanel({ state, sourceId }: { state: StateSnapshot; 
   const shown = check.usable ? view.shown : null;
   const preview = view.preview;
   if (!shown) {
-    const message = !preview ? "분석 프레임을 기다리는 중입니다." :
+    const message = (!preview || check.usable) ? "분석 프레임을 기다리는 중입니다." :
       preview.error_code ? PREVIEW_ERROR_LABEL[preview.error_code] :
       !check.usable && check.reason !== "NOT_READY" ? PREVIEW_BLOCK_LABEL[check.reason] : PREVIEW_STATUS_LABEL[preview.status];
     return <p className="camera__blank">{message}{view.error && ` · ${view.error}`}</p>;
