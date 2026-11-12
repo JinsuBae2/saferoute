@@ -4,6 +4,8 @@ import buildingData from "@space/wfi-v1.json";
 import displayData from "@space/wfi-display-v1.json";
 import { parseDisplay, sceneLabels, visibleLabelIndexes } from "./display";
 
+import { cctvPose } from "./cctv";
+
 const building = buildingData as Building;
 
 describe("WFI display metadata", () => {
@@ -73,4 +75,19 @@ it("keeps camera and stair labels readable when room labels overlap, and restore
     { left: 0, top: 0, width: 100, height: 30, priority: 2 },
     { left: 150, top: 0, width: 100, height: 30, priority: 0 },
   ])).toEqual(new Set([1, 0]));
+});
+
+it("aims each WFI camera from its installation into its observed corridor", () => {
+  const display = parseDisplay(displayData, building);
+  const cameras = building.sources.filter(s => s.source_type === "VIDEO_AI");
+  expect(cameras).toHaveLength(4);
+  for (const source of cameras) {
+    const pose = cctvPose(building, display, source.source_id);
+    expect(pose?.eye).toEqual(display.sources[source.source_id].installation?.position);
+    expect(pose?.zoneId).toBe(source.zone_id);
+    expect(building.nodes.some(n => n.zone_id === source.zone_id
+      && n.position.x === pose?.target.x && n.position.z === pose.target.z)).toBe(true);
+  }
+  expect(cctvPose(building, null, cameras[0].source_id)).toBeNull();
+  expect(cctvPose(building, display, "UNKNOWN")).toBeNull();
 });

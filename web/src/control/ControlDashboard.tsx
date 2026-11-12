@@ -6,7 +6,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SourceNotice } from "../SourceNotice";
 import { inRoom, signPath } from "../api/scope";
-import { RoomAiPanel } from "../room/RoomAiPanel";
+import { cctvPose } from "../building/cctv";
 
 import type { StateSnapshot } from "@contracts";
 
@@ -29,7 +29,7 @@ import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
 import { DemoControls } from "./DemoControls";
-import { CameraPreviewPanel } from "./CameraPreviewPanel";
+import { CameraStation } from "./CameraStation";
 import { AiDemoSummary } from "./AiDemoSummary";
 import { AlarmSoundBar } from "./AlarmSoundBar";
 import { useBuildingData } from "../building/useBuildingData";
@@ -239,13 +239,14 @@ export function ControlDashboard() {
   const [pickTarget, setPickTarget] = useState<"NODE" | "ZONE">("ZONE");
   /** 3D에서 고른 내 위치. 머리말의 「시연 시작」이 이것까지 있어야 열린다(이슈 #21). */
   const [startNode, setStartNode] = useState<string | null>(null);
-  const [camera, setCamera] = useState<{ sourceId: string | null; locate: number }>({
-    sourceId: null,
-    locate: 0,
-  });
+  const [selectedCamera, setCamera] = useState<{ runId: string; sourceId: string | null; fixed: boolean; locate: number } | null>(null);
   const state = view.state;
   const space = useBuildingData(state);
   const display = space.display;
+  const camera = selectedCamera && selectedCamera.runId === state?.run_id ? selectedCamera : null;
+  const sourceId = camera?.sourceId ?? null;
+  const fixedId = camera?.fixed ? sourceId : null;
+  const cctv = useMemo(() => cctvPose(space.building, display, fixedId), [space.building, display, fixedId]);
 
   const health = connectionHealth(view.lastStateSuccessAtMs, view.nowMs, view.pollIntervalMs * 3);
 
@@ -271,6 +272,9 @@ export function ControlDashboard() {
     );
   }
 
+  const selectCamera = (id: string | null) => setCamera({
+    runId: state.run_id, sourceId: id, fixed: id !== null, locate: camera?.locate ?? 0,
+  });
   const signs = summarizeSigns(state);
   const routes = summarizeRoutes(state);
   const sources = summarizeSources(state);
@@ -399,7 +403,7 @@ export function ControlDashboard() {
       {space.displayError !== null && <p className="panel__note">위치 이름 표시: {space.displayError} · 기본 ID로 표시합니다.</p>}
 
       {presentation && <AiDemoSummary state={state} building={space.building} display={display}
-        sourceId={camera.sourceId} stale={stale} />}
+        sourceId={sourceId} stale={stale} />}
 
       <div className="control__visuals">
         <div className="control__building">
@@ -416,8 +420,10 @@ export function ControlDashboard() {
               building={space.building}
               display={display}
               buildingError={space.buildingError}
-              highlightSourceId={camera.sourceId}
-              locateRequest={camera.locate}
+              highlightSourceId={sourceId}
+              cctv={cctv}
+              onCamera={selectCamera}
+              locateRequest={camera?.locate ?? 0}
               stale={stale}
               onPeopleCount={setPeople}
               onStartNode={setStartNode}
@@ -433,19 +439,17 @@ export function ControlDashboard() {
         </div>
 
         <div className="control__side">
-          <CameraPreviewPanel
-            key={`${state.run_id}/${state.building_id}/${state.building_version}`}
+          <CameraStation
+            key={state.run_id}
             state={state}
             building={space.building}
             display={display}
-            selectedSourceId={camera.sourceId}
-            onSelect={(sourceId) => setCamera((previous) => ({ ...previous, sourceId }))}
-            onLocate={(sourceId) =>
-              setCamera((previous) => ({ sourceId, locate: previous.locate + 1 }))
-            }
+            selectedSourceId={sourceId}
+            onSelect={selectCamera}
+            onLocate={(id) => setCamera(previous => ({
+              runId: state.run_id, sourceId: id, fixed: false, locate: (previous?.locate ?? 0) + 1,
+            }))}
           />
-
-      {inRoom() && <RoomAiPanel />}
 
       <Panel
         title="상황 설명"

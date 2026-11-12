@@ -43,19 +43,17 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "미리보기를 읽지 못했습니다";
 }
 
-/**
- * 그림이 그려질 준비가 될 때까지 기다린다.
- * 해독이 끝나기 전에 바꿔 달면 그 사이가 빈칸으로 보인다.
- * decode를 쓸 수 없는 환경에서는 그냥 넘어간다. 조금 깜빡일 뿐 화면이 멈추지는 않는다.
- */
-async function drawable(url: string): Promise<void> {
-  const image = new Image();
-  image.src = url;
-  if (typeof image.decode !== "function") return;
+function replacedFrame(error: unknown) {
+  return error instanceof ApiError && error.status === 404 && error.code === "PREVIEW_FRAME_UNAVAILABLE";
+}
+
+/** The store retains only the newest JPEG. Re-read metadata once when its image was replaced. */
+export async function readLatestPreview(readPair: () => Promise<void>): Promise<void> {
   try {
-    await image.decode();
-  } catch {
-    // 못 읽는 그림이면 어차피 아래에서 걸러진다.
+    await readPair();
+  } catch (error) {
+    if (!replacedFrame(error)) throw error;
+    await readPair();
   }
 }
 
@@ -73,8 +71,6 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
     let deadlineMs: number | null = null;
     /** 마지막 조회에서 이 카메라의 READY 프레임을 받았는지. 아니면 보여주던 것을 지운다. */
     let usable = false;
-    /** 지금 받는 중인 프레임. 같은 프레임을 두 번 받지 않는다. */
-    let fetching: string | null = null;
     /**
      * 방금 교체되어 물러난 그림 주소. 바꾸자마자 돌려주면 그 순간 화면이 빈다.
      * 다음 교체나 정리 때 돌려주므로, 살아 있는 임시 주소는 많아야 두 개다.
@@ -83,7 +79,6 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
     let published: CameraPreview = EMPTY;
     let stopped = false;
 
-    const frameAbort = new AbortController();
 
     const retire = (url: string | null) => {
       if (retired !== null && retired !== url) URL.revokeObjectURL(retired);
@@ -105,73 +100,44 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
       setView(published);
     };
 
-    async function loadFrame(frameId: string, startedMs: number) {
-      fetching = frameId;
+    async function readPair(signal: AbortSignal) {
+      const started = performance.now();
+      const current = await fetchPreview(sourceId!, runId!, signal);
+      if (stopped || signal.aborted) return;
+      preview = current;
+      error = null;
+      const frame = current.frame;
+      usable = current.status === "READY" && current.run_id === runId && current.source_id === sourceId && frame !== null;
+      publish();
+      if (!usable || !frame || shown?.frame.frame_id === frame.frame_id) return;
+
+      const image = await fetchPreviewFrame(frame.frame_id, runId!, sourceId!, signal);
+      let adopted = false;
       try {
-        const image = await fetchPreviewFrame(frameId, runId!, sourceId!, frameAbort.signal);
-        const receivedMs = performance.now();
-        const current = preview;
-        const frame = current?.frame ?? null;
-        const unusable =
-          stopped ||
-          current === null ||
-          frame === null ||
-          frame.frame_id !== frameId ||
-          current.run_id !== runId ||
-          current.source_id !== sourceId ||
-          // 헤더가 다른 프레임을 가리키면 쓰지 않는다 (A06 인계 문서 2번).
-          (image.frameId !== null && image.frameId !== frameId);
-        if (unusable || current === null || frame === null) {
-          URL.revokeObjectURL(image.objectUrl);
-          return;
-        }
-        const until = frameDeadline(
-          frame.expires_at,
-          current.generated_at,
-          startedMs,
-          receivedMs,
-          current.freshness_ms,
-        );
-        if (until === null) {
-          // 도착했을 때 이미 늦은 프레임은 띄우지 않는다.
-          URL.revokeObjectURL(image.objectUrl);
-          return;
-        }
-
-        await drawable(image.objectUrl);
-        // 기다리는 동안 기한이 지났거나 화면이 닫혔을 수 있다.
-        if (stopped || performance.now() >= until) {
-          URL.revokeObjectURL(image.objectUrl);
-          return;
-        }
-
+        if (image.frameId !== null && image.frameId !== frame.frame_id) return;
+        const until = frameDeadline(frame.expires_at, current.generated_at, started, performance.now(), current.freshness_ms);
+        if (until === null || stopped || signal.aborted) return;
+        const bitmap = new Image();
+        bitmap.src = image.objectUrl;
+        if (typeof bitmap.decode === "function") await bitmap.decode();
+        if (stopped || signal.aborted || performance.now() >= until) return;
         const previous = shown;
         shown = { url: image.objectUrl, frame };
         deadlineMs = until;
+        adopted = true;
         publish();
         retire(previous?.url ?? null);
-      } catch {
-        // 다음 프레임으로 교체된 frame_id의 404는 정상이다. 다음 조회에서 새 frame_id를 받는다.
       } finally {
-        if (fetching === frameId) fetching = null;
+        if (!adopted) URL.revokeObjectURL(image.objectUrl);
       }
     }
 
     const stop = startPolling(
-      (signal) => fetchPreview(sourceId, runId, signal),
-      (value) => {
-        preview = value;
-        error = null;
-        const frame = value.frame;
-        usable =
-          frame !== null && value.status === "READY" && value.run_id === runId && value.source_id === sourceId;
-        // 준비 중·오래됨·종료·장애면 publish가 보여주던 것을 지운다.
-        if (usable && frame !== null && frame.frame_id !== shown?.frame.frame_id && frame.frame_id !== fetching) {
-          void loadFrame(frame.frame_id, performance.now());
-        }
-        publish();
-      },
+      (signal) => readLatestPreview(() => readPair(signal)),
+      () => {},
       (reason) => {
+        // Two replacements in one poll: keep the previous matched pair only until its own deadline.
+        if (replacedFrame(reason)) { publish(); return; }
         error = messageOf(reason);
         usable = false;
         publish();
@@ -185,7 +151,6 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
     return () => {
       stopped = true;
       stop();
-      frameAbort.abort();
       clearInterval(clock);
       if (shown !== null) URL.revokeObjectURL(shown.url);
       if (retired !== null) URL.revokeObjectURL(retired);
