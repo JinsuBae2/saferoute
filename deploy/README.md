@@ -280,3 +280,6 @@ sudo certbot certificates                          # 만료일 확인
 
 
 프런트 빌드 시 `VITE_AI_DEMO_REPLAY_URL`에 서버에서 제공하는 분석 결과 MP4의 상대 경로를 지정한다. 같은 모델로 실제 검출한 상자를 그린 파일만 사용하며 원본과 파생 영상은 Git에 올리지 않는다. 예시 영상 재생은 모델 작업을 요청하지 않으며 재생 위치는 브라우저마다 독립적이다. 이 주소를 지정하지 않은 설치에서는 새 추론 화면을 바로 제공한다.
+
+
+현재 발표용 결과 영상은 서버의 `/home/ubuntu/saferoute-ai-demo/analysis-17d0ecdf.mp4`에 보관한다. 배포 체크아웃에서 `mkdir -p web/public/demo-media && cp /home/ubuntu/saferoute-ai-demo/analysis-17d0ecdf.mp4 web/public/demo-media/`로 준비한다. Git에서 제외되는 `web/.env.production.local`에 `VITE_AI_DEMO_REPLAY_URL=/demo-media/analysis-17d0ecdf.mp4`를 설정하면 다음 빌드에도 포함된다. SHA-256은 `17d0ecdf17cbe80d4e6d320a1c8a762f10c880cc089c779e0904d88c5d8eb12a`이다.
