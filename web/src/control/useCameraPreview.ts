@@ -107,6 +107,8 @@ export function useCameraPreview(sourceId: string | null, runId: string | null):
         current = await fetchPreview(sourceId!, runId!, signal);
       } catch (reason) {
         usable = false;
+        // 예전 응답을 두면 배지가 "표시 중"으로 남는다.
+        preview = null;
         error = messageOf(reason);
         publish();
         return;

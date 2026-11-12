@@ -65,9 +65,9 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
 
       {cameras.length === 0 ? (
         <p className="panel__empty">
-          등록된 영상 관측원이 없습니다.
+          등록된 카메라가 없습니다.
           <br />
-          관측원 상태와 경로는 아래 제어 결과로 계속 표시됩니다.
+          감지기·카메라 상태와 경로는 아래 제어 결과로 계속 표시됩니다.
         </p>
       ) : (
         <>
@@ -205,7 +205,7 @@ export function CameraPreviewPanel({ state, building, display, selectedSourceId,
                   </dd>
                 </div>
                 <div>
-                  <dt>관측원 유효성</dt>
+                  <dt>카메라 상태</dt>
                   <dd>
                     {validity ?? "—"}
                     <small className="location-detail">미리보기 상태와 별개입니다</small>

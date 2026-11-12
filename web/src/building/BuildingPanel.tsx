@@ -11,6 +11,7 @@ import type { CctvPose } from "./cctv";
 import { setExitGuide } from "../control/alarmSound";
 import { exitCall } from "../control/broadcast";
 import { BuildingScene } from "./BuildingScene";
+import { newFireFloors } from "./firePresentation";
 import { PhoneGuide } from "./EvacuationPhone";
 import type { FollowPose } from "./phoneGuide";
 import { matchesBuilding } from "./geometry";
@@ -133,6 +134,8 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
   };
 
   useEffect(() => { onStartNode?.(startId); }, [startId, onStartNode]);
+  // 「처음부터」로 실행이 바뀌면 이전 실행에서 따라가던 사람과 꺼 둔 전체 안내를 남기지 않는다.
+  useEffect(() => { setFollow(null); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
 
   const journey = useMemo(
     () => (building === null || startId === null ? null : describeJourney(building, display, state, startId)),
@@ -173,14 +176,18 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
     return new Set(all.filter((id) => !hiddenFloors.has(id)));
   }, [geometry, hiddenFloors]);
 
-  const toggleFloor = (floorId: string) => {
+  // 새 화재가 나면 그 층을 켠다. 다른 층만 보고 있으면 불이 화면에 없다. 화재마다 한 번만 하므로 그 뒤에는 다시 끌 수 있다.
+  const seenFires = useRef<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    if (building === null) return;
+    const fresh = newFireFloors(building, state.active_causes, seenFires.current);
+    seenFires.current = fresh.seen;
+    if (fresh.floors.size === 0) return;
     setHiddenFloors((previous) => {
-      const next = new Set(previous);
-      if (next.has(floorId)) next.delete(floorId);
-      else next.add(floorId);
-      return next;
+      const next = new Set([...previous].filter((id) => !fresh.floors.has(id)));
+      return next.size === previous.size ? previous : next;
     });
-  };
+  }, [building, state.active_causes]);
 
   /** 한 층만 보기. 다른 층은 모두 숨긴다. */
   const onlyFloor = (floorId: string) => {
@@ -237,14 +244,14 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
       ) : (
         <>
           {!cctv && <div className="scene__bar">
-            <span className="scene__floors" title="누르면 층을 켜고 끕니다. 두 번 누르면 그 층만 봅니다">
+            <span className="scene__floors" title="누르면 그 층만 봅니다. 「전체」로 모든 층을 다시 봅니다">
               {geometry.floors.map((floor) => (
                 <button
                   key={floor.floor_id}
                   type="button"
-                  className={visibleFloors.has(floor.floor_id) ? "chip chip--on" : "chip"}
-                  onClick={() => toggleFloor(floor.floor_id)}
-                  onDoubleClick={() => onlyFloor(floor.floor_id)}
+                  className={visibleFloors.size === 1 && visibleFloors.has(floor.floor_id) ? "chip chip--on" : "chip"}
+                  aria-pressed={visibleFloors.size === 1 && visibleFloors.has(floor.floor_id)}
+                  onClick={() => onlyFloor(floor.floor_id)}
                 >
                   {floorLabel.get(floor.floor_id) ?? floor.floor_id}
                 </button>
@@ -330,6 +337,9 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             {stale ? "확산 상태 연결 확인 중" : "불·연기 확산 중"} · 발화 후 {Math.floor(Math.max(...state.fire_simulation.fires.map(f=>f.elapsed_ms))/1000)}초
             {" · "}불이 도달한 지점 {state.fire_simulation.cells.filter(c=>c.fire>0).length}곳 · 차단 통로 {state.blocked_edges.length}개
             {" · 시연용 확산 / 빨간 바닥은 감지 구역"}
+          </p>}
+          {stale && <p role="status" className="control__alert control__alert--warn">
+            연결이 늦어지고 있습니다. 아래 3D의 유도등 방향·불·연기는 마지막으로 받은 상태이며 지금과 다를 수 있습니다.
           </p>}
           {followMessage?.runId === state.run_id && <p role="status" className="panel__note">{followMessage.text}</p>}
           <div className={`first-person-stage${firstPerson ? " first-person-stage--active" : ""}`}>

@@ -756,3 +756,12 @@ def test_controller_is_closed_even_when_the_runner_fails_to_close(setup):
     assert controller_closed == [1] and manager.availability()["in_use"] == 1
     assert client.get("/api/room/state", headers=a).status_code == 401
     assert state(client, b)["controller_mode"] == "NORMAL"
+
+
+def test_failed_room_restart_is_a_retryable_503(setup, monkeypatch):
+    client, manager, clock = setup
+    a = enter(client)
+    def broken(room): raise OSError("기록 폴더를 만들지 못했습니다")
+    monkeypatch.setattr(manager, "restart", broken)
+    response = client.post("/api/room/sim/restart", headers=a)
+    assert response.status_code == 503 and response.json()["error"]["code"] == "CONTROLLER_UNAVAILABLE"

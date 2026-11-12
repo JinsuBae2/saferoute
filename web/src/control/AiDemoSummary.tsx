@@ -26,7 +26,7 @@ export function AiDemoSummary({ state, building, display, sourceId, stale }: Pro
         <div>
           <p className="ai-demo__eyebrow">SAFE ROUTE · AI DEMO</p>
           <h2>영상에서 대피 안내까지</h2>
-          <p>영상 AI 관측 · 제어기 경로 판단 · 브라우저 단말 응답</p>
+          <p>영상 AI 감지 · 제어기 경로 판단 · 유도등 화면 응답</p>
         </div>
         <span className={`badge badge--${stale ? "warn" : "muted"}`}>
           {stale ? "제어 연결 지연 · 현재 결과 확인 불가" : `제어 상태 수신 · 안내 v${state.guidance_version}`}
@@ -41,18 +41,18 @@ export function AiDemoSummary({ state, building, display, sourceId, stale }: Pro
         <li>
           <span className="ai-demo__step">02 · 해당 카메라의 제어 결과</span>
           <strong>{stale ? "확인 불가" : waiting ? "—" : `경보 ${causes.length} · 차단 통로 ${blocks}`}</strong>
-          <small>{camera === undefined ? "선택 관측원 기준" : `관측 구역: ${display?.zone_labels[camera.zone_id] ?? camera.zone_id}`}</small>
+          <small>{camera === undefined ? "선택한 카메라 기준" : `관측 구역: ${display?.zone_labels[camera.zone_id] ?? camera.zone_id}`}</small>
           <small>경보는 영상 종료 후에도 확인 해제 전까지 유지</small>
         </li>
         <li>
           <span className="ai-demo__step">03 · 건물 전체 경로</span>
           <strong>{stale ? "확인 불가" : `안내 ${routes.guided} / ${routes.total} 지점`}</strong>
-          <small>{stale ? "연결 복구 후 확인" : `안내 불가 ${routes.unavailable}곳 · 모든 관측원 반영`}</small>
+          <small>{stale ? "연결 복구 후 확인" : `안내 불가 ${routes.unavailable}곳 · 모든 감지기·카메라 반영`}</small>
         </li>
         <li>
-          <span className="ai-demo__step">04 · 건물 전체 단말</span>
+          <span className="ai-demo__step">04 · 건물 전체 유도등</span>
           <strong>{stale ? "확인 불가" : `적용 ${signs.confirmedCurrent} / ${signs.total}대`}</strong>
-          <small>{stale ? "연결 복구 후 확인" : `미확인 ${signs.unconfirmed}대${signs.mixedVersion ? " · 혼합 버전" : ""} · 브라우저 ACK 기준`}</small>
+          <small>{stale ? "연결 복구 후 확인" : `미확인 ${signs.unconfirmed}대${signs.mixedVersion ? " · 혼합 버전" : ""} · 유도등 화면 응답 기준`}</small>
         </li>
       </ol>
       <p className="ai-demo__note">

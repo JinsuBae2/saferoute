@@ -120,7 +120,7 @@ class Controller:
         for source in self.building.sources:
             zone = self.zones[source.zone_id]
             reasons = []
-            if any(key[0] == source.source_id and not (key[1] == "FIRE" and source.source_id in self.fire_model.incidents)
+            if any(key[0] == source.source_id and not (key[1] == "FIRE" and self.fire_model.spreads(source.source_id))
                    for key in self.active_causes): reasons.append("ACTIVE_ALARM")
             if source.required and self.sources[source.source_id].validity != "VALID":
                 reasons.append("REQUIRED_OBSERVATION_UNKNOWN")
