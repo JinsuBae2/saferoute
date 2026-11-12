@@ -1,6 +1,7 @@
 import type { Building, ClearReceipt, ClearRequest, EventReceipt, ObservationEvent, Position, StateSnapshot } from "@contracts";
 import { defaultIgnition } from "../building/firePresentation";
 import { ApiError, clearCause, fetchState, postObservation } from "../api/client";
+import { newId } from "../api/id";
 
 export function manualFireSources(building: Building) {
   return building.sources.filter((source) => source.source_type === "MANUAL_TEST" && !source.required
@@ -61,7 +62,7 @@ export class ManualFireControl {
         if (!latest) throw new Error("시험 입력의 현재 순번을 확인할 수 없습니다");
         const event: ObservationEvent = {
           schema_version: 1, run_id: this.runId, building_id: this.building.building_id, building_version: this.building.building_version,
-          event_id: crypto.randomUUID(), source_id: source.source_id, source_type: "MANUAL_TEST",
+          event_id: newId(), source_id: source.source_id, source_type: "MANUAL_TEST",
           source_sequence: (latest.last_source_sequence ?? 0) + 1, event_kind: "ALARM", hazard_type: "FIRE",
           validity: "VALID", observed_at: state.generated_at, media_time_ms: null, confidence: null, reason_code: null,
           ignition_position: action.position ?? defaultIgnition(this.building, action.zoneId),
