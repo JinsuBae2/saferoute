@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import sys
 from weakref import WeakValueDictionary
+import httpx
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
@@ -257,7 +258,10 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
     @app.post("/api/room/sim/restart", response_model=SimulationState)
     def room_restart(request: Request):
         room = own_room(request)
-        manager().restart(room)
+        # 공동 시연(/sim/restart)과 같게, 화면이 다시 시도할 수 있는 503으로 알린다.
+        try: manager().restart(room)
+        except (httpx.HTTPError,ValueError,OSError) as error:
+            return JSONResponse(status_code=503,content={"error":{"code":"CONTROLLER_UNAVAILABLE","message":str(error),"field":None}})
         return room.runner.state()
 
     @app.get("/api/room/ai")

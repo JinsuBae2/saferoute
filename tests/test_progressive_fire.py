@@ -34,7 +34,7 @@ def test_local_fire_grows_and_smoke_reaches_open_door_before_flame():
     assert early.state.fires[0].elapsed_ms == 0
     assert any(c.fire > 0 for c in early.state.cells)
     assert not any(c.zone_id == "B" for c in early.state.cells)
-    middle = fire.evaluate(12000)
+    middle = fire.evaluate(15000)
     assert any(c.zone_id == "B" and c.smoke > 0 and c.fire == 0 for c in middle.state.cells)
     assert "b" not in early.nodes
     late = fire.evaluate(60000)
@@ -199,3 +199,30 @@ def test_positioned_fire_is_not_duplicated_as_whole_zone_simulated_smoke(tmp_pat
         assert other.snapshot().fire_simulation is None
     finally:
         runner.close(); controller.close(); other.close()
+
+
+def test_fire_in_a_zone_without_route_nodes_falls_back_to_zone_blocking(api):
+    client, clock, run_id = api
+    zone = next(z for z in BUILDING.zones if z.zone_id == "F2-VOID")
+    payload = event(clock, run_id, "MANUAL-F2-VOID", 1)
+    payload["ignition_position"] = dict(x=sum(p.x for p in zone.polygon)/len(zone.polygon), y=4.,
+                                        z=sum(p.z for p in zone.polygon)/len(zone.polygon))
+    assert client.post("/api/events", json=payload).status_code == 200, payload
+    blocked = {e["edge_id"] for e in client.get("/api/state").json()["blocked_edges"]}
+    assert set(zone.blocked_edge_ids) and set(zone.blocked_edge_ids) <= blocked
+
+
+@pytest.mark.parametrize("zone_id", ["F2-ROOM-W", "F3-VOID-N", "F3-CENTER"])
+def test_positioned_fire_is_refused_where_no_route_can_change(api, zone_id):
+    client, clock, run_id = api
+    zone = next(z for z in BUILDING.zones if z.zone_id == zone_id)
+    floor = next(f for f in BUILDING.floors if f.floor_id == zone.floor_id)
+    payload = event(clock, run_id, f"MANUAL-{zone_id}", 1)
+    payload["ignition_position"] = dict(x=sum(p.x for p in zone.polygon)/len(zone.polygon), y=floor.elevation,
+                                        z=sum(p.z for p in zone.polygon)/len(zone.polygon))
+    response = client.post("/api/events", json=payload)
+    assert response.status_code != 200 and response.json()["error"]["code"] == "INVALID_EVENT_COMBINATION", response.text
+    assert client.get("/api/state").json()["controller_mode"] != "EMERGENCY"
+    # 위치 없는 일반 경보(실제 감지기와 같은 경로)는 그대로 받는다.
+    assert client.post("/api/events", json=event(clock, run_id, f"MANUAL-{zone_id}", 1)).status_code == 200
+    assert client.get("/api/state").json()["controller_mode"] == "EMERGENCY"

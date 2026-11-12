@@ -588,14 +588,34 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         let picked: THREE.Object3D | null = raycaster.intersectObjects(targets, true)[0]?.object ?? null;
         while (picked !== null && picked.userData.personIndex === undefined) picked = picked.parent;
         if (picked !== null) {
-          liveRef.current.onFollow?.(picked.userData.personIndex as number);
+          const index = picked.userData.personIndex as number;
+          // 사람을 누르면 그 사람이 선 지점이 내 위치가 된다. 이것이 없으면 1인칭으로 들어가도 「시연 시작」이 열리지 않는다.
+          pickRef.current?.(people.list[index].from);
+          liveRef.current.onFollow?.(index);
           return;
         }
       }
       if (handles.pick === null || pickRef.current === undefined) return;
       const hit = raycaster.intersectObject(handles.pick.mesh, false)[0];
       const nodeId = hit?.instanceId === undefined ? undefined : handles.pick.ids[hit.instanceId];
-      if (nodeId !== undefined) pickRef.current(nodeId);
+      if (nodeId !== undefined) {
+        pickRef.current(nodeId);
+        return;
+      }
+      // 지점 점은 작아서 빗나가기 쉽다. 바닥을 누르면 같은 층에서 가장 가까운 지점을 고른다.
+      const entries = [...handles.zoneMeshes.entries()];
+      const floorHit = raycaster.intersectObjects(entries.map(([, mesh]) => mesh), false)[0];
+      const floorId = liveRef.current.building.zones.find((z) => z.zone_id === entries.find(([, mesh]) => mesh === floorHit?.object)?.[0])?.floor_id;
+      if (floorHit === undefined || floorId === undefined) return;
+      const shown = new Set(handles.pick.ids);
+      let nearest: string | null = null;
+      let best = Infinity;
+      for (const node of liveRef.current.building.nodes) {
+        if (node.floor_id !== floorId || !shown.has(node.node_id)) continue;
+        const d = Math.hypot(node.position.x - floorHit.point.x, node.position.z - floorHit.point.z);
+        if (d < best) { best = d; nearest = node.node_id; }
+      }
+      if (nearest !== null) pickRef.current(nearest);
     };
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointerup", onUp);

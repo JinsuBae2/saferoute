@@ -10,7 +10,7 @@ import { enableSound, setAnnouncement, setMuted, setVolume, soundStatus, stopSou
 import { alarmLevel, announce } from "./broadcast";
 import type { BroadcastMemory } from "./broadcast";
 
-export function AlarmSoundBar({ state, stale }: { state: StateSnapshot; stale: boolean }) {
+export function AlarmSoundBar({ state, stale, finishing = false }: { state: StateSnapshot; stale: boolean; finishing?: boolean }) {
   const sound = useSyncExternalStore(subscribeSound, soundStatus);
   const memory = useRef<BroadcastMemory | null>(null);
   useEffect(() => () => stopSound(), []);
@@ -29,8 +29,8 @@ export function AlarmSoundBar({ state, stale }: { state: StateSnapshot; stale: b
     <div className={level === "NONE" ? "alarm-bar" : `alarm-bar alarm-bar--${level === "FIRE" ? "fire" : "smoke"}`} role={level === "NONE" ? undefined : "alert"}>
       {level !== "NONE" && <span className="alarm-bar__lamp" aria-hidden />}
       <strong className="alarm-bar__title">
-        {level === "NONE" ? "경보 없음" : level === "FIRE" ? `화재 경보 ${fires}건` : "연기 감지 경보"}
-        {level !== "NONE" && ` · 활성 경보 ${state.active_causes.length}건`}
+        {level === "NONE" ? (finishing ? "경보 해제 · 대피 마무리 중" : "경보 없음") : level === "FIRE" ? `화재 경보 ${fires}건` : "연기 감지 경보"}
+        {level !== "NONE" && ` · 전체 활성 경보 ${state.active_causes.length}건`}
         {level !== "NONE" && stale && " · 제어기 연결 끊김(방향 안내 중단, 경보 유지)"}
       </strong>
       <span className="alarm-bar__caption" aria-live="polite">

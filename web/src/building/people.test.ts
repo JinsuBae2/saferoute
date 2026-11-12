@@ -114,6 +114,14 @@ describe("대피 인원 이동", () => {
     expect(people[0].progress).toBeCloseTo(0.2);
   });
 
+  it("지나온 지점이 막혀도 가던 쪽에 경로가 있으면 멈추지 않고 계속 간다", () => {
+    const people = [person("A")];
+    stepPeople(people, routes(route("A", "B"), route("B", null)), true, TEN_METRES, 5);
+    stepPeople(people, routes(route("A", null, ["ORIGIN_BLOCKED"]), route("B", null)), true, TEN_METRES, 2);
+    expect(people[0]).toMatchObject({ from: "A", to: "B", status: "MOVING" });
+    expect(people[0].progress).toBeCloseTo(0.7);
+  });
+
   it.each(["ORIGIN_BLOCKED", "NO_REACHABLE_EXIT"] as const)("이동 중 %s가 되면 멈추고 복구되면 이어 걷는다", (reason) => {
     const people = [person("A")];
     const safe = routes(route("A", "B"), route("B", null));

@@ -12,8 +12,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Building, BuildingDisplay, Position, StateSnapshot } from "@contracts";
 import { ApiError, restartSimulation } from "../api/client";
+import { inRoom } from "../api/scope";
 import { enableSound } from "./alarmSound";
-import { ManualFireControl, manualFireSources } from "./manualFire";
+import { demoMessage, ManualFireControl, manualFireSources } from "./manualFire";
 import type { ManualAction, ManualResult } from "./manualFire";
 
 type Props = {
@@ -26,9 +27,11 @@ type Props = {
   readonly ignitionPosition?: Position | null;
   /** 내 위치를 골랐는지. 3D가 알려 준다. 경로가 보여야 시작한다. */
   readonly hasStart: boolean;
+  /** 방금 눌렀지만 화재 위치로 쓸 수 없는 구역. */
+  readonly refusedZoneId?: string | null;
 };
 
-export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, hasStart }: Props) {
+export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, hasStart, refusedZoneId = null }: Props) {
   const control = useMemo(() => new ManualFireControl(building, state.run_id), [building, state.run_id]);
   const mounted = useRef(false);
   const busy = useRef(false);
@@ -66,6 +69,8 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
   /** 실행기에 재실행을 요청한다. 성공하면 run_id가 바뀌어 화면이 처음 상태로 돌아간다. */
   async function restart() {
     if (pending || busy.current) return;
+    if (!window.confirm(inRoom() ? "처음부터 다시 시작할까요? 진행 중인 화재와 대피가 모두 지워집니다."
+      : "공동 시연을 처음부터 다시 시작할까요? 지금 보고 있는 모든 사람의 화면이 초기화됩니다.")) return;
     busy.current = true;
     setPending(true); setNotice(null);
     try {
@@ -84,13 +89,16 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
     }
   }
 
-  const blocked = source === undefined
-    ? "3D 도면에서 화재 위치를 먼저 누르세요"
+  const refused = refusedZoneId === null ? null
+    : `${name(refusedZoneId)}은(는) 통로와 이어진 근거가 없어 화재 위치로 쓸 수 없습니다. 다른 곳을 누르세요`;
+  const blocked = refused
+    ?? (source === undefined
+    ? "1/3 · 3D 도면에서 화재 위치를 누르세요"
     : !hasStart
-      ? "도면을 한 번 더 눌러 내 위치를 정하세요"
+      ? "2/3 · 도면을 한 번 더 눌러 내 위치를 정하세요"
       : active.has(source.source_id)
         ? "고른 자리에 이미 시험 화재가 있습니다"
-        : null;
+        : null);
 
   return (
     <div className="control__demo">
@@ -114,10 +122,10 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
           처음부터
         </button>
       </div>
-      <p className="control__demo-note">경보·대피는 즉시 시작하고 불·연기는 점차 퍼집니다. 시연용 확산입니다.</p>
+      <p className="control__demo-note">경보·대피는 즉시 시작하고 불·연기는 점차 퍼집니다. 시연용 확산입니다. 시작하면 경보음이 켜집니다.</p>
       <p className="control__demo-note" role="status" aria-live="polite">
-        {pending ? "서버 응답을 확인하고 있습니다…" : notice?.text ?? blocked ?? "누르면 고른 자리에 화재가 납니다"}
-        {notice?.result && (state.guidance_version >= notice.result.guidanceVersion ? " · 반영 확인" : " · 반영 대기")}
+        {demoMessage(pending, refused, notice?.text ?? null, blocked ?? "3/3 · 「시연 시작」을 누르면 고른 자리에 화재가 납니다")}
+        {!pending && refused === null && notice?.result && (state.guidance_version >= notice.result.guidanceVersion ? " · 반영 확인" : " · 반영 대기")}
       </p>
     </div>
   );

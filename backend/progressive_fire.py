@@ -15,7 +15,8 @@ from .contracts.common import PlanPoint, Position
 from .contracts.messages import FireSimulation, HazardCell, SimulatedFire
 
 CELL = 2.0
-FIRE_MS_PER_M, SMOKE_MS_PER_M = 4000, 1200
+# 연기는 걷는 속도(1.2m/s)의 약 1/4. 더 빠르면 대피 전에 건물 전체가 막힌다.
+FIRE_MS_PER_M, SMOKE_MS_PER_M = 4000, 3000
 FIRE_FLOOR_DELAY, SMOKE_FLOOR_DELAY = 20000, 8000
 
 
@@ -189,6 +190,11 @@ class ProgressiveFire:
                          and segment_distance(position,nodes[e.from_node_id].position,nodes[e.to_node_id].position) <= .35}
         self.incidents[source_id] = (zone_id,position,now_ms,*times,initial_nodes,initial_edges)
         self._cache_key = None
+
+    def spreads(self, source_id):
+        """False when the ignition cannot reach any route node (isolated room cells)."""
+        incident = self.incidents.get(source_id)
+        return incident is not None and any(key.startswith("node:") for key in incident[4])
 
     def remove(self, source_id):
         self.incidents.pop(source_id,None)

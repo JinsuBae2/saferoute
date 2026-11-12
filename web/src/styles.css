@@ -318,7 +318,7 @@ code {
 }
 
 .control__ids {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.05em;
 }
 
@@ -396,7 +396,7 @@ code {
 }
 
 .tile__label {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.16em;
   color: var(--muted);
 }
@@ -460,7 +460,7 @@ code {
 .tile__bar--warn .tile__bar-fill { background: var(--tone-warn); }
 
 .tile__note {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   line-height: 1.6;
   color: var(--dim);
@@ -488,7 +488,7 @@ code {
 
 .panel__note {
   margin: 0 0 8px;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   line-height: 1.7;
   color: var(--muted);
@@ -706,13 +706,13 @@ code {
 }
 
 .chip {
-  padding: 7px 14px;
+  padding: 9px 14px;
   border-radius: 0;
   border: 0;
   background: var(--raised);
   color: var(--muted);
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   cursor: pointer;
 }
@@ -791,15 +791,15 @@ code {
 /* 바로 위 `.control__demo button`보다 명시도가 높아야 채운 색이 산다. */
 .control__demo button.control__demo-start { font-weight: 500; color: var(--accent-text); background: var(--accent); }
 .control__demo button:disabled { opacity: 0.4; cursor: not-allowed; }
-.control__demo-note { margin: 0; max-width: 32ch; font-size: 10px; letter-spacing: 0.06em; color: var(--muted); line-height: 1.5; }
+.control__demo-note { margin: 0; max-width: 32ch; font-size: 12px; letter-spacing: 0.06em; color: var(--muted); line-height: 1.5; }
 
 /* 「건물 3D」 제목 옆 — 지금 무엇을 고르는 중인지. 눌러서 대상을 바꾼다(이슈 #189). */
-.panel__aim { font-size: 10px; letter-spacing: 0.06em; color: var(--dim); }
+.panel__aim { font-size: 12px; letter-spacing: 0.06em; color: var(--dim); }
 
 .panel__aim-btn {
   padding: 5px 13px;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   color: #cdd5e8;
   background: var(--accent-soft);
@@ -918,7 +918,7 @@ code {
   left: -2px;
   bottom: 100%;
   padding: 1px 5px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   white-space: nowrap;
   color: #0b0f14;
@@ -970,12 +970,12 @@ code {
 .control--presentation .control__overview { display: none; }
 .ai-demo { border: 1px solid #31465a; border-radius: 14px; background: linear-gradient(120deg, #142332, var(--panel)); padding: 20px; }
 .ai-demo__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-.ai-demo__eyebrow { margin: 0 0 8px; color: #8dc9f5; font-size: 11px; letter-spacing: .18em; }
+.ai-demo__eyebrow { margin: 0 0 8px; color: #8dc9f5; font-size: 12px; letter-spacing: .18em; }
 .ai-demo h2 { margin: 0; font-size: clamp(22px, 2.3vw, 32px); letter-spacing: -.03em; }
 .ai-demo__head p:not(.ai-demo__eyebrow) { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 .ai-demo__steps { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0; margin: 18px 0 12px; gap: 10px; }
 .ai-demo__steps li { padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: #0b0f1480; display: flex; flex-direction: column; gap: 7px; }
-.ai-demo__step { font-size: 11px; color: #8dc9f5; }
+.ai-demo__step { font-size: 12px; color: #8dc9f5; }
 .ai-demo__steps strong { font-size: clamp(15px, 1.3vw, 21px); }
 .ai-demo__steps small { color: var(--muted); line-height: 1.5; }
 .ai-demo__note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
@@ -1250,10 +1250,24 @@ code {
 
   /* 왼쪽 3D는 화면에 붙여 둔다. 첫 화면에서 스크롤 없이 보이도록 화면 높이를 넘지 않고,
      남는 자리는 3D가 쓴다. 그래야 오른쪽 칸과 같은 선에서 끝난다(이슈 #21). */
+  /* 「시연 시작」과 3D를 한 화면에서 쓴다. 머리말을 위에 붙이고 3D 칸은 그 아래에 붙인다.
+     높이는 ControlDashboard가 --control-header로 알려 준다. */
+  .control__header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding-block: 10px;
+  }
+
+  .control__demo-note { max-width: 64ch; }
+  /* 한 줄에 들어가야 머리말이 낮아진다. */
+  .control__demo { margin-right: 0; }
+
   .control__building {
     position: sticky;
-    top: 12px;
-    max-height: calc(100vh - 24px);
+    top: calc(var(--control-header, 0px) + 2px);
+    scroll-margin-top: calc(var(--control-header, 0px) + 2px);
+    max-height: calc(100vh - var(--control-header, 0px) - 14px);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -1262,6 +1276,8 @@ code {
   .control__building > .panel {
     flex: 1 1 auto;
     min-height: 0;
+    /* 낮은 화면의 1인칭(무대 최소 540px)은 칸 안에서 스크롤한다. */
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
   }
@@ -1281,7 +1297,7 @@ code {
   }
 
   .control__side {
-    max-height: calc(100vh - 24px);
+    max-height: calc(100vh - var(--control-header, 0px) - 14px);
     overflow-y: auto;
     padding-right: 4px;
     /* 왼쪽 3D 칸과 같은 선에서 끝나게 한다. 남는 자리는 CCTV가 쓴다(이슈 #21). */
@@ -1344,7 +1360,7 @@ code {
 }
 
 .evac__counts span {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.14em;
   color: var(--muted);
 }
@@ -1463,3 +1479,8 @@ code {
 .cctv-station .analysis-open { margin-top: .75rem; }
 
 .control__side > .cctv-station:first-child { flex: 0 0 auto; }
+
+/* 머리말의 실행 번호·시각은 접어 둔다. 처음 보는 사람에게 필요한 정보가 아니다. */
+.control__ids summary { cursor: pointer; width: fit-content; }
+.control__shared { font-size: 13px; font-weight: 400; color: var(--tone-warn); }
+.room-entry__steps { margin: 8px 0 16px; padding-left: 20px; line-height: 1.9; }

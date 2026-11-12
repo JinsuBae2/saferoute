@@ -35,8 +35,8 @@ describe("AI 시연 요약", () => {
     const html = render("CAM-A", false, snapshot);
     expect(html).toContain("경보 1 · 차단 통로 1");
     expect(html).toContain("건물 전체 경로");
-    expect(html).toContain("건물 전체 단말");
-    expect(html).toContain("브라우저 ACK 기준");
+    expect(html).toContain("건물 전체 유도등");
+    expect(html).toContain("유도등 화면 응답 기준");
   });
 
   it("제어 연결이 끊기면 마지막 집계값을 현재 성과처럼 표시하지 않는다", () => {

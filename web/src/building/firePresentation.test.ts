@@ -4,7 +4,7 @@ import raw from "@space/wfi-v1.json";
 import geometry from "@space/wfi-geometry-v1.json";
 import { insidePolygon, visibleWalls } from "./geometry";
 import type { BuildingGeometry } from "./geometry";
-import { defaultIgnition, localSmoke, simulationFireCells } from "./firePresentation";
+import { defaultIgnition, localSmoke, newFireFloors, simulationFireCells } from "./firePresentation";
 
 const building = raw as Building;
 const field: FireSimulation = { model:"DEMO_GRAPH_V1",cell_size_m:2, fires:[], cells:[
@@ -32,5 +32,21 @@ describe("server progressive fire presentation", () => {
   it("shows only server-reported flames and respects floor visibility", () => {
     expect(simulationFireCells(field,new Set(["F1"])).map(c=>c.cell_id)).toEqual(["a"]);
     expect(simulationFireCells(null,new Set(["F1"]))).toEqual([]);
+  });
+});
+
+describe("newFireFloors", () => {
+  const cause = (zone: string, id: string) => ({ source_id: `MANUAL-${zone}`, hazard_type: "FIRE" as const,
+    first_event_id: id, last_event_id: id, activated_at: "2026-11-12T00:00:00Z", ignition_position: null });
+
+  it("shows the floor again for a second fire on the same floor, but not on plain refreshes", () => {
+    const first = [cause("F3-R304", "e1")];
+    const opened = newFireFloors(building, first, new Set());
+    expect([...opened.floors]).toEqual(["F3"]);
+    // 사용자가 3층을 숨긴 뒤 같은 상태가 다시 와도 켜지 않는다.
+    expect(newFireFloors(building, first, opened.seen).floors.size).toBe(0);
+    const second = newFireFloors(building, [...first, cause("F3-R307", "e2")], opened.seen);
+    expect([...second.floors]).toEqual(["F3"]);
+    expect(newFireFloors(building, [...first, cause("F3-R307", "e2")], second.seen).floors.size).toBe(0);
   });
 });

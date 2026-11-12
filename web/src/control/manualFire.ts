@@ -7,6 +7,22 @@ export function manualFireSources(building: Building) {
     && source.allowed_hazard_types.includes("FIRE"));
 }
 
+/** 지점도 차단 대상도 없는 구역은 불을 내도 경로가 바뀌지 않는다. 서버(check_event)와 같은 기준이다. */
+export function fireSelectable(building: Building, zoneId: string) {
+  const zone = building.zones.find((z) => z.zone_id === zoneId);
+  return zone !== undefined && (zone.blocked_node_ids.length > 0 || zone.blocked_edge_ids.length > 0
+    || building.nodes.some((node) => node.zone_id === zoneId));
+}
+
+/**
+ * 「시연 시작」 옆 한 줄. 거절 사유는 직전 조작 결과보다 먼저 보인다.
+ * 시연에 성공한 뒤 제한 구역을 눌러도 "발생 1건" 문구에 가려지지 않게 한다.
+ */
+export function demoMessage(pending: boolean, refused: string | null, notice: string | null, step: string) {
+  if (pending) return "서버 응답을 확인하고 있습니다…";
+  return refused ?? notice ?? step;
+}
+
 export type ManualAction = { kind: "ignite" | "clear"; zoneId: string; position?: Position | null } | { kind: "clear_all" };
 export type ManualResult = { completed: number; guidanceVersion: number };
 type ManualApi = {
@@ -39,10 +55,10 @@ export class ManualFireControl {
       let guidanceVersion = state.guidance_version;
       if (action.kind === "ignite") {
         const source = sources.find((s) => s.zone_id === action.zoneId);
-        if (!source) throw new Error("등록된 시험 화재 관측원이 없는 구역입니다");
+        if (!source) throw new Error("시험 화재를 낼 수 없는 구역입니다");
         if (active.has(source.source_id)) throw new Error("이미 활성 시험 화재가 있습니다");
         const latest = state.sources.find((s) => s.source_id === source.source_id);
-        if (!latest) throw new Error("시험 관측원의 현재 순번을 확인할 수 없습니다");
+        if (!latest) throw new Error("시험 입력의 현재 순번을 확인할 수 없습니다");
         const event: ObservationEvent = {
           schema_version: 1, run_id: this.runId, building_id: this.building.building_id, building_version: this.building.building_version,
           event_id: crypto.randomUUID(), source_id: source.source_id, source_type: "MANUAL_TEST",

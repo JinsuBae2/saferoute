@@ -1,4 +1,4 @@
-import type { Building, FireSimulation, HazardCell, Position } from "@contracts";
+import type { ActiveCause, Building, FireSimulation, HazardCell, Position } from "@contracts";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 import { insidePolygon, visibleWalls } from "./geometry";
 import type { BuildingGeometry } from "./geometry";
@@ -29,4 +29,20 @@ export function localSmoke(cells: readonly HazardCell[], zoneId: string, x: numb
 
 export function simulationFireCells(field: FireSimulation | null | undefined, floors: ReadonlySet<string>) {
   return field?.cells.filter(c=>c.fire>0 && floors.has(c.floor_id) && !c.cell_id.startsWith("node:") && !c.cell_id.startsWith("edge:")) ?? [];
+}
+
+/**
+ * 아직 본 적 없는 화재가 난 층. 층 목록만 비교하면 같은 층의 두 번째 화재를 놓친다.
+ * seen에 없는 화재만 돌려주므로 주기적인 상태 갱신으로는 숨긴 층이 다시 켜지지 않는다.
+ */
+export function newFireFloors(building: Building, causes: readonly ActiveCause[], seen: ReadonlySet<string>) {
+  const fires = causes.filter((cause) => cause.hazard_type === "FIRE");
+  const floors = new Set<string>();
+  for (const cause of fires) {
+    if (seen.has(cause.first_event_id)) continue;
+    const zoneId = building.sources.find((source) => source.source_id === cause.source_id)?.zone_id;
+    const floorId = building.zones.find((zone) => zone.zone_id === zoneId)?.floor_id;
+    if (floorId !== undefined) floors.add(floorId);
+  }
+  return { floors, seen: new Set(fires.map((cause) => cause.first_event_id)) };
 }

@@ -30,6 +30,8 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale }: 
   const path = guide?.kind === "ROUTE" ? guide.path.map(id => building.nodes.find(n => n.node_id === id)!) : [];
   const currentPath = path.flatMap((node, i) => i > 0 && (i > 1 || pose?.routeNodeId !== pose?.nodeId) && node.floor_id === floorId && path[i - 1].floor_id === floorId ? [{ from: path[i - 1].position, to: node.position }] : []);
   const next = pose?.routeNodeId !== pose?.nodeId ? path[0] : path[1] ?? path[0];
+  // 화재 전에는 방향을 지시하지 않는다. 평소에 "지금 우회전"이 뜨면 이미 대피 중인 것처럼 읽힌다.
+  const idle = !stale && guide?.kind === "ROUTE" && pose?.evacuating !== true;
   const status = stale ? "연결 확인 중" : guide?.kind === "BLOCKED" ? "안내 중단" : pose?.evacuating ? "대피 중" : "평상시 · 출발 대기";
   return <div className={`phone-overlay${open ? " phone-overlay--open" : ""}`}>
     <div className={`phone-handset${pose?.moving && !stale ? " phone-handset--walking" : ""}`} aria-hidden={!open} inert={!open}>
@@ -54,8 +56,8 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale }: 
             <small>장면 기반 QR 인식 시연</small>
           </div> : <>
             <div className={`phone-direction${guide?.kind !== "ROUTE" ? " phone-direction--paused" : ""}`}>
-              <span className="phone-arrow" aria-hidden="true">{guide?.kind === "ROUTE" ? guide.icon : "!"}</span>
-              <div><strong>{guide?.instruction ?? "현재 위치 확인 중"}</strong><p>{guide?.detail ?? "선택한 사람의 위치를 연결합니다"}</p></div>
+              <span className="phone-arrow" aria-hidden="true">{idle ? "✓" : guide?.kind === "ROUTE" ? guide.icon : "!"}</span>
+              <div><strong>{idle ? "평상시" : guide?.instruction ?? "현재 위치 확인 중"}</strong><p>{idle ? "화재가 나면 여기에 대피 방향이 나옵니다" : guide?.detail ?? "선택한 사람의 위치를 연결합니다"}</p></div>
             </div>
             <div className="phone-floor-info" role="status">
               <strong>{guide?.kind === "ROUTE" && guide.floorTransition !== null ? guide.floorTransition : `${stale ? "마지막 확인" : "현재"} ${floorLabel}`}</strong>

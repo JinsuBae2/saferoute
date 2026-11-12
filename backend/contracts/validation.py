@@ -90,6 +90,9 @@ def check_event(event: ObservationEvent, context: EventContext) -> EventCheck:
         from backend.progressive_fire import contains, in_wall, walls_for
         zone = next(z for z in context.building.zones if z.zone_id == source.zone_id)
         floor = next(f for f in context.building.floors if f.floor_id == zone.floor_id)
+        # 지점도 차단 대상도 없는 구역은 불을 내도 경로가 바뀌지 않는다(공간 자료에 연결 근거 없음, U04·U05).
+        if not (zone.blocked_node_ids or zone.blocked_edge_ids or any(n.zone_id == zone.zone_id for n in context.building.nodes)):
+            raise ContractError("INVALID_EVENT_COMBINATION", "통로와 이어진 근거가 없는 구역이라 시연 화재 위치로 쓸 수 없습니다. 다른 곳을 선택하세요", "ignition_position")
         p = event.ignition_position
         walls = walls_for(context.building.building_id,context.building.building_version).get(zone.floor_id,[])
         if abs(p.y-floor.elevation) > .01 or not contains(zone.polygon,p.x,p.z) or in_wall(walls,p):

@@ -29,6 +29,7 @@ import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
 import { DemoControls } from "./DemoControls";
+import { fireSelectable } from "./manualFire";
 import { CameraStation } from "./CameraStation";
 import { AiDemoSummary } from "./AiDemoSummary";
 import { AlarmSoundBar } from "./AlarmSoundBar";
@@ -235,8 +236,22 @@ export function ControlDashboard() {
    * 실행이 바뀌면 고른 것도 버린다. 실행 번호를 함께 담아 두면 효과 없이 저절로 비워진다.
    */
   const [fire, setFire] = useState<{ readonly runId: string; readonly zoneId: string; readonly position?: Position } | null>(null);
+  /** 화재 위치로 쓸 수 없어 거절한 구역. 이유를 「시연 시작」 옆에 보여 준다. */
+  const [refused, setRefused] = useState<{ readonly runId: string; readonly zoneId: string } | null>(null);
   /** 3D를 누르면 무엇이 정해지는지. 시연은 화재 위치부터 고르므로 구역으로 시작한다. */
   const [pickTarget, setPickTarget] = useState<"NODE" | "ZONE">("ZONE");
+  // 머리말(시연 시작)은 화면 위에 붙어 있다. 그 높이만큼 3D 칸을 내려 붙이도록 CSS에 알린다.
+  const mainRef = useRef<HTMLElement>(null);
+  const loaded = view.state !== null;
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (header === null) return;
+    const observer = new ResizeObserver(() => mainRef.current?.style.setProperty("--control-header", `${header.offsetHeight}px`));
+    observer.observe(header);
+    return () => observer.disconnect();
+    // 머리말은 첫 상태를 받은 뒤에야 그려진다.
+  }, [loaded]);
   /** 3D에서 고른 내 위치. 머리말의 「시연 시작」이 이것까지 있어야 열린다(이슈 #21). */
   const [startNode, setStartNode] = useState<string | null>(null);
   const [selectedCamera, setCamera] = useState<{ runId: string; sourceId: string | null; fixed: boolean; locate: number } | null>(null);
@@ -264,7 +279,7 @@ export function ControlDashboard() {
           <p className="panel__empty">
             {view.stateError ?? "상태를 기다리는 중입니다."}
             <br />
-            제어 백엔드가 떠 있는지 확인하세요.
+            서버가 실행 중인지 확인하세요.
           </p>
         </Panel>
         <footer className="control__footer"><SourceNotice /></footer>
@@ -282,6 +297,8 @@ export function ControlDashboard() {
   const simulation = simulationMatchesRun(view.simulation, state) ? view.simulation : null;
   const signChanges = summarizeSignChanges(state, defaults);
   const stale = health.stale || view.stateError !== null;
+  /** 경보는 해제됐지만 시작한 대피가 끝나지 않았다. 정상 복구(평상시)와 구분해 보여 준다. */
+  const finishing = state.controller_mode === "NORMAL" && people !== null && people.moving + people.stuck > 0;
   const fireZone = fire !== null && fire.runId === state.run_id ? fire.zoneId : "";
   /**
    * 지금 도면을 누르면 무엇이 정해지는지. 화재 위치가 비어 있으면 거기부터 고른다.
@@ -294,14 +311,15 @@ export function ControlDashboard() {
     : state.routes;
 
   return (
-    <main className={presentation ? "control control--presentation" : "control"}>
-      <header className="control__header">
+    <main ref={mainRef} className={presentation ? "control control--presentation" : "control"}>
+      <header ref={headerRef} className="control__header">
         <div>
-          <h1>saferoute 관제</h1>
-          <p className="control__ids">
+          <h1>saferoute 관제{!inRoom() && <small className="control__shared"> · 공동 시연 (조작이 모든 사람에게 적용됩니다)</small>}</h1>
+          <details className="control__ids">
+            <summary>기술 정보</summary>
             실행 <code>{state.run_id}</code> · {state.building_id} v{state.building_version} · 안내 버전{" "}
             <strong>{state.guidance_version}</strong> · 기준 시각 {state.generated_at}
-          </p>
+          </details>
         </div>
         {space.building !== null && (
           <DemoControls
@@ -313,6 +331,7 @@ export function ControlDashboard() {
             zoneId={fireZone}
             ignitionPosition={fire?.runId === state.run_id ? fire.position : null}
             hasStart={startNode !== null}
+            refusedZoneId={refused?.runId === state.run_id ? refused.zoneId : null}
           />
         )}
         <div className="control__actions">
@@ -321,7 +340,7 @@ export function ControlDashboard() {
             aria-pressed={presentation} onClick={() => setPresentation((previous) => !previous)}>
             {presentation ? "기본 관제로 돌아가기" : "AI 시연 보기"}
           </button>
-          <Badge tone={MODE_TONE[state.controller_mode]}>{MODE_LABEL[state.controller_mode]}</Badge>
+          <Badge tone={finishing ? "warn" : MODE_TONE[state.controller_mode]}>{finishing ? "경보 해제 · 대피 마무리 중" : MODE_LABEL[state.controller_mode]}</Badge>
         </div>
       </header>
 
@@ -334,7 +353,7 @@ export function ControlDashboard() {
         </p>
       )}
 
-      <AlarmSoundBar state={state} stale={stale} />
+      <AlarmSoundBar state={state} stale={stale} finishing={finishing} />
 
       {simulationLost && (
         <p className="control__alert" role="alert">
@@ -350,7 +369,7 @@ export function ControlDashboard() {
       {simulation?.status === "FAILED" && (
         <p className="control__alert" role="alert">
           시뮬레이션이 멈췄습니다. {SIMULATION_FAILURE_LABEL[simulation.error_code ?? ""] ?? "원인을 확인하지 못했습니다"}
-          {simulation.error_code !== null && <> (<code>{simulation.error_code}</code>)</>}. 새 감지 정보가 오지 않아 경로 안내가 멈춥니다. 시연 패널의 초기화로 다시 시작하세요.
+          {simulation.error_code !== null && <> (<code>{simulation.error_code}</code>)</>}. 새 감지 정보가 오지 않아 경로 안내가 멈춥니다. 위의 「처음부터」로 다시 시작하세요.
         </p>
       )}
 
@@ -431,6 +450,11 @@ export function ControlDashboard() {
               pickTarget={aim}
               onPickTarget={setPickTarget}
               onPickZone={(zoneId, position) => {
+                if (space.building !== null && !fireSelectable(space.building, zoneId)) {
+                  setRefused({ runId: state.run_id, zoneId });
+                  return;
+                }
+                setRefused(null);
                 setFire({ runId: state.run_id, zoneId, position });
                 // 화재 위치를 정했으면 다음은 내 위치다. 한 번 더 누르면 바로 이어진다.
                 setPickTarget("NODE");
@@ -454,7 +478,7 @@ export function ControlDashboard() {
 
       <Panel
         title="상황 설명"
-        note="Bedrock 작성 · 제어 판단과 별개이며 새 행동 지시를 만들지 않습니다"
+        note="AI(Amazon Bedrock)가 쓴 설명 · 제어 판단과 별개이며 새 행동 지시를 만들지 않습니다"
       >
         {explanation.usable ? (
           <div className="explanation">
@@ -475,7 +499,7 @@ export function ControlDashboard() {
           <p className="panel__empty">
             {/* 연결 실패·실행 대기·생성 실패를 나눠 말한다. HTTP 상태값만 보여 주지 않는다. */}
             {view.explanationError !== null ? (
-              <span title={view.explanationError}>연결 실패 · 상황 설명 서버에 연결하지 못했습니다. 서버가 실행 중인지 확인하세요.</span>
+              <span title={view.explanationError}>상황 설명 미연결 · 설명 서버가 연결되지 않았습니다. 경로·방향 안내에는 영향이 없습니다.</span>
             ) : view.explanation?.status === "PENDING" ? (
               "실행 대기 · 현재 안내에 대한 설명을 만들고 있습니다."
             ) : view.explanation?.error_code != null ? (
@@ -634,7 +658,7 @@ export function ControlDashboard() {
 
       <Panel
         title="경로"
-        note="cost는 경로 선택용 모델 비용입니다. 거리나 피난 시간이 아닙니다"
+        note="경로 점수는 경로를 고르는 데 쓰는 값입니다. 거리나 피난 시간이 아닙니다"
         folding
       >
         <label className="filter">
@@ -659,7 +683,7 @@ export function ControlDashboard() {
                 <th>지점</th>
                 <th>다음</th>
                 <th>목적지</th>
-                <th>모델 비용</th>
+                <th>경로 점수</th>
                 <th>사유</th>
               </tr>
             </thead>
@@ -737,18 +761,20 @@ export function ControlDashboard() {
           value={`${sources.total}개 중 ${sources.valid}개`}
           ratio={bar(sources.valid, sources.total)}
           tone={sources.anyUnconfirmed ? "warn" : "route"}
-          note={`최신 정보 수신 ${sources.valid}개 · 받지 못함 ${sources.initializing} · 만료 ${sources.stale} · 관측 불가 ${sources.unavailable} · 최신 정보가 위험 없음을 뜻하지는 않습니다`}
+          note={`최신 정보 수신 ${sources.valid}개 · 아직 입력 없음 ${sources.initializing}개(시험 입력·카메라는 쓸 때만 보냅니다) · 만료 ${sources.stale}개 · 감지 불가 ${sources.unavailable}개 · 최신 정보가 위험 없음을 뜻하지는 않습니다`}
         />
         <Tile
           label="유도등 반영 확인"
-          value={`${signs.total}개 중 ${signs.confirmedCurrent}개`}
+          value={`${signs.total}대 중 ${signs.confirmedCurrent}대`}
           ratio={bar(signs.confirmedCurrent, signs.total)}
-          tone={signs.unconfirmed > 0 ? "warn" : "route"}
-          note={signs.mixedVersion ? "서로 다른 안내 버전 표시 중" : `응답 없어 미확인 ${signs.unconfirmed}대`}
+          tone={signs.confirmedCurrent === 0 ? undefined : signs.unconfirmed > 0 ? "warn" : "route"}
+          note={signs.mixedVersion ? "서로 다른 안내 버전 표시 중"
+            : signs.confirmedCurrent === 0 ? "열려 있는 유도등 화면이 없습니다. 유도등 화면을 열어야 응답을 셉니다. 3D의 방향 안내에는 영향이 없습니다"
+            : `응답 없어 미확인 ${signs.unconfirmed}대`}
         />
         <Tile
           label="방향 변경 확인"
-          value={signChanges === null ? "확인 불가" : `${signChanges.changedConfirmed}대`}
+          value={signChanges === null ? "확인 불가" : `${signChanges.changed}대 중 ${signChanges.changedConfirmed}대`}
           ratio={signChanges === null ? undefined : bar(signChanges.changedConfirmed, signChanges.changed)}
           tone={signChanges !== null && signChanges.changed > signChanges.changedConfirmed ? "warn" : undefined}
           note={signChanges === null ? "건물 자료를 읽지 못했습니다"
@@ -757,7 +783,7 @@ export function ControlDashboard() {
       </div>
 
       <footer className="control__footer">
-        시험 조작 패널 외에는 조회만 합니다. 화면을 닫아도 활성 경보와 제어기·유도등 단말은 그대로 유지됩니다.
+        시험 조작 패널 외에는 조회만 합니다. 화면을 닫아도 활성 경보와 제어기·유도등 화면은 그대로 유지됩니다.
         <SourceNotice />
       </footer>
     </main>
