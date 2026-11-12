@@ -86,6 +86,14 @@ def check_event(event: ObservationEvent, context: EventContext) -> EventCheck:
         raise ContractError("UNKNOWN_SOURCE", "등록되지 않은 관측원입니다", "source_id")
     if source.source_type != event.source_type or (event.hazard_type and event.hazard_type not in source.allowed_hazard_types):
         raise ContractError("INVALID_EVENT_COMBINATION", "관측원 설정과 입력 유형이 다릅니다", "source_type")
+    if event.ignition_position is not None:
+        from backend.progressive_fire import contains, in_wall, walls_for
+        zone = next(z for z in context.building.zones if z.zone_id == source.zone_id)
+        floor = next(f for f in context.building.floors if f.floor_id == zone.floor_id)
+        p = event.ignition_position
+        walls = walls_for(context.building.building_id,context.building.building_version).get(zone.floor_id,[])
+        if abs(p.y-floor.elevation) > .01 or not contains(zone.polygon,p.x,p.z) or in_wall(walls,p):
+            raise ContractError("INVALID_EVENT_COMBINATION", "발화 위치가 구역·층 밖이거나 벽 안입니다. 바닥의 다른 지점을 선택하세요", "ignition_position")
     previous = context.seen_events.get(event.event_id)
     if previous is not None:
         if previous != event:

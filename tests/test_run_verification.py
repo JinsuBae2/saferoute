@@ -322,3 +322,82 @@ def test_reset_and_shutdown_finalize_distinct_verifiable_runs(tmp_path):
     for run_id in (previous, current):
         report = verify_run(tmp_path / "runs" / run_id)
         assert report["status"] == "PASS", report
+
+
+def recorded_progressive_run(tmp_path):
+    from backend.controller import Controller
+    from backend.contracts import parse_contract
+    from test_observation_state import FakeClock, control, payload, prepare
+
+    data = json.loads((ROOT / "data/fixtures/two-route-v1.json").read_text(encoding="utf-8"))
+    data["sources"].append(dict(source_id="MANUAL-A", source_type="MANUAL_TEST", zone_id="Z-A",
+                                required=False, freshness_ms=3000, allowed_hazard_types=["FIRE"]))
+    clock = FakeClock()
+    store = Controller(parse_contract("Building", data), tmp_path / "runs", clock=clock)
+    prepare(store, clock)
+    event = payload(store, clock, source="MANUAL-A", ignition_position=dict(x=-1., y=0., z=-1.))
+    store.receive(event)
+    early = store.snapshot()
+    clock.advance(1000)
+    visual = store.snapshot()
+    assert visual.fire_simulation.fires[0].elapsed_ms == 1000
+    assert visual.guidance_version == early.guidance_version
+    store.receive(event)
+    store.receive(payload(store, clock, source="MANUAL-A", sequence=2,
+                          ignition_position=dict(x=-.9, y=0., z=-1.)))
+    clock.advance(6000)
+    late = store.snapshot()
+    assert late.guidance_version > early.guidance_version
+    assert late.fire_simulation.fires[0].position.x == -1.
+    store.clear(control(store, source_id="MANUAL-A", hazard_type="FIRE"))
+    assert store.snapshot().fire_simulation is None
+    previous = store.run_id
+    store.reset(control(store))
+    assert store.snapshot().fire_simulation is None
+    store.close()
+    return [tmp_path / "runs" / run_id for run_id in (previous, store.run_id)]
+
+
+def test_progressive_fire_log_replays_visual_updates_spread_clear_and_reset(tmp_path):
+    directories = recorded_progressive_run(tmp_path)
+    decisions = read_records(directories[0], "decisions.jsonl")
+    assert len([r for r in decisions if r["operation"] == "fire_spread"]) == 1
+    for directory in directories:
+        report = verify_run(directory)
+        assert report["status"] == "PASS", report
+
+
+@pytest.mark.parametrize("damage", ["guidance", "inactive", "unpositioned", "origin"])
+def test_progressive_spread_requires_active_positioned_evidence_and_one_version_step(tmp_path, damage):
+    directory = recorded_controller_run(tmp_path) if damage == "inactive" else recorded_progressive_run(tmp_path)[0]
+    records = read_records(directory, "decisions.jsonl")
+    if damage == "inactive":
+        cleared = next(r for r in records if r["operation"] == "clear")
+        stop = records[-1]
+        records.insert(-1, cleared | dict(operation="fire_spread", guidance_version=cleared["guidance_version"] + 1,
+                       record_sequence=stop["record_sequence"], server_monotonic_ms=stop["server_monotonic_ms"]))
+        stop["record_sequence"] += 1
+        write_records(directory, "decisions.jsonl", records)
+        manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+        manifest["last_record_sequence"] += 1
+        write_json(directory / "manifest.json", manifest)
+        report = verify_run(directory)
+        assert_failed(report, "decisions.jsonl")
+        assert any("no active positioned fire" in error["message"] for error in report["errors"])
+        return
+    spread = next(r for r in records if r["operation"] == "fire_spread")
+    if damage == "guidance":
+        spread["guidance_version"] += 1
+    elif damage == "origin":
+        spread["active_causes"][0]["ignition_position"]["x"] = -.9
+    else:
+        events = read_records(directory, "events.jsonl")
+        for record in events:
+            if record["operation"] == "event" and record["payload"]["source_id"] == "MANUAL-A":
+                record["payload"].pop("ignition_position", None)
+        write_records(directory, "events.jsonl", events)
+    write_records(directory, "decisions.jsonl", records)
+    report = verify_run(directory)
+    assert_failed(report, "decisions.jsonl")
+    if damage == "unpositioned":
+        assert any("no active positioned fire" in error["message"] for error in report["errors"])

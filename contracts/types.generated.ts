@@ -13,6 +13,7 @@ export type ActiveCause = {
   "first_event_id": string;
   "last_event_id": string;
   "activated_at": string;
+  "ignition_position"?: Position | null;
 };
 
 export type ArmReceipt = {
@@ -161,6 +162,13 @@ export type FaceResult = {
   "reason_codes": Array<"INITIALIZING" | "ORIGIN_BLOCKED" | "NO_REACHABLE_EXIT" | "REQUIRED_OBSERVATION_UNKNOWN" | "EXIT_UNAVAILABLE" | "UNSUPPORTED_DISPLAY" | "CONTROLLER_UNAVAILABLE" | "COMMAND_EXPIRED" | "VERSION_MISMATCH">;
 };
 
+export type FireSimulation = {
+  "model"?: "DEMO_GRAPH_V1";
+  "cell_size_m"?: number;
+  "fires": Array<SimulatedFire>;
+  "cells": Array<HazardCell>;
+};
+
 export type Floor = {
   "floor_id": string;
   "label": string;
@@ -171,6 +179,15 @@ export type FloorTransform = {
   "floor_id": string;
   "scale": number;
   "translation": Position;
+};
+
+export type HazardCell = {
+  "cell_id": string;
+  "zone_id": string;
+  "floor_id": string;
+  "position": Position;
+  "fire": number;
+  "smoke": number;
 };
 
 export type Node = {
@@ -197,6 +214,7 @@ export type ObservationEvent = {
   "media_time_ms": number | null;
   "confidence": number | null;
   "reason_code": string | null;
+  "ignition_position"?: Position | null;
 };
 
 export type PlanPoint = {
@@ -325,6 +343,13 @@ export type SignState = {
   "terminals": Array<TerminalState>;
 };
 
+export type SimulatedFire = {
+  "source_id": string;
+  "zone_id": string;
+  "position": Position;
+  "elapsed_ms": number;
+};
+
 export type SimulationState = {
   "schema_version": 1;
   "building_id": string;
@@ -380,6 +405,7 @@ export type StateSnapshot = {
   "blocked_edges": Array<BlockedEdge>;
   "routes": Array<Route>;
   "signs": Array<SignState>;
+  "fire_simulation"?: FireSimulation | null;
 };
 
 export type TerminalState = {

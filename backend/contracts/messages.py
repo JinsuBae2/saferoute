@@ -7,7 +7,7 @@ from pydantic_core import PydanticCustomError
 
 from .common import (
     BuildingIdentity, ControllerMode, Display, FaceMode, HazardType, Identifier, NonnegativeInt,
-    NonnegativeNumber, PositiveInt, ReasonCode, RunIdentity, SOURCE_HAZARDS,
+    NonnegativeNumber, Position, PositiveInt, ReasonCode, RunIdentity, SOURCE_HAZARDS,
     SchemaVersion, SourceType, Text, UTCString, UUIDString, WireModel, unique,
 )
 
@@ -43,6 +43,7 @@ class ObservationEvent(RunIdentity):
     media_time_ms: NonnegativeInt | None
     confidence: Annotated[float, Field(ge=0, le=1, allow_inf_nan=False)] | None
     reason_code: Text | None
+    ignition_position: Position | None = None
 
     @model_validator(mode="after")
     def combination(self):
@@ -51,6 +52,8 @@ class ObservationEvent(RunIdentity):
                 raise PydanticCustomError("invalid_event_combination", message)
 
         alarm = self.event_kind == "ALARM"
+        require(self.ignition_position is None or (self.source_type == "MANUAL_TEST" and alarm and self.hazard_type == "FIRE"),
+                "ignition_position is only allowed for a manual FIRE alarm")
         unavailable = self.event_kind == "UNAVAILABLE"
         require(alarm == (self.hazard_type is not None), "hazard_type is required only for ALARM")
         require(self.validity == ("UNAVAILABLE" if unavailable else "VALID"), "event_kind and validity disagree")
@@ -253,6 +256,30 @@ class ActiveCause(WireModel):
     first_event_id: UUIDString
     last_event_id: UUIDString
     activated_at: UTCString
+    ignition_position: Position | None = None
+
+
+class HazardCell(WireModel):
+    cell_id: Identifier
+    zone_id: Identifier
+    floor_id: Identifier
+    position: Position
+    fire: Annotated[float, Field(ge=0, le=1)]
+    smoke: Annotated[float, Field(ge=0, le=1)]
+
+
+class SimulatedFire(WireModel):
+    source_id: Identifier
+    zone_id: Identifier
+    position: Position
+    elapsed_ms: NonnegativeInt
+
+
+class FireSimulation(WireModel):
+    model: Literal["DEMO_GRAPH_V1"] = "DEMO_GRAPH_V1"
+    cell_size_m: float = 2.0
+    fires: list[SimulatedFire]
+    cells: list[HazardCell]
 
 
 class BlockedNode(WireModel):
@@ -292,6 +319,7 @@ class StateSnapshot(RunIdentity):
     blocked_edges: list[BlockedEdge]
     routes: list[Route]
     signs: list[SignState]
+    fire_simulation: FireSimulation | None = None
 
     @model_validator(mode="after")
     def snapshot_identity(self):

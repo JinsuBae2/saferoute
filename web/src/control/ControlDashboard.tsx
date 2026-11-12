@@ -8,7 +8,7 @@ import { SourceNotice } from "../SourceNotice";
 import { inRoom, signPath } from "../api/scope";
 import { RoomAiPanel } from "../room/RoomAiPanel";
 
-import type { StateSnapshot } from "@contracts";
+import type { Position, StateSnapshot } from "@contracts";
 
 
 import {
@@ -234,7 +234,7 @@ export function ControlDashboard() {
    * 시연에서 고른 화재 위치. 도면 클릭과 목록이 같은 값을 써야 해서 여기에 둔다(이슈 #21).
    * 실행이 바뀌면 고른 것도 버린다. 실행 번호를 함께 담아 두면 효과 없이 저절로 비워진다.
    */
-  const [fire, setFire] = useState<{ readonly runId: string; readonly zoneId: string } | null>(null);
+  const [fire, setFire] = useState<{ readonly runId: string; readonly zoneId: string; readonly position?: Position } | null>(null);
   /** 3D를 누르면 무엇이 정해지는지. 시연은 화재 위치부터 고르므로 구역으로 시작한다. */
   const [pickTarget, setPickTarget] = useState<"NODE" | "ZONE">("ZONE");
   /** 3D에서 고른 내 위치. 머리말의 「시연 시작」이 이것까지 있어야 열린다(이슈 #21). */
@@ -307,6 +307,7 @@ export function ControlDashboard() {
             state={state}
             connected={!health.stale && view.stateError === null}
             zoneId={fireZone}
+            ignitionPosition={fire?.runId === state.run_id ? fire.position : null}
             hasStart={startNode !== null}
           />
         )}
@@ -423,8 +424,8 @@ export function ControlDashboard() {
               onStartNode={setStartNode}
               pickTarget={aim}
               onPickTarget={setPickTarget}
-              onPickZone={(zoneId) => {
-                setFire({ runId: state.run_id, zoneId });
+              onPickZone={(zoneId, position) => {
+                setFire({ runId: state.run_id, zoneId, position });
                 // 화재 위치를 정했으면 다음은 내 위치다. 한 번 더 누르면 바로 이어진다.
                 setPickTarget("NODE");
               }}
