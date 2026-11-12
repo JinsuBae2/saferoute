@@ -4,32 +4,42 @@
  */
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
-import type { StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 
 import { enableSound, setAnnouncement, setMuted, setVolume, soundStatus, stopSound, subscribeSound } from "./alarmSound";
-import { alarmLevel, announce } from "./broadcast";
-import type { BroadcastMemory } from "./broadcast";
+import { alarmLevel, alarmPlace, announce, broadcastKey } from "./broadcast";
+import type { BroadcastMemory, Places } from "./broadcast";
 
-export function AlarmSoundBar({ state, stale, finishing = false }: { state: StateSnapshot; stale: boolean; finishing?: boolean }) {
+export function AlarmSoundBar({ state, stale, building = null, display = null, finishing = false }: {
+  state: StateSnapshot;
+  stale: boolean;
+  /** 자리를 말해 주려면 둘 다 있어야 한다. 없으면 예전처럼 자리 없는 문장만 나온다. */
+  building?: Building | null;
+  display?: BuildingDisplay | null;
+  finishing?: boolean;
+}) {
   const sound = useSyncExternalStore(subscribeSound, soundStatus);
   const memory = useRef<BroadcastMemory | null>(null);
   useEffect(() => () => stopSound(), []);
   const level = alarmLevel(state);
-  const key = `${state.run_id}/${state.active_causes.map((cause) => `${cause.source_id}:${cause.hazard_type}`).join(",")}/${stale}`;
-  // 경보 구성이 바뀔 때만 방송을 다시 정한다. 1초마다 오는 상태 갱신으로 같은 문장이 처음부터 되풀이되지 않는다.
+  const places: Places = { building, display };
+  const key = broadcastKey(state, stale, places);
+  // 경보 구성·불이 닿은 구역이 바뀔 때만 방송을 다시 정한다. 1초마다 오는 상태 갱신으로 같은 문장이 처음부터 되풀이되지 않는다.
   useEffect(() => {
-    const next = announce(memory.current, state, stale);
+    const next = announce(memory.current, state, stale, places);
     memory.current = next.memory;
     setAnnouncement(next.announcement);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- key가 state의 경보 구성과 stale을 대신한다
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- key가 state의 경보 구성·확산·stale을 대신한다
   }, [key]);
 
   const fires = state.active_causes.filter((cause) => cause.hazard_type === "FIRE").length;
+  const place = alarmPlace(state, places);
   return (
     <div className={level === "NONE" ? "alarm-bar" : `alarm-bar alarm-bar--${level === "FIRE" ? "fire" : "smoke"}`} role={level === "NONE" ? undefined : "alert"}>
       {level !== "NONE" && <span className="alarm-bar__lamp" aria-hidden />}
       <strong className="alarm-bar__title">
         {level === "NONE" ? (finishing ? "경보 해제 · 대피 마무리 중" : "경보 없음") : level === "FIRE" ? `화재 경보 ${fires}건` : "연기 감지 경보"}
+        {level !== "NONE" && place !== null && ` · ${place}`}
         {level !== "NONE" && ` · 전체 활성 경보 ${state.active_causes.length}건`}
         {level !== "NONE" && stale && " · 제어기 연결 끊김(방향 안내 중단, 경보 유지)"}
       </strong>

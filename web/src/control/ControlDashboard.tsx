@@ -353,7 +353,7 @@ export function ControlDashboard() {
         </p>
       )}
 
-      <AlarmSoundBar state={state} stale={stale} finishing={finishing} />
+      <AlarmSoundBar state={state} stale={stale} building={space.building} display={display} finishing={finishing} />
 
       {simulationLost && (
         <p className="control__alert" role="alert">
