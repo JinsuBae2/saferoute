@@ -28,8 +28,8 @@ export function nearestPerson(building: Building, people: readonly Person[], sta
 }
 
 export function nearbyQr(building: Building, pose: FollowPose) {
-  // shortcut: 위치 QR 자산은 WFI v5용이다. 다른 건물에는 해당 위치 자산을 먼저 생성한다.
-  if (building.building_id !== "WFI" || building.building_version !== 5) return null;
+  // shortcut: 위치 QR 자산은 WFI v6용이다. 다른 건물에는 해당 위치 자산을 먼저 생성한다.
+  if (building.building_id !== "WFI" || building.building_version !== 6) return null;
   const origin = building.nodes.find(node => node.node_id === pose.routeNodeId);
   return building.signs.map(sign => ({ sign, node: building.nodes.find(node => node.node_id === sign.node_id) }))
     .filter(({ node }) => node && node.floor_id === origin?.floor_id

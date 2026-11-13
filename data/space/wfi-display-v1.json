@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "building_id": "WFI",
-  "building_version": 5,
+  "building_version": 6,
   "floor_labels": {
     "F1": "1층",
     "F2": "2층",

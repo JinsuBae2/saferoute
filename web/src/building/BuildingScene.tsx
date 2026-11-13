@@ -18,7 +18,7 @@ import { cctvSmoke, type CctvPose } from "./cctv";
 import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
 import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseFigure, signFaceTexture, softDotTexture } from "./assets";
-import { insidePolygon, visibleWalls, wallBox } from "./geometry";
+import { insidePolygon, interiorWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
 import { doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
@@ -774,7 +774,8 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
           }
         }
         // 같은 길을 걷는 사람이 한 점에 겹치지 않게 조금씩 비켜 세운다. 계단과 미끄럼틀에서는 한 줄로 간다.
-        if (!exiting && heading.y === 0) {
+        // 계단참의 평평한 구간도 계단이다. 거기서 비켜 서면 계단실 벽에 몸이 묻힌다.
+        if (!exiting && (person.to === null || stairPath(person.from, person.to) === null)) {
           point.x += ((index % 3) - 1) * 0.35;
           point.z += ((index % 2) - 0.5) * 0.5;
         }
@@ -1014,7 +1015,8 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     const firstPerson = firstPersonView;
     handles.controls.enabled = !firstPerson;
     handles.camera.fov = firstPerson ? 72 : FOV;
-    handles.camera.near = firstPerson ? 0.1 : 0.5;
+    // 계단실에서는 벽이 어깨 너비만큼 가깝다. 가까운 절단면을 당겨 벽 옆을 지날 때 벽이 잘려 보이지 않게 한다.
+    handles.camera.near = firstPerson ? 0.05 : 0.5;
     handles.camera.updateProjectionMatrix();
     handles.scene.fog = firstPerson ? handles.fog : null;
     handles.hemisphere.groundColor.setHex(firstPerson ? 0xb9c2cf : 0x1a2230);
@@ -1181,12 +1183,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
 
       // 벽. 열린 계단 안의 난간 선은 빼고 하나의 인스턴스 메시로 그린다.
       // 건물 둘레의 벽은 불투명하게 세우지 않는다. 그 자리는 위의 유리 외벽이 맡아 안이 들여다보인다.
-      const near = (value: number, edge: number) => Math.abs(value - edge) < 0.4;
-      const walls = visibleWalls(floor, geometry.stairs).filter((wall) => {
-        const box = wallBox(wall);
-        return !(box.sizeZ < 0.5 && (near(box.centerZ, minZ) || near(box.centerZ, maxZ)))
-          && !(box.sizeX < 0.5 && (near(box.centerX, minX) || near(box.centerX, maxX)));
-      });
+      const walls = interiorWalls(floor, geometry.stairs);
       if (walls.length > 0) {
         const mesh = new THREE.InstancedMesh(
           new THREE.BoxGeometry(1, 1, 1),
@@ -1279,7 +1276,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         staticGroup.add(hung.group);
         handles.signFaces.set(sign.sign_id, hung.faces);
         // QR은 유도등 옆의 위치 확인판이다. 인식 연출은 휴대폰 UI에서만 수행한다.
-        if (building.building_id === "WFI" && building.building_version === 5) {
+        if (building.building_id === "WFI" && building.building_version === 6) {
           const texture = new THREE.TextureLoader().load(`/qr/${encodeURIComponent(sign.sign_id)}.png`);
           texture.colorSpace = THREE.SRGBColorSpace;
           texture.magFilter = THREE.NearestFilter;
