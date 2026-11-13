@@ -138,3 +138,12 @@ export function doorFacing(building: Building): Map<string, string> {
   }
   return facing;
 }
+
+/** 문 지점에서 같은 층으로 이어진 지점들의 자리. 사람이 그 문을 지나며 걷는 선의 끝이다. */
+export function doorEnds(building: Pick<Building, "nodes" | "edges">, nodeId: string): { x: number; z: number }[] {
+  const door = building.nodes.find((node) => node.node_id === nodeId);
+  return building.edges.filter((edge) => edge.from_node_id === nodeId).flatMap((edge) => {
+    const other = building.nodes.find((node) => node.node_id === edge.to_node_id);
+    return other !== undefined && other.floor_id === door?.floor_id ? [{ x: other.position.x, z: other.position.z }] : [];
+  });
+}

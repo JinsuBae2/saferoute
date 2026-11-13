@@ -15,20 +15,20 @@ import type { Building, BuildingDisplay, HazardCell, Position, StateSnapshot } f
 import { localSmoke, simulationFireCells } from "./firePresentation";
 
 import { cctvSmoke, type CctvPose } from "./cctv";
-import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
+import type { BuildingGeometry, GeometryStair, StairStepAlong, WallRect } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
-import { addEarbuds, buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseActing, poseFigure, signFaceTexture, softDotTexture } from "./assets";
-import { insidePolygon, interiorWalls, wallBox } from "./geometry";
+import { addEarbuds, buildSignFixture, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseActing, poseFigure, signFaceTexture, softDotTexture } from "./assets";
+import { doorOpening, doorParts, insidePolygon, interiorWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
-import { doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
+import { doorEnds, doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
 import { countPeople, spawnPeople, stepPeople, walkTime } from "./people";
 import { loadPeople, savePeople } from "./peopleStore";
 import { nearestPerson, qrAssetsMatch } from "./phoneGuide";
-import { facePlace, QR_HEIGHT, QR_SIZE, qrMounts, SIGN_HEIGHT, SIGN_TALL } from "./signMount";
+import { fixtureParts, QR_HEIGHT, QR_SIZE, qrMounts, shownDisplay, signInstalls } from "./signMount";
 import { remainingTrack } from "./tracking";
 import type { YeongnamPhase } from "./yeongnam";
 import type { FaceShown } from "./yeongnam";
@@ -96,6 +96,8 @@ const SLIDE_DROP = 0.9;
 
 /** 카메라 한 대를 찾을 때 함께 보이는 범위(m). 너무 좁으면 어디인지 알 수 없다. */
 const FOCUS_REACH = 9;
+/** 문틀 안쪽 높이(m). */
+const DOOR_TALL = 2.1;
 
 /** 영남이 시연의 지금 상태. 화면 문구와 휴대폰 연출이 이것을 따른다. */
 export type YeongnamStatus = {
@@ -482,6 +484,8 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
   }, [onPickZone, pickTarget]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
   const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
+  // 유도등이 실제로 걸리는 자리. 그리기와 변경 목격 판정이 같은 값을 쓴다.
+  const installs = useMemo(() => signInstalls(building, geometry.floors, geometry.stairs), [building, geometry]);
   const firstPersonView = followIndex !== null || cctv !== null;
   const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string; lost: number;
     /** 머리 위 이름표·상태 표시. 글자마다 한 번만 만든다. */
@@ -509,9 +513,9 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     return zones;
   }, [state.fire_simulation]);
   // 그리기 반복은 한 번만 만들어지므로, 매번 바뀌는 값은 참조로 넘긴다.
-  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
+  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, installs, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
   useEffect(() => {
-    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
+    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, installs, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
   });
 
   // 1) 렌더러·카메라·조작. 한 번만 만든다.
@@ -822,7 +826,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
           if (yn.faces !== null && awake && !out && !onStairs && floorId !== undefined) {
             const yaw = people.yaw[people.yeongnamIndex];
             const walls = live.geometry.floors.find((floor) => floor.floor_id === floorId)?.walls ?? [];
-            const seen = witnessedSignChanges(live.building, walls, yn.faces, after, { x: figure.group.position.x, z: figure.group.position.z, floorId, headingX: Math.sin(yaw), headingZ: Math.cos(yaw) });
+            const seen = witnessedSignChanges(live.building, walls, yn.faces, after, live.installs, { x: figure.group.position.x, z: figure.group.position.z, floorId, headingX: Math.sin(yaw), headingZ: Math.cos(yaw) });
             // 출발 전에 서서 본 것은 안내 확인이다. 걷다가 본 것만 "이동 중 변경 목격"으로 남겨 휴대폰 연출로 잇는다.
             if (seen.length > 0) Object.assign(yn, { lookUntil: now + YEONGNAM.lookSeconds * 1000, sawMoving: yn.sawMoving || phase === "EVACUATE" });
           }
@@ -998,9 +1002,11 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
           }
           strolling = true;
         }
+        // 문을 지나는 구간에서는 비켜 세우지 않는다. 옆으로 비키면 문틀 기둥을 뚫는다.
+        const atDoor = live.nodeById.get(person.from)?.kind === "DOOR" || (person.to !== null && live.nodeById.get(person.to)?.kind === "DOOR");
         // 같은 길을 걷는 사람이 한 점에 겹치지 않게 조금씩 비켜 세운다. 계단과 미끄럼틀에서는 한 줄로 간다.
         // 계단참의 평평한 구간도 계단이다. 거기서 비켜 서면 계단실 벽에 몸이 묻힌다.
-        if (!exiting && !strolling && (person.to === null || stairPath(person.from, person.to) === null)) {
+        if (!exiting && !strolling && !atDoor && (person.to === null || stairPath(person.from, person.to) === null)) {
           point.x += ((index % 3) - 1) * 0.35;
           point.z += ((index % 2) - 0.5) * 0.5;
         }
@@ -1558,28 +1564,24 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         staticGroup.add(caps);
       }
 
-      // 문. 방 입구 지점에 문틀과 열린 문짝을 세운다. 문이 향하는 쪽은 그 입구에서 이어진 통로 방향이다.
+      // 문. 문틀은 벽의 실제 개구부에 벽과 같은 줄로 세운다(doorOpening). 이어진 통로 지점은 어느 쪽이 방 안인지 가리는 데만 쓴다.
       for (const node of building.nodes) {
         if (node.kind !== "DOOR" || node.floor_id !== floor.floor_id) continue;
         const toward = nodeById.get(edgeByDoor.get(node.node_id) ?? "");
         if (toward === undefined) continue;
-        const door = new THREE.Group();
+        const opening = doorOpening(node.position.x, node.position.z, toward.position.x, toward.position.z, floor.walls);
+        // 문틀·문짝의 자리는 doorParts가 정한다. 통과 검사(doors.test.ts)가 같은 도형을 본다.
+        const parts = doorParts(opening, node.position.x, node.position.z, toward.position.x, toward.position.z, doorEnds(building, node.node_id));
         const frame = new THREE.MeshLambertMaterial({ color: COLOR.frame });
-        for (const [w, h, x, y] of [[0.1, 2.2, -0.55, 1.1], [0.1, 2.2, 0.55, 1.1], [1.2, 0.1, 0, 2.25]]) {
-          const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.2), frame);
-          piece.position.set(x, y, 0);
+        const stand = ([x0, z0, x1, z1]: WallRect, bottom: number, top: number, material: THREE.Material) => {
+          const piece = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, top - bottom, z1 - z0), material);
+          piece.position.set((x0 + x1) / 2, base + (bottom + top) / 2, (z0 + z1) / 2);
           piece.castShadow = true;
-          door.add(piece);
-        }
-        const leaf = new THREE.Mesh(new THREE.BoxGeometry(1, 2.1, 0.05), new THREE.MeshLambertMaterial({ color: COLOR.door }));
-        // 활짝 열어 방 안쪽으로 젖혀 둔다. 반쯤 열면 나오는 사람이 문짝을 뚫고 지나간다.
-        leaf.position.set(-0.52, 1.05, -0.5);
-        leaf.rotation.y = Math.PI / 2;
-        leaf.castShadow = true;
-        door.add(leaf);
-        door.position.set(node.position.x, base, node.position.z);
-        door.rotation.y = Math.atan2(toward.position.x - node.position.x, toward.position.z - node.position.z);
-        staticGroup.add(door);
+          staticGroup.add(piece);
+        };
+        for (const jamb of parts.jambs) stand(jamb, 0, DOOR_TALL, frame);
+        stand(parts.lintel, DOOR_TALL, DOOR_TALL + 0.06, frame);
+        stand(parts.leaf, 0, DOOR_TALL - 0.02, new THREE.MeshLambertMaterial({ color: COLOR.door }));
       }
 
       // 출구 미끄럼틀. 켜진 출구마다 밖으로 내려가는 미끄럼판과 옆 난간을 놓는다. 사람이 이 위로 빠져나간다.
@@ -1608,15 +1610,17 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       for (const sign of building.signs) {
         const node = nodeById.get(sign.node_id);
         if (node === undefined || node.floor_id !== floor.floor_id) continue;
-        // 면이 걸린 자리와 향하는 쪽은 signMount가 정한다. 목격 판정도 같은 값을 쓴다.
-        // 높이는 바닥 기준으로 고정이다. 개요와 1인칭에서 벽 높이를 다르게 그려도 표지판은 같은 자리에 있고, 매다는 봉만 그 화면의 천장까지 닿는다.
-        const hung = buildHangingSign(sign.faces.map((face) => {
-          const place = facePlace(sign, node, face);
-          return { faceId: face.face_id, normalX: place.normalX, normalZ: place.normalZ, out: Math.hypot(place.x - node.position.x, place.z - node.position.z) };
-        }), Math.max(wallHeight - SIGN_HEIGHT - SIGN_TALL / 2, 0.1));
-        hung.group.position.set(node.position.x, base + SIGN_HEIGHT, node.position.z);
-        staticGroup.add(hung.group);
-        handles.signFaces.set(sign.sign_id, hung.faces);
+        // 기구의 종류·자리·높이는 signMount가 정한다(경로 지점과 다를 수 있다). 목격 판정도 같은 값을 쓴다.
+        // 높이는 바닥 기준으로 고정이다. 개요와 1인칭에서 벽 높이를 다르게 그려도 기구는 같은 자리에 있고, 천장형의 지지대만 그 화면의 천장까지 닿는다.
+        const faces = new Map<string, SignFaceMesh>();
+        for (const fixture of installs.get(sign.sign_id)?.fixtures ?? []) {
+          // 외함·지지대는 fixtureParts가 준 도형 그대로 세운다. 벽 겹침 검사(signMount.test.ts)가 같은 도형을 본다.
+          const built = buildSignFixture(fixtureParts(fixture, Math.max(wallHeight - fixture.y - fixture.tall / 2, 0.04)), fixture.panels, fixture.y, fixture.wide, fixture.tall, fixture.kind !== "EXIT", fixture.kind === "EXIT");
+          built.group.position.y = base;
+          staticGroup.add(built.group);
+          for (const [faceId, mesh] of built.faces) faces.set(faceId, mesh);
+        }
+        handles.signFaces.set(sign.sign_id, faces);
         // 위치 QR은 그 지점 가까운 벽면에 눈높이로 붙인다. 붙일 벽이 없는 지점에는 두지 않는다. 인식 연출(휴대폰)도 같은 자리로 판정한다.
         const mount = qrAssetsMatch(building) ? mounts.get(sign.sign_id) : undefined;
         if (mount !== undefined) {
@@ -1826,7 +1830,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         }
       }
     }
-  }, [geometry, building, display, showNames, visibleFloors, lift, nodeById, firstPersonView, mounts]);
+  }, [geometry, building, display, showNames, visibleFloors, lift, nodeById, firstPersonView, mounts, installs]);
 
   // 2-1) 화면 맞춤. 보이는 층이나 간격이 바뀌면 그 범위가 다 보이게 마지막 시점 모드로 맞추고,
   //      시점 버튼(view.nonce)을 누르면 같은 모드라도 다시 맞춘다.
@@ -2091,8 +2095,12 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       let ok = true;
       for (const face of sign.faces) {
         const mesh = meshes.get(face.face_id);
-        const texture = signFaceTexture(face.display);
-        if (mesh === undefined || texture === null) {
+        // 볼 사람이 없어 달지 않은 면(signMount)은 그릴 것이 없다. 실패가 아니다.
+        if (mesh === undefined) continue;
+        // 판이 그 면의 보는 방향과 다르게 붙어 있으면(복도 옆벽의 벽부형) 같은 방향을 그 판에서 본 화살표로 옮겨 그린다. 방향 자체는 서버 값이다.
+        const shown = face.display === null ? null : shownDisplay(face.display, mesh.userData.viewX, mesh.userData.viewZ, mesh.userData.normalX, mesh.userData.normalZ);
+        const texture = signFaceTexture(shown, mesh.userData.passage === true, mesh.userData.wideFace === true);
+        if (texture === null) {
           ok = false;
           continue;
         }
