@@ -463,7 +463,7 @@ application_status는 NOT_ISSUED/PENDING/APPLIED/REJECTED/EXPIRED/DUPLICATE_TERM
 
 ### 개인 체험의 예시 영상
 
-`GET/POST /api/room/ai`는 분석 상태를 반환한다. 서버가 예시 영상을 실행 중이면 응답에 미리보기 조회용 `source_id`를 포함한다. 이 식별자는 관객이 선택한 가상 CCTV와 독립적이다. 실행 중·대기 중 요청은 기존 작업을 반환한다. 완료 후 POST는 같은 방·실행에서 새 분석을 대기열 끝에 추가한다. 각 분석의 미리보기와 기록을 분리하며 제어기 관측을 전송하지 않는다. 운영용 AI 작업기의 기존 관측 계약은 유지한다.
+`GET/POST /api/room/ai`는 분석 상태를 반환한다. 서버에서 실행 중이거나 완료된 예시 영상은 `source_id`와 공개 분석 식별자 `analysis_id`를 제공한다. `GET /api/room/ai?include_result=true`는 해당 분석에서 수락한 가장 최근 영상 프레임의 `result.metadata`(PreviewFrame)와 `result.jpeg_base64`를 함께 제공한다. 이미 표시한 프레임 ID를 `after`로 보내면 같은 프레임의 본문은 생략한다. 완료 후에도 해당 방·실행에서 확인할 수 있으며 새 분석 또는 초기화 시 이전 결과를 지운다. 이 식별자는 관객이 선택한 가상 CCTV와 독립적이다. 실행 중·대기 중 요청은 기존 작업을 반환한다. 완료 후 POST는 같은 방·실행에서 새 분석을 대기열 끝에 추가한다. 각 분석의 미리보기와 기록을 분리하며 제어기 관측을 전송하지 않는다. 운영용 AI 작업기의 기존 관측 계약은 유지한다.
 
 
 ### 개인 체험의 발화와 설비 신호 (#217)

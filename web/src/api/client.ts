@@ -161,7 +161,14 @@ export function fetchRoom(signal?: AbortSignal): Promise<RoomInfo> {
   return requestAt<RoomInfo>("/api/room", { method: "GET", signal });
 }
 
+export type RoomAiResult = {
+  readonly metadata: NonNullable<Preview["frame"]>;
+  readonly jpeg_base64: string;
+};
+
 export type RoomAi = {
+  readonly analysis_id?: string;
+  readonly result?: RoomAiResult;
   readonly source_id?: string;
   readonly state: "UNAVAILABLE" | "IDLE" | "QUEUED" | "RUNNING" | "DONE" | "FAILED";
   /** 대기 중일 때 내 순서(1부터). */
@@ -169,8 +176,10 @@ export type RoomAi = {
   readonly run_id: string | null;
 };
 
-export function fetchRoomAi(signal?: AbortSignal): Promise<RoomAi> {
-  return requestAt<RoomAi>("/api/room/ai", { method: "GET", signal });
+export function fetchRoomAi(signal: AbortSignal, after?: string): Promise<RoomAi> {
+  const params = new URLSearchParams({ include_result: "true" });
+  if (after) params.set("after", after);
+  return requestAt<RoomAi>(`/api/room/ai?${params}`, { method: "GET", signal });
 }
 
 /** 내 방의 현재 실행에 대한 영상 AI 분석을 요청한다. 이미 요청했으면 같은 작업의 상태가 돌아온다. */
