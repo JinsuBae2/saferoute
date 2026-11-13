@@ -11,7 +11,7 @@ import type { CctvPose } from "./cctv";
 import { setExitGuide, soundStatus, subscribeSound } from "../control/alarmSound";
 import { exitCall } from "../control/broadcast";
 import { BuildingScene } from "./BuildingScene";
-import type { YeongnamStatus } from "./BuildingScene";
+import type { SignDisplayReport, YeongnamStatus } from "./BuildingScene";
 import { YEONGNAM_PHASE_LABEL } from "./yeongnam";
 import { newFireFloors } from "./firePresentation";
 import { PhoneGuide } from "./EvacuationPhone";
@@ -64,6 +64,8 @@ type Props = {
   readonly onPickTarget?: (target: "NODE" | "ZONE") => void;
   /** 선택형 시연 「영남이」를 준비했다. 발화 전부터 자는 모습을 보여 준다. */
   readonly yeongnamArmed?: boolean;
+  /** 3D가 유도등 면을 실제로 다시 그린 결과. 3D를 그리지 못하면 null이다. */
+  readonly onSignDisplay?: (report: SignDisplayReport | null) => void;
 };
 
 const MISMATCH_LABEL = {
@@ -72,7 +74,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ cctv, onCamera, state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE", onPickTarget, yeongnamArmed = false }: Props) {
+export function BuildingPanel({ cctv, onCamera, state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE", onPickTarget, yeongnamArmed = false, onSignDisplay }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   // 전체 안내(초록 화살표·선). 현재 위치를 고르면 그 경로만 보이게 끄고, 버튼으로 다시 켤 수 있다.
@@ -153,6 +155,8 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
   // 영남이 시연이 시작되면 주인공을 놓치지 않게 지켜볼 사람으로 잡는다. 사용자가 푼 뒤에는 다시 잡지 않는다.
   const yeongnamIndex = yeongnam?.index ?? null;
   useEffect(() => { if (yeongnamIndex !== null) setTracked(yeongnamIndex); }, [yeongnamIndex]);
+  // 3D를 그리지 못하는 동안에는 표시 결과가 없다고 알린다. 예전 결과가 남아 지금 것처럼 보이지 않게 한다.
+  useEffect(() => () => onSignDisplay?.(null), [onSignDisplay]);
 
   const journey = useMemo(
     () => (building === null || startId === null ? null : describeJourney(building, display, state, startId)),
@@ -417,6 +421,7 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             })}
             yeongnamArmed={yeongnamArmed}
             onYeongnam={setYeongnam}
+            onSignDisplay={onSignDisplay}
             showPeople={showPeople}
             stale={stale}
             followRequest={followRequest}

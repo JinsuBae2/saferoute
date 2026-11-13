@@ -9,6 +9,8 @@ import { emergency_state as emergencySample, state as initializingSample } from 
 import { explanation_ready, explanation_pending, explanation_unavailable } from "@samples";
 
 import {
+  advanceSignLog,
+  signGlyph,
   observedAgeMs,
   sourceStatus,
   summarizeSignChanges,
@@ -288,5 +290,44 @@ describe("유도등 반영 확인과 방향 변경", () => {
 
   it("건물 자료가 없으면 변경 수를 지어내지 않는다", () => {
     expect(summarizeSignChanges(EMERGENCY, null)).toBeNull();
+  });
+});
+
+describe("유도등 방향 변경 이력", () => {
+  const face = EMERGENCY.signs[0].faces[0];
+  const turn = (display: string | null, next = face.next_node_id, patch: Partial<StateSnapshot> = {}): StateSnapshot => ({
+    ...EMERGENCY, ...patch,
+    signs: EMERGENCY.signs.map((sign, index) => index !== 0 ? sign : { ...sign, faces: sign.faces.map((item, at) => at !== 0 ? item : { ...item, display: display as typeof item.display, next_node_id: next }) }),
+  });
+  const other = face.display === "LEFT" ? "RIGHT" : "LEFT";
+
+  it("새 실행의 첫 상태와 같은 상태의 반복 수신은 변경이 아니다", () => {
+    const first = advanceSignLog(null, EMERGENCY);
+    expect(first.changes).toEqual([]);
+    expect(advanceSignLog(first, { ...EMERGENCY, generated_at: "2026-11-10T01:00:09.000Z" })).toBe(first);
+  });
+
+  it("화살표가 바뀐 면만 위치·전후 방향·시각과 함께 남긴다", () => {
+    const log = advanceSignLog(advanceSignLog(null, EMERGENCY), turn(other, face.next_node_id, { generated_at: "2026-11-10T01:00:05.000Z", guidance_version: EMERGENCY.guidance_version + 1 }));
+    expect(log.changes).toEqual([{ signId: EMERGENCY.signs[0].sign_id, faceId: face.face_id, before: face.display, after: other, at: "2026-11-10T01:00:05.000Z", guidanceVersion: EMERGENCY.guidance_version + 1 }]);
+    expect(log.lastArrow).toBe(1);
+    expect(advanceSignLog(log, turn(other))).toBe(log);
+  });
+
+  it("경로만 바뀌고 화살표가 같은 면은 방향 변경으로 세지 않고 따로 센다", () => {
+    const log = advanceSignLog(advanceSignLog(null, EMERGENCY), turn(face.display, "다른-지점"));
+    expect(log.changes).toEqual([]);
+    expect(log).toMatchObject({ lastArrow: 0, lastRouteOnly: 1 });
+  });
+
+  it("다른 실행의 기록과 섞지 않고, 준비 중에 꺼져 있던 면이 켜지는 것은 변경이 아니다", () => {
+    const changed = advanceSignLog(advanceSignLog(null, EMERGENCY), turn(other));
+    expect(advanceSignLog(changed, turn(face.display, face.next_node_id, { run_id: "다른-실행" })).changes).toEqual([]);
+    const booting = advanceSignLog(null, turn(null, null, { controller_mode: "INITIALIZING" }));
+    expect(advanceSignLog(booting, EMERGENCY).changes).toEqual([]);
+  });
+
+  it("표시값을 화살표로 옮긴다", () => {
+    expect([signGlyph("LEFT"), signGlyph("STAIRS_DOWN"), signGlyph(null)]).toEqual(["←", "↘ 계단", "꺼짐"]);
   });
 });

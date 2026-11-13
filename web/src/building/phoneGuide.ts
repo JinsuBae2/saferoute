@@ -1,4 +1,4 @@
-import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, Route, StateSnapshot } from "@contracts";
 import type { WallRect } from "./geometry";
 import { segmentHitsWall } from "./geometry";
 import type { QrMount } from "./signMount";
@@ -66,14 +66,68 @@ export function nearbyQr(building: Building, pose: FollowPose, mounts: ReadonlyM
   return seen.sort((a, b) => a.distance - b.distance)[0]?.sign ?? null;
 }
 
+type ReasonCode = Route["reason_codes"][number];
+/** 경로가 없다고 확정한 것이 아니라, 감지 정보나 제어 상태를 확인하지 못해 안내하지 못하는 사유. */
+const UNCONFIRMED: readonly ReasonCode[] = ["INITIALIZING", "REQUIRED_OBSERVATION_UNKNOWN", "CONTROLLER_UNAVAILABLE", "COMMAND_EXPIRED", "VERSION_MISMATCH", "UNSUPPORTED_DISPLAY"];
+
+/** 서버가 남은 통로로 갈 출구가 없다고 판단했는지(NO_ROUTE), 확인하지 못한 것인지(UNCONFIRMED). */
+export function routeLoss(reasons: readonly ReasonCode[]): "NO_ROUTE" | "UNCONFIRMED" {
+  return reasons.length === 0 || reasons.some(reason => UNCONFIRMED.includes(reason)) ? "UNCONFIRMED" : "NO_ROUTE";
+}
+
+/**
+ * 경로가 막혔을 때의 행동 안내. 서버가 계산한 대피 경로가 아니라 일반 행동요령이다.
+ * 근거: 행정안전부 국민안전24 「화재 국민행동요령」(소관 소방청 생활안전과)의 '대피가 어려운 경우' 항목.
+ */
+export const BLOCKED_HELP = {
+  source: "행정안전부 국민안전24 「화재 국민행동요령」",
+  noRoute: [
+    "불·연기가 있는 통로로 무리하게 들어가지 마세요",
+    "화염·연기에서 먼 곳으로 가 문을 닫고, 젖은 수건 등으로 틈새를 막으세요",
+    "119에 현재 위치와 상황을 알리고 구조를 요청하세요",
+    "창문이 있으면 창문으로 구조를 요청하세요",
+  ],
+  unconfirmed: [
+    "경로가 없다는 뜻이 아닙니다. 감지 정보나 연결을 확인하지 못했습니다",
+    "가까운 유도등·안내방송과 직접 보이는 상황으로 판단하세요",
+    "연기가 오는 쪽은 피하고, 문은 손잡이가 뜨겁지 않은지 확인한 뒤 여세요",
+    "엘리베이터는 타지 말고 계단을 이용하세요",
+  ],
+  /** 옥상은 자동 목적지로 안내하지 않는다. 일반 도움말로만, 조건을 붙여 보여 준다. */
+  roof: "옥상: 이 건물은 옥상을 쓸 수 있는지와 가는 길이 확인되지 않아 대피 목적지로 안내하지 않습니다. 공식 요령은 계단으로 대피할 수 있을 때 지상층·옥상 등 안전한 곳으로 가도록 안내합니다. 계단에 불·연기가 없고 옥상 문이 열려 있는 것을 직접 확인한 경우에만 고려하세요.",
+} as const;
+
+/** 119에 알릴 위치. 최신 상태로 확인한 층과 지점 이름만 쓴다. 모르면 추측하지 않고 null이다. */
+export function reportPlace(building: Building, display: BuildingDisplay | null, nodeId: string): string | null {
+  const node = building.nodes.find(item => item.node_id === nodeId);
+  if (node === undefined) return null;
+  const floor = display?.floor_labels[node.floor_id] ?? building.floors.find(item => item.floor_id === node.floor_id)?.label;
+  if (floor === undefined) return null;
+  const near = display?.node_labels[nodeId];
+  // 지점 이름에 이미 층이 들어 있으면 층을 두 번 말하지 않는다.
+  return near === undefined ? floor : near.startsWith(floor) ? `${near} 부근` : `${floor} · ${near} 부근`;
+}
+
 type Guidance =
-  | { kind: "UNAVAILABLE" | "BLOCKED"; instruction: string; detail: string }
+  /**
+   * UNAVAILABLE: 통신이 늦거나 끊겨 최신 상태를 모른다. UNCONFIRMED: 감지·제어 문제로 서버가 경로를 확인하지 못했다.
+   * BLOCKED: 서버가 남은 통로로 갈 수 있는 출구가 없다고 판단했다. place는 119에 알릴 위치이고, 확실하지 않으면 null이다.
+   */
+  | { kind: "UNAVAILABLE" | "UNCONFIRMED" | "BLOCKED"; instruction: string; detail: string; actions: readonly string[]; place: string | null }
   | { kind: "ROUTE"; instruction: string; detail: string; path: readonly string[]; exitLabel: string; icon: string; distanceMetres: number | null; stairs: boolean; floorId: string; floorLabel: string; floorTransition: string | null; mapHint: string };
 
 export function phoneGuidance(building: Building, display: BuildingDisplay | null, state: StateSnapshot, pose: FollowPose, stale: boolean): Guidance {
-  if (stale || state.run_id !== pose.runId || !Number.isFinite(pose.progress)) return { kind: "UNAVAILABLE", instruction: "안내 연결 확인 중", detail: "최신 경로를 받을 때까지 기다려 주세요" };
+  // 연결이 늦으면 위치도 그때의 것이다. 지금 위치처럼 신고에 쓰라고 내밀지 않는다.
+  if (stale || state.run_id !== pose.runId || !Number.isFinite(pose.progress)) return { kind: "UNAVAILABLE", instruction: "안내 연결 확인 중", detail: "통신이 늦어 경로와 위치를 확인하지 못했습니다. 경로가 없다는 뜻은 아닙니다", actions: BLOCKED_HELP.unconfirmed.slice(1), place: null };
   const journey = describeJourney(building, display, state, pose.routeNodeId);
-  if (journey.kind !== "ROUTE") return { kind: "BLOCKED", instruction: "경로 차단 · 구조를 기다리세요", detail: journey.kind === "NO_ROUTE" ? `${journey.reasons.map(reason => ROUTE_REASON_LABEL[reason]).join(" · ")} · 연기가 없는 쪽에서 문을 닫고 119에 위치를 알리세요` : "현재 위치의 안내를 확인할 수 없습니다" };
+  if (journey.kind !== "ROUTE") {
+    const reasons = journey.kind === "NO_ROUTE" ? journey.reasons : [];
+    const place = reportPlace(building, display, pose.routeNodeId);
+    const why = reasons.map(reason => ROUTE_REASON_LABEL[reason]).join(" · ");
+    return routeLoss(reasons) === "NO_ROUTE"
+      ? { kind: "BLOCKED", instruction: "출구로 가는 경로가 없습니다", detail: why, actions: BLOCKED_HELP.noRoute, place }
+      : { kind: "UNCONFIRMED", instruction: "경로를 확인하지 못했습니다", detail: why || "현재 위치의 안내를 확인할 수 없습니다", actions: BLOCKED_HELP.unconfirmed, place };
+  }
   const node = building.nodes.find(n => n.node_id === pose.routeNodeId)!;
   const returning = pose.routeNodeId !== pose.nodeId;
   const targetId = returning ? pose.routeNodeId : journey.path[1] ?? journey.path[0];
