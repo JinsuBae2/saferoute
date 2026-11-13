@@ -28,7 +28,7 @@ import type { PeopleCount, Person } from "./people";
 import { countPeople, spawnPeople, stepPeople, walkTime } from "./people";
 import { loadPeople, savePeople } from "./peopleStore";
 import { nearestPerson, qrAssetsMatch } from "./phoneGuide";
-import { fixtureParts, QR_HEIGHT, QR_SIZE, qrMounts, signInstalls } from "./signMount";
+import { fixtureParts, QR_HEIGHT, QR_SIZE, qrMounts, shownDisplay, signInstalls } from "./signMount";
 import { remainingTrack } from "./tracking";
 import type { YeongnamPhase } from "./yeongnam";
 import type { FaceShown } from "./yeongnam";
@@ -485,7 +485,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
   const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
   // 유도등이 실제로 걸리는 자리. 그리기와 변경 목격 판정이 같은 값을 쓴다.
-  const installs = useMemo(() => signInstalls(building, geometry.floors), [building, geometry]);
+  const installs = useMemo(() => signInstalls(building, geometry.floors, geometry.stairs), [building, geometry]);
   const firstPersonView = followIndex !== null || cctv !== null;
   const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string; lost: number;
     /** 머리 위 이름표·상태 표시. 글자마다 한 번만 만든다. */
@@ -1615,7 +1615,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         const faces = new Map<string, SignFaceMesh>();
         for (const fixture of installs.get(sign.sign_id)?.fixtures ?? []) {
           // 외함·지지대는 fixtureParts가 준 도형 그대로 세운다. 벽 겹침 검사(signMount.test.ts)가 같은 도형을 본다.
-          const built = buildSignFixture(fixtureParts(fixture, Math.max(wallHeight - fixture.y - fixture.tall / 2, 0.04)), fixture.panels, fixture.y, fixture.wide, fixture.tall);
+          const built = buildSignFixture(fixtureParts(fixture, Math.max(wallHeight - fixture.y - fixture.tall / 2, 0.04)), fixture.panels, fixture.y, fixture.wide, fixture.tall, fixture.kind !== "EXIT", fixture.kind === "EXIT");
           built.group.position.y = base;
           staticGroup.add(built.group);
           for (const [faceId, mesh] of built.faces) faces.set(faceId, mesh);
@@ -2097,7 +2097,9 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         const mesh = meshes.get(face.face_id);
         // 볼 사람이 없어 달지 않은 면(signMount)은 그릴 것이 없다. 실패가 아니다.
         if (mesh === undefined) continue;
-        const texture = signFaceTexture(face.display);
+        // 판이 그 면의 보는 방향과 다르게 붙어 있으면(복도 옆벽의 벽부형) 같은 방향을 그 판에서 본 화살표로 옮겨 그린다. 방향 자체는 서버 값이다.
+        const shown = face.display === null ? null : shownDisplay(face.display, mesh.userData.viewX, mesh.userData.viewZ, mesh.userData.normalX, mesh.userData.normalZ);
+        const texture = signFaceTexture(shown, mesh.userData.passage === true, mesh.userData.wideFace === true);
         if (texture === null) {
           ok = false;
           continue;

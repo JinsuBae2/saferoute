@@ -73,7 +73,7 @@ describe("영남이 시연 설정", () => {
 describe("유도등 변경 목격 판정", () => {
   const geometry = parseGeometry(rawGeometry);
   const walls = geometry.floors.find((floor) => floor.floor_id === "F3")!.walls;
-  const installs = signInstalls(building, geometry.floors);
+  const installs = signInstalls(building, geometry.floors, geometry.stairs);
   const base = new Map<string, string | null>(building.signs.flatMap((sign) => sign.faces.map((face) => [`${sign.sign_id}/${face.face_id}`, "FORWARD" as string | null] as const)));
   const turn = (key: string, display: string | null) => new Map(base).set(key, display);
   // 300호 앞 복도(F3-J-R0)에서 남쪽을 본다. 정면 4.6 m에 갈림길 유도등(F3-J-N5)이 있다.
@@ -98,8 +98,14 @@ describe("유도등 변경 목격 판정", () => {
 
   it("바로 밑까지 다가가 화면 위로 벗어난 면의 변경은 봤다고 하지 않는다", () => {
     // 면은 2.45 m 높이에 걸려 있다. 1.2 m 앞에서는 1인칭 화면 위쪽 밖이다.
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, z: 6.2 - 0.6 - 1.2 })).toEqual([]);
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, z: 6.2 - 0.6 - 2.2 })).toEqual([ahead]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, z: 6.2 - 1.2 })).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, z: 6.2 - 2.2 })).toEqual([ahead]);
+    // 낮게 붙은 벽부형(0.9 m)도 바짝 다가서면 화면 아래로 벗어난다. 북쪽 복도 동쪽 끝 벽의 F3-J-N5 옆 접근면.
+    const low = "SIGN-F3-J-N5/FROM-F3-J-N6";
+    const east = { x: 35, z: 6.2, floorId: "F3", headingX: 1, headingZ: 0 };
+    expect(installs.get("SIGN-F3-J-N5")!.faces.get("FROM-F3-J-N6")).toMatchObject({ form: "WALL", kind: "CORRIDOR", y: 0.9 });
+    expect(witnessedSignChanges(building, walls, base, turn(low, "LEFT"), installs, east)).toEqual([low]);
+    expect(witnessedSignChanges(building, walls, base, turn(low, "LEFT"), installs, { ...east, x: 37 })).toEqual([]);
   });
 
   it("옆 통로에서 다가오는 사람은 그쪽을 보는 면의 변경만 본다", () => {
