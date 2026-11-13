@@ -85,6 +85,14 @@ describe("영남이 시연 설정", () => {
     expect(yeongnamFire(state(YEONGNAM.ignition))).toEqual({ elapsedMs: 7000 });
     expect(yeongnamFire(state({ ...YEONGNAM.ignition, x: 41 }))).toBeNull();
     expect(yeongnamFire(state(null))).toBeNull();
+    // 체험방에서 복도 구역의 불은 스프링클러 감지로 접수된다(backend/rooms.py). 그때도 같은 시연 화재다.
+    const sprinkler = building.sources.find((source) => source.zone_id === YEONGNAM.zoneId && source.source_type === "SIM_SPRINKLER");
+    if (sprinkler !== undefined) {
+      expect(yeongnamFire({
+        active_causes: [{ source_id: sprinkler.source_id, hazard_type: "SPRINKLER", ignition_position: YEONGNAM.ignition }],
+        fire_simulation: { fires: [{ source_id: sprinkler.source_id, elapsed_ms: 3000 }], cells: [] },
+      } as unknown as StateSnapshot)).toEqual({ elapsedMs: 3000 });
+    }
     // 확산 자료가 다른 화재의 것이면 경과 시간을 지어내지 않는다.
     expect(yeongnamFire(state(YEONGNAM.ignition, "MANUAL-F3-R303"))).toBeNull();
   });
