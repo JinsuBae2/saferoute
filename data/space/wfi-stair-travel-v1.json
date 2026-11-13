@@ -1,7 +1,7 @@
 {
   "format": "saferoute-stair-travel",
   "building_id": "WFI",
-  "building_version": 6,
+  "building_version": 7,
   "note": "사람이 실제로 걷는 계단 구간의 길이(m). web/src/building/stairs.ts의 stairTravel 결과이며 web/src/building/stairs.test.ts가 일치를 검사한다. 경로 비용과 무관하고, 시연 재검증(tools/yeongnam_check.py)만 읽는다",
   "metres": {
     "F1-S-A>F2-S-A": 15.57,

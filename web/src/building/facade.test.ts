@@ -66,7 +66,9 @@ describe("방 입구 문 방향", () => {
     expect(facing.size).toBe(26);
     expect(facing.get("F1-D-R101")).toBe("F1-J-PS");
     // 새로 넣은 문은 각자의 복도 쪽을, 기존 문은 방 안 통로가 생긴 뒤에도 예전 그대로를 향한다.
-    expect(facing.get("F3-D-R307-N")).toBe("F3-J-N1");
+    // 307호 북쪽 문은 308호 문 앞 공간으로 열린다. 복도 갈림길까지 곧게 가면 벽 모서리를 지나므로 308호 문 지점을 거친다(버전 7).
+    expect(facing.get("F3-D-R307-N")).toBe("F3-D-R308");
+    expect(facing.get("F3-D-R308")).toBe("F3-J-N1");
     expect(facing.get("F3-D-R304-E")).toBe("F3-J-R4");
     expect(facing.get("F2-D-INDUSTRY-E")).toBe("F2-J-R3");
     expect(facing.get("F3-D-R307")).toBe("F3-J-SW");
@@ -74,7 +76,7 @@ describe("방 입구 문 방향", () => {
     expect(facing.get("F2-D-INDUSTRY")).toBe("F2-J-W2");
     expect(facing.get("F1-D-CONF-N")).toBe("F1-J-LW");
     expect(facing.get("F1-D-CONF-S")).toBe("F1-J-LSW");
-    for (const target of facing.values()) expect(nodes.get(target)?.zone_id).toMatch(/CORR|LOBBY|PASSAGE/);
+    for (const [door, target] of facing) expect(nodes.get(door === "F3-D-R307-N" ? facing.get(target)! : target)?.zone_id).toMatch(/CORR|LOBBY|PASSAGE/);
     for (const target of facing.values()) expect(nodes.get(target)?.kind).not.toBe("EXIT");
   });
 

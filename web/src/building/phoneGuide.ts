@@ -32,8 +32,8 @@ export function nearestPerson(building: Building, people: readonly Person[], sta
 
 /** 위치 QR 자산(web/public/qr)이 이 건물 자료의 것인지. 내용에 건물 ID와 자료 버전이 들어 있어, 다르면 QR 연출을 켜지 않는다. */
 export function qrAssetsMatch(building: Pick<Building, "building_id" | "building_version">): boolean {
-  // shortcut: 위치 QR 자산은 WFI v6용이다. 다른 건물·버전에는 web/scripts/location-qr.swift로 먼저 만든다.
-  return building.building_id === "WFI" && building.building_version === 6;
+  // shortcut: 위치 QR 자산은 WFI v7용이다. 다른 건물·버전에는 web/scripts/location-qr.swift로 먼저 만든다.
+  return building.building_id === "WFI" && building.building_version === 7;
 }
 
 /** 휴대폰으로 비출 수 있는 거리(m), 시선 정면에서 벗어나도 되는 각의 코사인(약 65도), 판을 비스듬히 볼 수 있는 한계(판 정면에서 약 75도). */

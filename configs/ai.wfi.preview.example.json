@@ -1,6 +1,6 @@
 {
   "building_id": "WFI",
-  "building_version": 6,
+  "building_version": 7,
   "source_id": "CAM-F2-CORR-W",
   "expected_zone_id": "F2-CORR-W",
   "model_path": "models/fire-smoke-yolov8n.pt",
