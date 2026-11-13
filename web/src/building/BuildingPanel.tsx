@@ -93,6 +93,9 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
   // 경로 집중: 이름·전체 안내·CCTV·설비 아이콘을 한 번에 가린다. 각 토글의 값은 그대로 두어 풀면 전으로 돌아간다.
   const [focus, setFocus] = useState(false);
   const [yeongnam, setYeongnam] = useState<YeongnamStatus | null>(null);
+  // 위치 QR을 확인한 기록. 열쇠는 "실행/사람"이라 시연을 초기화하거나 다른 사람으로 바꾸면 섞이지 않는다.
+  // 1인칭에서 나갔다 들어오거나 휴대폰을 내렸다 꺼내도 같은 실행·같은 사람이면 남는다.
+  const [qrConfirmed, setQrConfirmed] = useState<Record<string, string>>({});
   const caption = useSyncExternalStore(subscribeSound, soundStatus).caption;
   const [followRequest, setFollowRequest] = useState<{ nodeId: string; nonce: number } | null>(null);
   const [followMessage, setFollowMessage] = useState<{ runId: string; text: string } | null>(null);
@@ -151,7 +154,7 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
 
   useEffect(() => { onStartNode?.(startId); }, [startId, onStartNode]);
   // 「처음부터」로 실행이 바뀌면 이전 실행에서 따라가던 사람과 꺼 둔 전체 안내를 남기지 않는다.
-  useEffect(() => { setFollow(null); setTracked(null); setYeongnam(null); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
+  useEffect(() => { setFollow(null); setTracked(null); setYeongnam(null); setQrConfirmed({}); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
   // 영남이 시연이 시작되면 주인공을 놓치지 않게 지켜볼 사람으로 잡는다. 사용자가 푼 뒤에는 다시 잡지 않는다.
   const yeongnamIndex = yeongnam?.index ?? null;
   useEffect(() => { if (yeongnamIndex !== null) setTracked(yeongnamIndex); }, [yeongnamIndex]);
@@ -454,6 +457,14 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
           {yeongnam?.notice != null && <p role="status" className="scene-caption">{yeongnam.notice}</p>}
           {firstPerson && <PhoneGuide key={`${runKey}/${follow}`} building={building} display={display} geometry={geometry} state={state} stale={stale}
             acting={yeongnam !== null && yeongnam.index === follow && yeongnam.phone}
+            confirmed={follow === null ? null : qrConfirmed[`${state.run_id}/${follow}`] ?? null}
+            onConfirm={(signId, auto) => {
+              if (follow === null) return;
+              setQrConfirmed((before) => ({ ...before, [`${state.run_id}/${follow}`]: signId }));
+              // 검증할 때 브라우저에서 인식 기록을 꺼내 볼 수 있게 둔다(영남이 기록과 같은 용도).
+              const scans = (window as unknown as { saferouteQrScans?: object[] }).saferouteQrScans ??= [];
+              scans.push({ runId: state.run_id, person: follow, signId, auto });
+            }}
             pose={phonePose?.personIndex === follow && phonePose.runId === state.run_id ? phonePose : null} />}
           </div>
 

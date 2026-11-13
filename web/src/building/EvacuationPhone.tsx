@@ -1,36 +1,45 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 import type { BuildingGeometry } from "./geometry";
-import { BLOCKED_HELP, nearbyQr, phoneGuidance } from "./phoneGuide";
+import { BLOCKED_HELP, nearbyQr, phoneGuidance, shouldAutoScan } from "./phoneGuide";
 import type { FollowPose } from "./phoneGuide";
 import { qrMounts } from "./signMount";
 import "./phone.css";
 
 type Props = { building: Building; display: BuildingDisplay | null; geometry: BuildingGeometry; state: StateSnapshot; pose: FollowPose | null; stale: boolean;
   /** 시연 인물이 스스로 휴대폰을 꺼내 가까운 QR을 비춘다. 평소에는 사용자가 꺼내고 누른다. */
-  acting?: boolean };
+  acting?: boolean;
+  /**
+   * 이 실행·이 사람이 이미 위치를 확인한 QR(유도등 ID). 없으면 null.
+   * 휴대폰을 내리거나 1인칭에서 나가도 남도록 이 화면 밖에서 보관한다.
+   */
+  confirmed: string | null;
+  onConfirm: (signId: string, auto: boolean) => void };
 
-/** QR을 비춘 채로 있어야 하는 시간(ms). 지나가며 잠깐 비추면 된다. 그 사이 대상이 시야에서 벗어나면 취소한다. */
-const QR_HOLD_MS = 350;
+/** QR을 비춘 채로 있어야 하는 시간(ms). 지나가며 잠깐 비추면 된다. 그 사이 대상이 시야에서 벗어나면 취소하고, 다음에 보이는 QR에서 다시 시도한다. */
+const QR_HOLD_MS = 600;
 
-export function PhoneGuide({ building, display, geometry, state, pose, stale, acting = false }: Props) {
+export function PhoneGuide({ building, display, geometry, state, pose, stale, acting = false, confirmed, onConfirm }: Props) {
   // 휴대폰은 처음부터 펼쳐 두지 않는다. 필요할 때 꺼낸다.
   const [open, setOpen] = useState(false);
-  const [scan, setScan] = useState<string | null>(null);
-  const [confirmed, setConfirmed] = useState<string | null>(null);
+  // 비추고 있는 QR과, 그것이 자동 인식인지(시연 인물이 스스로 비춘 것).
+  const [scan, setScan] = useState<{ signId: string; auto: boolean } | null>(null);
   const walls = geometry.floors.find(f => f.floor_id === building.nodes.find(node => node.node_id === pose?.routeNodeId)?.floor_id)?.walls ?? [];
   // 연결이 늦으면 위치가 오래된 것이라 QR을 잡지 않는다. 이 화면은 실행·사람마다 새로 만들어져 다른 실행의 확인이 남지 않는다.
   const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
   const qr = pose === null || stale ? null : nearbyQr(building, pose, mounts, walls);
   useEffect(() => { if (acting) setOpen(true); }, [acting]);
+  // 자동 인식은 처음 한 번뿐이다. 확인한 뒤에는 다른 QR 옆을 지나도, 층이 바뀌어도, 경로가 바뀌어도 다시 비추지 않는다.
   useEffect(() => {
-    if (acting && open && scan === null && qr !== undefined && qr !== null && qr.sign_id !== confirmed) setScan(qr.sign_id);
+    if (shouldAutoScan({ acting, open, scanning: scan !== null, qrSignId: qr?.sign_id ?? null, confirmed })) setScan({ signId: qr!.sign_id, auto: true });
   }, [acting, open, scan, qr, confirmed]);
   useEffect(() => {
     if (scan === null) return;
-    if (qr?.sign_id !== scan) { setScan(null); return; }
-    const timer = setTimeout(() => { setConfirmed(scan); setScan(null); }, QR_HOLD_MS);
+    if (qr?.sign_id !== scan.signId) { setScan(null); return; }
+    const timer = setTimeout(() => { onConfirm(scan.signId, scan.auto); setScan(null); }, QR_HOLD_MS);
     return () => clearTimeout(timer);
+    // onConfirm은 매번 새 함수라 넣으면 타이머가 계속 다시 걸린다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scan, qr?.sign_id]);
   const guide = pose === null ? null : phoneGuidance(building, display, state, pose, stale);
   const floorId = pose === null ? null : building.nodes.find(node => node.node_id === pose.routeNodeId)?.floor_id;
@@ -67,7 +76,7 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale, ac
           <div className={`phone-status${stale || lost !== null ? " phone-status--alert" : ""}`}><span/>{status}</div>
           {scan !== null ? <div className="phone-scanner" role="status">
             <p>QR 위치 확인 중</p>
-            <div className="phone-scan-frame"><img src={`/qr/${encodeURIComponent(scan)}.png`} alt="시연용 위치 QR"/><i/></div>
+            <div className="phone-scan-frame"><img src={`/qr/${encodeURIComponent(scan.signId)}.png`} alt="시연용 위치 QR"/><i/></div>
             <small>모의 인식 · 실제 카메라로 읽지 않습니다</small>
           </div> : lost !== null ? <div className="phone-lost" role="alert">
             <strong>{lost.instruction}</strong>
@@ -100,8 +109,9 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale, ac
             <div className="phone-destination"><span>도착 출구</span><strong>{guide?.kind === "ROUTE" ? guide.exitLabel : "안내 확인 필요"}</strong></div>
           </>}
           <div className="phone-qr">
-            <button type="button" disabled={qr === null || scan !== null} onClick={() => setScan(qr!.sign_id)}>{scan !== null ? "인식 중…" : qr !== null ? "QR 비추기 · 위치 확인" : "보이는 QR 없음"}</button>
-            <small role="status">{confirmed !== null ? `위치 확인 · ${display?.node_labels[building.signs.find(s=>s.sign_id===confirmed)?.node_id ?? ""] ?? confirmed} (모의 인식)` : "QR을 비추지 않아도 대피와 경로 갱신은 계속됩니다"}</small>
+            {/* 다시 확인은 사용자가 직접 누를 때만 한다. */}
+            <button type="button" disabled={qr === null || scan !== null} onClick={() => setScan({ signId: qr!.sign_id, auto: false })}>{scan !== null ? "인식 중…" : qr === null ? "보이는 QR 없음" : confirmed !== null ? "위치 다시 확인" : "QR 비추기 · 위치 확인"}</button>
+            <small role="status">{confirmed !== null ? `안내 시작 위치 확인 · ${display?.node_labels[building.signs.find(s=>s.sign_id===confirmed)?.node_id ?? ""] ?? confirmed} (모의 인식) · 이후 위치는 시연 인물의 위치입니다` : "QR을 비추지 않아도 대피와 경로 갱신은 계속됩니다"}</small>
           </div>
           <div className="phone-home" aria-hidden="true"/>
         </div>
