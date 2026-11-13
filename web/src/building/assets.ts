@@ -22,9 +22,9 @@ const ARROW_ANGLE: Record<string, number> = {
 
 const faceCache = new Map<string, THREE.Texture | null>();
 
-function drawRunner(ctx: CanvasRenderingContext2D, x: number) {
-  ctx.fillStyle = "#ffffff";
-  ctx.strokeStyle = "#ffffff";
+function drawRunner(ctx: CanvasRenderingContext2D, x: number, ink: string) {
+  ctx.fillStyle = ink;
+  ctx.strokeStyle = ink;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
@@ -41,53 +41,75 @@ function drawRunner(ctx: CanvasRenderingContext2D, x: number) {
 }
 
 /**
- * 표지판 한 면의 그림. display가 null이면 꺼진 면(안내 불가)이다.
+ * 유도등 한 면의 그림. display가 null이면 꺼진 면(안내 불가)이다.
+ * 피난구유도등은 녹색 바탕에 흰 그림, 통로유도등(passage)은 흰 바탕에 녹색 그림이다(유도등의 형식승인 및 제품검사의 기술기준 제9조).
+ * wide는 가로로 긴 와이드형(약 3:1) 표시면, 아니면 정사각형에 가까운 표준 표시면이다. 작은 판도 읽히도록 해상도를 두 배로 그린다.
  * 그림을 만들 수 없는 환경이면 null을 돌려주고, 그때는 빈 면으로 둔다.
  */
-export function signFaceTexture(display: string | null): THREE.Texture | null {
-  const key = display ?? "OFF";
+export function signFaceTexture(display: string | null, passage = false, wide = true): THREE.Texture | null {
+  const key = `${passage ? "P" : "E"}${wide ? "W" : "S"}/${display ?? "OFF"}`;
   const cached = faceCache.get(key);
   if (cached !== undefined) return cached;
+  const [width, height] = wide ? [FACE_W, FACE_H] : [256, 256];
   const canvas = document.createElement("canvas");
-  canvas.width = FACE_W;
-  canvas.height = FACE_H;
+  canvas.width = width * 2;
+  canvas.height = height * 2;
   const ctx = canvas.getContext("2d");
   if (ctx === null) {
     faceCache.set(key, null);
     return null;
   }
-  ctx.fillStyle = display === null ? "#374151" : "#0b8f3c";
-  ctx.fillRect(0, 0, FACE_W, FACE_H);
-  ctx.strokeStyle = display === null ? "#6b7280" : "#ffffff";
+  ctx.scale(2, 2);
+  const ink = display === null ? "#6b7280" : passage ? "#0b8f3c" : "#ffffff";
+  ctx.fillStyle = display === null ? "#374151" : passage ? "#ffffff" : "#0b8f3c";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = ink;
   ctx.lineWidth = 6;
-  ctx.strokeRect(5, 5, FACE_W - 10, FACE_H - 10);
-  if (display === "EXIT") {
-    drawRunner(ctx, 150);
+  ctx.strokeRect(5, 5, width - 10, height - 10);
+  const arrow = (x: number, y: number, angle: number, scale: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.moveTo(-52, -13); ctx.lineTo(8, -13); ctx.lineTo(8, -36); ctx.lineTo(54, 0);
+    ctx.lineTo(8, 36); ctx.lineTo(8, 13); ctx.lineTo(-52, 13);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  };
+  if (display === null) {
+    ctx.fillStyle = "#9ca3af";
+    ctx.fillRect(width / 2 - 60, height / 2 - 8, 120, 16);
+  } else if (wide) {
+    if (display === "EXIT") {
+      drawRunner(ctx, 150, ink);
+      ctx.lineWidth = 8;
+      ctx.strokeRect(232, 20, 70, 94);
+    } else {
+      // 왼쪽을 가리키면 화살표를 왼쪽에, 그 밖에는 오른쪽에 둔다.
+      const arrowLeft = display === "LEFT";
+      drawRunner(ctx, arrowLeft ? 288 : 96, ink);
+      if (ARROW_ANGLE[display] !== undefined) arrow(arrowLeft ? 110 : 274, 64, ARROW_ANGLE[display], 1);
+    }
+  } else if (display === "EXIT") {
+    ctx.translate(-64, 64);
+    drawRunner(ctx, 150, ink);
     ctx.lineWidth = 8;
     ctx.strokeRect(232, 20, 70, 94);
-  } else if (display !== null) {
-    const angle = ARROW_ANGLE[display];
-    // 왼쪽을 가리키면 화살표를 왼쪽에, 그 밖에는 오른쪽에 둔다.
-    const arrowLeft = display === "LEFT";
-    drawRunner(ctx, arrowLeft ? 288 : 96);
-    if (angle !== undefined) {
-      ctx.save();
-      ctx.translate(arrowLeft ? 110 : 274, 64);
-      ctx.rotate(angle);
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.moveTo(-52, -13); ctx.lineTo(8, -13); ctx.lineTo(8, -36); ctx.lineTo(54, 0);
-      ctx.lineTo(8, 36); ctx.lineTo(8, 13); ctx.lineTo(-52, 13);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
   } else {
-    ctx.fillStyle = "#9ca3af";
-    ctx.fillRect(132, 56, 120, 16);
+    // 표준 표시면: 위에 사람, 아래에 큰 화살표.
+    ctx.save();
+    ctx.translate(128 * 0.1, 10);
+    ctx.scale(0.9, 0.9);
+    drawRunner(ctx, 128, ink);
+    ctx.restore();
+    if (ARROW_ANGLE[display] !== undefined) arrow(128, 180, ARROW_ANGLE[display], 1.15);
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
   faceCache.set(key, texture);
   return texture;
 }
@@ -100,11 +122,11 @@ export type SignFaceMesh = THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMateri
  */
 export function buildSignFixture(
   parts: readonly { readonly role: "HOUSING" | "STEM" | "BASE"; readonly x: number; readonly z: number; readonly y: number; readonly normalX: number; readonly normalZ: number; readonly wide: number; readonly tall: number; readonly deep: number }[],
-  panels: readonly { readonly faceId: string; readonly x: number; readonly z: number; readonly normalX: number; readonly normalZ: number }[],
-  y: number, wide: number, tall: number,
+  panels: readonly { readonly faceId: string; readonly x: number; readonly z: number; readonly normalX: number; readonly normalZ: number; readonly viewX: number; readonly viewZ: number }[],
+  y: number, wide: number, tall: number, passage: boolean, wideFace: boolean,
 ): { group: THREE.Group; faces: Map<string, SignFaceMesh> } {
   const group = new THREE.Group();
-  const housing = new THREE.MeshLambertMaterial({ color: 0x1f2933 });
+  const housing = new THREE.MeshLambertMaterial({ color: 0xe6e9ed });
   const metal = new THREE.MeshLambertMaterial({ color: 0x8b949e });
   for (const part of parts) {
     const mesh = part.role === "STEM"
@@ -117,9 +139,10 @@ export function buildSignFixture(
   }
   const meshes = new Map<string, SignFaceMesh>();
   for (const panel of panels) {
-    const mesh: SignFaceMesh = new THREE.Mesh(new THREE.PlaneGeometry(wide - 0.012, tall - 0.012), new THREE.MeshBasicMaterial({ map: signFaceTexture(null) }));
+    const mesh: SignFaceMesh = new THREE.Mesh(new THREE.PlaneGeometry(wide - 0.012, tall - 0.012), new THREE.MeshBasicMaterial({ map: signFaceTexture(null, passage, wideFace) }));
     mesh.position.set(panel.x, y, panel.z);
     mesh.rotation.y = Math.atan2(panel.normalX, panel.normalZ);
+    Object.assign(mesh.userData, { passage, wideFace, viewX: panel.viewX, viewZ: panel.viewZ, normalX: panel.normalX, normalZ: panel.normalZ });
     group.add(mesh);
     meshes.set(panel.faceId, mesh);
   }
