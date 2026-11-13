@@ -115,32 +115,26 @@ def step(world, p, routes, metres):
         p["from"], p["to"], p["progress"], p["returning"] = p["to"], None, 0.0, False
 
 
-SIGN_HEIGHT, SIGN_TALL, EYE, SIGN_LIFT = 2.45, 0.4, 1.6, 30
-
-
-def face_place(sign, node, face):
-    """web/src/building/signMount.ts facePlace: 면이 걸린 자리와 향하는 쪽."""
-    first = sign.faces[0].view_direction
-    size = math.hypot(face.view_direction.x, face.view_direction.z)
-    nx, nz = -face.view_direction.x / size, -face.view_direction.z / size
-    single = all(abs(f.view_direction.x * first.x + f.view_direction.z * first.z) > 0.98 * math.hypot(f.view_direction.x, f.view_direction.z) * math.hypot(first.x, first.z) for f in sign.faces)
-    out = 0.052 if single else 0.55
-    return node.position.x + nx * out, node.position.z + nz * out, nx, nz
+EYE, SIGN_LIFT = 1.6, 30
+# 유도등 면이 실제로 걸린 자리(web/src/building/signMount.ts signInstalls). 같은 값인지는 signMount.test.ts가 지킨다.
+SIGN_FACES = json.loads((ROOT / "data/space/wfi-sign-install-v1.json").read_text(encoding="utf-8"))["faces"]
 
 
 def seen_changes(world, before, after, x, z, floor, hx, hz):
     """web/src/building/yeongnam.ts witnessedSignChanges와 같은 기준(실제 면의 자리·방향, 화면 위로 벗어나는 거리, 벽 가림)."""
     out = []
-    too_close = (SIGN_HEIGHT + SIGN_TALL / 2 - EYE) / math.tan(math.radians(SIGN_LIFT))
     for sign in world.building.signs:
         node = world.nodes[sign.node_id]
         if node.floor_id != floor: continue
         for face in sign.faces:
             was, now = before[(sign.sign_id, face.face_id)], after[(sign.sign_id, face.face_id)]
             if was is None or now is None or was == now: continue
-            px, pz, nx, nz = face_place(sign, node, face)
+            place = SIGN_FACES.get(f"{sign.sign_id}/{face.face_id}")
+            if place is None: continue  # 달지 않은 면
+            px, pz, nx, nz = place["x"], place["z"], place["normal_x"], place["normal_z"]
+            too_close = (abs(place["y"] - EYE) + place["tall"] / 2) / math.tan(math.radians(SIGN_LIFT))
             dx, dz = px - x, pz - z; d = math.hypot(dx, dz)
-            if not too_close <= d <= 14 or (dx * hx + dz * hz) / d < 0.82 or (-dx * nx - dz * nz) / d < 0.82: continue
+            if not too_close <= d <= 14 or (dx * hx + dz * hz) / d < 0.82 or (-dx * nx - dz * nz) / d < place["facing"]: continue
             if any(crosses_wall(Position(x=x, y=0, z=z), Position(x=px, y=0, z=pz), wall) for wall in world.walls.get(floor, [])): continue
             out.append(f"{sign.sign_id}/{face.face_id} {was}→{now} ({d:.1f} m)")
     return out
