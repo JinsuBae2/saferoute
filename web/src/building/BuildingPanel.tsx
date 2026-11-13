@@ -3,14 +3,16 @@
  * 건물 ID·자료 버전이 같을 때만 함께 쓴다(05번 2.3절).
  * 버전이 다르면 3D를 그리지 않고, 경로·유도등 안내는 서버 결과로 계속 표시한다.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import type { Building, BuildingDisplay, Position, SimulationState, StateSnapshot } from "@contracts";
 
 import type { CctvPose } from "./cctv";
-import { setExitGuide } from "../control/alarmSound";
+import { setExitGuide, soundStatus, subscribeSound } from "../control/alarmSound";
 import { exitCall } from "../control/broadcast";
 import { BuildingScene } from "./BuildingScene";
+import type { YeongnamStatus } from "./BuildingScene";
+import { YEONGNAM_PHASE_LABEL } from "./yeongnam";
 import { newFireFloors } from "./firePresentation";
 import { PhoneGuide } from "./EvacuationPhone";
 import type { FollowPose } from "./phoneGuide";
@@ -60,6 +62,8 @@ type Props = {
   readonly pickTarget?: "NODE" | "ZONE";
   /** 고를 대상을 바꾼다. 내 위치를 정한 뒤 화재 위치를 다시 고를 때 쓴다(이슈 #189). */
   readonly onPickTarget?: (target: "NODE" | "ZONE") => void;
+  /** 선택형 시연 「영남이」를 준비했다. 발화 전부터 자는 모습을 보여 준다. */
+  readonly yeongnamArmed?: boolean;
 };
 
 const MISMATCH_LABEL = {
@@ -68,7 +72,7 @@ const MISMATCH_LABEL = {
   MISSING_FLOOR: "형상 자료에 없는 층이 공간 자료에 있습니다",
 } as const;
 
-export function BuildingPanel({ cctv, onCamera, state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE", onPickTarget }: Props) {
+export function BuildingPanel({ cctv, onCamera, state, simulation, building, display, buildingError, highlightSourceId, locateRequest, stale = false, onStartNode, onPeopleCount, onPickZone, pickTarget = "NODE", onPickTarget, yeongnamArmed = false }: Props) {
   const { geometry, error: geometryError, loading } = useBuildingGeometry();
   const [showNames, setShowNames] = useState(true);
   // 전체 안내(초록 화살표·선). 현재 위치를 고르면 그 경로만 보이게 끄고, 버튼으로 다시 켤 수 있다.
@@ -80,10 +84,20 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
   useEffect(() => { onPeopleCount?.(showPeople ? people : null); }, [people, showPeople, onPeopleCount]);
   // 1인칭으로 따라갈 사람. 3D에서 사람을 누르면 들어가고, 그 사람이 빠져나가면 저절로 나온다.
   const [follow, setFollow] = useState<number | null>(null);
+  // 전체 화면에서 계속 지켜볼 사람. 1인칭에서 나와도 남는다. 카메라 시점(follow)과 따로 둔다.
+  const [tracked, setTracked] = useState<number | null>(null);
+  const [showCameras, setShowCameras] = useState(true);
+  const [showIcons, setShowIcons] = useState(true);
+  // 경로 집중: 이름·전체 안내·CCTV·설비 아이콘을 한 번에 가린다. 각 토글의 값은 그대로 두어 풀면 전으로 돌아간다.
+  const [focus, setFocus] = useState(false);
+  const [yeongnam, setYeongnam] = useState<YeongnamStatus | null>(null);
+  const caption = useSyncExternalStore(subscribeSound, soundStatus).caption;
   const [followRequest, setFollowRequest] = useState<{ nodeId: string; nonce: number } | null>(null);
   const [followMessage, setFollowMessage] = useState<{ runId: string; text: string } | null>(null);
   const [phonePose, setPhonePose] = useState<FollowPose | null>(null);
   const firstPerson = follow !== null && showPeople && cctv === null;
+  /** 그 사람을 1인칭으로 보면서 지켜볼 사람으로도 잡는다. */
+  const watch = (index: number) => { setFollow(index); setTracked(index); };
   useEffect(() => { if (cctv) setFollow(null); }, [cctv]);
   const [hiddenFloors, setHiddenFloors] = useState<ReadonlySet<string>>(new Set());
   // 층 간격은 처음부터 조금 벌려 위층 바닥이 아래층 복도를 덮지 않게 한다.
@@ -135,7 +149,10 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
 
   useEffect(() => { onStartNode?.(startId); }, [startId, onStartNode]);
   // 「처음부터」로 실행이 바뀌면 이전 실행에서 따라가던 사람과 꺼 둔 전체 안내를 남기지 않는다.
-  useEffect(() => { setFollow(null); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
+  useEffect(() => { setFollow(null); setTracked(null); setYeongnam(null); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
+  // 영남이 시연이 시작되면 주인공을 놓치지 않게 지켜볼 사람으로 잡는다. 사용자가 푼 뒤에는 다시 잡지 않는다.
+  const yeongnamIndex = yeongnam?.index ?? null;
+  useEffect(() => { if (yeongnamIndex !== null) setTracked(yeongnamIndex); }, [yeongnamIndex]);
 
   const journey = useMemo(
     () => (building === null || startId === null ? null : describeJourney(building, display, state, startId)),
@@ -272,20 +289,31 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
               </button>
             </span>
             <span className="scene__tools">
-              <button type="button" className={showNames ? "chip chip--on" : "chip"} aria-pressed={showNames} onClick={() => setShowNames((previous) => !previous)}>공간 이름</button>
-              <button type="button" className={showGuidance ? "chip chip--on" : "chip"} aria-pressed={showGuidance} onClick={() => setShowGuidance((previous) => !previous)}>전체 안내</button>
+              <button type="button" className={focus ? "chip chip--on" : "chip"} aria-pressed={focus} title="이름·전체 경로·CCTV·설비 아이콘을 한 번에 가립니다. 사람·남은 경로·불·연기·천장 유도등은 남습니다. 감지와 경로 계산은 그대로 진행됩니다"
+                onClick={() => setFocus((previous) => !previous)}>경로 집중</button>
+              <button type="button" className={showNames && !focus ? "chip chip--on" : "chip"} aria-pressed={showNames && !focus} disabled={focus} onClick={() => setShowNames((previous) => !previous)}>공간 이름</button>
+              <button type="button" className={showGuidance && !focus ? "chip chip--on" : "chip"} aria-pressed={showGuidance && !focus} disabled={focus} onClick={() => setShowGuidance((previous) => !previous)}>전체 경로</button>
+              <button type="button" className={showCameras && !focus ? "chip chip--on" : "chip"} aria-pressed={showCameras && !focus} disabled={focus} title="CCTV 아이콘과 이름만 가립니다. 감지는 계속됩니다" onClick={() => setShowCameras((previous) => !previous)}>CCTV</button>
+              <button type="button" className={showIcons && !focus ? "chip chip--on" : "chip"} aria-pressed={showIcons && !focus} disabled={focus} title="지점 구와 유도등 기둥·아이콘만 가립니다. 천장의 유도등은 남습니다" onClick={() => setShowIcons((previous) => !previous)}>설비 아이콘</button>
               {showPeople && people !== null && people.total > 0 && (
                 // 작은 사람을 정확히 누르기 어려우므로 버튼으로도 들어간다. 누를 때마다 다음 사람으로 넘어간다.
                 <button type="button" className="chip" onClick={() => {
                   setFollowMessage(null);
                   if (!firstPerson && startId !== null) setFollowRequest(previous => ({ nodeId: startId, nonce: (previous?.nonce ?? 0) + 1 }));
-                  else setFollow(previous => ((previous ?? -1) + 1) % people.total);
+                  else watch(((follow ?? -1) + 1) % people.total);
                 }}>
                   {firstPerson ? "다음 사람" : "1인칭 보기"}
                 </button>
               )}
               {firstPerson && (
+                // 나와도 방금 보던 사람은 계속 지켜본다. 전체 화면에서 그 사람과 남은 경로가 이어서 보인다.
                 <button type="button" className="chip chip--on" onClick={() => { setFollow(null); requestView(view.mode); }}>1인칭 나가기</button>
+              )}
+              {!firstPerson && tracked !== null && showPeople && (
+                <>
+                  <button type="button" className="chip" onClick={() => setFollow(tracked)}>같은 사람 1인칭</button>
+                  <button type="button" className="chip chip--on" title="지켜보던 사람의 강조와 남은 경로 표시를 끕니다. 그 사람의 이동은 그대로입니다" onClick={() => setTracked(null)}>추적 해제</button>
+                </>
               )}
               <button type="button" className={showPeople ? "chip chip--on" : "chip"} aria-pressed={showPeople} onClick={() => setShowPeople((previous) => !previous)}>대피 인원</button>
               <label className="scene__spread">
@@ -332,7 +360,11 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
                   <small> · 사람을 누르면 1인칭</small>
                 </>
               )}
-              {startId !== null && (
+              {tracked !== null && showPeople ? (
+                <>
+                  <span className="key key--journey" /> 추적 인물의 남은 경로(지금 위치부터 · 서버 경로)
+                </>
+              ) : startId !== null && (
                 <>
                   <span className="key key--journey" /> 선택 위치 경로
                   <span className="key key--journey-prev" /> 직전 경로(비교용, 회색)
@@ -350,6 +382,19 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             연결이 늦어지고 있습니다. 아래 3D의 유도등 방향·불·연기는 마지막으로 받은 상태이며 지금과 다를 수 있습니다.
           </p>}
           {followMessage?.runId === state.run_id && <p role="status" className="panel__note">{followMessage.text}</p>}
+          {tracked !== null && showPeople && stale && <p role="status" className="panel__note">연결이 늦어 추적 인물의 남은 경로를 숨겼습니다. 최신 경로를 받으면 다시 그립니다.</p>}
+          {yeongnam !== null && (
+            <p role="status" className="panel__note">
+              <strong>영남이 시연</strong> · {yeongnam.out ? "탈출 완료" : !yeongnam.ignited ? "준비됨 · 휴게공간(시연 설정)에서 자는 중 · 「시연 시작」을 누르면 화재가 납니다"
+                : yeongnam.stuck ? "서버가 안내할 경로를 찾지 못해 멈춤 · 휴대폰에 행동 안내 표시"
+                : yeongnam.looking ? (yeongnam.phase === "EVACUATE" ? "이동 중 · 정면 유도등의 화살표가 바뀌는 것을 목격" : "출발 전 · 정면 유도등의 바뀐 안내를 확인하는 중")
+                : yeongnam.phone ? (yeongnam.sawWhileMoving ? "바뀐 방향으로 대피 중 · 휴대폰을 꺼내 QR로 위치 확인" : "현재 유도등 안내에 따라 대피 중 · 휴대폰으로 QR 위치 확인(이동 중 유도등 변경은 보지 못함)")
+                : yeongnam.phase === "EVACUATE" && yeongnam.sawWhileMoving ? "바뀐 유도등 방향으로 대피 중" : YEONGNAM_PHASE_LABEL[yeongnam.phase]}
+              {yeongnam.ignited && yeongnam.phase === "LISTEN" && caption !== null && ` · 방송: ${caption}`}
+              {yeongnam.ignited && ` · 서버가 차단한 지점·통로 위에 있던 시간 ${yeongnam.exposedSeconds.toFixed(1)}초`}
+              {" · 행동만 연출이며 불·연기·경로·유도등은 서버 결과입니다"}
+            </p>
+          )}
           <div className={`first-person-stage${firstPerson ? " first-person-stage--active" : ""}`}>
           <BuildingScene
             cctv={cctv}
@@ -357,8 +402,21 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             geometry={geometry}
             building={building}
             display={display}
-            showNames={showNames}
-            showGuidance={showGuidance}
+            showNames={showNames && !focus}
+            showGuidance={showGuidance && !focus}
+            showCameras={showCameras && !focus}
+            showIcons={showIcons && !focus}
+            trackIndex={showPeople ? tracked : null}
+            onTrackEnd={() => { setTracked(null); setFollowMessage({ runId: state.run_id, text: "지켜보던 사람이 탈출했습니다. 추적을 마칩니다." }); }}
+            onTrackFloor={(floorId) => setHiddenFloors((previous) => {
+              // 지켜보는 사람이 숨긴 층으로 가면 그 층을 켠다. 켜 둔 층은 건드리지 않는다.
+              if (!previous.has(floorId)) return previous;
+              const next = new Set(previous);
+              next.delete(floorId);
+              return next;
+            })}
+            yeongnamArmed={yeongnamArmed}
+            onYeongnam={setYeongnam}
             showPeople={showPeople}
             stale={stale}
             followRequest={followRequest}
@@ -372,9 +430,8 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             onPeople={setPeople}
             followIndex={firstPerson ? follow : null}
             onFollow={(index) => {
-              setFollow(index);
-              // 나올 때는 보던 시점 모드로 화면을 다시 맞춘다.
-              if (index === null) requestView(view.mode);
+              // 사람을 고르면 지켜볼 사람도 그 사람이 된다. 따라가던 사람이 빠져나가 나올 때(null)는 시점만 되돌린다.
+              if (index === null) { setFollow(null); requestView(view.mode); } else watch(index);
             }}
             state={state}
             ignition={simulation?.demo_ignition}
@@ -383,12 +440,13 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             spread={firstPerson || cctv ? 0 : spread}
             view={view}
             highlightSourceId={highlightSourceId}
-            journey={sceneJourney}
+            journey={tracked !== null && showPeople ? null : sceneJourney}
             onPickNode={chooseStart}
             onPickZone={onPickZone}
             pickTarget={pickTarget}
           />
           {firstPerson && <PhoneGuide key={`${runKey}/${follow}`} building={building} display={display} geometry={geometry} state={state} stale={stale}
+            acting={yeongnam !== null && yeongnam.index === follow && yeongnam.phone}
             pose={phonePose?.personIndex === follow && phonePose.runId === state.run_id ? phonePose : null} />}
           </div>
 

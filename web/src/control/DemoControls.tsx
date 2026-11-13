@@ -32,9 +32,14 @@ type Props = {
   readonly hasStart: boolean;
   /** 방금 눌렀지만 화재 위치로 쓸 수 없는 구역. */
   readonly refusedZoneId?: string | null;
+  /**
+   * 선택형 시연 「영남이」. 준비하면 화재 위치와 주인공이 정해진 값으로 채워지고, 「시연 시작」은 평소와 같은 시험 화재를 낸다.
+   * 이 건물에서 쓸 수 없으면 주지 않는다.
+   */
+  readonly scenario?: { readonly armed: boolean; readonly onToggle: () => void };
 };
 
-export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, ignition: polled, hasStart, refusedZoneId = null }: Props) {
+export function DemoControls({ building, display, state, connected, zoneId, ignitionPosition, ignition: polled, hasStart, refusedZoneId = null, scenario }: Props) {
   const control = useMemo(() => new ManualFireControl(building, state.run_id), [building, state.run_id]);
   const mounted = useRef(false);
   const busy = useRef(false);
@@ -133,6 +138,18 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
         >
           시연 시작
         </button>
+        {scenario !== undefined && (
+          <button
+            type="button"
+            className={scenario.armed ? "chip chip--on" : "chip"}
+            aria-pressed={scenario.armed}
+            disabled={pending || ignition?.phase === "WAITING" || state.active_causes.some(cause => cause.hazard_type === "FIRE")}
+            title="일반 체험과 따로 고르는 시연입니다. 3층 휴게공간(시연 설정)에서 자던 영남이가 늦게 깨어 유도등 변경을 보고 대피합니다. 다시 누르면 일반 체험으로 돌아갑니다"
+            onClick={scenario.onToggle}
+          >
+            영남이 시연{scenario.armed ? " 준비됨" : " 준비"}
+          </button>
+        )}
         <button
           type="button"
           className="control__demo-reset"
@@ -150,7 +167,7 @@ export function DemoControls({ building, display, state, connected, zoneId, igni
         </p>
       ) : <p className="control__demo-note">{inRoom() ? "화재 위치의 설비가 감지하면 대피가 시작됩니다. 설비가 없는 구역은 수동 신고로 시작합니다." : "수동 화재 신고로 대피를 시작합니다."}</p>}
       <p className="control__demo-note" role="status" aria-live="polite">
-        {demoMessage(pending, refused, notice?.text ?? null, blocked ?? "3/3 · 「시연 시작」을 누르면 고른 자리에 화재가 납니다")}
+        {demoMessage(pending, refused, notice?.text ?? null, blocked ?? (scenario?.armed ? `영남이 시연 · 「시연 시작」을 누르면 ${name(zoneId)}에서 화재가 납니다. 「처음부터」로 초기화합니다` : "3/3 · 「시연 시작」을 누르면 고른 자리에 화재가 납니다"))}
         {!pending && refused === null && notice?.result && (state.guidance_version >= notice.result.guidanceVersion ? " · 반영 확인" : " · 반영 대기")}
       </p>
     </div>

@@ -6,19 +6,26 @@ import type { FollowPose } from "./phoneGuide";
 import { qrMounts } from "./signMount";
 import "./phone.css";
 
-type Props = { building: Building; display: BuildingDisplay | null; geometry: BuildingGeometry; state: StateSnapshot; pose: FollowPose | null; stale: boolean };
+type Props = { building: Building; display: BuildingDisplay | null; geometry: BuildingGeometry; state: StateSnapshot; pose: FollowPose | null; stale: boolean;
+  /** 시연 인물이 스스로 휴대폰을 꺼내 가까운 QR을 비춘다. 평소에는 사용자가 꺼내고 누른다. */
+  acting?: boolean };
 
 /** QR을 비춘 채로 있어야 하는 시간(ms). 지나가며 잠깐 비추면 된다. 그 사이 대상이 시야에서 벗어나면 취소한다. */
 const QR_HOLD_MS = 350;
 
-export function PhoneGuide({ building, display, geometry, state, pose, stale }: Props) {
-  const [open, setOpen] = useState(true);
+export function PhoneGuide({ building, display, geometry, state, pose, stale, acting = false }: Props) {
+  // 휴대폰은 처음부터 펼쳐 두지 않는다. 필요할 때 꺼낸다.
+  const [open, setOpen] = useState(false);
   const [scan, setScan] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const walls = geometry.floors.find(f => f.floor_id === building.nodes.find(node => node.node_id === pose?.routeNodeId)?.floor_id)?.walls ?? [];
   // 연결이 늦으면 위치가 오래된 것이라 QR을 잡지 않는다. 이 화면은 실행·사람마다 새로 만들어져 다른 실행의 확인이 남지 않는다.
   const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
   const qr = pose === null || stale ? null : nearbyQr(building, pose, mounts, walls);
+  useEffect(() => { if (acting) setOpen(true); }, [acting]);
+  useEffect(() => {
+    if (acting && open && scan === null && qr !== undefined && qr !== null && qr.sign_id !== confirmed) setScan(qr.sign_id);
+  }, [acting, open, scan, qr, confirmed]);
   useEffect(() => {
     if (scan === null) return;
     if (qr?.sign_id !== scan) { setScan(null); return; }

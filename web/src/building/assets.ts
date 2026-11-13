@@ -201,6 +201,51 @@ export function poseFigure(figure: Figure, phase: number, walking: boolean) {
   legR.rotation.x = swing;
 }
 
+/** 귀에 꽂은 이어폰 한 쌍. 머리에 붙여 두고, 방송을 들으려고 뺄 때 숨긴다. */
+export function addEarbuds(figure: Figure): THREE.Group {
+  const buds = new THREE.Group();
+  const white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  for (const side of [-1, 1]) {
+    const bud = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), white);
+    bud.position.set(side * 0.135, 1.6, 0);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.1, 5), white);
+    stem.position.set(side * 0.14, 1.53, 0.015);
+    buds.add(bud, stem);
+  }
+  figure.group.add(buds);
+  return buds;
+}
+
+/**
+ * 시연 인물의 단계별 자세. 서 있는 기본 자세 위에 덮어쓴다.
+ * 돌려주는 값은 몸 전체를 앞으로 숙이는 각도(tilt)와 앉느라 낮아지는 높이(drop)다.
+ */
+export function poseActing(figure: Figure, act: "SLEEP" | "NOTICE" | "PANIC" | "LISTEN" | "LOOK" | null, time: number): { tilt: number; drop: number } {
+  const [armL, armR, legL, legR] = figure.limbs;
+  armL.rotation.z = armR.rotation.z = 0;
+  if (act === null) return { tilt: 0, drop: 0 };
+  if (act === "SLEEP" || act === "NOTICE") {
+    // 의자에 앉아 다리를 앞으로 낸다. 잘 때는 고개와 몸을 앞으로 숙이고 숨에 맞춰 조금 오르내린다.
+    legL.rotation.x = legR.rotation.x = -1.45;
+    armL.rotation.x = armR.rotation.x = act === "SLEEP" ? -0.5 : 0.2;
+    return { tilt: act === "SLEEP" ? 0.55 + Math.sin(time * 1.3) * 0.04 : -0.12, drop: 0.42 };
+  }
+  legL.rotation.x = legR.rotation.x = 0;
+  if (act === "PANIC") {
+    // 두 손을 번쩍 들고 떤다.
+    armL.rotation.x = -2.8 + Math.sin(time * 15) * 0.14;
+    armR.rotation.x = -2.8 + Math.cos(time * 15) * 0.14;
+    armL.rotation.z = -0.35;
+    armR.rotation.z = 0.35;
+    return { tilt: -0.08, drop: 0 };
+  }
+  // 한 손을 귀에 대거나(방송 듣기), 앞의 유도등을 가리킨다(변경 확인).
+  armL.rotation.x = 0;
+  armR.rotation.x = act === "LISTEN" ? -2.6 : -1.7;
+  armR.rotation.z = act === "LISTEN" ? -0.45 : 0;
+  return { tilt: 0, drop: 0 };
+}
+
 /** 그룹 안의 메시를 모두 정리한다. 함께 쓰는 그림(표지판 면)은 건드리지 않는다. */
 export function disposeTree(root: THREE.Object3D) {
   root.traverse((object) => {
@@ -256,7 +301,7 @@ export function createFire(): Fire {
   group.add(flames);
   const glow = new THREE.Mesh(
     new THREE.CircleGeometry(1.1, 24),
-    new THREE.MeshBasicMaterial({ color: 0xff4a12, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+    new THREE.MeshBasicMaterial({ color: 0xff4a12, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
   );
   glow.rotation.x = -Math.PI / 2;
   glow.position.y = 0.06;
@@ -271,8 +316,9 @@ export function createFire(): Fire {
       position[i * 3 + 2] = seed[i * 2 + 1] * spread * 2;
       // 겹쳐 더해지면 하얗게 날아가므로 입자 하나의 밝기를 낮춘다.
       const heat = 1 - life[i];
-      color[i * 3] = 0.55;
-      color[i * 3 + 1] = 0.1 + heat * 0.22;
+      // 불꽃이 너무 밝으면 그 위와 둘레의 연기가 하얗게 묻힌다.
+      color[i * 3] = 0.42;
+      color[i * 3 + 1] = 0.08 + heat * 0.17;
       color[i * 3 + 2] = heat * heat * 0.04;
     }
     geometry.attributes.position.needsUpdate = true;
@@ -293,10 +339,38 @@ export type SmokePuff = {
   readonly z: number;
 };
 
+let smokeDot: THREE.Texture | null | undefined;
+/**
+ * 연기 입자의 그림. 불꽃용 점(softDotTexture)은 가운데만 진해 멀리서는 흐린 얼룩으로만 보인다.
+ * 연기는 가운데 절반이 고르게 차 있고 가장자리만 풀어지게 해, 복도 끝에 낀 연기가 덩어리로 읽히게 한다.
+ */
+function smokeTexture(): THREE.Texture | null {
+  if (smokeDot !== undefined) return smokeDot;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    smokeDot = null;
+    return null;
+  }
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.5, "rgba(255,255,255,0.9)");
+  gradient.addColorStop(0.8, "rgba(255,255,255,0.4)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
+  smokeDot = new THREE.CanvasTexture(canvas);
+  return smokeDot;
+}
+
 export function createSmokeSprite(): THREE.Sprite {
   const sprite = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: softDotTexture(), color: 0x70757e, transparent: true, opacity: 0, depthWrite: false }),
+    // 불빛과 섞여 보이지 않게 채도 없는 중간 회색으로 둔다. 남색 복도·갈색 방 바닥 어디서나 퍼진 범위가 읽힌다.
+    new THREE.SpriteMaterial({ map: smokeTexture(), color: 0x8a8f97, transparent: true, opacity: 0, depthWrite: false }),
   );
+  // 불꽃(더하기 혼합) 뒤에 그려, 불 위로 올라온 연기가 불빛에 지워지지 않게 한다.
+  sprite.renderOrder = 6;
   sprite.visible = false;
   return sprite;
 }
@@ -304,7 +378,7 @@ export function createSmokeSprite(): THREE.Sprite {
 /**
  * 연기 입자 하나를 지금 농도에 맞춰 놓는다. 연기는 천장부터 차서 농도가 짙을수록 아래로 내려온다.
  */
-export function placeSmoke(puff: SmokePuff, smoke: number, wallHeight: number, time: number) {
+export function placeSmoke(puff: SmokePuff, smoke: number, wallHeight: number, time: number, overview = false) {
   const { sprite, seed } = puff;
   if (smoke <= 0.02) {
     sprite.visible = false;
@@ -319,5 +393,6 @@ export function placeSmoke(puff: SmokePuff, smoke: number, wallHeight: number, t
   );
   const size = 2 + seed * 1.4 + smoke * 0.8;
   sprite.scale.set(size, size, 1);
-  sprite.material.opacity = Math.min(0.5, 0.08 + smoke * 0.34);
+  // 밖에서 내려다볼 때는 범위가 보이게 짙게, 연기 속을 걷는 1인칭에서는 표지판이 가려지지 않게 옅게 그린다(시야 저하는 안개가 맡는다).
+  sprite.material.opacity = overview ? Math.min(0.9, 0.3 + smoke * 0.6) : Math.min(0.65, 0.3 + smoke * 0.45);
 }
