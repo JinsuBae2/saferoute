@@ -18,7 +18,7 @@ import { cctvSmoke, type CctvPose } from "./cctv";
 import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
 import { addEarbuds, buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseActing, poseFigure, signFaceTexture, softDotTexture } from "./assets";
-import { insidePolygon, interiorWalls, wallBox } from "./geometry";
+import { doorOpening, insidePolygon, interiorWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
 import { doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
@@ -96,6 +96,8 @@ const SLIDE_DROP = 0.9;
 
 /** 카메라 한 대를 찾을 때 함께 보이는 범위(m). 너무 좁으면 어디인지 알 수 없다. */
 const FOCUS_REACH = 9;
+/** 문짝이 열린 각. 경첩에서 방 안쪽(문틀의 -Z)으로 직각이다. */
+const DOOR_OPEN = Math.PI / 2;
 
 /** 영남이 시연의 지금 상태. 화면 문구와 휴대폰 연출이 이것을 따른다. */
 export type YeongnamStatus = {
@@ -1558,27 +1560,35 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         staticGroup.add(caps);
       }
 
-      // 문. 방 입구 지점에 문틀과 열린 문짝을 세운다. 문이 향하는 쪽은 그 입구에서 이어진 통로 방향이다.
+      // 문. 문틀은 벽의 실제 개구부에 벽과 같은 줄로 세운다(doorOpening). 이어진 통로 지점은 어느 쪽이 방 안인지 가리는 데만 쓴다.
       for (const node of building.nodes) {
         if (node.kind !== "DOOR" || node.floor_id !== floor.floor_id) continue;
         const toward = nodeById.get(edgeByDoor.get(node.node_id) ?? "");
         if (toward === undefined) continue;
+        const opening = doorOpening(node.position.x, node.position.z, toward.position.x, toward.position.z, floor.walls);
         const door = new THREE.Group();
         const frame = new THREE.MeshLambertMaterial({ color: COLOR.frame });
-        for (const [w, h, x, y] of [[0.1, 2.2, -0.55, 1.1], [0.1, 2.2, 0.55, 1.1], [1.2, 0.1, 0, 2.25]]) {
+        const half = opening.width / 2;
+        for (const [w, h, x, y] of [[0.1, 2.2, -half + 0.05, 1.1], [0.1, 2.2, half - 0.05, 1.1], [opening.width, 0.1, 0, 2.25]]) {
           const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.2), frame);
           piece.position.set(x, y, 0);
           piece.castShadow = true;
           door.add(piece);
         }
-        const leaf = new THREE.Mesh(new THREE.BoxGeometry(1, 2.1, 0.05), new THREE.MeshLambertMaterial({ color: COLOR.door }));
-        // 활짝 열어 방 안쪽으로 젖혀 둔다. 반쯤 열면 나오는 사람이 문짝을 뚫고 지나간다.
-        leaf.position.set(-0.52, 1.05, -0.5);
-        leaf.rotation.y = Math.PI / 2;
+        // 문틀의 앞(+Z)은 통로 쪽이다. 벽에 직각인 두 방향 가운데 통로 지점이 있는 쪽을 고른다.
+        const outward = opening.along === "X" ? Math.sign(toward.position.z - opening.z) || 1 : Math.sign(toward.position.x - opening.x) || 1;
+        door.position.set(opening.x, base, opening.z);
+        door.rotation.y = opening.along === "X" ? (outward > 0 ? 0 : Math.PI) : (outward > 0 ? Math.PI / 2 : -Math.PI / 2);
+        // 문짝은 문설주의 경첩을 축으로 따로 돈다. 방 안쪽으로 직각까지 열어 둔다. 반쯤 열면 나오는 사람이 문짝을 뚫고 지나간다.
+        const hinge = new THREE.Group();
+        hinge.position.set(-half + 0.1, 0, 0);
+        const leafWidth = opening.width - 0.2;
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(leafWidth, 2.1, 0.05), new THREE.MeshLambertMaterial({ color: COLOR.door }));
+        leaf.position.set(leafWidth / 2, 1.05, 0);
         leaf.castShadow = true;
-        door.add(leaf);
-        door.position.set(node.position.x, base, node.position.z);
-        door.rotation.y = Math.atan2(toward.position.x - node.position.x, toward.position.z - node.position.z);
+        hinge.add(leaf);
+        hinge.rotation.y = DOOR_OPEN;
+        door.add(hinge);
         staticGroup.add(door);
       }
 

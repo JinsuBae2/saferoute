@@ -446,3 +446,46 @@ export function stairRun(points: readonly PlanPoint[], width: number, bottomY: n
     };
   });
 }
+
+/** 문틀을 세울 자리. along은 벽이 달리는 축, (x, z)는 개구부 가운데, width는 틈의 폭이다. */
+export type DoorOpening = { readonly x: number; readonly z: number; readonly along: "X" | "Z"; readonly width: number; readonly found: boolean };
+
+const DOOR_REACH = 1.3;
+const DOOR_GAP = [0.7, 1.8] as const;
+
+/**
+ * 문 지점 가까이에서 벽의 실제 개구부(같은 줄 위 벽 사이의 틈)를 찾는다. 문틀은 그 틈에, 벽과 같은 줄로 선다.
+ * 찾지 못하면(유리 외벽, 벽이 없는 자리) 지점에 두고, 이어진 통로 쪽(toward)을 가까운 축으로 맞춘다. found가 false다.
+ */
+export function doorOpening(x: number, z: number, towardX: number, towardZ: number, walls: readonly WallRect[]): DoorOpening {
+  const boxes = walls.map(wallBox);
+  let best: (DoorOpening & { distance: number }) | null = null;
+  for (const along of ["X", "Z"] as const) {
+    // p는 벽이 달리는 축의 좌표, c는 벽을 가로지르는 축의 좌표다.
+    const [p, c] = along === "X" ? [x, z] : [z, x];
+    const span = (box: Box2) => (along === "X"
+      ? { p0: box.centerX - box.sizeX / 2, p1: box.centerX + box.sizeX / 2, c0: box.centerZ - box.sizeZ / 2, c1: box.centerZ + box.sizeZ / 2, runs: box.sizeX >= box.sizeZ }
+      : { p0: box.centerZ - box.sizeZ / 2, p1: box.centerZ + box.sizeZ / 2, c0: box.centerX - box.sizeX / 2, c1: box.centerX + box.sizeX / 2, runs: box.sizeZ >= box.sizeX });
+    const spans = boxes.map(span);
+    for (const wall of spans) {
+      const line = (wall.c0 + wall.c1) / 2;
+      if (!wall.runs || Math.abs(line - c) > DOOR_REACH || p < wall.p0 - DOOR_REACH - DOOR_GAP[1] || p > wall.p1 + DOOR_REACH + DOOR_GAP[1]) continue;
+      // 그 줄을 지나는 벽(직각으로 만나는 벽의 끝도 포함)이 차지한 구간. 그 사이의 틈이 개구부다.
+      const taken = spans.filter((item) => item.c0 < line + 0.15 && item.c1 > line - 0.15).sort((a, b) => a.p0 - b.p0);
+      let end = -Infinity;
+      for (const item of taken) {
+        const gap = item.p0 - end;
+        if (gap >= DOOR_GAP[0] && gap <= DOOR_GAP[1]) {
+          const middle = (end + item.p0) / 2;
+          const distance = Math.hypot(middle - p, line - c);
+          if (distance <= DOOR_REACH && (best === null || distance < best.distance - 1e-6)) {
+            best = { ...(along === "X" ? { x: middle, z: line } : { x: line, z: middle }), along, width: gap, found: true, distance };
+          }
+        }
+        end = Math.max(end, item.p1);
+      }
+    }
+  }
+  if (best !== null) return { x: best.x, z: best.z, along: best.along, width: best.width, found: true };
+  return { x, z, along: Math.abs(towardX - x) >= Math.abs(towardZ - z) ? "Z" : "X", width: 1.1, found: false };
+}
