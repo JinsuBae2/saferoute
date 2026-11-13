@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 import type { BuildingGeometry } from "./geometry";
-import { nearbyQr, phoneGuidance } from "./phoneGuide";
+import { BLOCKED_HELP, nearbyQr, phoneGuidance } from "./phoneGuide";
 import type { FollowPose } from "./phoneGuide";
 import { qrMounts } from "./signMount";
 import "./phone.css";
@@ -46,7 +46,8 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale, ac
   const next = pose?.routeNodeId !== pose?.nodeId ? path[0] : path[1] ?? path[0];
   // 화재 전에는 방향을 지시하지 않는다. 평소에 "지금 우회전"이 뜨면 이미 대피 중인 것처럼 읽힌다.
   const idle = !stale && guide?.kind === "ROUTE" && pose?.evacuating !== true;
-  const status = stale ? "연결 확인 중" : guide?.kind === "BLOCKED" ? "안내 중단" : pose?.evacuating ? "대피 중" : "평상시 · 출발 대기";
+  const status = stale ? "연결 확인 중" : guide?.kind === "BLOCKED" ? "경로 없음" : guide?.kind === "UNCONFIRMED" ? "경로 확인 불가" : pose?.evacuating ? "대피 중" : "평상시 · 출발 대기";
+  const lost = guide !== null && guide.kind !== "ROUTE" ? guide : null;
   return <div className={`phone-overlay${open ? " phone-overlay--open" : ""}`}>
     <div className={`phone-handset${pose?.moving && !stale ? " phone-handset--walking" : ""}`} aria-hidden={!open} inert={!open}>
       <svg className="phone-hand" viewBox="0 0 360 580" aria-hidden="true">
@@ -63,11 +64,18 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale, ac
         <div className="phone-speaker" aria-hidden="true"/>
         <div className="phone-screen">
           <header className="phone-header"><span>SafeRoute</span><span className="phone-signal" aria-hidden="true">▂▄▆</span></header>
-          <div className={`phone-status${stale || guide?.kind === "BLOCKED" ? " phone-status--alert" : ""}`}><span/>{status}</div>
+          <div className={`phone-status${stale || lost !== null ? " phone-status--alert" : ""}`}><span/>{status}</div>
           {scan !== null ? <div className="phone-scanner" role="status">
             <p>QR 위치 확인 중</p>
             <div className="phone-scan-frame"><img src={`/qr/${encodeURIComponent(scan)}.png`} alt="시연용 위치 QR"/><i/></div>
             <small>모의 인식 · 실제 카메라로 읽지 않습니다</small>
+          </div> : lost !== null ? <div className="phone-lost" role="alert">
+            <strong>{lost.instruction}</strong>
+            {lost.detail !== "" && <p>{lost.detail}</p>}
+            <ul>{lost.actions.map(action => <li key={action}>{action}</li>)}</ul>
+            <p className="phone-lost__place">{lost.place !== null ? <>119에 알릴 위치 · <b>{lost.place}</b></> : "위치를 확인하지 못했습니다. 보이는 층·호실 표지를 119에 알려 주세요"}</p>
+            <details><summary>옥상으로 가도 되나요?</summary><p>{BLOCKED_HELP.roof}</p></details>
+            <small>일반 행동요령 · {BLOCKED_HELP.source} · 서버가 계산한 경로가 아닙니다</small>
           </div> : <>
             <div className={`phone-direction${guide?.kind !== "ROUTE" ? " phone-direction--paused" : ""}`}>
               <span className="phone-arrow" aria-hidden="true">{idle ? "✓" : guide?.kind === "ROUTE" ? guide.icon : "!"}</span>

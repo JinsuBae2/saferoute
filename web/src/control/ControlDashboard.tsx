@@ -16,7 +16,9 @@ import {
   connectionHealth,
   simulationMatchesRun,
   simulationConnectionLost,
+  advanceSignLog,
   defaultDisplays,
+  signGlyph,
   observedAgeMs,
   sourceStatus,
   summarizeRoutes,
@@ -29,12 +31,14 @@ import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
 import { DemoControls } from "./DemoControls";
+import type { SignDisplayReport } from "../building/BuildingScene";
 import { YEONGNAM, yeongnamSupported } from "../building/yeongnam";
 import { fireSelectable } from "./manualFire";
 import { CameraStation } from "./CameraStation";
 import { AiDemoSummary } from "./AiDemoSummary";
 import { AlarmSoundBar } from "./AlarmSoundBar";
 import { useBuildingData } from "../building/useBuildingData";
+import type { SignChangeLog } from "./controlModel";
 import type { PeopleCount } from "../building/people";
 
 // three.js는 관제에서만 쓴다. 단말 화면 묶음에 들어가지 않도록 따로 불러온다.
@@ -257,6 +261,11 @@ export function ControlDashboard() {
   const [startNode, setStartNode] = useState<string | null>(null);
   /** 선택형 시연 「영남이」를 준비한 실행. 실행이 바뀌면 저절로 풀린다. */
   const [armedRun, setArmedRun] = useState<string | null>(null);
+  /** 3D가 유도등 면을 실제로 다시 그린 결과. 별도 단말의 응답과 따로 본다. */
+  const [signDisplay, setSignDisplay] = useState<SignDisplayReport | null>(null);
+  const [signLog, setSignLog] = useState<SignChangeLog | null>(null);
+  const snapshot = view.state;
+  useEffect(() => { if (snapshot !== null) setSignLog((previous) => advanceSignLog(previous, snapshot)); }, [snapshot]);
   const [selectedCamera, setCamera] = useState<{ runId: string; sourceId: string | null; fixed: boolean; locate: number } | null>(null);
   const state = view.state;
   const space = useBuildingData(state);
@@ -455,6 +464,7 @@ export function ControlDashboard() {
               onPeopleCount={setPeople}
               onStartNode={setStartNode}
               yeongnamArmed={armed}
+              onSignDisplay={setSignDisplay}
               pickTarget={aim}
               onPickTarget={setPickTarget}
               onPickZone={(zoneId, position) => {
@@ -599,10 +609,16 @@ export function ControlDashboard() {
       </Panel>
 
       <Panel
-        title="유도등 반영 확인"
-        note="반영 확인은 유도등 화면이 안내를 표시하고 스스로 응답한 것만 셉니다. 서버가 방향을 계산한 것과는 다릅니다"
+        title="별도 유도등 단말 응답 (상세)"
+        note="유도등 화면(별도 단말)이 안내를 표시하고 스스로 응답한 것만 셉니다. 3D 화면의 표시나 서버의 방향 계산과는 다른 확인입니다"
         folding
       >
+        <p className="panel__note">
+          단말 연결 {state.signs.filter((sign) => sign.terminals.length > 0).length}대 · 응답(반영 확인) {signs.byStatus.APPLIED}대 · 응답 대기 {signs.byStatus.PENDING}대
+          {" · "}기한 지남 {signs.byStatus.EXPIRED}대 · 반영 실패 {signs.byStatus.REJECTED}대 · 중복 단말 {signs.byStatus.DUPLICATE_TERMINAL}대 · 안내 미발행 {signs.byStatus.NOT_ISSUED}대
+          {signs.mixedVersion && ` · 이전 안내 버전 ${signs.behindGuidance}대`}
+          {" · "}연결된 단말이 없어도 3D의 유도등 방향 안내는 계속됩니다
+        </p>
         <table className="grid">
           <thead>
             <tr>
@@ -772,23 +788,53 @@ export function ControlDashboard() {
           tone={sources.anyUnconfirmed ? "warn" : "route"}
           note={`최신 정보 수신 ${sources.valid}개 · 아직 입력 없음 ${sources.initializing}개(시험 입력·카메라는 쓸 때만 보냅니다) · 만료 ${sources.stale}개 · 감지 불가 ${sources.unavailable}개 · 최신 정보가 위험 없음을 뜻하지는 않습니다`}
         />
+        {(() => {
+          // 3D 화면이 실제로 면을 다시 그린 결과다. 서버 상태를 받은 것만으로 표시했다고 치지 않고, 별도 단말의 응답으로 꾸미지도 않는다.
+          const current = signDisplay !== null && signDisplay.runId === state.run_id;
+          const upToDate = current && signDisplay.guidanceVersion === state.guidance_version;
+          const visible = current ? signDisplay.drawn + signDisplay.failed : 0;
+          return (
+            <Tile
+              label="3D 유도등 표시 상태"
+              value={!current ? "확인 불가" : visible === 0 ? "표시 대상 없음" : `보이는 ${visible}대 중 ${signDisplay.drawn}대`}
+              ratio={current && visible > 0 ? bar(signDisplay.drawn, visible) : undefined}
+              tone={!current || visible === 0 ? undefined : stale || !upToDate || signDisplay.failed > 0 ? "warn" : "route"}
+              note={!current ? "3D 화면이 유도등을 그리지 않았습니다(불러오는 중이거나 3D를 표시할 수 없음)"
+                : `${stale ? "연결 지연 · 마지막으로 그린 안내" : upToDate ? "현재 안내" : "갱신 대기 · 그린 안내"} v${signDisplay.guidanceVersion}`
+                  + (signDisplay.failed > 0 ? ` · 면을 그리지 못함 ${signDisplay.failed}대` : "")
+                  + (signDisplay.hidden > 0 ? ` · 숨긴 층의 ${signDisplay.hidden}대는 집계에서 제외(고장 아님)` : "")
+                  + ` · 전체 ${signDisplay.total}대 · 이 화면의 표시 기준이며 실제 장치 응답이 아닙니다`}
+            />
+          );
+        })()}
         <Tile
-          label="유도등 반영 확인"
-          value={`${signs.total}대 중 ${signs.confirmedCurrent}대`}
-          ratio={bar(signs.confirmedCurrent, signs.total)}
-          tone={signs.confirmedCurrent === 0 ? undefined : signs.unconfirmed > 0 ? "warn" : "route"}
-          note={signs.mixedVersion ? "서로 다른 안내 버전 표시 중"
-            : signs.confirmedCurrent === 0 ? "열려 있는 유도등 화면이 없습니다. 유도등 화면을 열어야 응답을 셉니다. 3D의 방향 안내에는 영향이 없습니다"
-            : `응답 없어 미확인 ${signs.unconfirmed}대`}
-        />
-        <Tile
-          label="방향 변경 확인"
-          value={signChanges === null ? "확인 불가" : `${signChanges.changed}대 중 ${signChanges.changedConfirmed}대`}
-          ratio={signChanges === null ? undefined : bar(signChanges.changedConfirmed, signChanges.changed)}
-          tone={signChanges !== null && signChanges.changed > signChanges.changedConfirmed ? "warn" : undefined}
+          label="현재 우회 안내 유도등"
+          value={signChanges === null ? "확인 불가" : `${signChanges.changed}대`}
+          tone={signChanges !== null && signChanges.changed > 0 ? "warn" : undefined}
           note={signChanges === null ? "건물 자료를 읽지 못했습니다"
-            : `평상시와 방향이 달라진 유도등 ${signChanges.changed}대 중 반영 응답 ${signChanges.changedConfirmed}대 · 안내 중단 ${signChanges.stopped}대(응답 ${signChanges.stoppedConfirmed}대)`}
+            : `지금 평상시와 다른 방향을 안내하는 대수(서버 계산 기준, 누적 변경 횟수 아님) · 안내 중단(꺼짐) ${signChanges.stopped}대 · 별도 단말 응답 ${signs.byStatus.APPLIED}대는 아래 상세 참고`}
         />
+        <div className="tile">
+          <span className="tile__label">최근 방향 변경</span>
+          {signLog === null || signLog.runId !== state.run_id || signLog.changes.length === 0 ? (
+            <strong className="tile__value">없음</strong>
+          ) : (
+            <ul className="tile__list">
+              {signLog.changes.map((change) => (
+                <li key={`${change.signId}/${change.faceId}/${change.guidanceVersion}`}>
+                  <span title={`${change.signId} ${change.faceId}`}>{display?.signs[change.signId]?.label ?? change.signId}</span>{" "}
+                  <strong>{signGlyph(change.before)} ⇒ {signGlyph(change.after)}</strong>{" "}
+                  <small>{new Date(change.at).toLocaleTimeString("ko-KR", { hour12: false })} · v{change.guidanceVersion}</small>
+                </li>
+              ))}
+            </ul>
+          )}
+          <span className="tile__note">
+            이번 실행에서 화살표가 실제로 바뀐 면(서버 계산 기준). 같은 상태를 다시 받은 것은 세지 않습니다
+            {signLog !== null && signLog.runId === state.run_id && signLog.lastArrow + signLog.lastRouteOnly > 0
+              && ` · 마지막 갱신: 화살표 변경 ${signLog.lastArrow}면, 경로만 바뀌고 화살표는 같은 면 ${signLog.lastRouteOnly}면`}
+          </span>
+        </div>
       </div>
 
       <footer className="control__footer">

@@ -287,3 +287,57 @@ export function defaultDisplays(
 ): Map<string, Map<string, string>> {
   return new Map(signs.map((sign) => [sign.sign_id, new Map(sign.faces.map((face) => [face.face_id, face.next_node_to_display[face.default_next_node_id]]))]));
 }
+
+/** 유도등 면 표시값을 화살표 글자로. 꺼진 면(안내 불가)은 "꺼짐"이다. */
+export const SIGN_GLYPH: Record<string, string> = { LEFT: "←", RIGHT: "→", FORWARD: "↑", BACK: "↓", STAIRS_UP: "↗ 계단", STAIRS_DOWN: "↘ 계단", EXIT: "출구" };
+export function signGlyph(display: string | null): string {
+  return display === null ? "꺼짐" : SIGN_GLYPH[display] ?? display;
+}
+
+export type SignChange = {
+  readonly signId: string;
+  readonly faceId: string;
+  readonly before: string | null;
+  readonly after: string | null;
+  /** 바뀐 상태의 서버 기준 시각과 안내 버전. */
+  readonly at: string;
+  readonly guidanceVersion: number;
+};
+
+export type SignChangeLog = {
+  readonly runId: string;
+  /** 준비 중(INITIALIZING)이던 직전 상태. 그때의 꺼진 면이 켜지는 것은 방향 변경이 아니다. */
+  readonly settled: boolean;
+  readonly faces: ReadonlyMap<string, { readonly display: string | null; readonly next: string | null }>;
+  /** 최근 것부터. 화살표(표시값)가 실제로 바뀐 면만 담는다. */
+  readonly changes: readonly SignChange[];
+  /** 마지막으로 무언가 바뀐 갱신에서: 화살표가 바뀐 면 수, 다음 지점(경로)만 바뀌고 화살표는 같은 면 수. */
+  readonly lastArrow: number;
+  readonly lastRouteOnly: number;
+};
+
+/**
+ * 새 상태를 받을 때마다 호출해 유도등 방향 변경 이력을 잇는다.
+ * - 같은 상태를 다시 받은 것은 변경이 아니다(같은 기록 객체를 그대로 돌려준다).
+ * - 실행이 바뀌면 이전 기록을 버린다. 새 실행의 첫 상태는 비교할 것이 없어 변경이 아니다.
+ * - 경로(다음 지점)가 바뀌어도 화살표가 같으면 방향 변경으로 세지 않고 따로 센다.
+ */
+export function advanceSignLog(log: SignChangeLog | null, state: StateSnapshot, keep = 6): SignChangeLog {
+  const faces = new Map(state.signs.flatMap((sign) => sign.faces.map((face) => [`${sign.sign_id}/${face.face_id}`, { display: face.display, next: face.next_node_id }] as const)));
+  const settled = state.controller_mode !== "INITIALIZING";
+  if (log === null || log.runId !== state.run_id || !log.settled || !settled) {
+    return { runId: state.run_id, settled, faces, changes: [], lastArrow: 0, lastRouteOnly: 0 };
+  }
+  const changed: SignChange[] = [];
+  let routeOnly = 0;
+  for (const [key, now] of faces) {
+    const before = log.faces.get(key);
+    if (before === undefined) continue;
+    if (before.display !== now.display) {
+      const [signId, faceId] = key.split("/");
+      changed.push({ signId, faceId, before: before.display, after: now.display, at: state.generated_at, guidanceVersion: state.guidance_version });
+    } else if (before.next !== now.next) routeOnly += 1;
+  }
+  if (changed.length === 0 && routeOnly === 0) return log;
+  return { runId: state.run_id, settled, faces, changes: [...changed, ...log.changes].slice(0, keep), lastArrow: changed.length, lastRouteOnly: routeOnly };
+}

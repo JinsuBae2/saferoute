@@ -124,6 +124,22 @@ export type YeongnamTrace = {
   readonly guidanceVersion: number; readonly fromBlocked: boolean; readonly toBlocked: boolean; readonly edgeBlocked: boolean; readonly exposed: boolean; readonly looking: boolean;
 };
 
+/**
+ * 3D 화면이 유도등 면을 실제로 다시 그린 결과. 서버 상태를 받은 것과 구분한다.
+ * 별도 유도등 단말의 응답(ACK)이 아니다. 이 화면에 보이는 표지판만 센다.
+ */
+export type SignDisplayReport = {
+  readonly runId: string;
+  readonly guidanceVersion: number;
+  readonly total: number;
+  /** 보이는 층에 있어 면을 새로 그린 대수. */
+  readonly drawn: number;
+  /** 보이는 층에 있지만 면 그림을 만들지 못한 대수. */
+  readonly failed: number;
+  /** 숨긴 층에 있어 집계에서 뺀 대수. */
+  readonly hidden: number;
+};
+
 type Props = {
   readonly cctv: CctvPose | null;
   readonly onCamera: (id: string) => void;
@@ -158,6 +174,7 @@ type Props = {
   /** 영남이 시연을 준비했다(발화 전). 발화 뒤에는 서버 상태로 판단하므로 이 값이 없어도 이어진다. */
   readonly yeongnamArmed?: boolean;
   readonly onYeongnam?: (status: YeongnamStatus | null) => void;
+  readonly onSignDisplay?: (report: SignDisplayReport) => void;
   /** 3D에서 사람을 눌렀거나(순번), 따라가던 사람이 빠져나갔을 때(null). */
   readonly onFollow?: (index: number | null) => void;
   /** 1인칭으로 따라가는 사람의 위치·시선·지금 경로를 읽는 지점. 출구 유도음이 쓴다. 1인칭이 아니면 null. */
@@ -244,6 +261,8 @@ type Handles = {
   /** 출구 유도등 아이콘(안내 상태에 따라 다시 그림)과 출구 이름표. CCTV와 같은 방식으로 커서를 올렸을 때만 보인다. */
   exitIcons: { icon: THREE.Sprite; nodeId: string }[];
   exitLabels: Map<string, THREE.Sprite>;
+  /** 유도등 면을 바꾼 뒤 아직 화면에 그리지 않은 보고. 다음 프레임을 그린 뒤에 알린다. */
+  signReport: SignDisplayReport | null;
 };
 
 /** 아이콘 위로 이름표를 띄우는 기준점. 아이콘 위쪽 끝에서 6px 위에 이름표 아래쪽이 오게 한다. */
@@ -449,7 +468,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ cctv, onCamera, geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, trackIndex = null, onTrackEnd, onTrackFloor, showCameras = true, showIcons = true, yeongnamArmed = false, onYeongnam, state, ignition, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingScene({ cctv, onCamera, geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, trackIndex = null, onTrackEnd, onTrackFloor, showCameras = true, showIcons = true, yeongnamArmed = false, onYeongnam, onSignDisplay, state, ignition, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -490,9 +509,9 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     return zones;
   }, [state.fire_simulation]);
   // 그리기 반복은 한 번만 만들어지므로, 매번 바뀌는 값은 참조로 넘긴다.
-  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
+  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
   useEffect(() => {
-    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
+    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
   });
 
   // 1) 렌더러·카메라·조작. 한 번만 만든다.
@@ -583,6 +602,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       cameraIcons: [],
       exitIcons: [],
       exitLabels: new Map(),
+      signReport: null,
     };
     handlesRef.current = handles;
 
@@ -1200,6 +1220,12 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         puff.sprite.scale.multiplyScalar(outside ? 1.15 : 1);
       }
       renderer.render(scene, camera);
+      // 면 그림을 바꾼 프레임을 실제로 그린 뒤에야 "표시했다"고 알린다.
+      if (handles.signReport !== null) {
+        const report = handles.signReport;
+        handles.signReport = null;
+        live.onSignDisplay?.(report);
+      }
     };
     animate();
     // 개발용(?devFrames=1): 창이 가려져 화면 갱신이 멈춰도 타이머로 계속 그린다. 가려진 창에서 화면을 확인할 때만 쓴다.
@@ -2056,16 +2082,27 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     }
 
     // 천장 표지판의 면. 서버가 준 표시값 그대로 그림을 바꾼다. 안내 불가면 꺼진 면이다.
+    // 실제로 면을 바꾼 대수를 세어 둔다. 숨긴 층의 표지판은 그리지 않았으므로 고장이 아니라 집계 밖이다.
+    let drawn = 0;
+    let failed = 0;
     for (const sign of state.signs) {
       const meshes = handles.signFaces.get(sign.sign_id);
       if (meshes === undefined) continue;
+      let ok = true;
       for (const face of sign.faces) {
         const mesh = meshes.get(face.face_id);
-        if (mesh === undefined) continue;
-        mesh.material.map = signFaceTexture(face.display);
+        const texture = signFaceTexture(face.display);
+        if (mesh === undefined || texture === null) {
+          ok = false;
+          continue;
+        }
+        mesh.material.map = texture;
         mesh.material.needsUpdate = true;
       }
+      if (ok) drawn += 1;
+      else failed += 1;
     }
+    handles.signReport = { runId: state.run_id, guidanceVersion: state.guidance_version, total: state.signs.length, drawn, failed, hidden: state.signs.length - drawn - failed };
 
     // 방금 막힌 지점에 이유를 짧게 띄운다. 서버가 차단한 지점만, 확산 자료에 불이나 차단 기준 이상의 연기가 있을 때만 쓴다.
     if (blockSeen.current.runId !== state.run_id) blockSeen.current = { runId: state.run_id, at: new Map() };
