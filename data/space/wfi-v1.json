@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "building_id": "WFI",
-  "building_version": 5,
+  "building_version": 6,
   "coordinate_system": {
     "unit": "m",
     "measured": false,
@@ -1965,9 +1965,9 @@
       "floor_id": "F1",
       "zone_id": "F1-STAIR-B",
       "position": {
-        "x": 37.2,
+        "x": 35.8,
         "y": 0.0,
-        "z": 15.9
+        "z": 15.65
       },
       "kind": "STAIR"
     },
@@ -2820,7 +2820,7 @@
       "from_node_id": "F1-J-PM",
       "to_node_id": "F1-S-B",
       "kind": "CORRIDOR",
-      "cost": 4.9,
+      "cost": 3.5,
       "traversable": true,
       "door_open": null
     },
@@ -2829,7 +2829,7 @@
       "from_node_id": "F1-S-B",
       "to_node_id": "F1-J-PM",
       "kind": "CORRIDOR",
-      "cost": 4.9,
+      "cost": 3.5,
       "traversable": true,
       "door_open": null
     },
@@ -4278,7 +4278,7 @@
       "from_node_id": "F1-S-C",
       "to_node_id": "F2-S-C",
       "kind": "STAIR",
-      "cost": 7652.8,
+      "cost": 7627.6,
       "traversable": true,
       "door_open": null
     },
@@ -4287,7 +4287,7 @@
       "from_node_id": "F2-S-C",
       "to_node_id": "F1-S-C",
       "kind": "STAIR",
-      "cost": 7652.8,
+      "cost": 7627.6,
       "traversable": true,
       "door_open": null
     },
@@ -4296,7 +4296,7 @@
       "from_node_id": "F2-S-D",
       "to_node_id": "F3-S-D",
       "kind": "STAIR",
-      "cost": 7652.8,
+      "cost": 7627.6,
       "traversable": true,
       "door_open": null
     },
@@ -4305,7 +4305,7 @@
       "from_node_id": "F3-S-D",
       "to_node_id": "F2-S-D",
       "kind": "STAIR",
-      "cost": 7652.8,
+      "cost": 7627.6,
       "traversable": true,
       "door_open": null
     },
@@ -4332,7 +4332,7 @@
       "from_node_id": "F1-J-CONF-N",
       "to_node_id": "F1-J-CONF-S",
       "kind": "CORRIDOR",
-      "cost": 852.7,
+      "cost": 849.9,
       "traversable": true,
       "door_open": null
     },
@@ -4341,7 +4341,7 @@
       "from_node_id": "F1-J-CONF-S",
       "to_node_id": "F1-J-CONF-N",
       "kind": "CORRIDOR",
-      "cost": 852.7,
+      "cost": 849.9,
       "traversable": true,
       "door_open": null
     },
@@ -4440,7 +4440,7 @@
       "from_node_id": "F2-J-INDUSTRY-W",
       "to_node_id": "F2-J-INDUSTRY-E",
       "kind": "CORRIDOR",
-      "cost": 855.3,
+      "cost": 852.5,
       "traversable": true,
       "door_open": null
     },
@@ -4449,7 +4449,7 @@
       "from_node_id": "F2-J-INDUSTRY-E",
       "to_node_id": "F2-J-INDUSTRY-W",
       "kind": "CORRIDOR",
-      "cost": 855.3,
+      "cost": 852.5,
       "traversable": true,
       "door_open": null
     },
@@ -4512,7 +4512,7 @@
       "from_node_id": "F3-J-R307-N",
       "to_node_id": "F3-J-R307-S",
       "kind": "CORRIDOR",
-      "cost": 850.8,
+      "cost": 848.0,
       "traversable": true,
       "door_open": null
     },
@@ -4521,7 +4521,7 @@
       "from_node_id": "F3-J-R307-S",
       "to_node_id": "F3-J-R307-N",
       "kind": "CORRIDOR",
-      "cost": 850.8,
+      "cost": 848.0,
       "traversable": true,
       "door_open": null
     },
@@ -4620,7 +4620,7 @@
       "from_node_id": "F3-J-R304-N",
       "to_node_id": "F3-J-R304-E",
       "kind": "CORRIDOR",
-      "cost": 842.7,
+      "cost": 839.9,
       "traversable": true,
       "door_open": null
     },
@@ -4629,7 +4629,7 @@
       "from_node_id": "F3-J-R304-E",
       "to_node_id": "F3-J-R304-N",
       "kind": "CORRIDOR",
-      "cost": 842.7,
+      "cost": 839.9,
       "traversable": true,
       "door_open": null
     },
@@ -5498,6 +5498,20 @@
             "F1-J-PM": "FORWARD",
             "F1-J-LNW": "RIGHT"
           }
+        },
+        {
+          "face_id": "FROM-F1-J-LNW",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-X-N",
+          "next_node_to_display": {
+            "F1-X-N": "LEFT",
+            "F1-J-PM": "RIGHT",
+            "F1-J-LNW": "BACK"
+          }
         }
       ]
     },
@@ -5533,6 +5547,36 @@
             "F1-J-PS": "FORWARD",
             "F1-S-B": "LEFT",
             "F1-J-LM": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F1-J-LM",
+          "view_direction": {
+            "x": 0.983,
+            "y": 0.0,
+            "z": -0.182
+          },
+          "default_next_node_id": "F1-J-PN",
+          "next_node_to_display": {
+            "F1-J-PN": "LEFT",
+            "F1-J-PS": "RIGHT",
+            "F1-S-B": "FORWARD",
+            "F1-J-LM": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F1-S-B",
+          "view_direction": {
+            "x": -0.982,
+            "y": 0.0,
+            "z": -0.188
+          },
+          "default_next_node_id": "F1-J-PN",
+          "next_node_to_display": {
+            "F1-J-PN": "RIGHT",
+            "F1-J-PS": "LEFT",
+            "F1-S-B": "BACK",
+            "F1-J-LM": "FORWARD"
           }
         }
       ]
@@ -5570,6 +5614,36 @@
             "F1-D-R101": "RIGHT",
             "F1-J-LS": "LEFT"
           }
+        },
+        {
+          "face_id": "FROM-F1-D-R101",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-X-S",
+          "next_node_to_display": {
+            "F1-J-PM": "RIGHT",
+            "F1-X-S": "LEFT",
+            "F1-D-R101": "BACK",
+            "F1-J-LS": "FORWARD"
+          }
+        },
+        {
+          "face_id": "FROM-F1-J-LS",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-X-S",
+          "next_node_to_display": {
+            "F1-J-PM": "LEFT",
+            "F1-X-S": "RIGHT",
+            "F1-D-R101": "FORWARD",
+            "F1-J-LS": "BACK"
+          }
         }
       ]
     },
@@ -5603,6 +5677,20 @@
             "F1-X-NW": "BACK",
             "F1-J-LE": "FORWARD",
             "F1-J-PN": "LEFT"
+          }
+        },
+        {
+          "face_id": "FROM-F1-J-PN",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-X-NW",
+          "next_node_to_display": {
+            "F1-X-NW": "RIGHT",
+            "F1-J-LE": "LEFT",
+            "F1-J-PN": "BACK"
           }
         }
       ]
@@ -5640,6 +5728,21 @@
             "F1-D-NURSING": "FORWARD",
             "F1-D-CONF-N": "FORWARD"
           }
+        },
+        {
+          "face_id": "FROM-F1-D-R102",
+          "view_direction": {
+            "x": -0.504,
+            "y": 0.0,
+            "z": 0.864
+          },
+          "default_next_node_id": "F1-J-LE",
+          "next_node_to_display": {
+            "F1-J-LE": "LEFT",
+            "F1-D-R102": "BACK",
+            "F1-D-NURSING": "FORWARD",
+            "F1-D-CONF-N": "RIGHT"
+          }
         }
       ]
     },
@@ -5676,6 +5779,36 @@
             "F1-J-LC": "LEFT",
             "F1-J-LA": "FORWARD"
           }
+        },
+        {
+          "face_id": "FROM-F1-J-LC",
+          "view_direction": {
+            "x": -0.971,
+            "y": 0.0,
+            "z": -0.237
+          },
+          "default_next_node_id": "F1-J-LNW",
+          "next_node_to_display": {
+            "F1-J-LNW": "RIGHT",
+            "F1-J-LW": "FORWARD",
+            "F1-J-LC": "BACK",
+            "F1-J-LA": "LEFT"
+          }
+        },
+        {
+          "face_id": "FROM-F1-J-LW",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-J-LNW",
+          "next_node_to_display": {
+            "F1-J-LNW": "LEFT",
+            "F1-J-LW": "BACK",
+            "F1-J-LC": "FORWARD",
+            "F1-J-LA": "RIGHT"
+          }
         }
       ]
     },
@@ -5709,6 +5842,20 @@
             "F1-J-LE": "BACK",
             "F1-J-LM": "FORWARD",
             "F1-S-C": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F1-S-C",
+          "view_direction": {
+            "x": -0.555,
+            "y": 0.0,
+            "z": -0.832
+          },
+          "default_next_node_id": "F1-J-LE",
+          "next_node_to_display": {
+            "F1-J-LE": "FORWARD",
+            "F1-J-LM": "BACK",
+            "F1-S-C": "BACK"
           }
         }
       ]
@@ -5746,6 +5893,21 @@
             "F1-J-PM": "BACK",
             "F1-J-LS": "LEFT"
           }
+        },
+        {
+          "face_id": "FROM-F1-J-LS",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F1-J-PM",
+          "next_node_to_display": {
+            "F1-J-LC": "LEFT",
+            "F1-S-C": "LEFT",
+            "F1-J-PM": "RIGHT",
+            "F1-J-LS": "BACK"
+          }
         }
       ]
     },
@@ -5779,6 +5941,20 @@
             "F1-J-LM": "RIGHT",
             "F1-J-LSW": "FORWARD",
             "F1-J-PS": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F1-J-LM",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F1-J-PS",
+          "next_node_to_display": {
+            "F1-J-LM": "BACK",
+            "F1-J-LSW": "RIGHT",
+            "F1-J-PS": "LEFT"
           }
         }
       ]
@@ -5814,6 +5990,34 @@
             "F2-J-N3": "RIGHT",
             "F2-J-W1": "BACK"
           }
+        },
+        {
+          "face_id": "FROM-F2-J-N1",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-W1",
+          "next_node_to_display": {
+            "F2-J-N1": "BACK",
+            "F2-J-N3": "FORWARD",
+            "F2-J-W1": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-N3",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-W1",
+          "next_node_to_display": {
+            "F2-J-N1": "FORWARD",
+            "F2-J-N3": "BACK",
+            "F2-J-W1": "LEFT"
+          }
         }
       ]
     },
@@ -5847,6 +6051,20 @@
             "F2-J-N2": "BACK",
             "F2-D-R201": "LEFT",
             "F2-J-N4": "FORWARD"
+          }
+        },
+        {
+          "face_id": "FROM-F2-D-R201",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-N2",
+          "next_node_to_display": {
+            "F2-J-N2": "RIGHT",
+            "F2-D-R201": "BACK",
+            "F2-J-N4": "LEFT"
           }
         }
       ]
@@ -5882,6 +6100,20 @@
             "F2-J-N6": "BACK",
             "F2-J-E1": "LEFT"
           }
+        },
+        {
+          "face_id": "FROM-F2-J-E1",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-J-N6",
+          "next_node_to_display": {
+            "F2-J-N3": "LEFT",
+            "F2-J-N6": "RIGHT",
+            "F2-J-E1": "BACK"
+          }
         }
       ]
     },
@@ -5915,6 +6147,34 @@
             "F2-J-N4": "LEFT",
             "F2-J-N7": "RIGHT",
             "F2-J-E4": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-N4",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-E4",
+          "next_node_to_display": {
+            "F2-J-N4": "BACK",
+            "F2-J-N7": "FORWARD",
+            "F2-J-E4": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-N7",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-E4",
+          "next_node_to_display": {
+            "F2-J-N4": "FORWARD",
+            "F2-J-N7": "BACK",
+            "F2-J-E4": "LEFT"
           }
         }
       ]
@@ -5950,6 +6210,20 @@
             "F2-D-R202": "FORWARD",
             "F2-J-R1": "BACK"
           }
+        },
+        {
+          "face_id": "FROM-F2-J-N6",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-R1",
+          "next_node_to_display": {
+            "F2-J-N6": "BACK",
+            "F2-D-R202": "LEFT",
+            "F2-J-R1": "RIGHT"
+          }
         }
       ]
     },
@@ -5983,6 +6257,20 @@
             "F2-J-N7": "FORWARD",
             "F2-D-R203": "RIGHT",
             "F2-J-R2": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F2-D-R203",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-R2",
+          "next_node_to_display": {
+            "F2-J-N7": "RIGHT",
+            "F2-D-R203": "BACK",
+            "F2-J-R2": "LEFT"
           }
         }
       ]
@@ -6018,6 +6306,34 @@
             "F2-J-R2B": "RIGHT",
             "F2-S-B": "BACK"
           }
+        },
+        {
+          "face_id": "FROM-F2-J-R1",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-J-R1": "BACK",
+            "F2-J-R2B": "FORWARD",
+            "F2-S-B": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-R2B",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-J-R1": "FORWARD",
+            "F2-J-R2B": "BACK",
+            "F2-S-B": "LEFT"
+          }
         }
       ]
     },
@@ -6051,6 +6367,20 @@
             "F2-J-R2": "BACK",
             "F2-D-ADMIN": "LEFT",
             "F2-J-R3": "FORWARD"
+          }
+        },
+        {
+          "face_id": "FROM-F2-D-ADMIN",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-R2",
+          "next_node_to_display": {
+            "F2-J-R2": "RIGHT",
+            "F2-D-ADMIN": "BACK",
+            "F2-J-R3": "LEFT"
           }
         }
       ]
@@ -6086,6 +6416,34 @@
             "F2-D-DIRECTOR": "LEFT",
             "F2-D-INDUSTRY-E": "RIGHT"
           }
+        },
+        {
+          "face_id": "FROM-F2-D-DIRECTOR",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-R2B",
+          "next_node_to_display": {
+            "F2-J-R2B": "RIGHT",
+            "F2-D-DIRECTOR": "BACK",
+            "F2-D-INDUSTRY-E": "FORWARD"
+          }
+        },
+        {
+          "face_id": "FROM-F2-D-INDUSTRY-E",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-J-R2B",
+          "next_node_to_display": {
+            "F2-J-R2B": "LEFT",
+            "F2-D-DIRECTOR": "FORWARD",
+            "F2-D-INDUSTRY-E": "BACK"
+          }
         }
       ]
     },
@@ -6119,6 +6477,34 @@
             "F2-J-N2": "LEFT",
             "F2-S-A": "BACK",
             "F2-J-W2": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-N2",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-S-A",
+          "next_node_to_display": {
+            "F2-J-N2": "BACK",
+            "F2-S-A": "RIGHT",
+            "F2-J-W2": "FORWARD"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-W2",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-S-A",
+          "next_node_to_display": {
+            "F2-J-N2": "FORWARD",
+            "F2-S-A": "LEFT",
+            "F2-J-W2": "BACK"
           }
         }
       ]
@@ -6156,6 +6542,36 @@
             "F2-S-C": "LEFT",
             "F2-J-E1": "RIGHT"
           }
+        },
+        {
+          "face_id": "FROM-F2-J-E1",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-J-E3",
+          "next_node_to_display": {
+            "F2-J-E3": "LEFT",
+            "F2-S-D": "LEFT",
+            "F2-S-C": "FORWARD",
+            "F2-J-E1": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F2-S-C",
+          "view_direction": {
+            "x": 0.41,
+            "y": 0.0,
+            "z": -0.912
+          },
+          "default_next_node_id": "F2-J-E3",
+          "next_node_to_display": {
+            "F2-J-E3": "RIGHT",
+            "F2-S-D": "FORWARD",
+            "F2-S-C": "BACK",
+            "F2-J-E1": "FORWARD"
+          }
         }
       ]
     },
@@ -6189,6 +6605,34 @@
             "F2-S-B": "BACK",
             "F2-J-N6": "RIGHT",
             "F2-J-E3": "LEFT"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-E3",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-S-B": "RIGHT",
+            "F2-J-N6": "FORWARD",
+            "F2-J-E3": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-N6",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-S-B": "LEFT",
+            "F2-J-N6": "BACK",
+            "F2-J-E3": "FORWARD"
           }
         }
       ]
@@ -6229,6 +6673,21 @@
             "F1-S-B": "STAIRS_DOWN",
             "F2-J-E4": "BACK",
             "F2-J-R2": "FORWARD",
+            "F3-S-B": "STAIRS_UP"
+          }
+        },
+        {
+          "face_id": "FROM-F2-J-R2",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F1-S-B",
+          "next_node_to_display": {
+            "F1-S-B": "STAIRS_DOWN",
+            "F2-J-E4": "FORWARD",
+            "F2-J-R2": "BACK",
             "F3-S-B": "STAIRS_UP"
           }
         }
@@ -6299,6 +6758,34 @@
             "F3-J-N3": "RIGHT",
             "F3-J-W1": "BACK"
           }
+        },
+        {
+          "face_id": "FROM-F3-J-N1",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-W1",
+          "next_node_to_display": {
+            "F3-J-N1": "BACK",
+            "F3-J-N3": "FORWARD",
+            "F3-J-W1": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F3-J-N3",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-W1",
+          "next_node_to_display": {
+            "F3-J-N1": "FORWARD",
+            "F3-J-N3": "BACK",
+            "F3-J-W1": "LEFT"
+          }
         }
       ]
     },
@@ -6332,6 +6819,20 @@
             "F3-J-N2": "FORWARD",
             "F3-S-D": "LEFT",
             "F3-J-N4": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F3-S-D",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-J-N4",
+          "next_node_to_display": {
+            "F3-J-N2": "LEFT",
+            "F3-S-D": "BACK",
+            "F3-J-N4": "RIGHT"
           }
         }
       ]
@@ -6367,6 +6868,34 @@
             "F3-J-N6": "RIGHT",
             "F3-J-E1": "BACK"
           }
+        },
+        {
+          "face_id": "FROM-F3-J-N3",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-E1",
+          "next_node_to_display": {
+            "F3-J-N3": "BACK",
+            "F3-J-N6": "FORWARD",
+            "F3-J-E1": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F3-J-N6",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-E1",
+          "next_node_to_display": {
+            "F3-J-N3": "FORWARD",
+            "F3-J-N6": "BACK",
+            "F3-J-E1": "LEFT"
+          }
         }
       ]
     },
@@ -6400,6 +6929,20 @@
             "F3-J-N4": "FORWARD",
             "F3-D-ROOM-NE": "RIGHT",
             "F3-J-N5": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F3-D-ROOM-NE",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-N5",
+          "next_node_to_display": {
+            "F3-J-N4": "RIGHT",
+            "F3-D-ROOM-NE": "BACK",
+            "F3-J-N5": "LEFT"
           }
         }
       ]
@@ -6435,6 +6978,20 @@
             "F3-J-R0": "FORWARD",
             "F3-J-R1": "BACK"
           }
+        },
+        {
+          "face_id": "FROM-F3-J-N6",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-R1",
+          "next_node_to_display": {
+            "F3-J-N6": "BACK",
+            "F3-J-R0": "LEFT",
+            "F3-J-R1": "RIGHT"
+          }
         }
       ]
     },
@@ -6468,6 +7025,20 @@
             "F3-J-N5": "FORWARD",
             "F3-D-R301": "RIGHT",
             "F3-J-R2": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F3-D-R301",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-N5": "RIGHT",
+            "F3-D-R301": "BACK",
+            "F3-J-R2": "LEFT"
           }
         }
       ]
@@ -6507,6 +7078,38 @@
             "F3-J-R3": "RIGHT",
             "F3-J-R4": "RIGHT"
           }
+        },
+        {
+          "face_id": "FROM-F3-J-R1",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-R1": "BACK",
+            "F3-D-R302": "LEFT",
+            "F3-S-B": "RIGHT",
+            "F3-J-R3": "FORWARD",
+            "F3-J-R4": "FORWARD"
+          }
+        },
+        {
+          "face_id": "FROM-F3-J-R3",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-R1": "FORWARD",
+            "F3-D-R302": "RIGHT",
+            "F3-S-B": "LEFT",
+            "F3-J-R3": "BACK",
+            "F3-J-R4": "BACK"
+          }
         }
       ]
     },
@@ -6540,6 +7143,20 @@
             "F3-J-R2": "BACK",
             "F3-D-R303": "LEFT",
             "F3-J-R4": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F3-D-R303",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-J-R2": "RIGHT",
+            "F3-D-R303": "BACK",
+            "F3-J-R4": "RIGHT"
           }
         }
       ]
@@ -6575,6 +7192,34 @@
             "F3-S-B": "BACK",
             "F3-J-E2": "LEFT"
           }
+        },
+        {
+          "face_id": "FROM-F3-J-E2",
+          "view_direction": {
+            "x": -0.203,
+            "y": 0.0,
+            "z": -0.979
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-N4": "FORWARD",
+            "F3-S-B": "RIGHT",
+            "F3-J-E2": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F3-J-N4",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-S-B",
+          "next_node_to_display": {
+            "F3-J-N4": "BACK",
+            "F3-S-B": "LEFT",
+            "F3-J-E2": "FORWARD"
+          }
         }
       ]
     },
@@ -6609,6 +7254,34 @@
             "F3-S-A": "BACK",
             "F3-J-W2": "RIGHT"
           }
+        },
+        {
+          "face_id": "FROM-F3-J-N2",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-S-A",
+          "next_node_to_display": {
+            "F3-J-N2": "BACK",
+            "F3-S-A": "RIGHT",
+            "F3-J-W2": "FORWARD"
+          }
+        },
+        {
+          "face_id": "FROM-F3-J-W2",
+          "view_direction": {
+            "x": 0.23,
+            "y": 0.0,
+            "z": -0.973
+          },
+          "default_next_node_id": "F3-S-A",
+          "next_node_to_display": {
+            "F3-J-N2": "FORWARD",
+            "F3-S-A": "LEFT",
+            "F3-J-W2": "BACK"
+          }
         }
       ]
     },
@@ -6642,6 +7315,20 @@
             "F3-J-W1": "BACK",
             "F3-D-R305": "RIGHT",
             "F3-J-SW": "RIGHT"
+          }
+        },
+        {
+          "face_id": "FROM-F3-J-SW",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-W1",
+          "next_node_to_display": {
+            "F3-J-W1": "LEFT",
+            "F3-D-R305": "BACK",
+            "F3-J-SW": "BACK"
           }
         }
       ]
@@ -6678,6 +7365,21 @@
             "F3-D-R307": "RIGHT",
             "F3-D-R306": "FORWARD",
             "F3-D-COMMUNITY": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F3-D-R307",
+          "view_direction": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          },
+          "default_next_node_id": "F3-J-W2",
+          "next_node_to_display": {
+            "F3-J-W2": "LEFT",
+            "F3-D-R307": "BACK",
+            "F3-D-R306": "RIGHT",
+            "F3-D-COMMUNITY": "LEFT"
           }
         }
       ]
@@ -6718,6 +7420,20 @@
             "F3-J-E1": "BACK",
             "F3-J-R2": "FORWARD"
           }
+        },
+        {
+          "face_id": "FROM-F3-J-R2",
+          "view_direction": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F2-S-B",
+          "next_node_to_display": {
+            "F2-S-B": "STAIRS_DOWN",
+            "F3-J-E1": "FORWARD",
+            "F3-J-R2": "BACK"
+          }
         }
       ]
     },
@@ -6751,6 +7467,20 @@
             "F3-D-R304-E": "RIGHT",
             "F3-J-R3": "FORWARD",
             "F3-J-R2": "BACK"
+          }
+        },
+        {
+          "face_id": "FROM-F3-D-R304-E",
+          "view_direction": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "default_next_node_id": "F3-J-R2",
+          "next_node_to_display": {
+            "F3-D-R304-E": "BACK",
+            "F3-J-R3": "RIGHT",
+            "F3-J-R2": "LEFT"
           }
         }
       ]

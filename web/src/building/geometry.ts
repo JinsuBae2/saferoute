@@ -27,11 +27,21 @@ export type GeometryFloor = {
 
 export type StairKind = "ENCLOSED" | "OPEN";
 
+/** 한 층 구간(lower→upper)의 디딤판 중심선. 아래에서 위 순서다. 두 층의 벽 사이 빈 곳을 따라 적는다. */
+export type GeometryFlight = {
+  readonly lower: string;
+  readonly upper: string;
+  readonly width: number;
+  readonly centerline: readonly PlanPoint[];
+};
+
 export type GeometryStair = {
   readonly stair_id: string;
   readonly kind: StairKind;
   readonly floors: readonly string[];
   readonly footprint: readonly PlanPoint[];
+  /** 없는 구간은 종류와 가로세로 비로 추정한다(stairCenterline). */
+  readonly flights?: readonly GeometryFlight[];
   readonly note?: string;
 };
 
@@ -144,6 +154,15 @@ export function parseGeometry(value: unknown): BuildingGeometry {
       kind: stair.kind,
       floors: stair.floors as readonly string[],
       footprint: requirePoints(stair.footprint, `stairs[${index}].footprint`),
+      ...(Array.isArray(stair.flights) ? { flights: stair.flights.map((flight, flightIndex): GeometryFlight => {
+        const where = `stairs[${index}].flights[${flightIndex}]`;
+        if (!isRecord(flight) || typeof flight.lower !== "string" || typeof flight.upper !== "string" || typeof flight.width !== "number" || !(flight.width > 0)) {
+          throw new GeometryFormatError(`${where}에 lower·upper·width가 없습니다`);
+        }
+        const centerline = requirePoints(flight.centerline, `${where}.centerline`);
+        if (centerline.length < 2) throw new GeometryFormatError(`${where}.centerline은 두 점 이상이어야 합니다`);
+        return { lower: flight.lower, upper: flight.upper, width: flight.width, centerline };
+      }) } : {}),
       ...(typeof stair.note === "string" ? { note: stair.note } : {}),
     };
   });
@@ -262,6 +281,38 @@ export function visibleWalls(
   stairs: readonly GeometryStair[],
 ): readonly WallRect[] {
   return floor.walls.filter((wall) => !isInsideOpenStair(wall, floor.floor_id, stairs));
+}
+
+/**
+ * 불투명하게 세우는 안쪽 벽. 건물 둘레의 얇은 벽은 유리 외벽이 맡으므로 뺀다.
+ * 3D가 그리는 벽과, 벽에 붙이는 것(위치 QR)이 같은 목록을 쓴다.
+ */
+export function interiorWalls(floor: GeometryFloor, stairs: readonly GeometryStair[]): readonly WallRect[] {
+  const xs = floor.slab.map((point) => point.x);
+  const zs = floor.slab.map((point) => point.z);
+  const [minX, maxX, minZ, maxZ] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+  const near = (value: number, edge: number) => Math.abs(value - edge) < 0.4;
+  return visibleWalls(floor, stairs).filter((wall) => {
+    const box = wallBox(wall);
+    return !(box.sizeZ < 0.5 && (near(box.centerZ, minZ) || near(box.centerZ, maxZ)))
+      && !(box.sizeX < 0.5 && (near(box.centerX, minX) || near(box.centerX, maxX)));
+  });
+}
+
+/** 두 점을 잇는 선분이 벽 직사각형 안을 지나는지. 시선이 벽에 가리는지 볼 때 쓴다. */
+export function segmentHitsWall([x0, z0, x1, z1]: WallRect, ax: number, az: number, bx: number, bz: number): boolean {
+  let low = 0;
+  let high = 1;
+  for (const [start, end, lo, hi] of [[ax, bx, x0, x1], [az, bz, z0, z1]]) {
+    const delta = end - start;
+    if (Math.abs(delta) < 1e-9) {
+      if (!(lo < start && start < hi)) return false;
+    } else {
+      low = Math.max(low, Math.min((lo - start) / delta, (hi - start) / delta));
+      high = Math.min(high, Math.max((lo - start) / delta, (hi - start) / delta));
+    }
+  }
+  return low < high;
 }
 
 export type StepBox = Box2 & { readonly centerY: number };

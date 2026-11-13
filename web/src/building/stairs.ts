@@ -26,7 +26,9 @@ function flightEndpoints(building: Building, geometry: BuildingGeometry, stair: 
 export function flightSteps(building: Building, geometry: BuildingGeometry, stair: GeometryStair, lowerId: string, upperId: string, lift: FloorLift): readonly StairStepAlong[] {
   const elevation = (id: string) => geometry.floors.find((floor) => floor.floor_id === id)?.elevation ?? 0;
   const entry = flightEndpoints(building, geometry, stair, lowerId, upperId)?.lower.position ?? null;
-  const { points, width } = stairCenterline(stair, entry);
+  // 자료에 이 구간의 중심선이 있으면 그것을 쓴다. 범위만으로 추정한 길은 계단실 가운데 벽과 겹칠 수 있다.
+  const flight = stair.flights?.find((item) => item.lower === lowerId && item.upper === upperId);
+  const { points, width } = flight === undefined ? stairCenterline(stair, entry) : { points: flight.centerline, width: flight.width };
   return stairRun(points, width, displayY(elevation(lowerId), lowerId, lift), displayY(elevation(upperId), upperId, lift));
 }
 
@@ -82,7 +84,7 @@ export function stairTravel(building: Building, geometry: BuildingGeometry, lift
 }
 
 /** 실제 거리로 정한 진행률을 표시 경로의 같은 구간에 옮긴다. */
-export function alongStair(path: StairTravel, ratio: number): { point: THREE.Vector3; heading: THREE.Vector3 } {
+export function alongStair(path: StairTravel, ratio: number): { point: THREE.Vector3; heading: THREE.Vector3; index: number } {
   let left = path.length * Math.min(Math.max(ratio, 0), 1);
   for (let index = 0; index < path.lengths.length; index += 1) {
     if (left <= path.lengths[index] || index === path.lengths.length - 1) {
@@ -90,9 +92,10 @@ export function alongStair(path: StairTravel, ratio: number): { point: THREE.Vec
       return {
         point: path.points[index].clone().lerp(path.points[index + 1], share),
         heading: path.points[index + 1].clone().sub(path.points[index]),
+        index,
       };
     }
     left -= path.lengths[index];
   }
-  return { point: path.points[0].clone(), heading: new THREE.Vector3() };
+  return { point: path.points[0].clone(), heading: new THREE.Vector3(), index: 0 };
 }
