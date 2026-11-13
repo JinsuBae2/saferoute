@@ -1,7 +1,7 @@
 import type { Building, BuildingDisplay, HazardCell, Position } from "@contracts";
 import { localSmoke } from "./firePresentation";
 
-// WFI v6 가상 카메라의 조준점. 위치는 표시 자료, 시야 방향은 복도 안의 시연 지점이다.
+// WFI v7 가상 카메라의 조준점. 위치는 표시 자료, 시야 방향은 복도 안의 시연 지점이다.
 const targets: Readonly<Record<string, string>> = {
   "CAM-F2-CORR-W": "F2-J-W2",
   "CAM-F2-CORR-E": "F2-J-E2",
@@ -17,7 +17,7 @@ export function cctvSmoke(pose: CctvPose, smokeByZone: ReadonlyMap<string, numbe
 }
 
 export function cctvPose(building: Building | null, display: BuildingDisplay | null, id: string | null): CctvPose | null {
-  if (!id || building?.building_id !== "WFI" || building.building_version !== 6 || !display) return null;
+  if (!id || building?.building_id !== "WFI" || building.building_version !== 7 || !display) return null;
   const lens = display.sources[id]?.installation;
   const source = building.sources.find(s => s.source_id === id && s.source_type === "VIDEO_AI");
   const aim = building.nodes.find(n => n.node_id === targets[id]);

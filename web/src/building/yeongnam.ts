@@ -6,11 +6,11 @@
  * 시점은 서버가 준 발화 후 경과 시간으로 정해, 새로고침하거나 다른 화면에서 봐도 같은 장면이다.
  *
  * 발화 위치·출발점·시점은 서버 확산 모형과 경로 계산으로 후보를 모의해 고른 값이다(docs/implementation/yeongnam-demo.md).
- * 이 발화에서는 불꽃보다 연기가 먼저 통로를 막는다(시험용 확산 모형 기준, tools/yeongnam_check.py로 다시 확인).
- * - 36초쯤: 302호 앞 복도가 연기로 막힌다(불꽃은 약 40초에 닿는다). 300호 앞 갈림길 유도등이 직진에서 우회전으로 바뀐다.
- *   영남이는 복도에 나와 서서 이 유도등을 마주 보고 있다.
- * - 45초쯤: 계단 B가 연기로 막힌다(불꽃은 약 52초). 북쪽 복도를 걷던 영남이 정면의 유도등이 계단 A 쪽으로 바뀐다.
- * shortcut: WFI v6 한 건물의 좌표다, 건물 자료나 확산 속도가 바뀌면 후보 모의부터 다시 한다.
+ * 불은 동쪽 복도 남쪽 끝에서 나 복도를 따라 번진다. 300호 문밖에서 남쪽을 보면 복도 안의 불꽃과 연기가 보인다.
+ * - 36초쯤: 302호 앞 복도 지점이 연기로 막힌다(불꽃은 약 40초에 닿는다, tools/yeongnam_check.py로 다시 확인).
+ *   영남이 앞 갈림길 유도등이 직진에서 우회전으로 바뀐다. 영남이는 그 유도등 2.6 m 앞에 서서 마주 보고 있다.
+ * - 화살표가 바뀌는 것을 확인한 뒤 걸어가 갈림길에서 오른쪽(북쪽 복도)으로 돈다. 그 뒤에 휴대폰을 꺼낸다.
+ * shortcut: WFI v7 한 건물의 좌표다, 건물 자료나 확산 속도가 바뀌면 후보 모의부터 다시 한다.
  */
 import type { Building, Position, StateSnapshot } from "@contracts";
 import type { WallRect } from "./geometry";
@@ -19,34 +19,42 @@ import type { SignInstall } from "./signMount";
 
 export const YEONGNAM = {
   buildingId: "WFI",
-  buildingVersion: 6,
+  buildingVersion: 7,
   /** 영남이로 지정한 기존 인원의 시작 위치(3층 300호 문). 새 인원을 더하지 않는다. */
   startNodeId: "F3-D-R300",
-  zoneId: "F3-R302",
-  ignition: { x: 44, y: 8, z: 19.5 } as Position,
+  zoneId: "F3-CORR-E2",
+  ignition: { x: 36.6, y: 8, z: 25 } as Position,
   /** 방 안에서 자는 자리. 300호를 휴게공간으로 꾸민 것은 시연 설정이고 실제 용도가 아니다. */
   rest: { x: 40.4, z: 1.7 },
   restLabel: "휴게공간(시연 설정 · 실제 300호)",
   /**
-   * 깨어나 복도로 나와 서는 자리(300호 문 앞 복도 지점)와 바라보는 쪽(302호가 있는 남쪽).
-   * 방 안에서는 벽에 가려 복도 끝이 보이지 않는다. 문에서 한 걸음(1.1 m)이며 대피 경로의 첫 구간이다.
+   * 깨어나 복도로 나와 서는 자리와 바라보는 쪽(불이 난 남쪽).
+   * 문 앞 복도 지점(watchNodeId)에서 다음 갈림길(aheadNodeId) 쪽으로 watchAhead(m)만큼 더 간 곳이다. 모두 대피 경로의 첫 두 구간 위다.
+   * 갈림길 유도등까지 2.6 m라 화살표를 읽을 수 있고, 오른쪽 통로 입구가 바로 앞에 보인다.
    */
   watchNodeId: "F3-J-R0",
+  aheadNodeId: "F3-J-N5",
+  watchAhead: 2,
   watchToward: { x: 37.1, z: 15.3 },
   /** 발화 후 경과 시간(초)으로 나눈 단계의 시작. */
   noticeAt: 26,
-  riseAt: 28.5,
-  panicAt: 31.5,
+  riseAt: 28,
+  panicAt: 32,
   listenAt: 35.5,
-  departAt: 38,
-  /** 바뀐 유도등을 확인하느라 멈춰 서는 시간(초). */
-  lookSeconds: 1.5,
-  /**
-   * 걷다가 유도등 변경을 보지 못한 경우에 출발 뒤 휴대폰을 꺼내는 시점(초). 변경을 봤으면 확인을 마친 직후에 꺼낸다.
-   * 기본 실행의 이동 중 변경(출발 약 7초 뒤)보다 늦어야 그 장면을 휴대폰이 가리지 않는다.
-   */
-  phoneAfter: 14,
+  departAt: 37,
+  /** 바뀐 유도등을 확인하느라 멈춰 서는 시간(초). 바뀐 화살표를 같은 구도에서 이만큼 보여 준 뒤 출발한다. */
+  lookSeconds: 2,
 } as const;
+
+/**
+ * 300호 문에서 서는 자리 쪽으로 걸은 거리(m). 첫 두 구간(문 → 문 앞 복도 → 다음 갈림길)을 벗어났으면 Infinity다.
+ * 화면에서는 이 거리가 서는 자리(첫 구간 + watchAhead)에 닿을 때까지 영남이를 서는 자리에 세워 둔다.
+ */
+export function walkedToStand(person: { readonly from: string; readonly to: string | null; readonly progress: number; readonly returning?: boolean }, first: number, second: number): number {
+  if (person.from === YEONGNAM.startNodeId && (person.to === null || person.to === YEONGNAM.watchNodeId)) return person.progress * first;
+  if (person.from === YEONGNAM.watchNodeId && person.to === YEONGNAM.aheadNodeId && person.returning !== true) return first + person.progress * second;
+  return Infinity;
+}
 
 /** 자기 → 알아채기 → 복도로 나오기 → 불·연기를 보고 당황 → 이어폰 빼고 방송 듣기 → 대피. */
 export type YeongnamPhase = "SLEEP" | "NOTICE" | "RISE" | "PANIC" | "LISTEN" | "EVACUATE";
@@ -149,13 +157,24 @@ export function witnessedSignChanges(building: Pick<Building, "signs" | "nodes">
   return seen;
 }
 
+const ARROW_LABEL: Record<string, string> = { FORWARD: "직진", RIGHT: "우측", LEFT: "좌측", BACK: "뒤쪽" };
+
+/**
+ * 눈앞의 유도등이 바뀐 순간에 띄우는 자막. 바뀐 화살표의 방향과, 그때 새로 막힌 지점이 불꽃 없이 연기로 막혔는지를 서버 자료에서 읽어 쓴다.
+ * 자막은 보조다. 화살표가 바뀌는 것은 실제 유도등에서 보인다.
+ */
+export function changeCaption(display: string | null | undefined, newlyBlocked: readonly { readonly fire: number; readonly smoke: number }[]): string {
+  const cause = newlyBlocked.length === 0 ? "경로 차단" : newlyBlocked.some((cell) => cell.fire > 0) ? "화염 확산" : "연기 유입";
+  const arrow = display == null ? undefined : ARROW_LABEL[display];
+  return arrow === undefined ? `${cause} · 안내 변경` : `${cause} · ${arrow} 경로로 안내 변경`;
+}
+
 /** 머리 위 표시. 단계마다 다른 그림이라 멀리서도 지금 무엇을 하는지 구분된다. */
 export function yeongnamEmote(phase: YeongnamPhase, looking: boolean, phone: boolean): string | null {
   if (phase === "SLEEP") return "💤 Zzz";
   if (phase === "NOTICE") return "❗";
   if (phase === "PANIC") return "😨";
-  // 출발 전에 본 것은 바뀐 안내의 확인이고, 걷다가 본 것이 방향 변경의 목격이다.
-  if (looking) return phase === "EVACUATE" ? "❗ 유도등 변경" : "👀 안내 확인";
+  if (looking) return "❗ 유도등 변경";
   if (phase === "RISE") return "❗";
   if (phase === "LISTEN") return "📢 방송 확인";
   return phone ? "📱" : null;
@@ -165,7 +184,7 @@ export const YEONGNAM_PHASE_LABEL: Record<YeongnamPhase, string> = {
   SLEEP: "이어폰을 끼고 자는 중",
   NOTICE: "뒤늦게 알아챔",
   RISE: "일어나 복도로 나오는 중",
-  PANIC: "복도 끝의 연기를 보고 당황",
+  PANIC: "복도의 불과 연기를 보고 당황",
   LISTEN: "이어폰을 빼고 안내방송을 듣는 중",
   EVACUATE: "유도등을 따라 대피 중",
 };

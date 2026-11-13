@@ -4,7 +4,7 @@ import rawBuilding from "@space/wfi-v1.json";
 import { spawnPeople, stepPeople } from "./people";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 import { parseGeometry } from "./geometry";
-import { BLOCKED_HELP, nearestPerson, nearbyQr, phoneGuidance, qrAssetsMatch, reportPlace, routeLoss } from "./phoneGuide";
+import { BLOCKED_HELP, nearestPerson, nearbyQr, phoneGuidance, qrAssetsMatch, reportPlace, routeLoss, shouldAutoScan } from "./phoneGuide";
 import { qrMounts } from "./signMount";
 import type { FollowPose } from "./phoneGuide";
 
@@ -118,6 +118,26 @@ describe("QR 모의 인식", () => {
     expect(nearbyQr(building, { ...pose(bare.node_id), yaw: 0 }, mounts, [])).toBeNull();
     expect(qrAssetsMatch({ building_id: "WFI", building_version: 5 })).toBe(false);
     expect(nearbyQr({ ...building, building_version: 5 }, from(1.2), mounts, walls)).toBeNull();
+  });
+});
+
+describe("QR 자동 인식은 처음 한 번", () => {
+  const ready = { acting: true, open: true, scanning: false, qrSignId: "SIGN-F3-J-N5", confirmed: null };
+  it("시연 인물이 휴대폰을 꺼냈고 보이는 QR이 있고 아직 확인 전일 때만 스스로 비춘다", () => {
+    expect(shouldAutoScan(ready)).toBe(true);
+    expect(shouldAutoScan({ ...ready, acting: false })).toBe(false);
+    expect(shouldAutoScan({ ...ready, open: false })).toBe(false);
+    expect(shouldAutoScan({ ...ready, scanning: true })).toBe(false);
+    expect(shouldAutoScan({ ...ready, qrSignId: null })).toBe(false);
+  });
+  it("한 번 확인한 뒤에는 다른 QR이 보여도 다시 비추지 않는다", () => {
+    // 다른 QR 옆을 지남, 층이 바뀜, 휴대폰을 내렸다 다시 꺼냄: 모두 confirmed가 남아 있어 자동 인식이 없다.
+    for (const qrSignId of ["SIGN-F3-J-N5", "SIGN-F3-J-N4", "SIGN-F2-S-A", "SIGN-F1-J-LE"]) expect(shouldAutoScan({ ...ready, qrSignId, confirmed: "SIGN-F3-J-N5" })).toBe(false);
+  });
+  it("첫 인식이 취소되면(확인 전) 다음에 보이는 QR에서 다시 시도한다", () => {
+    // 비추던 QR이 시야에서 벗어나면 scanning만 꺼지고 confirmed는 null로 남는다.
+    expect(shouldAutoScan({ ...ready, qrSignId: null })).toBe(false);
+    expect(shouldAutoScan({ ...ready, qrSignId: "SIGN-F3-J-N4" })).toBe(true);
   });
 });
 

@@ -35,32 +35,58 @@ describe("문틀 자리", () => {
     expect(r302.opening).toMatchObject({ along: "Z", found: true });
   });
 
-  it("문을 지나는 사람(몸통 반지름 0.17 m)이 문틀 기둥과 열린 문짝을 뚫지 않는다", () => {
-    // 사람 모형의 몸통(assets.ts createFigure, 반지름 0.17 m)이 걷는 선을 따라갈 때 기둥·문짝까지의 거리를 2 cm 간격으로 잰다.
-    // 문 지점이 끝인 구간에서는 사람을 옆으로 비켜 세우지 않는다(BuildingScene).
-    const hits: string[] = [];
-    // 걷는 선 자체가 벽 모서리를 스치는 구간. 문틀이 아니라 건물 자료(지점 자리)의 문제라 문틀로는 고칠 수 없다. 숨기지 않고 따로 적는다.
-    const skims: string[] = [];
-    for (const { node, parts, walls } of doors) {
-      for (const edge of building.edges) {
-        if (edge.from_node_id !== node.node_id) continue;
-        const other = building.nodes.find((item) => item.node_id === edge.to_node_id)!;
-        if (other.floor_id !== node.floor_id) continue;
-        const length = Math.hypot(other.position.x - node.position.x, other.position.z - node.position.z);
-        const gap = (rects: readonly (readonly [number, number, number, number])[]) => {
-          let least = Infinity;
-          for (let gone = 0; gone <= length; gone += 0.02) {
-            const [px, pz] = [node.position.x + (other.position.x - node.position.x) * gone / length, node.position.z + (other.position.z - node.position.z) * gone / length];
-            least = Math.min(least, ...rects.map(([x0, z0, x1, z1]) => Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(z0 - pz, 0, pz - z1))));
-          }
-          return least;
-        };
-        if (gap(walls) < 0.05) skims.push(`${node.node_id} > ${other.node_id}`);
-        else if (gap([...parts.jambs, parts.leaf]) < 0.17) hits.push(`${node.node_id} > ${other.node_id} ${gap([...parts.jambs, parts.leaf]).toFixed(2)}`);
-      }
+  // 사람 모형의 몸통(assets.ts createFigure, 반지름 0.17 m)이 걷는 선을 따라갈 때 도형까지의 가장 짧은 거리. 2 cm 간격으로 잰다.
+  const BODY = 0.17;
+  const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
+  const clearance = (from: { x: number; z: number }, to: { x: number; z: number }, rects: readonly (readonly [number, number, number, number])[]) => {
+    const length = Math.hypot(to.x - from.x, to.z - from.z);
+    let least = Infinity;
+    for (let gone = 0; gone <= length; gone += 0.02) {
+      const [px, pz] = [from.x + (to.x - from.x) * gone / length, from.z + (to.z - from.z) * gone / length];
+      for (const [x0, z0, x1, z1] of rects) least = Math.min(least, Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(z0 - pz, 0, pz - z1)));
     }
+    return least;
+  };
+  const flat = building.edges.flatMap((edge) => {
+    const [from, to] = [nodes.get(edge.from_node_id)!, nodes.get(edge.to_node_id)!];
+    return from.floor_id === to.floor_id && edge.kind !== "STAIR" ? [{ edge, from, to, atDoor: from.kind === "DOOR" || to.kind === "DOOR" }] : [];
+  });
+  const wallsOf = (floorId: string) => geometry.floors.find((floor) => floor.floor_id === floorId)!.walls;
+  const partsOf = (floorId: string) => doors.filter((door) => door.node.floor_id === floorId).flatMap((door) => [...door.parts.jambs, door.parts.leaf]);
+
+  // 문 지점이 끝인 구간에서는 사람을 옆으로 비켜 세우지 않으므로(BuildingScene) 걷는 선이 곧 몸통이 지나는 자리다.
+  // 벽 검사와 문틀·문짝 검사는 서로 건너뛰지 않고 따로 한다. 문틀·문짝은 자기 문뿐 아니라 그 층의 모든 문과 잰다.
+  it("문을 지나는 모든 구간에서 몸통(반지름 0.17 m)이 벽에 닿지 않는다", () => {
+    const hits = flat.filter((leg) => leg.atDoor).flatMap(({ edge, from, to }) => {
+      const gap = clearance(from.position, to.position, wallsOf(from.floor_id));
+      return gap < BODY ? [`${edge.edge_id} ${gap.toFixed(3)}`] : [];
+    });
     expect(hits).toEqual([]);
-    expect(skims).toEqual(["F3-D-R307-N > F3-J-N1"]);
+  });
+
+  it("문을 지나는 모든 구간에서 몸통이 그 층 어느 문의 문틀 기둥·열린 문짝에도 닿지 않는다", () => {
+    const hits = flat.filter((leg) => leg.atDoor).flatMap(({ edge, from, to }) => {
+      const gap = clearance(from.position, to.position, partsOf(from.floor_id));
+      return gap < BODY ? [`${edge.edge_id} ${gap.toFixed(3)}`] : [];
+    });
+    expect(hits).toEqual([]);
+  });
+
+  it("307호 북쪽 문에서 복도까지 양방향 모두 벽·문틀·문짝과 0.3 m 넘게 떨어져 지난다", () => {
+    const path = ["F3-D-R307-N", "F3-D-R308", "F3-J-N1"].map((id) => nodes.get(id)!.position);
+    for (const [from, to] of [[path[0], path[1]], [path[1], path[2]], [path[2], path[1]], [path[1], path[0]]]) {
+      expect(clearance(from, to, wallsOf("F3"))).toBeGreaterThan(0.3);
+      expect(clearance(from, to, partsOf("F3"))).toBeGreaterThan(0.3);
+    }
+  });
+
+  it("복도 구간의 중심선이 벽·문틀에서 몸통 반지름보다 가까운 곳은 적어 둔 둘뿐이다", () => {
+    // 복도 구간에서는 사람을 옆으로 비켜 세우므로 중심선이 실제 자리가 아니다. 줄 세우기와 함께 따로 고칠 일이라 늘지 않게만 지킨다.
+    const near = flat.filter((leg) => !leg.atDoor).flatMap(({ edge, from, to }) => {
+      const [wall, part] = [clearance(from.position, to.position, wallsOf(from.floor_id)), clearance(from.position, to.position, partsOf(from.floor_id))];
+      return Math.min(wall, part) < BODY ? [`${edge.edge_id} ${wall < BODY ? "벽" : "문틀"} ${Math.min(wall, part).toFixed(2)}`] : [];
+    });
+    expect(near).toEqual(["E-F3-J-W2-F3-J-SW 문틀 0.14", "E-F3-J-SW-F3-J-W2 문틀 0.14", "E-F3-J-R4-F3-J-R2 벽 0.13", "E-F3-J-R2-F3-J-R4 벽 0.13"]);
   });
 
   it("문틀 기둥은 벽 줄 위에 있고 문짝은 그와 직각으로 방 안쪽에 열려 있다", () => {

@@ -212,7 +212,7 @@ export function addEarbuds(figure: Figure): THREE.Group {
  * 시연 인물의 단계별 자세. 서 있는 기본 자세 위에 덮어쓴다.
  * 돌려주는 값은 몸 전체를 앞으로 숙이는 각도(tilt)와 앉느라 낮아지는 높이(drop)다.
  */
-export function poseActing(figure: Figure, act: "SLEEP" | "NOTICE" | "PANIC" | "LISTEN" | "LOOK" | null, time: number): { tilt: number; drop: number } {
+export function poseActing(figure: Figure, act: "SLEEP" | "NOTICE" | "PANIC" | "LISTEN" | "LOOK" | null, time: number, ownView = false): { tilt: number; drop: number } {
   const [armL, armR, legL, legR] = figure.limbs;
   armL.rotation.z = armR.rotation.z = 0;
   if (act === null) return { tilt: 0, drop: 0 };
@@ -224,11 +224,13 @@ export function poseActing(figure: Figure, act: "SLEEP" | "NOTICE" | "PANIC" | "
   }
   legL.rotation.x = legR.rotation.x = 0;
   if (act === "PANIC") {
-    // 두 손을 번쩍 들고 떤다.
-    armL.rotation.x = -2.8 + Math.sin(time * 15) * 0.14;
-    armR.rotation.x = -2.8 + Math.cos(time * 15) * 0.14;
-    armL.rotation.z = -0.35;
-    armR.rotation.z = 0.35;
+    // 두 손을 번쩍 들고 떤다. 본인 시점에서는 머리 위로 든 손이 보이지 않으므로 눈앞으로 내민다.
+    const lift = ownView ? -2.1 : -2.8;
+    armL.rotation.x = lift + Math.sin(time * 15) * 0.14;
+    armR.rotation.x = lift + Math.cos(time * 15) * 0.14;
+    // 본인 시점에서는 두 손이 화면 양옆 안쪽에 들어오게 모은다.
+    armL.rotation.z = ownView ? 0.12 : -0.35;
+    armR.rotation.z = ownView ? -0.12 : 0.35;
     return { tilt: -0.08, drop: 0 };
   }
   // 한 손을 귀에 대거나(방송 듣기), 앞의 유도등을 가리킨다(변경 확인).
@@ -287,7 +289,8 @@ export function createFire(): Fire {
   geometry.setAttribute("color", new THREE.BufferAttribute(color, 3));
   const flames = new THREE.Points(
     geometry,
-    new THREE.PointsMaterial({ size: 0.5, map: softDotTexture(), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }),
+    // 더하기 혼합은 밝은 벽·바닥 앞에서 흰 빛으로 날아가 불꽃으로 읽히지 않는다. 색을 그대로 덮어 어느 배경에서도 주황 불꽃으로 보이게 한다.
+    new THREE.PointsMaterial({ size: 0.62, map: softDotTexture(), vertexColors: true, transparent: true, opacity: 0.85, depthWrite: false, fog: false }),
   );
   flames.frustumCulled = false;
   group.add(flames);
@@ -306,12 +309,11 @@ export function createFire(): Fire {
       position[i * 3] = seed[i * 2] * spread * 2 + Math.sin(time * 5 + i) * 0.05;
       position[i * 3 + 1] = 0.1 + life[i] * 2.1;
       position[i * 3 + 2] = seed[i * 2 + 1] * spread * 2;
-      // 겹쳐 더해지면 하얗게 날아가므로 입자 하나의 밝기를 낮춘다.
+      // 밑동은 노랑, 위로 갈수록 주황에서 검붉은 색으로 식는다.
       const heat = 1 - life[i];
-      // 불꽃이 너무 밝으면 그 위와 둘레의 연기가 하얗게 묻힌다.
-      color[i * 3] = 0.42;
-      color[i * 3 + 1] = 0.08 + heat * 0.17;
-      color[i * 3 + 2] = heat * heat * 0.04;
+      color[i * 3] = 0.55 + heat * 0.45;
+      color[i * 3 + 1] = 0.08 + heat * heat * 0.72;
+      color[i * 3 + 2] = heat * heat * heat * 0.18;
     }
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
@@ -333,38 +335,49 @@ export type SmokePuff = {
 
 let smokeDot: THREE.Texture | null | undefined;
 /**
- * 연기 입자의 그림. 불꽃용 점(softDotTexture)은 가운데만 진해 멀리서는 흐린 얼룩으로만 보인다.
- * 연기는 가운데 절반이 고르게 차 있고 가장자리만 풀어지게 해, 복도 끝에 낀 연기가 덩어리로 읽히게 한다.
+ * 연기 입자의 그림. 원 하나로 그리면 겹친 자리마다 둥근 원판의 테두리가 드러난다.
+ * 크기가 다른 덩이 여럿을 겹쳐 가운데는 짙고 가장자리는 울퉁불퉁하게 풀어지는 한 뭉치로 그린다. 색은 입자마다 농도에 맞춰 입힌다.
  */
 function smokeTexture(): THREE.Texture | null {
   if (smokeDot !== undefined) return smokeDot;
   const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 64;
+  canvas.width = canvas.height = 128;
   const ctx = canvas.getContext("2d");
   if (ctx === null) {
     smokeDot = null;
     return null;
   }
-  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gradient.addColorStop(0, "rgba(255,255,255,1)");
-  gradient.addColorStop(0.5, "rgba(255,255,255,0.9)");
-  gradient.addColorStop(0.8, "rgba(255,255,255,0.4)");
-  gradient.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 64, 64);
+  // 덩이의 자리·크기(가운데 64 기준). 모든 덩이가 그림 안에 들어와 네모난 끝이 생기지 않는다.
+  const lobes = [[64, 66, 40], [44, 54, 26], [86, 52, 28], [52, 84, 24], [82, 82, 26], [64, 40, 22], [34, 74, 16], [96, 68, 16]];
+  for (const [x, y, radius] of lobes) {
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, "rgba(255,255,255,0.55)");
+    gradient.addColorStop(0.55, "rgba(255,255,255,0.3)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 128, 128);
+  }
   smokeDot = new THREE.CanvasTexture(canvas);
   return smokeDot;
 }
 
 export function createSmokeSprite(): THREE.Sprite {
   const sprite = new THREE.Sprite(
-    // 불빛과 섞여 보이지 않게 채도 없는 중간 회색으로 둔다. 남색 복도·갈색 방 바닥 어디서나 퍼진 범위가 읽힌다.
-    new THREE.SpriteMaterial({ map: smokeTexture(), color: 0x8a8f97, transparent: true, opacity: 0, depthWrite: false }),
+    // 빛을 받지 않는 재질이라 조명이 연기를 희게 띄우지 않는다. 색은 placeSmoke가 농도에 맞춰 정한다.
+    new THREE.SpriteMaterial({ map: smokeTexture(), color: 0x4a4846, transparent: true, opacity: 0, depthWrite: false }),
   );
   // 불꽃(더하기 혼합) 뒤에 그려, 불 위로 올라온 연기가 불빛에 지워지지 않게 한다.
   sprite.renderOrder = 6;
   sprite.visible = false;
   return sprite;
+}
+
+/**
+ * 농도에 따른 연기의 밝기(0~255 회색 값). 옅으면 짙은 회색, 통로를 막는 농도(약 0.5)를 넘으면 그을음의 검정에 가깝다.
+ * 입자마다 조금씩 달라 한 가지 색으로 칠한 면처럼 보이지 않는다.
+ */
+export function smokeShade(smoke: number, seed: number): number {
+  return Math.round(Math.min(96, Math.max(14, 88 - 74 * Math.min(1, smoke * 1.5) + (seed - 0.5) * 22)));
 }
 
 /**
@@ -377,14 +390,22 @@ export function placeSmoke(puff: SmokePuff, smoke: number, wallHeight: number, t
     return;
   }
   sprite.visible = true;
-  const depth = wallHeight * (0.25 + 0.6 * smoke);
+  // 뜨거운 연기는 천장 아래에 층으로 깔리고, 짙어질수록 층이 두꺼워져 바닥 쪽으로 내려온다.
+  // 옅을 때는 아래쪽이 비어 그 밑으로 복도 안쪽의 불꽃이 보이고, 통로가 완전히 찰 만큼 짙어지면 시야를 가린다.
+  const depth = wallHeight * (0.3 + 0.65 * smoke);
+  // 천천히 부풀었다 줄고 돌면서 피어오르는 것처럼 보이게 한다. 옆으로 퍼진 납작한 덩이다.
+  const size = (2.2 + seed * 1.4 + smoke * 0.9) * (1 + Math.sin(time * 0.5 + seed * 31) * 0.06);
+  const tall = size * 0.6;
   sprite.position.set(
     puff.x + Math.sin(time * 0.25 + seed * 40) * 0.35,
-    puff.baseY + wallHeight - seed * depth + Math.sin(time * 0.4 + seed * 17) * 0.08,
+    puff.baseY + wallHeight - tall * 0.3 - seed * Math.max(depth - tall * 0.6, 0) + Math.sin(time * 0.4 + seed * 17) * 0.08,
     puff.z + Math.cos(time * 0.21 + seed * 23) * 0.35,
   );
-  const size = 2 + seed * 1.4 + smoke * 0.8;
-  sprite.scale.set(size, size, 1);
-  // 밖에서 내려다볼 때는 범위가 보이게 짙게, 연기 속을 걷는 1인칭에서는 표지판이 가려지지 않게 옅게 그린다(시야 저하는 안개가 맡는다).
-  sprite.material.opacity = overview ? Math.min(0.9, 0.3 + smoke * 0.6) : Math.min(0.65, 0.3 + smoke * 0.45);
+  sprite.scale.set(size, tall, 1);
+  sprite.material.rotation = Math.sin(time * 0.15 + seed * 6.28) * 0.25;
+  // 그을음 섞인 연기: 붉은 기가 조금 도는 무채색. 농도가 색과 불투명도를 함께 정한다.
+  const shade = smokeShade(smoke, seed);
+  sprite.material.color.setRGB((shade + 4) / 255, shade / 255, (shade - 3) / 255, THREE.SRGBColorSpace);
+  // 밖에서 내려다볼 때는 범위가 보이게 짙게, 연기 속을 걷는 1인칭에서는 조금 옅게 그린다(가까운 시야 저하는 안개가 맡는다).
+  sprite.material.opacity = overview ? Math.min(0.92, 0.3 + smoke * 0.7) : Math.min(0.8, 0.24 + smoke * 0.6);
 }

@@ -93,6 +93,9 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
   // 경로 집중: 이름·전체 안내·CCTV·설비 아이콘을 한 번에 가린다. 각 토글의 값은 그대로 두어 풀면 전으로 돌아간다.
   const [focus, setFocus] = useState(false);
   const [yeongnam, setYeongnam] = useState<YeongnamStatus | null>(null);
+  // 위치 QR을 확인한 기록. 열쇠는 "실행/사람"이라 시연을 초기화하거나 다른 사람으로 바꾸면 섞이지 않는다.
+  // 1인칭에서 나갔다 들어오거나 휴대폰을 내렸다 꺼내도 같은 실행·같은 사람이면 남는다.
+  const [qrConfirmed, setQrConfirmed] = useState<Record<string, string>>({});
   const caption = useSyncExternalStore(subscribeSound, soundStatus).caption;
   const [followRequest, setFollowRequest] = useState<{ nodeId: string; nonce: number } | null>(null);
   const [followMessage, setFollowMessage] = useState<{ runId: string; text: string } | null>(null);
@@ -151,7 +154,7 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
 
   useEffect(() => { onStartNode?.(startId); }, [startId, onStartNode]);
   // 「처음부터」로 실행이 바뀌면 이전 실행에서 따라가던 사람과 꺼 둔 전체 안내를 남기지 않는다.
-  useEffect(() => { setFollow(null); setTracked(null); setYeongnam(null); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
+  useEffect(() => { setFollow(null); setTracked(null); setYeongnam(null); setQrConfirmed({}); setFollowRequest(null); setShowGuidance(true); }, [state.run_id]);
   // 영남이 시연이 시작되면 주인공을 놓치지 않게 지켜볼 사람으로 잡는다. 사용자가 푼 뒤에는 다시 잡지 않는다.
   const yeongnamIndex = yeongnam?.index ?? null;
   useEffect(() => { if (yeongnamIndex !== null) setTracked(yeongnamIndex); }, [yeongnamIndex]);
@@ -391,9 +394,9 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             <p role="status" className="panel__note">
               <strong>영남이 시연</strong> · {yeongnam.out ? "탈출 완료" : !yeongnam.ignited ? "준비됨 · 휴게공간(시연 설정)에서 자는 중 · 「시연 시작」을 누르면 화재가 납니다"
                 : yeongnam.stuck ? "서버가 안내할 경로를 찾지 못해 멈춤 · 휴대폰에 행동 안내 표시"
-                : yeongnam.looking ? (yeongnam.phase === "EVACUATE" ? "이동 중 · 정면 유도등의 화살표가 바뀌는 것을 목격" : "출발 전 · 정면 유도등의 바뀐 안내를 확인하는 중")
-                : yeongnam.phone ? (yeongnam.sawWhileMoving ? "바뀐 방향으로 대피 중 · 휴대폰을 꺼내 QR로 위치 확인" : "현재 유도등 안내에 따라 대피 중 · 휴대폰으로 QR 위치 확인(이동 중 유도등 변경은 보지 못함)")
-                : yeongnam.phase === "EVACUATE" && yeongnam.sawWhileMoving ? "바뀐 유도등 방향으로 대피 중" : YEONGNAM_PHASE_LABEL[yeongnam.phase]}
+                : yeongnam.looking ? "눈앞의 유도등 화살표가 바뀌는 것을 확인하는 중"
+                : yeongnam.phone ? (yeongnam.sawChange ? "바뀐 방향으로 대피 중 · 휴대폰을 꺼내 QR로 위치 확인" : "현재 유도등 안내에 따라 대피 중 · 휴대폰으로 QR 위치 확인(유도등이 바뀌는 순간은 보지 못함)")
+                : yeongnam.phase === "EVACUATE" && yeongnam.sawChange ? "바뀐 유도등 방향으로 대피 중" : YEONGNAM_PHASE_LABEL[yeongnam.phase]}
               {yeongnam.ignited && yeongnam.phase === "LISTEN" && caption !== null && ` · 방송: ${caption}`}
               {yeongnam.ignited && ` · 서버가 차단한 지점·통로 위에 있던 시간 ${yeongnam.exposedSeconds.toFixed(1)}초`}
               {" · 행동만 연출이며 불·연기·경로·유도등은 서버 결과입니다"}
@@ -450,8 +453,18 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             onPickZone={onPickZone}
             pickTarget={pickTarget}
           />
+          {/* 눈앞의 유도등이 실제로 바뀐 순간에만 잠깐 띄우는 보조 자막. 화살표 변경 자체는 3D의 유도등에서 보인다. */}
+          {yeongnam?.notice != null && <p role="status" className="scene-caption">{yeongnam.notice}</p>}
           {firstPerson && <PhoneGuide key={`${runKey}/${follow}`} building={building} display={display} geometry={geometry} state={state} stale={stale}
             acting={yeongnam !== null && yeongnam.index === follow && yeongnam.phone}
+            confirmed={follow === null ? null : qrConfirmed[`${state.run_id}/${follow}`] ?? null}
+            onConfirm={(signId, auto) => {
+              if (follow === null) return;
+              setQrConfirmed((before) => ({ ...before, [`${state.run_id}/${follow}`]: signId }));
+              // 검증할 때 브라우저에서 인식 기록을 꺼내 볼 수 있게 둔다(영남이 기록과 같은 용도).
+              const scans = (window as unknown as { saferouteQrScans?: object[] }).saferouteQrScans ??= [];
+              scans.push({ runId: state.run_id, person: follow, signId, auto });
+            }}
             pose={phonePose?.personIndex === follow && phonePose.runId === state.run_id ? phonePose : null} />}
           </div>
 
