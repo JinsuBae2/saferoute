@@ -10,7 +10,7 @@
  * - 36초쯤: 302호 앞 복도가 연기로 막힌다(불꽃은 약 40초에 닿는다). 300호 앞 갈림길 유도등이 직진에서 우회전으로 바뀐다.
  *   영남이는 복도에 나와 서서 이 유도등을 마주 보고 있다.
  * - 45초쯤: 계단 B가 연기로 막힌다(불꽃은 약 52초). 북쪽 복도를 걷던 영남이 정면의 유도등이 계단 A 쪽으로 바뀐다.
- * shortcut: WFI v6 한 건물의 좌표다, 건물 자료나 확산 속도가 바뀌면 후보 모의부터 다시 한다.
+ * shortcut: WFI v7 한 건물의 좌표다, 건물 자료나 확산 속도가 바뀌면 후보 모의부터 다시 한다.
  */
 import type { Building, Position, StateSnapshot } from "@contracts";
 import type { WallRect } from "./geometry";
@@ -19,7 +19,7 @@ import type { SignInstall } from "./signMount";
 
 export const YEONGNAM = {
   buildingId: "WFI",
-  buildingVersion: 6,
+  buildingVersion: 7,
   /** 영남이로 지정한 기존 인원의 시작 위치(3층 300호 문). 새 인원을 더하지 않는다. */
   startNodeId: "F3-D-R300",
   zoneId: "F3-R302",
