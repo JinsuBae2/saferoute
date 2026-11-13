@@ -277,24 +277,29 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
             return JSONResponse(status_code=503,content={"error":{"code":"CONTROLLER_UNAVAILABLE","message":str(error),"field":None}})
         return room.runner.state()
 
-    def demo_status(room, status, include_result=False, after=None):
-        with room.extras_lock:
-            demo = room.extras.get("ai_demo")
-            if not demo or demo[0] != status["run_id"] or status["state"] not in ("RUNNING", "DONE"):
-                return status
-            result = room.extras["ai_result"]
-            status = {**status, "source_id": demo[2], "analysis_id": result["analysis_id"]}
-            frame = result["frame"]
-            if include_result and frame and frame["metadata"]["frame_id"] != after:
-                status["result"] = frame
-            return status
+    def demo_status(room, include_result=False, after=None):
+        queue = manager().ai
+        status = queue.status(room)
+        while status["state"] in ("RUNNING", "DONE"):
+            # A preview upload can wait on this room's controller. Never hold the shared queue lock here.
+            with room.extras_lock:
+                demo = room.extras.get("ai_demo")
+                if not demo or demo[0] != status["run_id"]:
+                    return status
+                result = room.extras["ai_result"]
+                response = {**status, "source_id": demo[2], "analysis_id": result["analysis_id"]}
+                frame = result["frame"]
+                if include_result and frame and frame["metadata"]["frame_id"] != after:
+                    response["result"] = frame
+            latest = queue.status(room)
+            if latest == status:
+                return response
+            status = latest
+        return status
 
     @app.get("/api/room/ai")
     def room_ai(request: Request, include_result: bool = False, after: str | None = None):
-        room = own_room(request)
-        queue = manager().ai
-        with queue.lock:
-            status = demo_status(room, queue.status(room), include_result, after)
+        status = demo_status(own_room(request), include_result, after)
         return JSONResponse(status, headers={"Cache-Control": "private, no-store"})
 
     @app.post("/api/room/ai")
@@ -303,8 +308,8 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
         with rooms.lock:
             live = dict(rooms.rooms)
         room = own_room(request)
-        with rooms.ai.lock:
-            return demo_status(room, rooms.ai.request(room, live))
+        rooms.ai.request(room, live)
+        return demo_status(room)
 
     # Preview frames: written only by the room's AI worker (internal credential), read only by that room's browser.
     def preview_store(room):

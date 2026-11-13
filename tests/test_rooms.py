@@ -904,6 +904,23 @@ def test_room_demo_replay_replaces_only_its_preview(setup, wfi, tmp_path, monkey
     manager.ai.launch = ai_launcher(manager, tmp_path)
     first = request_ai(client, who).json()
     assert first["source_id"] == source
+    room = manager.rooms[info["room_id"]]
+    status_read = threading.Event()
+    original_status = manager.ai.status
+
+    def observed_status(target):
+        value = original_status(target)
+        if target is room:
+            status_read.set()
+        return value
+
+    with monkeypatch.context() as spy, ThreadPoolExecutor(max_workers=2) as pool:
+        spy.setattr(manager.ai, "status", observed_status)
+        with room.extras_lock:
+            pending = pool.submit(ai_state, client, who)
+            assert status_read.wait(3)
+            assert pool.submit(ai_state, client, other).result(timeout=3)["state"] == "IDLE"
+        assert pending.result(timeout=3)["analysis_id"] == first["analysis_id"]
     assert first["analysis_id"] != attempts[0]["X-Saferoute-Demo-Attempt"]
     from datetime import timedelta
     from base64 import b64encode
