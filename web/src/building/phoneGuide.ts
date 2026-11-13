@@ -36,6 +36,14 @@ export function qrAssetsMatch(building: Pick<Building, "building_id" | "building
   return building.building_id === "WFI" && building.building_version === 7;
 }
 
+/**
+ * 시연 인물이 스스로 QR을 비출 때인지. 휴대폰을 꺼냈고, 비추는 중이 아니고, 보이는 QR이 있고, 아직 한 번도 확인하지 않았을 때뿐이다.
+ * 한 번 확인한 뒤에는 자동으로 다시 비추지 않는다(다시 확인은 사용자가 직접 누른다). 첫 인식이 취소됐으면 확인 전이므로 다시 시도한다.
+ */
+export function shouldAutoScan(input: { readonly acting: boolean; readonly open: boolean; readonly scanning: boolean; readonly qrSignId: string | null; readonly confirmed: string | null }): boolean {
+  return input.acting && input.open && !input.scanning && input.qrSignId !== null && input.confirmed === null;
+}
+
 /** 휴대폰으로 비출 수 있는 거리(m), 시선 정면에서 벗어나도 되는 각의 코사인(약 65도), 판을 비스듬히 볼 수 있는 한계(판 정면에서 약 75도). */
 const QR_REACH = 5;
 const QR_VIEW = 0.42;
