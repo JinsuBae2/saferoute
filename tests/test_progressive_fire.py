@@ -226,3 +226,23 @@ def test_positioned_fire_is_refused_where_no_route_can_change(api, zone_id):
     # 위치 없는 일반 경보(실제 감지기와 같은 경로)는 그대로 받는다.
     assert client.post("/api/events", json=event(clock, run_id, f"MANUAL-{zone_id}", 1)).status_code == 200
     assert client.get("/api/state").json()["controller_mode"] == "EMERGENCY"
+
+
+
+def test_yeongnam_demo_selection_still_holds():
+    """선택형 시연 「영남이」의 선정 조건을 서버 모형으로 고정한다(값은 web/src/building/yeongnam.ts, 검증은 tools/yeongnam_check.py).
+
+    두 번의 경로 변경이 불꽃 없이 연기만으로 생기고(불꽃만 반영하면 3초 이상 늦다), 영남이가 그 변경을 정면 유도등에서 보며,
+    기본 실행과 행동 10초 지연 모두 차단된 지점·통로를 밟지 않고 출구에 닿는지 본다.
+    확산 속도나 건물 자료를 바꿔 이 시험이 깨지면 시연 값을 다시 골라야 한다. 실제 피난 가능 시간을 보장하는 시험이 아니다.
+    """
+    from tools.yeongnam_check import problems, report
+
+    result = report([0, 10])
+    assert problems(result) == []
+    first, second = result["changes"]
+    cfg, base = result["config"], result["runs"][0]
+    # 첫 변경은 복도에 서서 보는 동안, 두 번째는 걷기 시작한 뒤에 온다.
+    assert cfg["panicAt"] < first["at"] < cfg["departAt"] < second["at"]
+    assert [at for at, _ in base["witnessed"]] == [first["at"], second["at"]]
+    assert "F3-S-A" in base["trail"] and base["trail"][-1] == "F1-X-NW"

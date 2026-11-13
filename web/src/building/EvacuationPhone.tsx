@@ -1,21 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 import type { BuildingGeometry } from "./geometry";
-import { nearbyQr, phoneGuidance } from "./phoneGuide";
+import { BLOCKED_HELP, nearbyQr, phoneGuidance } from "./phoneGuide";
 import type { FollowPose } from "./phoneGuide";
+import { qrMounts } from "./signMount";
 import "./phone.css";
 
-type Props = { building: Building; display: BuildingDisplay | null; geometry: BuildingGeometry; state: StateSnapshot; pose: FollowPose | null; stale: boolean };
+type Props = { building: Building; display: BuildingDisplay | null; geometry: BuildingGeometry; state: StateSnapshot; pose: FollowPose | null; stale: boolean;
+  /** 시연 인물이 스스로 휴대폰을 꺼내 가까운 QR을 비춘다. 평소에는 사용자가 꺼내고 누른다. */
+  acting?: boolean };
 
-export function PhoneGuide({ building, display, geometry, state, pose, stale }: Props) {
-  const [open, setOpen] = useState(true);
+/** QR을 비춘 채로 있어야 하는 시간(ms). 지나가며 잠깐 비추면 된다. 그 사이 대상이 시야에서 벗어나면 취소한다. */
+const QR_HOLD_MS = 350;
+
+export function PhoneGuide({ building, display, geometry, state, pose, stale, acting = false }: Props) {
+  // 휴대폰은 처음부터 펼쳐 두지 않는다. 필요할 때 꺼낸다.
+  const [open, setOpen] = useState(false);
   const [scan, setScan] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<string | null>(null);
-  const qr = pose === null || stale ? null : nearbyQr(building, pose);
+  const walls = geometry.floors.find(f => f.floor_id === building.nodes.find(node => node.node_id === pose?.routeNodeId)?.floor_id)?.walls ?? [];
+  // 연결이 늦으면 위치가 오래된 것이라 QR을 잡지 않는다. 이 화면은 실행·사람마다 새로 만들어져 다른 실행의 확인이 남지 않는다.
+  const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
+  const qr = pose === null || stale ? null : nearbyQr(building, pose, mounts, walls);
+  useEffect(() => { if (acting) setOpen(true); }, [acting]);
+  useEffect(() => {
+    if (acting && open && scan === null && qr !== undefined && qr !== null && qr.sign_id !== confirmed) setScan(qr.sign_id);
+  }, [acting, open, scan, qr, confirmed]);
   useEffect(() => {
     if (scan === null) return;
     if (qr?.sign_id !== scan) { setScan(null); return; }
-    const timer = setTimeout(() => { setConfirmed(scan); setScan(null); }, 800);
+    const timer = setTimeout(() => { setConfirmed(scan); setScan(null); }, QR_HOLD_MS);
     return () => clearTimeout(timer);
   }, [scan, qr?.sign_id]);
   const guide = pose === null ? null : phoneGuidance(building, display, state, pose, stale);
@@ -32,7 +46,8 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale }: 
   const next = pose?.routeNodeId !== pose?.nodeId ? path[0] : path[1] ?? path[0];
   // 화재 전에는 방향을 지시하지 않는다. 평소에 "지금 우회전"이 뜨면 이미 대피 중인 것처럼 읽힌다.
   const idle = !stale && guide?.kind === "ROUTE" && pose?.evacuating !== true;
-  const status = stale ? "연결 확인 중" : guide?.kind === "BLOCKED" ? "안내 중단" : pose?.evacuating ? "대피 중" : "평상시 · 출발 대기";
+  const status = stale ? "연결 확인 중" : guide?.kind === "BLOCKED" ? "경로 없음" : guide?.kind === "UNCONFIRMED" ? "경로 확인 불가" : pose?.evacuating ? "대피 중" : "평상시 · 출발 대기";
+  const lost = guide !== null && guide.kind !== "ROUTE" ? guide : null;
   return <div className={`phone-overlay${open ? " phone-overlay--open" : ""}`}>
     <div className={`phone-handset${pose?.moving && !stale ? " phone-handset--walking" : ""}`} aria-hidden={!open} inert={!open}>
       <svg className="phone-hand" viewBox="0 0 360 580" aria-hidden="true">
@@ -49,11 +64,18 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale }: 
         <div className="phone-speaker" aria-hidden="true"/>
         <div className="phone-screen">
           <header className="phone-header"><span>SafeRoute</span><span className="phone-signal" aria-hidden="true">▂▄▆</span></header>
-          <div className={`phone-status${stale || guide?.kind === "BLOCKED" ? " phone-status--alert" : ""}`}><span/>{status}</div>
+          <div className={`phone-status${stale || lost !== null ? " phone-status--alert" : ""}`}><span/>{status}</div>
           {scan !== null ? <div className="phone-scanner" role="status">
             <p>QR 위치 확인 중</p>
             <div className="phone-scan-frame"><img src={`/qr/${encodeURIComponent(scan)}.png`} alt="시연용 위치 QR"/><i/></div>
-            <small>장면 기반 QR 인식 시연</small>
+            <small>모의 인식 · 실제 카메라로 읽지 않습니다</small>
+          </div> : lost !== null ? <div className="phone-lost" role="alert">
+            <strong>{lost.instruction}</strong>
+            {lost.detail !== "" && <p>{lost.detail}</p>}
+            <ul>{lost.actions.map(action => <li key={action}>{action}</li>)}</ul>
+            <p className="phone-lost__place">{lost.place !== null ? <>119에 알릴 위치 · <b>{lost.place}</b></> : "위치를 확인하지 못했습니다. 보이는 층·호실 표지를 119에 알려 주세요"}</p>
+            <details><summary>옥상으로 가도 되나요?</summary><p>{BLOCKED_HELP.roof}</p></details>
+            <small>일반 행동요령 · {BLOCKED_HELP.source} · 서버가 계산한 경로가 아닙니다</small>
           </div> : <>
             <div className={`phone-direction${guide?.kind !== "ROUTE" ? " phone-direction--paused" : ""}`}>
               <span className="phone-arrow" aria-hidden="true">{idle ? "✓" : guide?.kind === "ROUTE" ? guide.icon : "!"}</span>
@@ -78,8 +100,8 @@ export function PhoneGuide({ building, display, geometry, state, pose, stale }: 
             <div className="phone-destination"><span>도착 출구</span><strong>{guide?.kind === "ROUTE" ? guide.exitLabel : "안내 확인 필요"}</strong></div>
           </>}
           <div className="phone-qr">
-            <button type="button" disabled={qr === null || scan !== null} onClick={() => setScan(qr!.sign_id)}>{scan !== null ? "인식 중…" : qr !== null ? "QR 찍기 · 위치 확인" : "가까운 QR을 찾는 중"}</button>
-            <small role="status">{confirmed !== null ? `최근 QR · ${display?.node_labels[building.signs.find(s=>s.sign_id===confirmed)?.node_id ?? ""] ?? confirmed}` : "QR을 찍지 않아도 대피는 계속됩니다"}</small>
+            <button type="button" disabled={qr === null || scan !== null} onClick={() => setScan(qr!.sign_id)}>{scan !== null ? "인식 중…" : qr !== null ? "QR 비추기 · 위치 확인" : "보이는 QR 없음"}</button>
+            <small role="status">{confirmed !== null ? `위치 확인 · ${display?.node_labels[building.signs.find(s=>s.sign_id===confirmed)?.node_id ?? ""] ?? confirmed} (모의 인식)` : "QR을 비추지 않아도 대피와 경로 갱신은 계속됩니다"}</small>
           </div>
           <div className="phone-home" aria-hidden="true"/>
         </div>

@@ -7,7 +7,8 @@ import { useMemo } from "react";
 import type { Building, BuildingDisplay } from "@contracts";
 
 import type { Journey, JourneyTrack, SignOnPath } from "./journey";
-import { APPLICATION_LABEL, FACE_DISPLAY_LABEL, ROUTE_REASON_LABEL } from "./journey";
+import { APPLICATION_LABEL, FACE_DISPLAY_LABEL, faceName, ROUTE_REASON_LABEL } from "./journey";
+import { BLOCKED_HELP, reportPlace, routeLoss } from "./phoneGuide";
 
 type Props = {
   readonly building: Building;
@@ -24,7 +25,6 @@ type Props = {
   readonly picker?: boolean;
 };
 
-const FACE_NAME: Record<string, string> = { FRONT: "정면", REAR: "후면" };
 const STATUS_TONE: Record<string, string> = {
   APPLIED: "route",
   PENDING: "warn",
@@ -114,10 +114,18 @@ export function JourneyPanel({ building, display, startId, onStart, journey, tra
               <strong>{nodeLabel(journey.startId)}</strong>: 안내 불가 ·{" "}
               {journey.reasons.map((code) => ROUTE_REASON_LABEL[code]).join(" · ") || "사유 없음"}
               <br />
-              출구까지 안전한 경로가 없습니다. 연기가 없는 쪽으로 피해 문을 닫고, 119에 위치를 알린 뒤 구조를 기다리세요.
-              이 위치는 관제에 안내 불가로 표시됩니다. 사람이 있는지는 시스템이 알 수 없습니다.
+              {routeLoss(journey.reasons) === "NO_ROUTE"
+                ? "서버가 남은 통로로 갈 수 있는 출구를 찾지 못했습니다."
+                : "감지 정보나 제어 상태를 확인하지 못해 경로를 안내하지 못합니다. 경로가 없다는 뜻은 아닙니다."}
+              {" "}이 위치는 관제에 안내 불가로 표시됩니다. 사람이 있는지는 시스템이 알 수 없습니다.
               <br />
-              <small>일반 행동요령이며 서버가 계산한 대피 경로가 아닙니다. 대피 공간 안내는 아직 지원하지 않습니다.</small>
+              {(routeLoss(journey.reasons) === "NO_ROUTE" ? BLOCKED_HELP.noRoute : BLOCKED_HELP.unconfirmed).join(" · ")}
+              <br />
+              119에 알릴 위치: <strong>{reportPlace(building, display, journey.startId) ?? "확인하지 못함"}</strong>
+              <br />
+              <small>{BLOCKED_HELP.roof}</small>
+              <br />
+              <small>일반 행동요령({BLOCKED_HELP.source})이며 서버가 계산한 대피 경로가 아닙니다.</small>
             </p>
           )}
 
@@ -188,7 +196,7 @@ export function JourneyPanel({ building, display, startId, onStart, journey, tra
                     <td>
                       {item.faces.length === 0
                         ? "—"
-                        : item.faces.map((face) => `${FACE_NAME[face.faceId] ?? face.faceId} ${faceText(face)}`).join(" · ")}
+                        : item.faces.map((face) => `${faceName(face.faceId)} ${faceText(face)}`).join(" · ")}
                     </td>
                     <td>
                       <span className={`badge badge--${item.status === null ? "muted" : STATUS_TONE[item.status]}`}>

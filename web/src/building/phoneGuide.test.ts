@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { Building, StateSnapshot } from "@contracts";
+import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
 import rawBuilding from "@space/wfi-v1.json";
 import { spawnPeople, stepPeople } from "./people";
-import { nearestPerson, nearbyQr, phoneGuidance } from "./phoneGuide";
+import rawGeometry from "@space/wfi-geometry-v1.json";
+import { parseGeometry } from "./geometry";
+import { BLOCKED_HELP, nearestPerson, nearbyQr, phoneGuidance, qrAssetsMatch, reportPlace, routeLoss } from "./phoneGuide";
+import { qrMounts } from "./signMount";
 import type { FollowPose } from "./phoneGuide";
 
 const building = rawBuilding as unknown as Building;
@@ -69,10 +72,52 @@ describe("휴대폰 대피 안내", () => {
     expect(guide.kind).toBe("ROUTE");
     if (guide.kind === "ROUTE") expect(guide.floorId).toBe("F3");
   });
-  it("QR은 같은 층에서 실제 인물이 지나가는 가까운 지점만 인식한다", () => {
-    const sign = building.signs.find(s => at(s.node_id).floor_id === "F1")!;
-    expect(nearbyQr(building, pose(sign.node_id))?.sign_id).toBe(sign.sign_id);
-    expect(nearbyQr(building, { ...pose("F3-D-R301"), x: at(sign.node_id).position.x, z: at(sign.node_id).position.z })).toBeNull();
+});
+
+describe("QR 모의 인식", () => {
+  const geometry = parseGeometry(rawGeometry);
+  const mounts = qrMounts(building, geometry.floors, geometry.stairs);
+  const walls = geometry.floors.find(floor => floor.floor_id === "F3")!.walls;
+  const sign = building.signs.find(item => item.node_id === "F3-J-N5")!;
+  const mount = mounts.get(sign.sign_id)!;
+  /** 판 앞쪽으로 ahead만큼, 판을 따라 옆으로 side만큼 떨어진 자리에서 판을 마주 본다(turn만큼 고개를 돌림). */
+  const from = (ahead: number, side = 0, turn = 0): FollowPose => ({ ...pose("F3-J-N5"),
+    x: mount.x + mount.normalX * ahead - mount.normalZ * side, z: mount.z + mount.normalZ * ahead + mount.normalX * side,
+    yaw: Math.atan2(-mount.normalX, -mount.normalZ) + turn });
+
+  it("벽면에 붙은 QR을 앞에서 바라보면 잡고, 3D와 같은 자리로 판정한다", () => {
+    expect(qrAssetsMatch(building)).toBe(true);
+    expect(nearbyQr(building, from(1.2), mounts, walls)?.sign_id).toBe(sign.sign_id);
+    expect(nearbyQr(building, from(1.2, 0.5), mounts, walls)?.sign_id).toBe(sign.sign_id);
+  });
+
+  it("등 뒤, 먼 곳, 다른 구간, 다른 층의 QR은 잡지 않는다", () => {
+    expect(nearbyQr(building, from(1.2, 0, Math.PI), mounts, walls)).toBeNull();
+    expect(nearbyQr(building, { ...from(1.2), nodeId: "F3-D-R301", routeNodeId: "F3-D-R301" }, mounts, walls)).toBeNull();
+    expect(nearbyQr(building, { ...from(1.2), routeNodeId: "F2-S-A" }, mounts, walls)).toBeNull();
+    expect(nearbyQr(building, from(5.5), mounts, [])).toBeNull();
+  });
+
+  it("벽 너머(판의 뒷면 쪽)나 판과 거의 나란한 옆에서는 잡지 않는다", () => {
+    // 판 뒤쪽은 벽 속·벽 너머다. 고개를 판 쪽으로 돌려도 잡히지 않는다.
+    expect(nearbyQr(building, { ...from(-0.8), yaw: Math.atan2(mount.normalX, mount.normalZ) }, mounts, walls)).toBeNull();
+    expect(nearbyQr(building, { ...from(-0.8), yaw: Math.atan2(mount.normalX, mount.normalZ) }, mounts, [])).toBeNull();
+    expect(nearbyQr(building, from(0.1, 2.5, -Math.PI / 2), mounts, [])).toBeNull();
+  });
+
+  it("사이에 벽이 있으면 잡지 않는다", () => {
+    const here = from(2);
+    const between = [Math.min(here.x, mount.x) - 0.5, Math.min(here.z, mount.z) + 0.01, Math.max(here.x, mount.x) + 0.5, Math.max(here.z, mount.z) - 0.01] as const;
+    const wall = mount.normalX !== 0 ? [mount.x + mount.normalX * 0.8 - 0.05, here.z - 1, mount.x + mount.normalX * 0.8 + 0.05, here.z + 1] as const : [here.x - 1, mount.z + mount.normalZ * 0.8 - 0.05, here.x + 1, mount.z + mount.normalZ * 0.8 + 0.05] as const;
+    expect(between).toHaveLength(4);
+    expect(nearbyQr(building, here, mounts, [wall])).toBeNull();
+  });
+
+  it("붙일 벽이 없는 지점이나 자산과 버전이 다른 건물에서는 QR이 없다", () => {
+    const bare = building.signs.find(item => !mounts.has(item.sign_id))!;
+    expect(nearbyQr(building, { ...pose(bare.node_id), yaw: 0 }, mounts, [])).toBeNull();
+    expect(qrAssetsMatch({ building_id: "WFI", building_version: 5 })).toBe(false);
+    expect(nearbyQr({ ...building, building_version: 5 }, from(1.2), mounts, walls)).toBeNull();
   });
 });
 
@@ -105,5 +150,40 @@ describe("몇 m 앞 회전 안내", () => {
     const changed = state(["A", "D", "E"]);
     expect(phoneGuidance(navBuilding, null, changed, navPose, false)).toMatchObject({ instruction:"경로 변경 확인 중", distanceMetres:null });
     expect(phoneGuidance(navBuilding, null, changed, navPose, true).kind).toBe("UNAVAILABLE");
+  });
+
+  describe("경로를 안내하지 못할 때", () => {
+    const lost = (reasons: string[]) => ({ ...state(), routes: [{ node_id: "F3-S-A", next_node_id: null, exit_id: null, path_node_ids: [], reason_codes: reasons, cost: null }] }) as unknown as StateSnapshot;
+    const labels = { floor_labels: { F3: "3층" }, node_labels: { "F3-S-A": "계단 A 앞" } } as unknown as BuildingDisplay;
+    it("출구 경로가 없는 것과 확인하지 못한 것을 다른 문구로 알린다", () => {
+      expect(routeLoss(["NO_REACHABLE_EXIT"])).toBe("NO_ROUTE");
+      expect(routeLoss(["ORIGIN_BLOCKED"])).toBe("NO_ROUTE");
+      expect(routeLoss(["NO_REACHABLE_EXIT", "REQUIRED_OBSERVATION_UNKNOWN"])).toBe("UNCONFIRMED");
+      expect(routeLoss(["CONTROLLER_UNAVAILABLE"])).toBe("UNCONFIRMED");
+      const none = phoneGuidance(building, labels, lost(["NO_REACHABLE_EXIT"]), pose(), false);
+      const unknown = phoneGuidance(building, labels, lost(["REQUIRED_OBSERVATION_UNKNOWN"]), pose(), false);
+      expect(none.kind).toBe("BLOCKED");
+      expect(unknown.kind).toBe("UNCONFIRMED");
+      expect(none.instruction).not.toBe(unknown.instruction);
+      if (none.kind !== "BLOCKED" || unknown.kind !== "UNCONFIRMED") return;
+      expect(none.actions.join(" ")).toContain("119");
+      expect(none.actions.join(" ")).toContain("무리하게");
+      expect(unknown.actions.join(" ")).toContain("경로가 없다는 뜻이 아닙니다");
+    });
+    it("확인한 층과 위치만 신고용으로 보여 주고, 연결이 늦으면 위치를 내밀지 않는다", () => {
+      const none = phoneGuidance(building, labels, lost(["NO_REACHABLE_EXIT"]), pose(), false);
+      expect(none.kind === "BLOCKED" && none.place).toBe("3층 · 계단 A 앞 부근");
+      const stale = phoneGuidance(building, labels, lost(["NO_REACHABLE_EXIT"]), pose(), true);
+      expect(stale.kind).toBe("UNAVAILABLE");
+      expect(stale.kind === "UNAVAILABLE" && stale.place).toBeNull();
+      expect(reportPlace(building, null, "없는-지점")).toBeNull();
+      expect(reportPlace(building, { floor_labels: { F3: "3층" }, node_labels: { "F3-S-A": "3층 계단 A 앞" } } as unknown as BuildingDisplay, "F3-S-A")).toBe("3층 계단 A 앞 부근");
+    });
+    it("옥상은 대피 목적지가 아니라 조건이 붙은 도움말로만 둔다", () => {
+      const none = phoneGuidance(building, labels, lost(["NO_REACHABLE_EXIT"]), pose(), false);
+      expect(none.kind === "BLOCKED" && none.actions.join(" ")).not.toContain("옥상");
+      expect(BLOCKED_HELP.roof).toContain("확인되지 않아");
+      expect(BLOCKED_HELP.roof).toContain("직접 확인한 경우에만");
+    });
   });
 });
