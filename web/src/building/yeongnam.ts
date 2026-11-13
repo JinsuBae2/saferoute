@@ -98,7 +98,9 @@ export function yeongnamSupported(building: Pick<Building, "building_id" | "buil
  */
 export function yeongnamFire(state: StateSnapshot): { readonly elapsedMs: number } | null {
   const near = (a: number, b: number) => Math.abs(a - b) < 0.05;
-  const cause = state.active_causes.find((item) => item.hazard_type === "FIRE" && item.ignition_position != null
+  // 체험방에서는 그 구역의 감지 설비가 화재를 알린다. 스프링클러가 있는 구역(복도)의 불은 SPRINKLER 경보로 접수되므로 둘 다 받는다.
+  // 발화 위치가 붙은 경보는 시연 화재뿐이라, 위치가 같으면 어느 설비가 알렸든 같은 불이다.
+  const cause = state.active_causes.find((item) => (item.hazard_type === "FIRE" || item.hazard_type === "SPRINKLER") && item.ignition_position != null
     && near(item.ignition_position.x, YEONGNAM.ignition.x) && near(item.ignition_position.y, YEONGNAM.ignition.y) && near(item.ignition_position.z, YEONGNAM.ignition.z));
   if (cause === undefined) return null;
   const fire = state.fire_simulation?.fires.find((item) => item.source_id === cause.source_id);
