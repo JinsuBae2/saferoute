@@ -17,7 +17,7 @@ import { localSmoke, simulationFireCells } from "./firePresentation";
 import { cctvSmoke, type CctvPose } from "./cctv";
 import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
-import { buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseFigure, signFaceTexture, softDotTexture } from "./assets";
+import { addEarbuds, buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseActing, poseFigure, signFaceTexture, softDotTexture } from "./assets";
 import { insidePolygon, interiorWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
@@ -29,6 +29,10 @@ import { countPeople, spawnPeople, stepPeople, walkTime } from "./people";
 import { loadPeople, savePeople } from "./peopleStore";
 import { nearestPerson, qrAssetsMatch } from "./phoneGuide";
 import { facePlace, QR_HEIGHT, QR_SIZE, qrMounts, SIGN_HEIGHT, SIGN_TALL } from "./signMount";
+import { remainingTrack } from "./tracking";
+import type { YeongnamPhase } from "./yeongnam";
+import type { FaceShown } from "./yeongnam";
+import { devWalk, shownFaces, witnessedSignChanges, YEONGNAM, yeongnamDelay, yeongnamEmote, yeongnamFire, yeongnamPhase, yeongnamSupported } from "./yeongnam";
 import type { FollowPose } from "./phoneGuide";
 import { storageScope } from "../api/scope";
 import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
@@ -93,6 +97,33 @@ const SLIDE_DROP = 0.9;
 /** 카메라 한 대를 찾을 때 함께 보이는 범위(m). 너무 좁으면 어디인지 알 수 없다. */
 const FOCUS_REACH = 9;
 
+/** 영남이 시연의 지금 상태. 화면 문구와 휴대폰 연출이 이것을 따른다. */
+export type YeongnamStatus = {
+  readonly index: number;
+  readonly phase: YeongnamPhase;
+  /** 정면 유도등의 화살표가 바뀐 것을 확인하느라 멈춰 선 중. */
+  readonly looking: boolean;
+  /** 걷는 중에 정면 유도등의 화살표가 바뀌는 것을 봤다. 출발 전에 서서 본 것은 세지 않는다. */
+  readonly sawWhileMoving: boolean;
+  /** 휴대폰을 꺼내 들었다. */
+  readonly phone: boolean;
+  readonly ignited: boolean;
+  readonly out: boolean;
+  /** 서버가 안내할 경로를 찾지 못해 멈춰 있다. */
+  readonly stuck: boolean;
+  /**
+   * 서버가 그 시점에 차단한 지점·통로 위에 있던 시간(초, 0.5초 단위로 알림). 실제로 걸은 자리와 같은 시점의 서버 상태를 대조한 값이다.
+   * 0이 아니면 시연 값이 맞지 않는 것이다. 숨기지 않고 그대로 보여 준다.
+   */
+  readonly exposedSeconds: number;
+};
+
+/** 영남이의 실제 이동과 같은 시점의 서버 차단 상태를 나란히 적은 기록 한 줄. 검증용이며 서버로 보내지 않는다. */
+export type YeongnamTrace = {
+  readonly t: number | null; readonly phase: YeongnamPhase; readonly from: string; readonly to: string | null; readonly progress: number; readonly status: string;
+  readonly guidanceVersion: number; readonly fromBlocked: boolean; readonly toBlocked: boolean; readonly edgeBlocked: boolean; readonly exposed: boolean; readonly looking: boolean;
+};
+
 type Props = {
   readonly cctv: CctvPose | null;
   readonly onCamera: (id: string) => void;
@@ -114,6 +145,19 @@ type Props = {
   readonly followIndex?: number | null;
   readonly followRequest?: { nodeId: string; nonce: number } | null;
   readonly onFollowUnavailable?: () => void;
+  /** 전체 화면에서 계속 지켜볼 사람. 카메라 시점(followIndex)과 따로 둔다. 남은 경로를 노란 선으로 그린다. */
+  readonly trackIndex?: number | null;
+  /** 지켜보던 사람이 탈출했다. */
+  readonly onTrackEnd?: () => void;
+  /** 지켜보는 사람이 있는(향하는) 층. 숨긴 층으로 들어가면 화면에서 사라지므로 바깥이 그 층을 켠다. */
+  readonly onTrackFloor?: (floorId: string) => void;
+  /** CCTV 아이콘·이름을 그릴지. 감지 자체와는 무관하다. */
+  readonly showCameras?: boolean;
+  /** 관제용 설비·지점 아이콘(지점 구, 유도등 기둥·아이콘)을 그릴지. 천장의 실제 유도등은 늘 그린다. */
+  readonly showIcons?: boolean;
+  /** 영남이 시연을 준비했다(발화 전). 발화 뒤에는 서버 상태로 판단하므로 이 값이 없어도 이어진다. */
+  readonly yeongnamArmed?: boolean;
+  readonly onYeongnam?: (status: YeongnamStatus | null) => void;
   /** 3D에서 사람을 눌렀거나(순번), 따라가던 사람이 빠져나갔을 때(null). */
   readonly onFollow?: (index: number | null) => void;
   /** 1인칭으로 따라가는 사람의 위치·시선·지금 경로를 읽는 지점. 출구 유도음이 쓴다. 1인칭이 아니면 null. */
@@ -173,6 +217,7 @@ type Handles = {
   /** 연기 입자. 구역마다 천장 아래에 흩어 두고 농도에 따라 보이게 한다. */
   smokeGroup: THREE.Group;
   smokePuffs: SmokePuff[];
+  /** 확산 칸의 연기 입자. 칸마다 높이가 다른 둘을 둔다(열쇠 끝의 #0·#1). 천장에 붙은 하나만으로는 멀리서 표지판 뒤에 가린다. */
   fieldPuffs: Map<string, { puff: SmokePuff; smoke: number }>;
   /** 천장 표지판의 면. 서버 표시값이 바뀌면 그림만 바꾼다. */
   signFaces: Map<string, Map<string, SignFaceMesh>>;
@@ -404,7 +449,7 @@ function nameSprite(text: string, viewportHeight: number): THREE.Sprite | null {
   return sprite;
 }
 
-export function BuildingScene({ cctv, onCamera, geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, state, ignition, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
+export function BuildingScene({ cctv, onCamera, geometry, building, display, showNames = true, showGuidance = true, showPeople = false, stale = false, onPeople, followIndex = null, followRequest = null, onFollowUnavailable, onFollow, onListener, trackIndex = null, onTrackEnd, onTrackFloor, showCameras = true, showIcons = true, yeongnamArmed = false, onYeongnam, state, ignition, smokeByZone, visibleFloors, spread, view, highlightSourceId, journey = null, onPickNode, onPickZone, pickTarget = "NODE" }: Props) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<Handles | null>(null);
   // 장면은 한 번만 만들므로 최신 콜백을 참조로 넘긴다.
@@ -419,7 +464,9 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
   const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
   const firstPersonView = followIndex !== null || cctv !== null;
-  const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string; lost: number } | null>(null);
+  const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string; lost: number;
+    /** 머리 위 이름표·상태 표시. 글자마다 한 번만 만든다. */
+    labels: Map<string, THREE.Sprite>; earbuds: THREE.Group | null; bench: THREE.Mesh | null; yeongnamIndex: number } | null>(null);
 
   const nodeById = useMemo(
     () => new Map(building.nodes.map((node) => [node.node_id, node])),
@@ -443,9 +490,9 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     return zones;
   }, [state.fire_simulation]);
   // 그리기 반복은 한 번만 만들어지므로, 매번 바뀌는 값은 참조로 넘긴다.
-  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
+  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
   useEffect(() => {
-    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
+    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
   });
 
   // 1) 렌더러·카메라·조작. 한 번만 만든다.
@@ -558,7 +605,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       raycaster.setFromCamera(pointer, camera);
       // 1인칭으로 걷는 동안에는 도면을 고르지 않는다. 걷는 사람 눈에는 지점 구도 구역 판도 없다.
       if (liveRef.current.follow !== null || liveRef.current.cctv) return;
-      const cameraHit = raycaster.intersectObjects(handles.cameraIcons.map(item => item.icon), false)[0];
+      const cameraHit = raycaster.intersectObjects(handles.cameraIcons.map(item => item.icon).filter(icon => icon.visible), false)[0];
       const source = cameraHit && handles.cameraIcons.find(item => item.icon === cameraHit.object);
       if (source) {
         liveRef.current.onCamera(source.sourceId);
@@ -634,8 +681,11 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       renderer.domElement.style.cursor = target === null ? "" : "pointer";
     };
     const onMove = (event: PointerEvent) => {
-      const targets = [...handles.cameraIcons.map((item) => item.icon), ...handles.exitIcons.map((item) => item.icon)];
-      if (targets.length === 0) return;
+      const targets = [...handles.cameraIcons.map((item) => item.icon), ...handles.exitIcons.map((item) => item.icon)].filter((icon) => icon.visible);
+      if (targets.length === 0) {
+        showHoverLabel(null);
+        return;
+      }
       const rect = renderer.domElement.getBoundingClientRect();
       raycaster.setFromCamera(
         new THREE.Vector2(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1),
@@ -685,6 +735,102 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     };
     // 사람은 화면을 그리는 횟수가 아니라 실제 지난 시간만큼 걷는다(#202). 화면 갱신과 타이머 양쪽에서 부르며,
     // 같은 시계를 쓰므로 겹쳐 세지 않는다. 탭이 가려져 화면 갱신이 멈춰도 타이머가 이어 간다.
+    const routeCache: { state: unknown; map: Map<string, StateSnapshot["routes"][number]> } = { state: null, map: new Map() };
+    const routesNow = () => {
+      const { state } = liveRef.current;
+      if (routeCache.state !== state) {
+        routeCache.state = state;
+        routeCache.map = new Map(state.routes.map((route) => [route.node_id, route]));
+      }
+      return routeCache.map;
+    };
+    const blockCache: { state: unknown; nodes: Set<string>; edges: Set<string> } = { state: null, nodes: new Set(), edges: new Set() };
+    const blockedNow = () => {
+      const { state } = liveRef.current;
+      if (blockCache.state !== state) Object.assign(blockCache, { state, nodes: new Set(state.blocked_nodes.map((item) => item.node_id)), edges: new Set(state.blocked_edges.map((item) => item.edge_id)) });
+      return blockCache;
+    };
+    const edgeCache: { building: unknown; ids: Map<string, string[]> } = { building: null, ids: new Map() };
+    /** 두 지점을 잇는 통로 ID(양방향). 한쪽 방향만 막혀도 그 통로는 막힌 것으로 본다. */
+    const edgesBetween = (a: string, b: string) => {
+      const { building } = liveRef.current;
+      if (edgeCache.building !== building) {
+        edgeCache.building = building;
+        edgeCache.ids = new Map();
+        for (const edge of building.edges) {
+          for (const key of [`${edge.from_node_id}>${edge.to_node_id}`, `${edge.to_node_id}>${edge.from_node_id}`]) edgeCache.ids.set(key, [...(edgeCache.ids.get(key) ?? []), edge.edge_id]);
+        }
+      }
+      return edgeCache.ids.get(`${a}>${b}`) ?? [];
+    };
+    // 영남이 시연. 연출은 이 사람을 세워 두는 것뿐이고, 걷기 시작하면 다른 사람과 같은 서버 경로를 따른다.
+    const yn = { run: "", faces: null as FaceShown | null, facesOf: null as unknown, lookUntil: 0, sawMoving: false, elapsedMs: -1, elapsedAt: 0, key: "", exposed: 0, trace: [] as YeongnamTrace[], tracedAt: 0 };
+    // 검증할 때 브라우저에서 기록을 꺼내 볼 수 있게 둔다(docs/implementation/yeongnam-demo.md).
+    (window as unknown as { saferouteYeongnamTrace?: () => readonly YeongnamTrace[] }).saferouteYeongnamTrace = () => yn.trace;
+    let acting: (YeongnamStatus & { elapsed: number | null }) | null = null;
+    const directYeongnam = (now: number, walked: number) => {
+      const live = liveRef.current;
+      const people = peopleRef.current;
+      const fire = yeongnamFire(live.state);
+      // 준비만 한 상태는 불이 없을 때만 유효하다. 다른 자리의 화재에서는 영남이도 바로 대피한다.
+      const on = people !== null && people.yeongnamIndex >= 0 && (fire !== null || (live.yeongnamArmed && live.state.active_causes.length === 0));
+      if (yn.run !== live.state.run_id) Object.assign(yn, { run: live.state.run_id, faces: null, facesOf: null, lookUntil: 0, sawMoving: false, elapsedMs: -1, elapsedAt: 0, exposed: 0, trace: [], tracedAt: 0 });
+      if (!on) {
+        if (people !== null && people.yeongnamIndex >= 0) people.list[people.yeongnamIndex].hold = false;
+        acting = null;
+        yn.faces = null;
+      } else {
+        let elapsed: number | null = null;
+        if (fire !== null) {
+          if (fire.elapsedMs !== yn.elapsedMs) Object.assign(yn, { elapsedMs: fire.elapsedMs, elapsedAt: now });
+          // 서버는 1초 단위로 준다. 그 사이는 지난 시간만큼 잇되, 응답이 늦으면 서버보다 앞서 나가지 않는다.
+          elapsed = (yn.elapsedMs + (live.stale ? 0 : Math.min(now - yn.elapsedAt, 1500))) / 1000;
+        }
+        const person = people.list[people.yeongnamIndex];
+        // 단계는 (검증용 지연을 뺀) 경과 시간으로 정한다. 기록에는 실제 경과 시간을 남긴다.
+        const staged = elapsed === null ? null : elapsed - yeongnamDelay(window.location.href);
+        const phase = yeongnamPhase(staged);
+        const out = person.status === "OUT";
+        // 새 서버 상태가 오면, 영남이가 선 자리에서 정면으로 보이는 유도등 면이 다른 화살표로 바뀌었는지 본다.
+        // 경로가 바뀐 것만으로는(먼 곳의 변경, 안내 불가 전환) 멈춰 서지 않는다.
+        if (yn.facesOf !== live.state && !live.stale) {
+          const after = shownFaces(live.state);
+          const figure = people.figures[people.yeongnamIndex];
+          const floorId = live.nodeById.get(person.from)?.floor_id;
+          const onStairs = person.to !== null && live.nodeById.get(person.to)?.floor_id !== floorId;
+          const awake = phase === "PANIC" || phase === "LISTEN" || phase === "EVACUATE";
+          if (yn.faces !== null && awake && !out && !onStairs && floorId !== undefined) {
+            const yaw = people.yaw[people.yeongnamIndex];
+            const walls = live.geometry.floors.find((floor) => floor.floor_id === floorId)?.walls ?? [];
+            const seen = witnessedSignChanges(live.building, walls, yn.faces, after, { x: figure.group.position.x, z: figure.group.position.z, floorId, headingX: Math.sin(yaw), headingZ: Math.cos(yaw) });
+            // 출발 전에 서서 본 것은 안내 확인이다. 걷다가 본 것만 "이동 중 변경 목격"으로 남겨 휴대폰 연출로 잇는다.
+            if (seen.length > 0) Object.assign(yn, { lookUntil: now + YEONGNAM.lookSeconds * 1000, sawMoving: yn.sawMoving || phase === "EVACUATE" });
+          }
+          yn.faces = after;
+          yn.facesOf = live.state;
+        }
+        const looking = !out && now < yn.lookUntil;
+        person.hold = !out && (phase !== "EVACUATE" || looking);
+        const phone = phase === "EVACUATE" && !out && !looking && (yn.sawMoving || (staged ?? 0) >= YEONGNAM.departAt + YEONGNAM.phoneAfter);
+        // 실제로 있는 자리와 같은 시점의 서버 차단 상태를 대조한다. 서 있으면 그 지점, 걷는 중이면 그 통로(어느 방향이든)를 본다.
+        const block = blockedNow();
+        const edgeBlocked = person.to !== null && edgesBetween(person.from, person.to).some((id) => block.edges.has(id));
+        const fromBlocked = block.nodes.has(person.from);
+        const exposed = fire !== null && !out && !live.stale && (person.to === null ? fromBlocked : edgeBlocked);
+        if (exposed) yn.exposed += walked;
+        if (fire !== null && now - yn.tracedAt >= 500 && yn.trace.length < 1200 && (!out || yn.trace.at(-1)?.status !== "OUT")) {
+          yn.tracedAt = now;
+          yn.trace.push({ t: elapsed === null ? null : Math.round(elapsed * 10) / 10, phase, from: person.from, to: person.to, progress: Math.round(person.progress * 100) / 100, status: person.status,
+            guidanceVersion: live.state.guidance_version, fromBlocked, toBlocked: person.to !== null && block.nodes.has(person.to), edgeBlocked, exposed, looking });
+        }
+        acting = { index: people.yeongnamIndex, phase, looking, sawWhileMoving: yn.sawMoving, phone, ignited: fire !== null, out, stuck: person.status === "STUCK", elapsed: staged, exposedSeconds: Math.round(yn.exposed * 2) / 2 };
+      }
+      const key = acting === null ? "" : `${yn.run}/${acting.phase}/${acting.looking}/${acting.sawWhileMoving}/${acting.phone}/${acting.ignited}/${acting.out}/${acting.stuck}/${acting.exposedSeconds}`;
+      if (key !== yn.key) {
+        yn.key = key;
+        live.onYeongnam?.(acting === null ? null : { index: acting.index, phase: acting.phase, looking: acting.looking, sawWhileMoving: acting.sawWhileMoving, phone: acting.phone, ignited: acting.ignited, out: acting.out, stuck: acting.stuck, exposedSeconds: acting.exposedSeconds });
+      }
+    };
     let lastWalk = performance.now();
     const walkPeople = () => {
       const now = performance.now();
@@ -698,7 +844,8 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       people.list.forEach((person, index) => {
         if (person.status === "OUT" && people.slide[index] < SLIDE_SECONDS && !live.stale) people.slide[index] += walk;
       });
-      const routes = new Map(live.state.routes.map((route) => [route.node_id, route]));
+      const routes = routesNow();
+      directYeongnam(now, walk);
       stepPeople(
         people.list,
         routes,
@@ -724,6 +871,17 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     };
     const walker = setInterval(walkPeople, 250);
 
+    // 추적 경로 막대. 모양과 재질을 함께 쓰고 길이만 늘여, 매 프레임 다시 이어도 새로 만들지 않는다.
+    const UP = new THREE.Vector3(0, 1, 0);
+    const trackGroup = new THREE.Group();
+    scene.add(trackGroup);
+    const trackGeometry = new THREE.CylinderGeometry(0.16, 0.16, 1, 8);
+    const trackMaterial = new THREE.MeshBasicMaterial({ color: COLOR.journey, transparent: true, opacity: 0.95, depthTest: false });
+    handles.disposables.add(trackGeometry).add(trackMaterial);
+    const trackRods: THREE.Mesh[] = [];
+    let trackEnded: number | null = null;
+    let trackFloor: string | null = null;
+    const walkNodes = devWalk(window.location.href);
     const movePeople = (seconds: number, time: number) => {
       walkPeople();
       const people = peopleRef.current;
@@ -735,6 +893,27 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       };
       let sliding = false;
       let gazeYaw: number | null = null;
+      const overview = live.follow === null && live.cctv === null;
+      const viewportHeight = renderer.getSize(new THREE.Vector2()).y;
+      for (const sprite of people.labels.values()) sprite.visible = false;
+      /** 머리 위 글자. 같은 글자는 한 번만 만들어 다시 쓴다. */
+      const label = (text: string, x: number, y: number, z: number, size: number) => {
+        let sprite = people.labels.get(text);
+        if (sprite === undefined) {
+          const made = nameSprite(text, viewportHeight);
+          if (made === null) return;
+          made.renderOrder = 24;
+          people.group.add(made);
+          people.labels.set(text, made);
+          sprite = made;
+        }
+        sizeName(sprite, viewportHeight);
+        sprite.scale.multiplyScalar(size);
+        sprite.position.set(x, y, z);
+        sprite.visible = true;
+      };
+      if (people.bench !== null) people.bench.visible = false;
+      if (people.earbuds !== null) people.earbuds.visible = false;
       people.list.forEach((person, index) => {
         const figure = people.figures[index];
         const marker = people.markers[index];
@@ -775,26 +954,134 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
             point = from.clone().lerp(to, person.progress);
           }
         }
+        // 개발용: 지정한 지점들을 차례로 걷는 모습(계단을 올라가는 쪽 확인). 첫 번째 사람이 대피를 시작하기 전에만 그린다.
+        let strolling = false;
+        if (index === 0 && walkNodes !== null && person.started !== true && !exiting) {
+          const legs = walkNodes.slice(1).map((nodeId, leg) => {
+            const stair = stairPath(walkNodes[leg], nodeId);
+            const a = at(walkNodes[leg]);
+            const b = at(nodeId);
+            return { stair, a, b, length: stair?.length ?? (a !== null && b !== null ? a.distanceTo(b) : 0) };
+          });
+          let left = (time * PEOPLE_SPEED) % Math.max(legs.reduce((sum, leg) => sum + leg.length, 0), 0.01);
+          const leg = legs.find((item) => { if (left <= item.length) return true; left -= item.length; return false; }) ?? legs[0];
+          const ratio = leg.length === 0 ? 0 : left / leg.length;
+          if (leg.stair !== null) {
+            ({ point, heading } = alongStair(leg.stair, ratio));
+            if (index === live.follow) {
+              const ahead = alongStair(leg.stair, ratio + STAIR_LOOK_AHEAD / Math.max(leg.stair.length, 0.01)).point.sub(point);
+              if (ahead.x * ahead.x + ahead.z * ahead.z > 0.04) gazeYaw = Math.atan2(ahead.x, ahead.z);
+            }
+          } else if (leg.a !== null && leg.b !== null) {
+            heading = leg.b.clone().sub(leg.a);
+            point = leg.a.clone().lerp(leg.b, ratio);
+          }
+          strolling = true;
+        }
         // 같은 길을 걷는 사람이 한 점에 겹치지 않게 조금씩 비켜 세운다. 계단과 미끄럼틀에서는 한 줄로 간다.
         // 계단참의 평평한 구간도 계단이다. 거기서 비켜 서면 계단실 벽에 몸이 묻힌다.
-        if (!exiting && (person.to === null || stairPath(person.from, person.to) === null)) {
+        if (!exiting && !strolling && (person.to === null || stairPath(person.from, person.to) === null)) {
           point.x += ((index % 3) - 1) * 0.35;
           point.z += ((index % 2) - 0.5) * 0.5;
+        }
+        // 영남이: 자던 자리에서 일어나 문 앞 복도로 나와, 302호 쪽을 보며 서 있다가 출발한다.
+        // 판정상의 자리는 출발할 때까지 300호 문 지점이다. 복도 지점은 대피 경로의 첫 구간(1.1 m) 끝이라,
+        // 출발하면 판정상의 자리가 그 지점에 닿을 때까지 서서 기다린 뒤 이어 걷는다. 화면이 판정보다 앞서 위험한 곳에 서지 않는다.
+        const act = acting !== null && acting.index === index && !exiting ? acting : null;
+        const atStart = person.from === YEONGNAM.startNodeId && (person.to === null || person.to === YEONGNAM.watchNodeId);
+        const staged = act !== null && atStart;
+        const watchNode = staged ? at(YEONGNAM.watchNodeId) : null;
+        if (act !== null && staged && watchNode !== null) {
+          const door = from.clone().add(point.clone().sub(person.to === null ? from : from.clone().lerp(watchNode, person.progress)).setY(0));
+          const watch = watchNode.clone().add(door.clone().sub(from));
+          const rest = new THREE.Vector3(YEONGNAM.rest.x, from.y, YEONGNAM.rest.z);
+          if (act.phase === "SLEEP" || act.phase === "NOTICE") {
+            heading = door.clone().sub(rest);
+            point = rest;
+            if (people.bench !== null) {
+              people.bench.position.set(rest.x, from.y + 0.21, rest.z);
+              people.bench.visible = true;
+            }
+          } else if (act.phase === "RISE") {
+            const first = rest.distanceTo(door);
+            const total = first + door.distanceTo(watch);
+            const gone = total * Math.min(Math.max(((act.elapsed ?? 0) - YEONGNAM.riseAt) / (YEONGNAM.panicAt - YEONGNAM.riseAt), 0), 1);
+            heading = gone < first ? door.clone().sub(rest) : watch.clone().sub(door);
+            point = gone < first ? rest.clone().lerp(door, gone / first) : door.clone().lerp(watch, (gone - first) / Math.max(total - first, 0.01));
+          } else {
+            heading = new THREE.Vector3(YEONGNAM.watchToward.x - watch.x, 0, YEONGNAM.watchToward.z - watch.z);
+            point = watch;
+          }
         }
         figure.group.position.copy(point);
         if (heading.x * heading.x + heading.z * heading.z > 0.0001) people.yaw[index] = Math.atan2(heading.x, heading.z);
         // 걷는 길의 기울기. 계단에서는 내려가는 쪽(또는 올라가는 쪽)을 보게 하는 데 쓴다.
-        people.slope[index] = person.to === null ? 0 : Math.atan2(heading.y, Math.hypot(heading.x, heading.z));
+        people.slope[index] = person.to === null && !strolling ? 0 : Math.atan2(heading.y, Math.hypot(heading.x, heading.z));
         figure.group.rotation.set(exiting ? -0.5 : 0, people.yaw[index], 0, "YXZ");
-        poseFigure(figure, time * 6 + index, person.status === "MOVING");
+        poseFigure(figure, time * 6 + index, strolling || (staged ? act?.phase === "RISE" : person.status === "MOVING"));
+        if (act !== null) {
+          const pose = poseActing(figure, act.looking ? "LOOK" : act.phase === "EVACUATE" || act.phase === "RISE" ? null : act.phase, time);
+          figure.group.position.y -= pose.drop;
+          figure.group.rotation.x = pose.tilt;
+          if (people.earbuds !== null) people.earbuds.visible = act.phase !== "LISTEN" && act.phase !== "EVACUATE";
+        }
+        // 이름표와 상태 표시는 밖에서 볼 때만 띄운다. 「경로 집중」으로 다른 표시를 꺼도 남는다.
+        const tracked = index === live.track;
+        if (overview) {
+          const name = act !== null ? "영남이" : tracked ? `추적 중 · ${index + 1}번` : null;
+          const emote = act === null ? null : yeongnamEmote(act.phase, act.looking, act.phone);
+          const top = figure.group.position.y + 2.05;
+          if (name !== null) label(name, point.x, top, point.z, 1);
+          if (emote !== null) label(emote, point.x, top + 0.75, point.z, 1.5);
+          if (staged && act?.phase === "SLEEP") label(YEONGNAM.restLabel, point.x, top - 1.9, point.z + 1.4, 0.8);
+        }
+        marker.scale.setScalar(tracked ? 0.05 : 0.028);
         if (exiting) {
           // 앉아서 다리를 앞으로 뻗고 팔을 든다.
           figure.limbs[0].rotation.x = figure.limbs[1].rotation.x = -2.4;
           figure.limbs[2].rotation.x = figure.limbs[3].rotation.x = -1.3;
         }
         marker.position.set(point.x, point.y + 2.4, point.z);
-        marker.material.color.setHex(person.status === "STUCK" ? COLOR.personStuck : COLOR.person);
+        marker.material.color.setHex(tracked ? COLOR.journey : person.status === "STUCK" ? COLOR.personStuck : COLOR.person);
       });
+      // 지켜보는 사람의 남은 길. 매 프레임 그 사람이 선 자리에서 다시 잇는다. 서버 경로가 바뀌면 다음 프레임부터 새 경로다.
+      // 연결이 끊긴 동안에는 마지막 경로를 지금 경로처럼 보이지 않게 지운다. 1인칭에서는 다른 안내 표시처럼 그리지 않는다.
+      let rods = 0;
+      const watched = live.track === null ? undefined : people.list[live.track];
+      if (watched !== undefined && live.track !== null) {
+        if (watched.status === "OUT" && people.slide[live.track] >= SLIDE_SECONDS) {
+          if (trackEnded !== live.track) live.onTrackEnd?.();
+          trackEnded = live.track;
+        } else if (overview && live.showPeople && !live.stale) {
+          trackEnded = null;
+          const floorId = live.nodeById.get(watched.to ?? watched.from)?.floor_id;
+          if (floorId !== undefined && floorId !== trackFloor) {
+            trackFloor = floorId;
+            live.onTrackFloor?.(floorId);
+          }
+          const track = remainingTrack(watched, routesNow(), (nodeId) => live.nodeById.get(nodeId),
+            (node) => new THREE.Vector3(node.position.x, displayY(node.position.y, node.floor_id, live.lift), node.position.z), stairPath);
+          for (const piece of track.pieces) {
+            if (!live.visibleFloors.has(piece.floors[0]) || !live.visibleFloors.has(piece.floors[1])) continue;
+            let mesh = trackRods[rods];
+            if (mesh === undefined) {
+              mesh = new THREE.Mesh(trackGeometry, trackMaterial);
+              mesh.renderOrder = 9;
+              trackGroup.add(mesh);
+              trackRods.push(mesh);
+            }
+            const direction = piece.to.clone().sub(piece.from);
+            const length = direction.length();
+            mesh.position.copy(piece.from).addScaledVector(direction, 0.5);
+            mesh.quaternion.setFromUnitVectors(UP, direction.divideScalar(length));
+            mesh.scale.set(1, length, 1);
+            mesh.visible = true;
+            rods += 1;
+          }
+        }
+      }
+      if (live.track === null) trackFloor = null;
+      for (let index = rods; index < trackRods.length; index += 1) trackRods[index].visible = false;
       // 1인칭: 고른 사람의 눈높이에서 걷는 방향을 본다.
       const justPicked = live.follow !== lastFollow;
       if (live.follow === null && lastFollow !== null) live.onListener?.(null);
@@ -845,8 +1132,13 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     };
 
     let frame = 0;
+    let drawnAt = 0;
     const animate = () => {
       frame = requestAnimationFrame(animate);
+      draw();
+    };
+    const draw = () => {
+      drawnAt = performance.now();
       const following = liveRef.current.follow !== null || liveRef.current.cctv !== null;
       // 1인칭에서는 궤도 조작이 카메라를 되돌리지 않게 건너뛴다.
       if (!following) controls.update();
@@ -859,7 +1151,8 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
           child.visible = false;
           return [];
         }
-        if (child.userData.iconKind !== undefined) child.visible = true;
+        // 매 프레임 다시 정하므로 끈 표시가 다음 프레임에 되살아나지 않게 여기서 토글을 본다. 고정 형상 쪽 아이콘은 CCTV뿐이다.
+        if (child.userData.iconKind !== undefined) child.visible = liveRef.current.showCameras;
         // 설비 아이콘은 이름표 겹침 정리 대상이 아니다. 늘 보여야 한다.
         if (child.userData.iconKind !== undefined) return [];
         // CCTV·출구 이름표는 커서를 올렸을 때만 보이므로 겹침 정리에서 뺀다.
@@ -898,15 +1191,19 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         light.intensity = 26 + Math.sin(time * 13 + index) * 5 + Math.sin(time * 29) * 3;
       });
       const live = liveRef.current;
-      for (const puff of handles.smokePuffs) placeSmoke(puff, live.smokeByZone?.get(puff.zoneId) ?? 0, live.wallHeight, time);
+      const outside = live.follow === null && live.cctv === null;
+      for (const puff of handles.smokePuffs) placeSmoke(puff, live.smokeByZone?.get(puff.zoneId) ?? 0, live.wallHeight, time, outside);
       if (live.cctv) handles.fog.density = 0.012 + 0.11 * cctvSmoke(live.cctv, live.smokeByZone, live.hazardByZone.get(live.cctv.zoneId) ?? []);
       for (const {puff,smoke} of handles.fieldPuffs.values()) {
-        placeSmoke(puff,smoke,live.wallHeight,time);
-        puff.sprite.scale.multiplyScalar(.55);
+        placeSmoke(puff,smoke,live.wallHeight,time,outside);
+        // 확산 칸은 2 m 간격이다. 칸보다 조금 크게 그려 이웃 칸과 이어진 연기로 보이게 한다. 칸 밖으로 번져 보일 만큼 키우지는 않는다.
+        puff.sprite.scale.multiplyScalar(outside ? 1.15 : 1);
       }
       renderer.render(scene, camera);
     };
     animate();
+    // 개발용(?devFrames=1): 창이 가려져 화면 갱신이 멈춰도 타이머로 계속 그린다. 가려진 창에서 화면을 확인할 때만 쓴다.
+    const ticker = /[?&]devFrames=1/.test(window.location.href) ? setInterval(() => { if (performance.now() - drawnAt > 30) draw(); }, 33) : null;
 
     const resize = () => {
       const width = mount.clientWidth;
@@ -927,6 +1224,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
 
     return () => {
       cancelAnimationFrame(frame);
+      if (ticker !== null) clearInterval(ticker);
       clearInterval(walker);
       observer.disconnect();
       controls.removeEventListener("change", keepInside);
@@ -983,8 +1281,14 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       return here === undefined || ahead === undefined ? 0 : Math.atan2(ahead.position.x - here.position.x, ahead.position.z - here.position.z);
     });
     // 이미 탈출한 사람이 새로고침 뒤에 미끄럼틀을 다시 타지 않게 한다.
+    // 영남이로 지정한 기존 인원. 사람 번호는 시작 위치 목록의 순서라 걷는 중에도 바뀌지 않는다.
+    const yeongnamIndex = yeongnamSupported(building) ? spawnPeople(building).findIndex((person) => person.from === YEONGNAM.startNodeId) : -1;
+    const earbuds = yeongnamIndex >= 0 ? addEarbuds(figures[yeongnamIndex]) : null;
+    const bench = yeongnamIndex >= 0 ? new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 1.3), new THREE.MeshLambertMaterial({ color: COLOR.door })) : null;
+    if (bench !== null) group.add(bench);
+    const labels = new Map<string, THREE.Sprite>();
     peopleRef.current = { list, group, figures, markers, yaw: facing, slope: list.map(() => 0),
-      slide: list.map((person) => (person.status === "OUT" && saved !== null ? SLIDE_SECONDS : 0)), key: "", lost: 0 };
+      slide: list.map((person) => (person.status === "OUT" && saved !== null ? SLIDE_SECONDS : 0)), key: "", lost: 0, labels, earbuds, bench, yeongnamIndex };
     if (saved !== null && saved.follow !== null && list[saved.follow].status !== "OUT") liveRef.current.onFollow?.(saved.follow);
     const store = () => {
       try { savePeople(localStorage, scope, state.run_id, building, list, liveRef.current.follow); } catch { /* 저장 실패는 복원만 빠진다 */ }
@@ -997,10 +1301,16 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       handles.scene.remove(group);
       disposeTree(group);
       for (const marker of markers) marker.material.dispose();
+      for (const sprite of labels.values()) {
+        sprite.material.map?.dispose();
+        sprite.material.dispose();
+      }
       peopleRef.current = null;
     };
   }, [building, state.run_id]);
 
+  /** 지점이 처음 차단된 때(서버 기준 시각). 방금 막힌 곳에만 이유를 띄우려고 실행마다 기억한다. */
+  const blockSeen = useRef<{ runId: string; at: Map<string, number> }>({ runId: "", at: new Map() });
   const handledFollow = useRef(0);
   useEffect(() => {
     if (followRequest === null || followRequest.nonce === handledFollow.current || peopleRef.current === null) return;
@@ -1566,6 +1876,8 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       });
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
+      // 지점 구를 꺼도 누르는 자리는 남긴다(교차 판정은 visible을 보지 않는다). 표시만 바뀐다.
+      mesh.visible = showIcons;
       dynamicGroup.add(mesh);
       handles.pick = { mesh, ids: shownNodes.map((node) => node.node_id) };
     }
@@ -1711,9 +2023,10 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
 
     // 기둥은 바닥에서 벽 높이 조금 위까지. 아이콘은 그 끝에 얹어 벽 너머에서도 보이게 한다.
     const poleTop = geometry.wall_height + 0.3;
-    if (!firstPerson) placeSigns(shownSigns, () => new THREE.CylinderGeometry(0.06, 0.06, poleTop, 6), poleTop / 2);
+    // 기둥과 떠 있는 아이콘은 관제용 표시다. 꺼도 천장의 실제 유도등은 아래에서 그대로 방향을 바꾼다.
+    if (!firstPerson && showIcons) placeSigns(shownSigns, () => new THREE.CylinderGeometry(0.06, 0.06, poleTop, 6), poleTop / 2);
     handles.exitIcons = [];
-    for (const [signs, exitLocation] of firstPerson ? [] : ([[directionalSigns, false], [exitSigns, true]] as const)) {
+    for (const [signs, exitLocation] of firstPerson || !showIcons ? [] : ([[directionalSigns, false], [exitSigns, true]] as const)) {
       for (const sign of signs) {
         const node = nodeById.get(sign.node_id);
         if (node === undefined) continue;
@@ -1754,6 +2067,24 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       }
     }
 
+    // 방금 막힌 지점에 이유를 짧게 띄운다. 서버가 차단한 지점만, 확산 자료에 불이나 차단 기준 이상의 연기가 있을 때만 쓴다.
+    if (blockSeen.current.runId !== state.run_id) blockSeen.current = { runId: state.run_id, at: new Map() };
+    const basis = Date.parse(state.generated_at);
+    const hazardAt = new Map((state.fire_simulation?.cells ?? []).filter((cell) => cell.cell_id.startsWith("node:")).map((cell) => [cell.cell_id.slice(5), cell]));
+    for (const node of state.blocked_nodes) if (!blockSeen.current.at.has(node.node_id)) blockSeen.current.at.set(node.node_id, basis);
+    const fresh = firstPerson ? [] : state.blocked_nodes
+      .map((blocked) => ({ node: nodeById.get(blocked.node_id), cell: hazardAt.get(blocked.node_id), since: blockSeen.current.at.get(blocked.node_id) ?? basis }))
+      .filter((item) => item.node !== undefined && item.cell !== undefined && visibleFloors.has(item.node.floor_id) && basis - item.since < 8000 && (item.cell.fire > 0 || item.cell.smoke >= 0.5))
+      .sort((a, b) => b.since - a.since).slice(0, 3);
+    for (const { node, cell } of fresh) {
+      if (node === undefined || cell === undefined) continue;
+      const note = nameSprite(cell.fire > 0 ? "화염 · 통로 차단" : "연기 유입 · 통로 차단", handles.renderer.getSize(new THREE.Vector2()).y);
+      if (note === null) continue;
+      note.position.set(node.position.x, displayY(node.position.y, node.floor_id, lift) + 2.3, node.position.z);
+      note.renderOrder = 22;
+      dynamicGroup.add(note);
+    }
+
     // 실제 경보는 구역 표시, 위치 지정 시험은 서버가 보낸 작은 칸별 화염을 표시한다.
     const burning = [...new Set(state.active_causes.filter((cause) => cause.hazard_type === "FIRE" && !cause.ignition_position).map((cause) => sourceById.get(cause.source_id)?.zone_id))]
       .flatMap((zoneId) => {
@@ -1784,21 +2115,25 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     handles.fires = [...handles.fireObjects.values()];
     const smokeCells = (state.fire_simulation?.cells ?? []).filter(c=>c.smoke>.02 && visibleFloors.has(c.floor_id)
       && !c.cell_id.startsWith("node:") && !c.cell_id.startsWith("edge:"));
-    const smokeIds = new Set(smokeCells.map(c=>`${state.run_id}/${c.cell_id}`));
+    const smokeIds = new Set(smokeCells.flatMap(c=>[0,1].map(n=>`${state.run_id}/${c.cell_id}#${n}`)));
     for (const [key,{puff}] of handles.fieldPuffs) {
       if (!smokeIds.has(key)) { handles.smokeGroup.remove(puff.sprite); puff.sprite.material.dispose(); handles.fieldPuffs.delete(key); }
     }
     smokeCells.forEach((cell,index)=>{
-      const key = `${state.run_id}/${cell.cell_id}`;
       const baseY = displayY(cell.position.y,cell.floor_id,lift);
-      let entry = handles.fieldPuffs.get(key);
-      if (!entry) {
-        const sprite = createSmokeSprite(); handles.smokeGroup.add(sprite);
-        entry = {puff:{sprite,zoneId:cell.zone_id,baseY,x:cell.position.x,z:cell.position.z,seed:(index*.3819+.2)%1},smoke:cell.smoke};
-        handles.fieldPuffs.set(key,entry);
-      } else {
-        entry.smoke=cell.smoke;
-        entry.puff={...entry.puff,baseY,x:cell.position.x,z:cell.position.z,zoneId:cell.zone_id};
+      for (const n of [0,1]) {
+        const key = `${state.run_id}/${cell.cell_id}#${n}`;
+        let entry = handles.fieldPuffs.get(key);
+        if (!entry) {
+          const sprite = createSmokeSprite(); handles.smokeGroup.add(sprite);
+          // 두 번째 입자는 연기층의 아래쪽 절반에 둔다. 같은 칸 안에서 높이만 다르다.
+          const seed = n === 0 ? ((index*.3819+.2)%1)*.5 : .5+((index*.618+.1)%1)*.5;
+          entry = {puff:{sprite,zoneId:cell.zone_id,baseY,x:cell.position.x,z:cell.position.z,seed},smoke:cell.smoke};
+          handles.fieldPuffs.set(key,entry);
+        } else {
+          entry.smoke=cell.smoke;
+          entry.puff={...entry.puff,baseY,x:cell.position.x,z:cell.position.z,zoneId:cell.zone_id};
+        }
       }
     });
 
@@ -1931,7 +2266,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         dynamicGroup.add(halo);
       }
     }
-  }, [state, ignition, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, spread, highlightSourceId, journey, showGuidance, firstPersonView]);
+  }, [state, ignition, smokeByZone, visibleFloors, building, display, geometry, nodeById, zoneById, sourceById, lift, spread, highlightSourceId, journey, showGuidance, showIcons, firstPersonView]);
 
   return <div className="scene" ref={mountRef} />;
 }

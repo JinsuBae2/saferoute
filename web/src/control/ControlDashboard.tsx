@@ -29,6 +29,7 @@ import type { ExplanationBlockReason } from "./controlModel";
 import { EXPLANATION_ERROR_LABEL } from "./explanation";
 import { useControlSnapshot } from "./useControlSnapshot";
 import { DemoControls } from "./DemoControls";
+import { YEONGNAM, yeongnamSupported } from "../building/yeongnam";
 import { fireSelectable } from "./manualFire";
 import { CameraStation } from "./CameraStation";
 import { AiDemoSummary } from "./AiDemoSummary";
@@ -254,6 +255,8 @@ export function ControlDashboard() {
   }, [loaded]);
   /** 3D에서 고른 내 위치. 머리말의 「시연 시작」이 이것까지 있어야 열린다(이슈 #21). */
   const [startNode, setStartNode] = useState<string | null>(null);
+  /** 선택형 시연 「영남이」를 준비한 실행. 실행이 바뀌면 저절로 풀린다. */
+  const [armedRun, setArmedRun] = useState<string | null>(null);
   const [selectedCamera, setCamera] = useState<{ runId: string; sourceId: string | null; fixed: boolean; locate: number } | null>(null);
   const state = view.state;
   const space = useBuildingData(state);
@@ -299,7 +302,8 @@ export function ControlDashboard() {
   const stale = health.stale || view.stateError !== null;
   /** 경보는 해제됐지만 시작한 대피가 끝나지 않았다. 정상 복구(평상시)와 구분해 보여 준다. */
   const finishing = state.controller_mode === "NORMAL" && people !== null && people.moving + people.stuck > 0;
-  const fireZone = fire !== null && fire.runId === state.run_id ? fire.zoneId : "";
+  const armed = armedRun === state.run_id && space.building !== null && yeongnamSupported(space.building);
+  const fireZone = armed ? YEONGNAM.zoneId : fire !== null && fire.runId === state.run_id ? fire.zoneId : "";
   /**
    * 지금 도면을 누르면 무엇이 정해지는지. 화재 위치가 비어 있으면 거기부터 고른다.
    * 「처음부터」로 실행이 바뀌면 고른 화재 위치가 버려지므로, 내 위치에 갇히지 않고
@@ -330,8 +334,9 @@ export function ControlDashboard() {
             connected={!health.stale && view.stateError === null}
             zoneId={fireZone}
             ignition={simulation?.demo_ignition}
-            ignitionPosition={fire?.runId === state.run_id ? fire.position : null}
-            hasStart={startNode !== null}
+            ignitionPosition={armed ? YEONGNAM.ignition : fire?.runId === state.run_id ? fire.position : null}
+            hasStart={armed || startNode !== null}
+            scenario={yeongnamSupported(space.building) ? { armed, onToggle: () => setArmedRun(armed ? null : state.run_id) } : undefined}
             refusedZoneId={refused?.runId === state.run_id ? refused.zoneId : null}
           />
         )}
@@ -449,6 +454,7 @@ export function ControlDashboard() {
               stale={stale}
               onPeopleCount={setPeople}
               onStartNode={setStartNode}
+              yeongnamArmed={armed}
               pickTarget={aim}
               onPickTarget={setPickTarget}
               onPickZone={(zoneId, position) => {
@@ -457,6 +463,8 @@ export function ControlDashboard() {
                   return;
                 }
                 setRefused(null);
+                // 도면에서 화재 위치를 직접 고르면 일반 체험이다.
+                setArmedRun(null);
                 setFire({ runId: state.run_id, zoneId, position });
                 // 화재 위치를 정했으면 다음은 내 위치다. 한 번 더 누르면 바로 이어진다.
                 setPickTarget("NODE");

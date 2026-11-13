@@ -18,6 +18,8 @@ export type Person = {
   status: PersonStatus;
   /** 안내가 바뀌어 직전 지점으로 되돌아가는 중. 닿을 때까지는 다시 돌아서지 않는다. */
   returning?: boolean;
+  /** 시연 연출로 잠시 세워 둔다(자는 중·유도등 확인 중). 저장하지 않고 장면이 매번 정한다. 서버 경로·위험 판정은 그대로다. */
+  hold?: boolean;
   /** 경보로 대피를 시작했다. 한 번 시작하면 경보가 해제돼도 탈출할 때까지 이어 간다. 초기화(새 실행)에서만 처음으로 돌아간다. */
   started?: boolean;
 };
@@ -56,6 +58,10 @@ export function stepPeople(
     // 오래된 상태의 경보로 대피를 시작하지 않는다.
     if (alarm && valid) person.started = true;
     if (person.started !== true) {
+      person.status = "WAITING";
+      continue;
+    }
+    if (person.hold === true) {
       person.status = "WAITING";
       continue;
     }
