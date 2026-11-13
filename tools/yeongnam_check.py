@@ -8,8 +8,10 @@
 web/src/building/yeongnam.ts에서, 계단 길이는 data/space/wfi-stair-travel-v1.json에서 읽는다.
 
 확인하는 것
-- 두 번의 경로 변경이 불꽃이 아니라 연기로 생기는지(그 시점에 막힌 지점의 불꽃 값 0, 불꽃만 반영하면 더 늦게 바뀜)
-- 영남이가 선 자리·걷는 방향의 정면 유도등 면이 그때 바뀌는지
+- 첫 경로 변경이 불꽃이 아니라 연기로 생기는지(그 시점에 막힌 지점의 불꽃 값 0, 불꽃만 반영하면 더 늦게 바뀜)
+- 영남이가 문밖에 서서 마주 보는 유도등 면이 그때 직진에서 우회전으로 바뀌는지, 그 오른쪽 길이 실제 대피 경로인지
+- 서 있는 동안 그 자리에서 벽에 가리지 않는 복도 안에 불꽃과 연기가 있는지
+- 서 있는 자리(판정상의 자리보다 앞선 화면상의 자리)가 그동안 서버 차단 대상이 아닌지
 - 매 순간 영남이가 선 지점·걷는 통로가 그 시점의 서버 차단 대상이 아닌지, 출구에 닿는지
 - 다른 인원이 모두 탈출하는지
 시험용 확산 모형 위의 확인이다. 실제 연소·피난 시간을 말하지 않는다.
@@ -30,7 +32,6 @@ from backend.routing import calculate_routes
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEED, DT, HORIZON = 1.2, 0.25, 240
-LOOK = 1.5
 
 
 def settings():
@@ -39,8 +40,27 @@ def settings():
     def word(name): return re.search(rf'\b{name}: "([^"]+)"', text).group(1)
     x, y, z = map(float, re.search(r"ignition: \{ x: ([0-9.]+), y: ([0-9.]+), z: ([0-9.]+) \}", text).groups())
     toward = re.search(r"watchToward: \{ x: ([0-9.]+), z: ([0-9.]+) \}", text).groups()
-    return dict(start=word("startNodeId"), zone=word("zoneId"), watch=word("watchNodeId"), toward=tuple(map(float, toward)),
-                ignition=Position(x=x, y=y, z=z), **{k: number(k) for k in ["panicAt", "listenAt", "departAt"]})
+    return dict(start=word("startNodeId"), zone=word("zoneId"), watch=word("watchNodeId"), ahead=word("aheadNodeId"), toward=tuple(map(float, toward)),
+                ignition=Position(x=x, y=y, z=z), **{k: number(k) for k in ["panicAt", "listenAt", "departAt", "watchAhead", "lookSeconds"]})
+
+
+def stand(world, cfg):
+    """문밖에 서는 자리: 문 앞 복도 지점에서 다음 갈림길 쪽으로 watchAhead만큼 간 곳. (x, z, 거기까지 걷는 거리)"""
+    a, b = world.nodes[cfg["watch"]].position, world.nodes[cfg["ahead"]].position
+    ratio = cfg["watchAhead"] / world.length(cfg["watch"], cfg["ahead"])
+    return a.x + (b.x - a.x) * ratio, a.z + (b.z - a.z) * ratio, world.length(cfg["start"], cfg["watch"]) + cfg["watchAhead"]
+
+
+def in_sight(world, cells, x, z, floor):
+    """그 자리에서 벽에 가리지 않는 확산 칸 가운데 불꽃이 있는 칸과 연기가 짙은(0.3 이상) 칸의 거리 목록."""
+    fire, smoke = [], []
+    for c in cells.values():
+        if c.floor_id != floor or c.cell_id.startswith(("node:", "edge:")) or (c.fire <= 0 and c.smoke < 0.3): continue
+        if any(crosses_wall(Position(x=x, y=0, z=z), Position(x=c.position.x, y=0, z=c.position.z), wall) for wall in world.walls.get(floor, [])): continue
+        d = round(math.hypot(c.position.x - x, c.position.z - z), 1)
+        if c.fire > 0: fire.append(d)
+        if c.smoke >= 0.3: smoke.append(d)
+    return sorted(fire), sorted(smoke)
 
 
 class World:
@@ -141,18 +161,26 @@ def seen_changes(world, before, after, x, z, floor, hx, hz):
 
 
 def run(world, timeline, cfg, delay=0.0):
-    """영남이 한 명. 출발 전에는 문 지점에서 기다리고(화면에서는 복도 지점에 서서 남쪽을 본다), 정면 유도등이 바뀌면 잠깐 선다."""
+    """영남이 한 명. 출발 전에는 문 지점에서 기다리고(화면에서는 문밖 서는 자리에서 남쪽을 본다), 정면 유도등이 바뀌면 잠깐 선다."""
     p, t, hold, exposed, witnessed, trace = person(cfg["start"]), 0.0, 0.0, 0.0, [], []
     depart = cfg["departAt"] + delay
-    watch = world.nodes[cfg["watch"]].position
+    sx, sz, reach = stand(world, cfg)
+    ahead_blocked, phone_at = 0.0, None
     while t < HORIZON and p["status"] != "OUT":
         routes, blocked_nodes, blocked_edges, faces = timeline.at(t)
+        # 화면에서는 판정상의 자리가 서는 자리에 닿을 때까지 거기 서 있다(web BuildingScene과 같은 규칙).
+        walked = (p["progress"] * world.length(cfg["start"], cfg["watch"]) if p["from"] == cfg["start"] and p["to"] in (None, cfg["watch"])
+                  else world.length(cfg["start"], cfg["watch"]) + p["progress"] * world.length(cfg["watch"], cfg["ahead"]) if p["from"] == cfg["watch"] and p["to"] == cfg["ahead"] and not p["returning"]
+                  else math.inf)
+        staged = walked < reach
+        # 서 있는 자리는 문 앞 복도 지점과 다음 갈림길 사이다. 깨어 나와 있는 동안 그 통로와 두 지점이 막히면 안 된다.
+        if staged and t >= cfg["panicAt"] + delay and (cfg["watch"] in blocked_nodes or cfg["ahead"] in blocked_nodes or any(e in blocked_edges for e in world.edges.get((cfg["watch"], cfg["ahead"]), []))): ahead_blocked += DT
+        if phone_at is None and t >= depart and p["status"] != "OUT" and p["from"] not in (cfg["start"], cfg["watch"]): phone_at = t
         if t >= 1 and abs(t - round(t)) < 1e-9 and t >= cfg["panicAt"] + delay:
             a = world.nodes[p["from"]]
             b = world.nodes[p["to"]] if p["to"] else None
-            staged = p["from"] == cfg["start"] and p["to"] in (None, cfg["watch"])
             if staged:
-                x, z, floor = watch.x, watch.z, a.floor_id
+                x, z, floor = sx, sz, a.floor_id
                 hx, hz = cfg["toward"][0] - x, cfg["toward"][1] - z
             elif b is not None and a.floor_id == b.floor_id:
                 x, z, floor = a.position.x + (b.position.x - a.position.x) * p["progress"], a.position.z + (b.position.z - a.position.z) * p["progress"], a.floor_id
@@ -162,15 +190,16 @@ def run(world, timeline, cfg, delay=0.0):
             if size > 0.01:
                 seen = seen_changes(world, timeline.at(t - 1)[3], faces, x, z, floor, hx / size, hz / size)
                 if seen:
-                    witnessed.append((t, seen)); hold = LOOK
-        if t >= depart:
-            if hold > 0: hold -= DT
-            else: step(world, p, routes, SPEED * DT)
+                    witnessed.append((t, seen)); hold = cfg["lookSeconds"]
+        # 변경을 본 순간부터 lookSeconds 동안 서 있는다(출발 시각 전이면 그 시간과 겹친다).
+        # 서는 자리에 닿기 전에는 화면의 영남이가 이미 서 있으므로 판정상의 걷기는 멈추지 않는다.
+        if hold > 0: hold -= DT
+        if t >= depart and (staged or hold <= 0): step(world, p, routes, SPEED * DT)
         on_blocked = (p["from"] in blocked_nodes) if p["to"] is None else any(e in blocked_edges for e in world.edges.get((p["from"], p["to"]), []))
         if p["status"] != "OUT" and on_blocked: exposed += DT
         if abs(t * 2 - round(t * 2)) < 1e-9: trace.append((t, p["from"], p["to"], round(p["progress"], 2), p["status"], on_blocked))
         t += DT
-    return dict(status=p["status"], out=t if p["status"] == "OUT" else None, exposed=exposed, witnessed=witnessed, trail=p["trail"], trace=trace, depart=depart)
+    return dict(status=p["status"], out=t if p["status"] == "OUT" else None, exposed=exposed, witnessed=witnessed, trail=p["trail"], trace=trace, depart=depart, ahead_blocked=ahead_blocked, phone_at=phone_at)
 
 
 def others(world, timeline, skip):
@@ -184,10 +213,9 @@ def others(world, timeline, skip):
 
 
 def changes(world, timeline, cfg):
-    """경로가 바뀌는 두 시점과, 그때 새로 막힌 지점의 불·연기, 불꽃만 반영했을 때의 변경 시점."""
+    """문 앞 복도 지점의 남은 경로가 처음 바뀌는 시점과, 그때 새로 막힌 지점의 불·연기, 불꽃만 반영했을 때의 변경 시점."""
     found = []
-    for node in [cfg["watch"], None]:
-        # 첫 변경: 복도 지점의 남은 경로가 달라지는 때. 두 번째: 그 뒤 다시 달라지는 때.
+    for node in [cfg["watch"]]:
         origin = cfg["watch"]
         since = found[-1]["at"] + 1 if found else 1
         at = next(t for t in range(since, HORIZON) if timeline.at(t)[0][origin].path_node_ids != timeline.at(t - 1)[0][origin].path_node_ids)
@@ -204,6 +232,11 @@ def report(delays):
     timeline = Timeline(world, cfg["zone"], cfg["ignition"])
     result = dict(config={k: (v.model_dump() if isinstance(v, Position) else v) for k, v in cfg.items()}, changes=changes(world, timeline, cfg),
                   others=others(world, timeline, cfg["start"]), runs={})
+    sx, sz, _ = stand(world, cfg)
+    floor = world.nodes[cfg["watch"]].floor_id
+    # 당황하기 시작할 때와 유도등이 바뀔 때, 서 있는 자리에서 보이는 불꽃·짙은 연기.
+    result["sight"] = {at: in_sight(world, timeline.cells(at), sx, sz, floor) for at in [int(cfg["panicAt"]), result["changes"][0]["at"]]}
+    result["route_after"] = result["changes"][0]["after"]
     for delay in delays:
         r = run(world, timeline, cfg, delay)
         result["runs"][delay] = r
@@ -221,12 +254,19 @@ def problems(result):
     for delay, r in result["runs"].items():
         if r["status"] != "OUT": bad.append(f"지연 {delay}초: 탈출하지 못함({r['status']})")
         if r["exposed"] > 0: bad.append(f"지연 {delay}초: 차단된 지점·통로 위에 {r['exposed']}초 있었다")
+    for at, (fire, smoke) in result["sight"].items():
+        if len(fire) < 3: bad.append(f"{at}초: 서 있는 자리에서 보이는 복도의 불꽃 칸이 {len(fire)}개뿐이다")
+        if not smoke: bad.append(f"{at}초: 서 있는 자리에서 보이는 짙은 연기가 없다")
+    cfg = result["config"]
+    if result["route_after"][:2] != [cfg["watch"], cfg["ahead"]]: bad.append(f"바뀐 경로가 서 있는 자리 앞 갈림길을 지나지 않는다: {result['route_after'][:3]}")
+    for delay, r in result["runs"].items():
+        if r["ahead_blocked"] > 0: bad.append(f"지연 {delay}초: 문밖에 서 있는 동안 그 자리가 {r['ahead_blocked']}초 차단 대상이었다")
     base = result["runs"].get(0)
     if base is not None:
-        standing = [at for at, _ in base["witnessed"] if at < base["depart"]]
-        moving = [at for at, _ in base["witnessed"] if at >= base["depart"]]
-        if not standing: bad.append("기본 실행에서 출발 전에 바뀐 안내를 확인하지 못함")
-        if not moving: bad.append("기본 실행에서 이동 중에 정면 유도등의 화살표 변경을 보지 못함")
+        standing = [seen for at, seen in base["witnessed"] if at < base["depart"] + 1]
+        if not standing: bad.append("기본 실행에서 문밖에 서서 유도등 변경을 보지 못함")
+        elif not any("FORWARD→RIGHT" in item for seen in standing for item in seen): bad.append(f"문밖에서 본 변경이 직진→우회전이 아니다: {standing}")
+        if base["phone_at"] is None or base["phone_at"] < base["depart"]: bad.append("휴대폰을 꺼내는 시점이 출발 뒤가 아니다")
     return bad
 
 
@@ -243,6 +283,9 @@ def main():
     for delay, r in result["runs"].items():
         print(f"지연 {delay:g}초: 출발 {r['depart']:g}초 · {r['status']} {r['out']}초 · 차단 구간 위 {r['exposed']}초 · {' > '.join(r['trail'])}")
         for at, seen in r["witnessed"]: print(f"    {at:g}초 정면 유도등 변경: {', '.join(seen)}")
+        print(f"    휴대폰 {r['phone_at']}초 · 서 있는 자리 차단 {r['ahead_blocked']}초")
+    for at, (fire, smoke) in result["sight"].items():
+        print(f"{at}초 서 있는 자리에서 보이는 복도: 불꽃 {len(fire)}칸(가장 가까운 곳 {fire[0] if fire else '-'} m) · 짙은 연기 {len(smoke)}칸(가장 가까운 곳 {smoke[0] if smoke else '-'} m)")
     bad = problems(result)
     for line in bad: print("실패:", line)
     return 1 if bad else 0

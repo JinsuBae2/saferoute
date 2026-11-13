@@ -391,9 +391,9 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             <p role="status" className="panel__note">
               <strong>영남이 시연</strong> · {yeongnam.out ? "탈출 완료" : !yeongnam.ignited ? "준비됨 · 휴게공간(시연 설정)에서 자는 중 · 「시연 시작」을 누르면 화재가 납니다"
                 : yeongnam.stuck ? "서버가 안내할 경로를 찾지 못해 멈춤 · 휴대폰에 행동 안내 표시"
-                : yeongnam.looking ? (yeongnam.phase === "EVACUATE" ? "이동 중 · 정면 유도등의 화살표가 바뀌는 것을 목격" : "출발 전 · 정면 유도등의 바뀐 안내를 확인하는 중")
-                : yeongnam.phone ? (yeongnam.sawWhileMoving ? "바뀐 방향으로 대피 중 · 휴대폰을 꺼내 QR로 위치 확인" : "현재 유도등 안내에 따라 대피 중 · 휴대폰으로 QR 위치 확인(이동 중 유도등 변경은 보지 못함)")
-                : yeongnam.phase === "EVACUATE" && yeongnam.sawWhileMoving ? "바뀐 유도등 방향으로 대피 중" : YEONGNAM_PHASE_LABEL[yeongnam.phase]}
+                : yeongnam.looking ? "눈앞의 유도등 화살표가 바뀌는 것을 확인하는 중"
+                : yeongnam.phone ? (yeongnam.sawChange ? "바뀐 방향으로 대피 중 · 휴대폰을 꺼내 QR로 위치 확인" : "현재 유도등 안내에 따라 대피 중 · 휴대폰으로 QR 위치 확인(유도등이 바뀌는 순간은 보지 못함)")
+                : yeongnam.phase === "EVACUATE" && yeongnam.sawChange ? "바뀐 유도등 방향으로 대피 중" : YEONGNAM_PHASE_LABEL[yeongnam.phase]}
               {yeongnam.ignited && yeongnam.phase === "LISTEN" && caption !== null && ` · 방송: ${caption}`}
               {yeongnam.ignited && ` · 서버가 차단한 지점·통로 위에 있던 시간 ${yeongnam.exposedSeconds.toFixed(1)}초`}
               {" · 행동만 연출이며 불·연기·경로·유도등은 서버 결과입니다"}
@@ -450,6 +450,8 @@ export function BuildingPanel({ cctv, onCamera, state, simulation, building, dis
             onPickZone={onPickZone}
             pickTarget={pickTarget}
           />
+          {/* 눈앞의 유도등이 실제로 바뀐 순간에만 잠깐 띄우는 보조 자막. 화살표 변경 자체는 3D의 유도등에서 보인다. */}
+          {yeongnam?.notice != null && <p role="status" className="scene-caption">{yeongnam.notice}</p>}
           {firstPerson && <PhoneGuide key={`${runKey}/${follow}`} building={building} display={display} geometry={geometry} state={state} stale={stale}
             acting={yeongnam !== null && yeongnam.index === follow && yeongnam.phone}
             pose={phonePose?.personIndex === follow && phonePose.runId === state.run_id ? phonePose : null} />}
