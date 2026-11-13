@@ -1,0 +1,1176 @@
+{
+  "building_id": "WFI",
+  "building_version": 6,
+  "faces": {
+    "SIGN-F1-X-N/FRONT": {
+      "form": "CEILING",
+      "x": 32.4,
+      "z": 5.925,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-X-S/FRONT": {
+      "form": "CEILING",
+      "x": 32.4,
+      "z": 27.275,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F1-X-NW/FRONT": {
+      "form": "CEILING",
+      "x": 17.4,
+      "z": 5.925,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-X-SE/FRONT": {
+      "form": "CEILING",
+      "x": 40.1,
+      "z": 27.175,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F1-J-PN/FRONT": {
+      "form": "SOLID",
+      "x": 32.4,
+      "z": 9.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-J-PN/REAR": {
+      "form": "SOLID",
+      "x": 32.4,
+      "z": 8.4,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F1-J-PN/FROM-F1-J-LNW": {
+      "form": "SOLID",
+      "x": 31.8,
+      "z": 9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-PM/FRONT": {
+      "form": "SOLID",
+      "x": 32.4,
+      "z": 15.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-J-PM/REAR": {
+      "form": "SOLID",
+      "x": 32.4,
+      "z": 14.4,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F1-J-PM/FROM-F1-J-LM": {
+      "form": "SOLID",
+      "x": 31.81,
+      "z": 15.109,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -0.983,
+      "normal_z": 0.182
+    },
+    "SIGN-F1-J-PM/FROM-F1-S-B": {
+      "form": "SOLID",
+      "x": 32.989,
+      "z": 15.113,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0.982,
+      "normal_z": 0.188
+    },
+    "SIGN-F1-J-PS/FRONT": {
+      "form": "SOLID",
+      "x": 32.4,
+      "z": 22.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F1-J-PS/REAR": {
+      "form": "SOLID",
+      "x": 32.4,
+      "z": 23.8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-J-PS/FROM-F1-D-R101": {
+      "form": "SOLID",
+      "x": 33,
+      "z": 23.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-PS/FROM-F1-J-LS": {
+      "form": "SOLID",
+      "x": 31.8,
+      "z": 23.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LNW/FRONT": {
+      "form": "SOLID",
+      "x": 17.4,
+      "z": 9.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-J-LNW/REAR": {
+      "form": "SOLID",
+      "x": 17.4,
+      "z": 8.4,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F1-J-LNW/FROM-F1-J-PN": {
+      "form": "SOLID",
+      "x": 18,
+      "z": 9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LW/FRONT": {
+      "form": "SOLID",
+      "x": 12.4,
+      "z": 11.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LW/REAR": {
+      "form": "SOLID",
+      "x": 13.6,
+      "z": 11.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LW/FROM-F1-D-R102": {
+      "form": "SOLID",
+      "x": 13.302,
+      "z": 11.382,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0.504,
+      "normal_z": -0.864
+    },
+    "SIGN-F1-J-LE/FRONT": {
+      "form": "SOLID",
+      "x": 16.5,
+      "z": 12.5,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-J-LE/REAR": {
+      "form": "SOLID",
+      "x": 16.5,
+      "z": 11.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F1-J-LE/FROM-F1-J-LC": {
+      "form": "SOLID",
+      "x": 17.083,
+      "z": 12.042,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0.971,
+      "normal_z": 0.237
+    },
+    "SIGN-F1-J-LE/FROM-F1-J-LW": {
+      "form": "SOLID",
+      "x": 15.9,
+      "z": 11.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LC/FRONT": {
+      "form": "SOLID",
+      "x": 21.6,
+      "z": 13,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LC/REAR": {
+      "form": "SOLID",
+      "x": 20.4,
+      "z": 13,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LC/FROM-F1-S-C": {
+      "form": "SOLID",
+      "x": 21.333,
+      "z": 13.499,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0.555,
+      "normal_z": 0.832
+    },
+    "SIGN-F1-J-LM/FRONT": {
+      "form": "SOLID",
+      "x": 26.4,
+      "z": 16,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LM/REAR": {
+      "form": "SOLID",
+      "x": 27.6,
+      "z": 16,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LM/FROM-F1-J-LS": {
+      "form": "SOLID",
+      "x": 27,
+      "z": 16.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F1-J-LS/FRONT": {
+      "form": "SOLID",
+      "x": 26.4,
+      "z": 23.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LS/REAR": {
+      "form": "SOLID",
+      "x": 27.6,
+      "z": 23.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F1-J-LS/FROM-F1-J-LM": {
+      "form": "SOLID",
+      "x": 27,
+      "z": 22.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-N2/REAR": {
+      "form": "SOLID",
+      "x": 15,
+      "z": 6.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-N2/FROM-F2-J-N1": {
+      "form": "SOLID",
+      "x": 14.4,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N2/FROM-F2-J-N3": {
+      "form": "SOLID",
+      "x": 15.6,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N3/FRONT": {
+      "form": "SOLID",
+      "x": 17.2,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N3/REAR": {
+      "form": "SOLID",
+      "x": 16,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N3/FROM-F2-D-R201": {
+      "form": "SOLID",
+      "x": 16.6,
+      "z": 5.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-N4/FRONT": {
+      "form": "SOLID",
+      "x": 24.9,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N4/REAR": {
+      "form": "SOLID",
+      "x": 26.1,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N4/FROM-F2-J-E1": {
+      "form": "SOLID",
+      "x": 25.5,
+      "z": 6.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-N6/REAR": {
+      "form": "SOLID",
+      "x": 30.5,
+      "z": 6.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-N6/FROM-F2-J-N4": {
+      "form": "SOLID",
+      "x": 29.9,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N6/FROM-F2-J-N7": {
+      "form": "SOLID",
+      "x": 31.1,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-N7/FRONT": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 5.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-N7/REAR": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 6.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-N7/FROM-F2-J-N6": {
+      "form": "SOLID",
+      "x": 36.3,
+      "z": 6.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-R1/FRONT": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 7.1,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-R1/REAR": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 8.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-R1/FROM-F2-D-R203": {
+      "form": "SOLID",
+      "x": 37.5,
+      "z": 7.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-R2/REAR": {
+      "form": "SOLID",
+      "x": 36.3,
+      "z": 15.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-R2/FROM-F2-J-R1": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 14.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-R2/FROM-F2-J-R2B": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 15.8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-R2B/FRONT": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 17.1,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-R2B/REAR": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 15.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-R2B/FROM-F2-D-ADMIN": {
+      "form": "SOLID",
+      "x": 37.5,
+      "z": 16.5,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-R3/REAR": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 21.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-R3/FROM-F2-D-DIRECTOR": {
+      "form": "SOLID",
+      "x": 37.5,
+      "z": 22.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-R3/FROM-F2-D-INDUSTRY-E": {
+      "form": "SOLID",
+      "x": 36.3,
+      "z": 22.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-W1/REAR": {
+      "form": "SOLID",
+      "x": 14.4,
+      "z": 16.5,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-W1/FROM-F2-J-N2": {
+      "form": "SOLID",
+      "x": 15,
+      "z": 15.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-W1/FROM-F2-J-W2": {
+      "form": "SOLID",
+      "x": 15,
+      "z": 17.1,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-E2/REAR": {
+      "form": "SOLID",
+      "x": 26.1,
+      "z": 18.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-E2/FROM-F2-J-E1": {
+      "form": "SOLID",
+      "x": 25.5,
+      "z": 17.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-J-E2/FROM-F2-S-C": {
+      "form": "SOLID",
+      "x": 25.254,
+      "z": 18.847,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -0.41,
+      "normal_z": 0.912
+    },
+    "SIGN-F2-J-E4/REAR": {
+      "form": "SOLID",
+      "x": 31.1,
+      "z": 15.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-J-E4/FROM-F2-J-E3": {
+      "form": "SOLID",
+      "x": 30.5,
+      "z": 15.8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F2-J-E4/FROM-F2-J-N6": {
+      "form": "SOLID",
+      "x": 30.5,
+      "z": 14.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F2-S-A/FRONT": {
+      "form": "CEILING",
+      "x": 13.325,
+      "z": 16.5,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F2-S-B/FRONT": {
+      "form": "CEILING",
+      "x": 34.05,
+      "z": 15.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F2-S-B/FROM-F2-J-R2": {
+      "form": "CEILING",
+      "x": 34.15,
+      "z": 15.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N1/FRONT": {
+      "form": "CEILING",
+      "x": 9.95,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N1/REAR": {
+      "form": "CEILING",
+      "x": 10.05,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N2/REAR": {
+      "form": "SOLID",
+      "x": 15.8,
+      "z": 6.8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-N2/FROM-F3-J-N1": {
+      "form": "SOLID",
+      "x": 15.2,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N2/FROM-F3-J-N3": {
+      "form": "SOLID",
+      "x": 16.4,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N3/FRONT": {
+      "form": "SOLID",
+      "x": 27.2,
+      "z": 6.1,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N3/REAR": {
+      "form": "SOLID",
+      "x": 28.4,
+      "z": 6.1,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N3/FROM-F3-S-D": {
+      "form": "SOLID",
+      "x": 27.8,
+      "z": 6.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-N4/REAR": {
+      "form": "SOLID",
+      "x": 30.6,
+      "z": 6.8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-N4/FROM-F3-J-N3": {
+      "form": "SOLID",
+      "x": 30,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N4/FROM-F3-J-N6": {
+      "form": "SOLID",
+      "x": 31.2,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N6/FRONT": {
+      "form": "SOLID",
+      "x": 33.9,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N6/REAR": {
+      "form": "SOLID",
+      "x": 35.1,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-N6/FROM-F3-D-ROOM-NE": {
+      "form": "SOLID",
+      "x": 34.5,
+      "z": 5.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-N5/FRONT": {
+      "form": "SOLID",
+      "x": 37.1,
+      "z": 5.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-N5/REAR": {
+      "form": "SOLID",
+      "x": 37.1,
+      "z": 6.8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-N5/FROM-F3-J-N6": {
+      "form": "SOLID",
+      "x": 36.5,
+      "z": 6.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-R1/FRONT": {
+      "form": "SOLID",
+      "x": 37.1,
+      "z": 8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-R1/REAR": {
+      "form": "SOLID",
+      "x": 37.1,
+      "z": 9.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-R1/FROM-F3-D-R301": {
+      "form": "SOLID",
+      "x": 37.7,
+      "z": 8.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-R2/FRONT": {
+      "form": "SOLID",
+      "x": 37.7,
+      "z": 15.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-R2/REAR": {
+      "form": "SOLID",
+      "x": 36.5,
+      "z": 15.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-R2/FROM-F3-J-R1": {
+      "form": "SOLID",
+      "x": 37.1,
+      "z": 14.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-R2/FROM-F3-J-R3": {
+      "form": "SOLID",
+      "x": 37.1,
+      "z": 15.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-R3/REAR": {
+      "form": "SOLID",
+      "x": 37.1,
+      "z": 23.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-R3/FROM-F3-D-R303": {
+      "form": "SOLID",
+      "x": 37.7,
+      "z": 23.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-E1/REAR": {
+      "form": "SOLID",
+      "x": 31.2,
+      "z": 15.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-E1/FROM-F3-J-E2": {
+      "form": "SOLID",
+      "x": 30.722,
+      "z": 15.888,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0.203,
+      "normal_z": 0.979
+    },
+    "SIGN-F3-J-E1/FROM-F3-J-N4": {
+      "form": "SOLID",
+      "x": 30.6,
+      "z": 14.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-W1/REAR": {
+      "form": "SOLID",
+      "x": 15.2,
+      "z": 16.5,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-W1/FROM-F3-J-N2": {
+      "form": "SOLID",
+      "x": 15.8,
+      "z": 15.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-W1/FROM-F3-J-W2": {
+      "form": "SOLID",
+      "x": 15.662,
+      "z": 17.084,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -0.23,
+      "normal_z": 0.973
+    },
+    "SIGN-F3-J-W2/FRONT": {
+      "form": "SOLID",
+      "x": 14.5,
+      "z": 22.9,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-W2/REAR": {
+      "form": "SOLID",
+      "x": 14.5,
+      "z": 21.7,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-W2/FROM-F3-J-SW": {
+      "form": "SOLID",
+      "x": 13.9,
+      "z": 22.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-SW/FRONT": {
+      "form": "SOLID",
+      "x": 7.5,
+      "z": 22,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-SW/REAR": {
+      "form": "SOLID",
+      "x": 8.7,
+      "z": 22,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-SW/FROM-F3-D-R307": {
+      "form": "SOLID",
+      "x": 8.1,
+      "z": 21.4,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-S-A/FRONT": {
+      "form": "CEILING",
+      "x": 13.325,
+      "z": 16.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-S-B/FRONT": {
+      "form": "CEILING",
+      "x": 34.05,
+      "z": 15.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    },
+    "SIGN-F3-S-B/FROM-F3-J-R2": {
+      "form": "CEILING",
+      "x": 34.15,
+      "z": 15.3,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 1,
+      "normal_z": 0
+    },
+    "SIGN-F3-J-R4/FRONT": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 22.8,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": 1
+    },
+    "SIGN-F3-J-R4/REAR": {
+      "form": "SOLID",
+      "x": 36.9,
+      "z": 21.6,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": 0,
+      "normal_z": -1
+    },
+    "SIGN-F3-J-R4/FROM-F3-D-R304-E": {
+      "form": "SOLID",
+      "x": 36.3,
+      "z": 22.2,
+      "y": 2.45,
+      "tall": 0.4,
+      "facing": 0.82,
+      "normal_x": -1,
+      "normal_z": 0
+    }
+  }
+}

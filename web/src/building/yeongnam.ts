@@ -15,7 +15,7 @@
 import type { Building, Position, StateSnapshot } from "@contracts";
 import type { WallRect } from "./geometry";
 import { segmentHitsWall } from "./geometry";
-import { facePlace, SIGN_HEIGHT, SIGN_TALL } from "./signMount";
+import type { SignInstall } from "./signMount";
 
 export const YEONGNAM = {
   buildingId: "WFI",
@@ -110,7 +110,7 @@ export type Viewer = { readonly x: number; readonly z: number; readonly floorId:
 const SIGN_SIGHT = 14;
 const SIGN_AHEAD = 0.82;
 const EYE = 1.6;
-/** 1인칭 화면 위쪽 끝까지의 올려본각 여유(도). 이보다 높이 올려다봐야 하면 면이 화면 위로 벗어난다. */
+/** 1인칭 화면 위아래 끝까지의 각 여유(도). 이보다 더 올려다보거나 내려다봐야 하면 면이 화면 밖으로 벗어난다. */
 const SIGN_LIFT = 30;
 
 /**
@@ -120,9 +120,8 @@ const SIGN_LIFT = 30;
  * 화살표가 다른 화살표로 바뀐 것만 센다. 꺼지거나 켜진 것(안내 불가 전환), 등 뒤나 먼 곳의 변경,
  * 경로만 바뀌고 화살표는 같은 것은 "방향 변경을 봤다"가 아니다.
  */
-export function witnessedSignChanges(building: Pick<Building, "signs" | "nodes">, walls: readonly WallRect[], before: FaceShown, after: FaceShown, viewer: Viewer): string[] {
+export function witnessedSignChanges(building: Pick<Building, "signs" | "nodes">, walls: readonly WallRect[], before: FaceShown, after: FaceShown, installs: ReadonlyMap<string, SignInstall>, viewer: Viewer): string[] {
   const seen: string[] = [];
-  const tooClose = (SIGN_HEIGHT + SIGN_TALL / 2 - EYE) / Math.tan((SIGN_LIFT * Math.PI) / 180);
   for (const sign of building.signs) {
     const node = building.nodes.find((item) => item.node_id === sign.node_id);
     if (node === undefined || node.floor_id !== viewer.floorId) continue;
@@ -131,14 +130,18 @@ export function witnessedSignChanges(building: Pick<Building, "signs" | "nodes">
       const was = before.get(key);
       const now = after.get(key);
       if (was == null || now == null || was === now) continue;
-      const place = facePlace(sign, node, face);
+      // 달지 않은 면(볼 사람이 없는 쪽)은 바뀌어도 볼 수 없다.
+      const place = installs.get(sign.sign_id)?.faces.get(face.face_id);
+      if (place === undefined) continue;
+      // 눈높이에서 위아래로 벗어난 만큼. 높이 걸린 천장형도, 낮게 붙은 벽부형도 바짝 다가서면 화면 밖이다.
+      const tooClose = (Math.abs(place.y - EYE) + place.tall / 2) / Math.tan((SIGN_LIFT * Math.PI) / 180);
       const dx = place.x - viewer.x;
       const dz = place.z - viewer.z;
       const distance = Math.hypot(dx, dz);
       if (distance < tooClose || distance > SIGN_SIGHT) continue;
       if ((dx * viewer.headingX + dz * viewer.headingZ) / distance < SIGN_AHEAD) continue;
       // 면이 보는 사람 쪽을 향해 있어야 한다(면의 앞쪽에서, 너무 비스듬하지 않게).
-      if ((-dx * place.normalX - dz * place.normalZ) / distance < SIGN_AHEAD) continue;
+      if ((-dx * place.normalX - dz * place.normalZ) / distance < place.facing) continue;
       if (walls.some((wall) => segmentHitsWall(wall, viewer.x, viewer.z, place.x, place.z))) continue;
       seen.push(key);
     }

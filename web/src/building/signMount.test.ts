@@ -3,12 +3,15 @@ import type { Building } from "@contracts";
 import rawBuilding from "@space/wfi-v1.json";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 import { insidePolygon, parseGeometry, segmentHitsWall, visibleWalls } from "./geometry";
-import { facePlace, QR_SIZE, qrMounts, SIGN_HEIGHT, singleBoard } from "./signMount";
+import rawInstall from "@space/wfi-sign-install-v1.json";
+import { faceHidden, fixtureHitsWall, fixtureParts, QR_SIZE, qrMounts, signInstalls } from "./signMount";
 
 const building = rawBuilding as Building;
 const geometry = parseGeometry(rawGeometry);
 const nodes = new Map(building.nodes.map((node) => [node.node_id, node]));
 const mounts = qrMounts(building, geometry.floors, geometry.stairs);
+const installs = signInstalls(building, geometry.floors);
+const wallsOf = (signId: string) => geometry.floors.find((floor) => floor.floor_id === nodes.get(building.signs.find((sign) => sign.sign_id === signId)!.node_id)!.floor_id)!.walls;
 
 describe("유도등 면의 설치 자리", () => {
   it("어느 통로에서 다가와도 마주 보는 면이 있다(출구 표지 제외)", () => {
@@ -22,29 +25,64 @@ describe("유도등 면의 설치 자리", () => {
         const dx = here.position.x - from.position.x;
         const dz = here.position.z - from.position.z;
         const size = Math.hypot(dx, dz);
-        if (!sign.faces.some((face) => (face.view_direction.x * dx + face.view_direction.z * dz) / size >= 0.7)) blind.push(`${sign.sign_id} ← ${from.node_id}`);
+        // 그쪽을 보는 사람용 면(자료의 view_direction)이 실제로 달려 있어야 한다. 옆벽의 벽부형 한 장이 맡은 면도 달린 것이다.
+        if (!sign.faces.some((face) => installs.get(sign.sign_id)!.faces.has(face.face_id) && (face.view_direction.x * dx + face.view_direction.z * dz) / size >= 0.7)) blind.push(`${sign.sign_id} ← ${from.node_id}`);
       }
     }
     expect(blind).toEqual([]);
   });
 
-  it("면은 보는 사람 쪽을 향하고, 다면형은 가운데에서 그쪽으로 나와 있다", () => {
-    for (const sign of building.signs) {
-      const node = nodes.get(sign.node_id)!;
-      for (const face of sign.faces) {
-        const place = facePlace(sign, node, face);
-        expect(place.normalX * face.view_direction.x + place.normalZ * face.view_direction.z).toBeLessThan(-0.99);
-        const out = (place.x - node.position.x) * place.normalX + (place.z - node.position.z) * place.normalZ;
-        expect(out).toBeCloseTo(singleBoard(sign) ? 0.052 : 0.55);
+  it("표시면은 외함 앞면에 있고, 3D가 세우는 도형과 검사하는 도형이 같다", () => {
+    for (const install of installs.values()) {
+      for (const fixture of install.fixtures) {
+        const housings = fixtureParts(fixture, 0.3).filter((part) => part.role === "HOUSING");
+        expect(housings.length).toBe(fixture.form === "SOLID" ? fixture.panels.length : 1);
+        for (const panel of fixture.panels) {
+          // 표시면에서 뒤로 두께 절반만큼 간 자리가 그 면의 외함 가운데다(양면 판은 가운데가 같다).
+          const near = Math.min(...housings.map((part) => Math.hypot(panel.x - part.normalX * 0 - part.x, panel.z - part.z)));
+          expect(near).toBeCloseTo(fixture.deep / 2);
+        }
       }
     }
-    expect(SIGN_HEIGHT - 0.2).toBeGreaterThan(1.9);
   });
 
-  it("앞뒤 두 면뿐인 표지는 판 하나, 옆 방향 면이 있으면 다면형이다", () => {
-    const byNode = (nodeId: string) => building.signs.find((sign) => sign.node_id === nodeId)!;
-    expect(singleBoard(byNode("F3-S-A"))).toBe(true);
-    expect(singleBoard(byNode("F3-J-N5"))).toBe(false);
+  it("판 전체와 지지 구조가 벽과 겹치지 않는다", () => {
+    const hits = [...installs].flatMap(([signId, install]) => install.fixtures.filter((fixture) => fixtureHitsWall(fixture, wallsOf(signId))).map((fixture) => `${signId} ${fixture.form}`));
+    expect(hits).toEqual([]);
+    expect(installs.get("SIGN-F3-J-W2")!.fixtures.length).toBeGreaterThan(0);
+    // 검사가 실제로 겹침을 잡는지: 벽 위로 옮기면 겹친다.
+    const fixture = installs.get("SIGN-F3-J-N5")!.fixtures[0];
+    const [x0, z0] = wallsOf("SIGN-F3-J-N5")[0];
+    expect(fixtureHitsWall({ ...fixture, x: x0 + 0.01, z: z0 + 0.01, panels: fixture.panels.map((panel) => ({ ...panel, x: panel.x - fixture.x + x0 + 0.01, z: panel.z - fixture.z + z0 + 0.01 })) }, wallsOf("SIGN-F3-J-N5"))).toBe(true);
+  });
+
+  it("단 면은 정면 1.5 m 앞에서 벽에 가리지 않는다. 가린 면과 달지 않은 면은 정해진 목록뿐이다", () => {
+    const hidden = [...installs].flatMap(([signId, install]) => [...install.faces.values()].filter((face) => faceHidden(face, wallsOf(signId))).map((face) => `${signId}/${face.faceId}`));
+    expect(hidden).toMatchInlineSnapshot(`[]`);
+    const skipped = building.signs.flatMap((sign) => sign.faces.filter((face) => !installs.get(sign.sign_id)!.faces.has(face.face_id)).map((face) => `${sign.sign_id}/${face.face_id}`));
+    expect(skipped).toMatchInlineSnapshot(`
+      [
+        "SIGN-F2-J-N2/FRONT",
+        "SIGN-F2-J-N6/FRONT",
+        "SIGN-F2-J-R2/FRONT",
+        "SIGN-F2-J-R3/FRONT",
+        "SIGN-F2-J-W1/FRONT",
+        "SIGN-F2-J-E2/FRONT",
+        "SIGN-F2-J-E4/FRONT",
+        "SIGN-F3-J-N2/FRONT",
+        "SIGN-F3-J-N4/FRONT",
+        "SIGN-F3-J-R3/FRONT",
+        "SIGN-F3-J-E1/FRONT",
+        "SIGN-F3-J-W1/FRONT",
+      ]
+    `);
+  });
+
+  it("검증 스크립트가 읽는 설치 표(data/space/wfi-sign-install-v1.json)가 같은 값이다", () => {
+    const round = (value: number) => Math.round(value * 1000) / 1000 + 0;
+    const faces = Object.fromEntries([...installs].flatMap(([signId, install]) => [...install.faces.values()].map((face) =>
+      [`${signId}/${face.faceId}`, { form: face.form, x: round(face.x), z: round(face.z), y: face.y, tall: face.tall, facing: face.facing, normal_x: round(face.normalX), normal_z: round(face.normalZ) }])));
+    expect({ building_id: building.building_id, building_version: building.building_version, faces }).toEqual(rawInstall);
   });
 });
 

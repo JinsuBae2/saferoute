@@ -6,6 +6,7 @@ import { stepPeople } from "./people";
 import type { Person } from "./people";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 import { parseGeometry } from "./geometry";
+import { signInstalls } from "./signMount";
 import { devWalk, shownFaces, witnessedSignChanges, YEONGNAM, yeongnamDelay, yeongnamEmote, yeongnamFire, yeongnamPhase, yeongnamSupported } from "./yeongnam";
 
 const building = rawBuilding as Building;
@@ -70,7 +71,9 @@ describe("영남이 시연 설정", () => {
 });
 
 describe("유도등 변경 목격 판정", () => {
-  const walls = parseGeometry(rawGeometry).floors.find((floor) => floor.floor_id === "F3")!.walls;
+  const geometry = parseGeometry(rawGeometry);
+  const walls = geometry.floors.find((floor) => floor.floor_id === "F3")!.walls;
+  const installs = signInstalls(building, geometry.floors);
   const base = new Map<string, string | null>(building.signs.flatMap((sign) => sign.faces.map((face) => [`${sign.sign_id}/${face.face_id}`, "FORWARD" as string | null] as const)));
   const turn = (key: string, display: string | null) => new Map(base).set(key, display);
   // 300호 앞 복도(F3-J-R0)에서 남쪽을 본다. 정면 4.6 m에 갈림길 유도등(F3-J-N5)이 있다.
@@ -78,38 +81,38 @@ describe("유도등 변경 목격 판정", () => {
   const ahead = "SIGN-F3-J-N5/FRONT";
 
   it("정면에서 마주 보는 면의 화살표가 다른 화살표로 바뀌면 봤다고 한다", () => {
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), south)).toEqual([ahead]);
-    expect(witnessedSignChanges(building, walls, base, base, south)).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, south)).toEqual([ahead]);
+    expect(witnessedSignChanges(building, walls, base, base, installs, south)).toEqual([]);
   });
 
   it("꺼지거나 켜진 것, 등진 면, 등 뒤, 다른 층, 먼 곳의 변경은 봤다고 하지 않는다", () => {
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, null), south)).toEqual([]);
-    expect(witnessedSignChanges(building, walls, turn(ahead, null), base, south)).toEqual([]);
-    expect(witnessedSignChanges(building, walls, base, turn("SIGN-F3-J-N5/REAR", "LEFT"), south)).toEqual([]);
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), { ...south, headingZ: -1 })).toEqual([]);
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), { ...south, floorId: "F2" })).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, null), installs, south)).toEqual([]);
+    expect(witnessedSignChanges(building, walls, turn(ahead, null), base, installs, south)).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn("SIGN-F3-J-N5/REAR", "LEFT"), installs, south)).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, headingZ: -1 })).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, floorId: "F2" })).toEqual([]);
     // 서쪽 끝 계단 A 앞 유도등이 바뀌어도 동쪽 복도에 선 사람은 보지 못한다.
     const far = building.signs.find((sign) => sign.node_id === "F3-J-W1")!;
-    expect(witnessedSignChanges(building, walls, base, turn(`${far.sign_id}/${far.faces[0].face_id}`, "LEFT"), south)).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(`${far.sign_id}/${far.faces[0].face_id}`, "LEFT"), installs, south)).toEqual([]);
   });
 
   it("바로 밑까지 다가가 화면 위로 벗어난 면의 변경은 봤다고 하지 않는다", () => {
     // 면은 2.45 m 높이에 걸려 있다. 1.2 m 앞에서는 1인칭 화면 위쪽 밖이다.
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), { ...south, z: 6.2 - 0.55 - 1.2 })).toEqual([]);
-    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), { ...south, z: 6.2 - 0.55 - 2.2 })).toEqual([ahead]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, z: 6.2 - 0.6 - 1.2 })).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(ahead, "RIGHT"), installs, { ...south, z: 6.2 - 0.6 - 2.2 })).toEqual([ahead]);
   });
 
   it("옆 통로에서 다가오는 사람은 그쪽을 보는 면의 변경만 본다", () => {
     // 북쪽 복도를 서쪽으로 걷는 사람 정면에는 F3-J-N4의 서쪽 접근면이 있다. 남북을 보는 면(FRONT·REAR)은 옆면이라 보이지 않는다.
     const west = { x: 34, z: 6.2, floorId: "F3", headingX: -1, headingZ: 0 };
     const side = "SIGN-F3-J-N4/FROM-F3-J-N6";
-    expect(witnessedSignChanges(building, walls, base, turn(side, "LEFT"), west)).toEqual([side]);
-    expect(witnessedSignChanges(building, walls, base, turn("SIGN-F3-J-N4/FRONT", "LEFT"), west)).toEqual([]);
+    expect(witnessedSignChanges(building, walls, base, turn(side, "LEFT"), installs, west)).toEqual([side]);
+    expect(witnessedSignChanges(building, walls, base, turn("SIGN-F3-J-N4/FRONT", "LEFT"), installs, west)).toEqual([]);
   });
 
   it("벽에 가린 유도등의 변경은 봤다고 하지 않는다", () => {
     const wall = [[36, 3, 38, 3.2]] as const;
-    expect(witnessedSignChanges(building, wall, base, turn(ahead, "RIGHT"), south)).toEqual([]);
+    expect(witnessedSignChanges(building, wall, base, turn(ahead, "RIGHT"), installs, south)).toEqual([]);
   });
 
   it("서버 상태에서 면별 표시값을 그대로 읽는다", () => {

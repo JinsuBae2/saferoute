@@ -17,7 +17,7 @@ import { localSmoke, simulationFireCells } from "./firePresentation";
 import { cctvSmoke, type CctvPose } from "./cctv";
 import type { BuildingGeometry, GeometryStair, StairStepAlong, WallRect } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
-import { addEarbuds, buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseActing, poseFigure, signFaceTexture, softDotTexture } from "./assets";
+import { addEarbuds, buildSignFixture, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseActing, poseFigure, signFaceTexture, softDotTexture } from "./assets";
 import { doorOpening, doorParts, insidePolygon, interiorWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
@@ -28,7 +28,7 @@ import type { PeopleCount, Person } from "./people";
 import { countPeople, spawnPeople, stepPeople, walkTime } from "./people";
 import { loadPeople, savePeople } from "./peopleStore";
 import { nearestPerson, qrAssetsMatch } from "./phoneGuide";
-import { facePlace, QR_HEIGHT, QR_SIZE, qrMounts, SIGN_HEIGHT, SIGN_TALL } from "./signMount";
+import { fixtureParts, QR_HEIGHT, QR_SIZE, qrMounts, signInstalls } from "./signMount";
 import { remainingTrack } from "./tracking";
 import type { YeongnamPhase } from "./yeongnam";
 import type { FaceShown } from "./yeongnam";
@@ -484,6 +484,8 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
   }, [onPickZone, pickTarget]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
   const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
+  // 유도등이 실제로 걸리는 자리. 그리기와 변경 목격 판정이 같은 값을 쓴다.
+  const installs = useMemo(() => signInstalls(building, geometry.floors), [building, geometry]);
   const firstPersonView = followIndex !== null || cctv !== null;
   const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string; lost: number;
     /** 머리 위 이름표·상태 표시. 글자마다 한 번만 만든다. */
@@ -511,9 +513,9 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     return zones;
   }, [state.fire_simulation]);
   // 그리기 반복은 한 번만 만들어지므로, 매번 바뀌는 값은 참조로 넘긴다.
-  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
+  const liveRef = useRef({ state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, installs, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height });
   useEffect(() => {
-    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
+    liveRef.current = { state, cctv, onCamera, nodeById, lift, visibleFloors, onPeople, smokeByZone, hazardByZone, follow: followIndex, onFollow, onListener, showPeople, stale, geometry, building, installs, track: trackIndex, onTrackEnd, onTrackFloor, showCameras, yeongnamArmed, onYeongnam, onSignDisplay, wallHeight: firstPersonView ? geometry.floor_height - geometry.slab_thickness : geometry.wall_height };
   });
 
   // 1) 렌더러·카메라·조작. 한 번만 만든다.
@@ -824,7 +826,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
           if (yn.faces !== null && awake && !out && !onStairs && floorId !== undefined) {
             const yaw = people.yaw[people.yeongnamIndex];
             const walls = live.geometry.floors.find((floor) => floor.floor_id === floorId)?.walls ?? [];
-            const seen = witnessedSignChanges(live.building, walls, yn.faces, after, { x: figure.group.position.x, z: figure.group.position.z, floorId, headingX: Math.sin(yaw), headingZ: Math.cos(yaw) });
+            const seen = witnessedSignChanges(live.building, walls, yn.faces, after, live.installs, { x: figure.group.position.x, z: figure.group.position.z, floorId, headingX: Math.sin(yaw), headingZ: Math.cos(yaw) });
             // 출발 전에 서서 본 것은 안내 확인이다. 걷다가 본 것만 "이동 중 변경 목격"으로 남겨 휴대폰 연출로 잇는다.
             if (seen.length > 0) Object.assign(yn, { lookUntil: now + YEONGNAM.lookSeconds * 1000, sawMoving: yn.sawMoving || phase === "EVACUATE" });
           }
@@ -1608,15 +1610,17 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       for (const sign of building.signs) {
         const node = nodeById.get(sign.node_id);
         if (node === undefined || node.floor_id !== floor.floor_id) continue;
-        // 면이 걸린 자리와 향하는 쪽은 signMount가 정한다. 목격 판정도 같은 값을 쓴다.
-        // 높이는 바닥 기준으로 고정이다. 개요와 1인칭에서 벽 높이를 다르게 그려도 표지판은 같은 자리에 있고, 매다는 봉만 그 화면의 천장까지 닿는다.
-        const hung = buildHangingSign(sign.faces.map((face) => {
-          const place = facePlace(sign, node, face);
-          return { faceId: face.face_id, normalX: place.normalX, normalZ: place.normalZ, out: Math.hypot(place.x - node.position.x, place.z - node.position.z) };
-        }), Math.max(wallHeight - SIGN_HEIGHT - SIGN_TALL / 2, 0.1));
-        hung.group.position.set(node.position.x, base + SIGN_HEIGHT, node.position.z);
-        staticGroup.add(hung.group);
-        handles.signFaces.set(sign.sign_id, hung.faces);
+        // 기구의 종류·자리·높이는 signMount가 정한다(경로 지점과 다를 수 있다). 목격 판정도 같은 값을 쓴다.
+        // 높이는 바닥 기준으로 고정이다. 개요와 1인칭에서 벽 높이를 다르게 그려도 기구는 같은 자리에 있고, 천장형의 지지대만 그 화면의 천장까지 닿는다.
+        const faces = new Map<string, SignFaceMesh>();
+        for (const fixture of installs.get(sign.sign_id)?.fixtures ?? []) {
+          // 외함·지지대는 fixtureParts가 준 도형 그대로 세운다. 벽 겹침 검사(signMount.test.ts)가 같은 도형을 본다.
+          const built = buildSignFixture(fixtureParts(fixture, Math.max(wallHeight - fixture.y - fixture.tall / 2, 0.04)), fixture.panels, fixture.y, fixture.wide, fixture.tall);
+          built.group.position.y = base;
+          staticGroup.add(built.group);
+          for (const [faceId, mesh] of built.faces) faces.set(faceId, mesh);
+        }
+        handles.signFaces.set(sign.sign_id, faces);
         // 위치 QR은 그 지점 가까운 벽면에 눈높이로 붙인다. 붙일 벽이 없는 지점에는 두지 않는다. 인식 연출(휴대폰)도 같은 자리로 판정한다.
         const mount = qrAssetsMatch(building) ? mounts.get(sign.sign_id) : undefined;
         if (mount !== undefined) {
@@ -1826,7 +1830,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         }
       }
     }
-  }, [geometry, building, display, showNames, visibleFloors, lift, nodeById, firstPersonView, mounts]);
+  }, [geometry, building, display, showNames, visibleFloors, lift, nodeById, firstPersonView, mounts, installs]);
 
   // 2-1) 화면 맞춤. 보이는 층이나 간격이 바뀌면 그 범위가 다 보이게 마지막 시점 모드로 맞추고,
   //      시점 버튼(view.nonce)을 누르면 같은 모드라도 다시 맞춘다.
@@ -2091,8 +2095,10 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       let ok = true;
       for (const face of sign.faces) {
         const mesh = meshes.get(face.face_id);
+        // 볼 사람이 없어 달지 않은 면(signMount)은 그릴 것이 없다. 실패가 아니다.
+        if (mesh === undefined) continue;
         const texture = signFaceTexture(face.display);
-        if (mesh === undefined || texture === null) {
+        if (texture === null) {
           ok = false;
           continue;
         }
