@@ -458,6 +458,7 @@ class RoomManager:
             with room.extras_lock:
                 room.extras.pop("preview", None)
                 room.extras.pop("ai_demo", None)
+                room.extras.pop("ai_result", None)
 
     def _notify(self, room, reason):
         for listener in self.listeners:
