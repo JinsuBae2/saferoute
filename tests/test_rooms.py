@@ -890,6 +890,7 @@ def test_room_demo_replay_replaces_only_its_preview(setup, wfi, tmp_path, monkey
     config.write_text(json.dumps({"source_id": source}), encoding="utf-8")
     monkeypatch.setenv("SAFEROUTE_AI_CONFIG_FILE", str(config))
     monkeypatch.setenv("SAFEROUTE_AI_VIDEO_FILE", str(config))
+    other = enter(client)
     jobs, attempts = [], []
 
     def spawn(argv, *, env, **kwargs):
@@ -901,13 +902,43 @@ def test_room_demo_replay_replaces_only_its_preview(setup, wfi, tmp_path, monkey
 
     monkeypatch.setattr("backend.app.subprocess.Popen", spawn)
     manager.ai.launch = ai_launcher(manager, tmp_path)
-    assert request_ai(client, who).json()["source_id"] == source
-    assert client.post("/internal/preview", headers=attempts[0], json=update).status_code == 204
+    first = request_ai(client, who).json()
+    assert first["source_id"] == source
+    assert first["analysis_id"] != attempts[0]["X-Saferoute-Demo-Attempt"]
+    from datetime import timedelta
+    from base64 import b64encode
+
+    def result(headers=who, **params):
+        return client.get("/api/room/ai", headers=headers, params={"include_result": True, **params}).json()
+
+    def utc(value):
+        return value.isoformat().replace("+00:00", "Z")
+
+    now = clock.utcnow()
+    frame = dict(frame_id=str(uuid4()), frame_index=3, media_time_ms=1500, width=10, height=10,
+                 observed_at=utc(now), inference_completed_at=utc(now),
+                 expires_at=utc(now + timedelta(milliseconds=300)),
+                 detections=[dict(hazard_type="FIRE", confidence=0.8, xyxy=[0, 0, 1, 1])])
+    image = b64encode(bytes.fromhex("ffd80102ffd9")).decode("ascii")
+    ready = dict(sequence=1, jpeg_base64=image,
+                 preview=update["preview"] | dict(status="READY", frame=frame, generated_at=utc(now)))
+    assert client.post("/internal/preview", headers=attempts[0], json=ready).status_code == 204
+    received = result()["result"]
+    assert received["metadata"]["frame_id"] == frame["frame_id"] and received["jpeg_base64"] == image
+    assert received["metadata"]["detections"] == frame["detections"]
+    assert "result" not in result(after=frame["frame_id"])
+    assert "result" not in result(other)
+    clock.advance(400)
+    assert client.get(f"/api/room/previews/{source}?run_id={info['run_id']}", headers=who).json()["status"] == "STALE"
+    assert result()["result"] == received
+    assert client.post("/internal/preview", headers=attempts[0], json=update | {"sequence": 2}).status_code == 204
     jobs[0].code = 0
     manager.step_all()
-    assert ai_state(client, who)["state"] == "DONE"
+    assert result()["state"] == "DONE" and result()["result"] == received
     ignite(client, who, clock, "MANUAL-F1-PASSAGE-N")
-    assert request_ai(client, who).json()["run_id"] == info["run_id"]
+    second = request_ai(client, who).json()
+    assert second["run_id"] == info["run_id"] and second["analysis_id"] != first["analysis_id"]
+    assert "result" not in result()
     assert request_ai(client, who).json()["state"] == "RUNNING" and len(jobs) == 2
     assert client.post("/internal/preview", headers=attempts[0], json=update).status_code == 409
     assert client.post("/internal/preview", headers=attempts[1], json=update).status_code == 204

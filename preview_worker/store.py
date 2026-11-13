@@ -105,6 +105,7 @@ class Store:
             raise PreviewError(422, 'SCHEMA_VALIDATION_FAILED')
         terminal = value.status == 'EOF' or (value.status == 'UNAVAILABLE' and value.error_code != 'PREVIEW_FAILED')
         self.entries[value.source_id] = Entry(update.sequence, value, jpeg, index, terminal)
+        return value
 
     def current(self, state, building, run_id, source_id):
         source = self.context(state, building, run_id, source_id)

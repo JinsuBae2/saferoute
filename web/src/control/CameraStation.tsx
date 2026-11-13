@@ -75,7 +75,7 @@ export function CameraStation({ state, building, display, selectedSourceId, igni
         <video className="demo-replay" src={replayUrl} controls autoPlay muted playsInline
           aria-label="실내 화재 예시 영상의 AI 분석 결과" onError={() => setReplayError(true)} />
         {replayError && <p role="alert">분석 영상을 재생할 수 없습니다. 새로 추론하기에서 예시 영상을 분석할 수 있습니다.</p>}
-      </> : inRoom() ? <RoomAiPanel state={state} /> :
+      </> : inRoom() ? <RoomAiPanel key={state.run_id} state={state} /> :
         <a className="chip" href="#/room">개인 체험에서 예시 영상 분석하기</a>}
       <a href={`https://github.com/JinsuBae2/saferoute/blob/${__SOURCE_COMMIT__}/docs/ai/final-evaluation-closeout.md`}
         target="_blank" rel="noopener noreferrer">모델 평가 보고서 보기</a>

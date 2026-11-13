@@ -64,6 +64,7 @@ def ai_launcher(manager, runs_root):
         attempt = str(uuid4())
         with room.extras_lock:
             room.extras["ai_demo"] = (run_id, attempt, source)
+            room.extras["ai_result"] = {"analysis_id": str(uuid4()), "frame": None}
             room.extras.pop("preview", None)
         environment = os.environ | {"SAFEROUTE_ROOM_ID": room.room_id, "SAFEROUTE_INTERNAL_TOKEN": manager.internal_token,
                                     "SAFEROUTE_DEMO_ATTEMPT": attempt}
@@ -276,17 +277,25 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
             return JSONResponse(status_code=503,content={"error":{"code":"CONTROLLER_UNAVAILABLE","message":str(error),"field":None}})
         return room.runner.state()
 
-    def demo_status(room, status):
+    def demo_status(room, status, include_result=False, after=None):
         with room.extras_lock:
             demo = room.extras.get("ai_demo")
-            if demo and demo[0] == status["run_id"] and status["state"] == "RUNNING":
-                return {**status, "source_id": demo[2]}
-        return status
+            if not demo or demo[0] != status["run_id"] or status["state"] not in ("RUNNING", "DONE"):
+                return status
+            result = room.extras["ai_result"]
+            status = {**status, "source_id": demo[2], "analysis_id": result["analysis_id"]}
+            frame = result["frame"]
+            if include_result and frame and frame["metadata"]["frame_id"] != after:
+                status["result"] = frame
+            return status
 
     @app.get("/api/room/ai")
-    def room_ai(request: Request):
+    def room_ai(request: Request, include_result: bool = False, after: str | None = None):
         room = own_room(request)
-        return demo_status(room, manager().ai.status(room))
+        queue = manager().ai
+        with queue.lock:
+            status = demo_status(room, queue.status(room), include_result, after)
+        return JSONResponse(status, headers={"Cache-Control": "private, no-store"})
 
     @app.post("/api/room/ai")
     def room_ai_request(request: Request):
@@ -294,7 +303,8 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
         with rooms.lock:
             live = dict(rooms.rooms)
         room = own_room(request)
-        return demo_status(room, rooms.ai.request(room, live))
+        with rooms.ai.lock:
+            return demo_status(room, rooms.ai.request(room, live))
 
     # Preview frames: written only by the room's AI worker (internal credential), read only by that room's browser.
     def preview_store(room):
@@ -334,7 +344,12 @@ def create_app(*, building=None, runs_dir=None, clock=None, operator_id=None, ro
                 if demo or attempt:
                     if not demo or (update.preview.run_id, attempt, update.preview.source_id) != demo:
                         raise RoomError(409, "PREVIEW_UPDATE_REJECTED", "다른 영상 분석의 프레임입니다")
-                preview_call(preview_store(room).accept, update, room.controller.snapshot(), room.controller.building)
+                accepted = preview_call(preview_store(room).accept, update, room.controller.snapshot(), room.controller.building)
+                if demo and accepted.frame is not None:
+                    # A historical result for this example video, separate from expiring camera observations.
+                    room.extras["ai_result"]["frame"] = {
+                        "metadata": accepted.frame.model_dump(mode="json"), "jpeg_base64": update.jpeg_base64,
+                    }
         await asyncio.to_thread(accept)
         return Response(status_code=204)
 
