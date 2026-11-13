@@ -95,34 +95,65 @@ export function signFaceTexture(display: string | null): THREE.Texture | null {
 export type SignFaceMesh = THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
 
 /**
- * 천장에 매달린 표지판. faces의 normal은 그 면이 향하는 쪽(보는 사람 쪽)이다.
- * 돌려준 면 메시의 그림만 바꾸면 방향이 바뀐다.
+ * 천장에 매단 표지판. 원점이 표지판 가운데다. faces의 normal은 그 면이 향하는 쪽(보는 사람 쪽), out은 가운데에서 그쪽으로 나온 거리다.
+ * - 면이 모두 가운데(out이 거의 0)에 있으면 판 하나의 양면형이다.
+ * - 옆 방향을 보는 면이 섞이면 면마다 판을 하나씩 세워 둘러싼 다면형이다. 어느 통로에서 와도 한 면이 정면으로 보인다.
+ * rod는 천장까지 올라가는 매다는 봉의 길이다. 돌려준 면 메시의 그림만 바꾸면 방향이 바뀐다.
  */
 export function buildHangingSign(
-  faces: readonly { readonly faceId: string; readonly normalX: number; readonly normalZ: number }[],
+  faces: readonly { readonly faceId: string; readonly normalX: number; readonly normalZ: number; readonly out: number }[],
+  rod = 0.36,
 ): { group: THREE.Group; faces: Map<string, SignFaceMesh> } {
   const group = new THREE.Group();
   const frame = new THREE.MeshLambertMaterial({ color: 0x1f2933 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 0.1), frame);
-  body.castShadow = true;
-  group.add(body);
-  for (const dx of [-0.42, 0.42]) {
-    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.36, 6), frame);
-    rod.position.set(dx, 0.38, 0);
-    group.add(rod);
-  }
   const meshes = new Map<string, SignFaceMesh>();
   const first = faces[0];
-  if (first !== undefined) group.rotation.y = Math.atan2(first.normalX, first.normalZ);
-  faces.forEach((face, index) => {
-    // 첫 면을 기준으로 몸체를 돌렸으므로, 반대쪽을 보는 면은 뒷면에 붙인다.
-    const opposite = first !== undefined && index > 0 && face.normalX * first.normalX + face.normalZ * first.normalZ < 0;
-    const mesh: SignFaceMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.02, 0.34), new THREE.MeshBasicMaterial({ map: signFaceTexture(null) }));
-    mesh.position.z = opposite ? -0.052 : 0.052;
-    if (opposite) mesh.rotation.y = Math.PI;
-    group.add(mesh);
+  const panel = (): SignFaceMesh => new THREE.Mesh(new THREE.PlaneGeometry(1.02, 0.34), new THREE.MeshBasicMaterial({ map: signFaceTexture(null) }));
+  const hang = (x: number, z: number) => {
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, rod, 6), frame);
+    bar.position.set(x, 0.2 + rod / 2, z);
+    group.add(bar);
+  };
+  if (first === undefined) return { group, faces: meshes };
+  if (faces.every((face) => face.out < 0.1)) {
+    const board = new THREE.Group();
+    board.rotation.y = Math.atan2(first.normalX, first.normalZ);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 0.1), frame);
+    body.castShadow = true;
+    board.add(body);
+    faces.forEach((face) => {
+      // 첫 면을 기준으로 판을 돌렸으므로, 반대쪽을 보는 면은 뒷면에 붙인다.
+      const opposite = face.normalX * first.normalX + face.normalZ * first.normalZ < 0;
+      const mesh = panel();
+      mesh.position.z = opposite ? -0.052 : 0.052;
+      if (opposite) mesh.rotation.y = Math.PI;
+      board.add(mesh);
+      meshes.set(face.faceId, mesh);
+    });
+    group.add(board);
+    const side = { x: Math.cos(board.rotation.y) * 0.42, z: -Math.sin(board.rotation.y) * 0.42 };
+    hang(side.x, side.z);
+    hang(-side.x, -side.z);
+    return { group, faces: meshes };
+  }
+  for (const face of faces) {
+    const plate = new THREE.Group();
+    plate.rotation.y = Math.atan2(face.normalX, face.normalZ);
+    plate.position.set(face.normalX * face.out, 0, face.normalZ * face.out);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 0.05), frame);
+    back.position.z = -0.027;
+    back.castShadow = true;
+    const mesh = panel();
+    mesh.position.z = 0.002;
+    plate.add(back, mesh);
+    group.add(plate);
     meshes.set(face.faceId, mesh);
-  });
+  }
+  // 면들을 잇는 윗판과 가운데 봉. 면이 셋이어도 한 덩어리로 매달린 것으로 보인다.
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.03, 1.12), frame);
+  cap.position.y = 0.215;
+  group.add(cap);
+  hang(0, 0);
   return { group, faces: meshes };
 }
 

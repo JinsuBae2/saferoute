@@ -1,4 +1,7 @@
 import type { Building, BuildingDisplay, StateSnapshot } from "@contracts";
+import type { WallRect } from "./geometry";
+import { segmentHitsWall } from "./geometry";
+import type { QrMount } from "./signMount";
 import { describeJourney, ROUTE_REASON_LABEL } from "./journey";
 import type { Person } from "./people";
 
@@ -27,16 +30,40 @@ export function nearestPerson(building: Building, people: readonly Person[], sta
   return nearest;
 }
 
-export function nearbyQr(building: Building, pose: FollowPose) {
-  // shortcut: 위치 QR 자산은 WFI v6용이다. 다른 건물에는 해당 위치 자산을 먼저 생성한다.
-  if (building.building_id !== "WFI" || building.building_version !== 6) return null;
+/** 위치 QR 자산(web/public/qr)이 이 건물 자료의 것인지. 내용에 건물 ID와 자료 버전이 들어 있어, 다르면 QR 연출을 켜지 않는다. */
+export function qrAssetsMatch(building: Pick<Building, "building_id" | "building_version">): boolean {
+  // shortcut: 위치 QR 자산은 WFI v6용이다. 다른 건물·버전에는 web/scripts/location-qr.swift로 먼저 만든다.
+  return building.building_id === "WFI" && building.building_version === 6;
+}
+
+/** 휴대폰으로 비출 수 있는 거리(m), 시선 정면에서 벗어나도 되는 각의 코사인(약 65도), 판을 비스듬히 볼 수 있는 한계(판 정면에서 약 75도). */
+const QR_REACH = 5;
+const QR_VIEW = 0.42;
+const QR_SLANT = 0.25;
+
+/**
+ * 지금 비출 수 있는 가까운 QR. 3D에 붙인 것과 같은 자리(mounts)로 판정한다.
+ * 같은 층에서, 걷는 구간의 양 끝 지점의 QR 가운데 거리 안에 있고, 바라보는 쪽에 있고, 판의 앞면 쪽에 서 있고, 벽에 가리지 않은 것만 고른다.
+ * 벽 너머, 등 뒤, 판의 뒷면 쪽에서는 잡지 않는다. 모의 인식이다. 실제 카메라로 QR을 읽지 않는다.
+ */
+export function nearbyQr(building: Building, pose: FollowPose, mounts: ReadonlyMap<string, QrMount>, walls: readonly WallRect[] = []) {
+  if (!qrAssetsMatch(building)) return null;
   const origin = building.nodes.find(node => node.node_id === pose.routeNodeId);
-  return building.signs.map(sign => ({ sign, node: building.nodes.find(node => node.node_id === sign.node_id) }))
-    .filter(({ node }) => node && node.floor_id === origin?.floor_id
-      && (node.node_id === pose.nodeId || node.node_id === pose.toNodeId)
-      && Math.hypot(node.position.x - pose.x, node.position.z - pose.z) <= 4)
-    .sort((a, b) => Math.hypot(a.node!.position.x - pose.x, a.node!.position.z - pose.z)
-      - Math.hypot(b.node!.position.x - pose.x, b.node!.position.z - pose.z))[0]?.sign ?? null;
+  const seen = building.signs.flatMap(sign => {
+    const node = building.nodes.find(item => item.node_id === sign.node_id);
+    const place = mounts.get(sign.sign_id);
+    if (!node || !place || node.floor_id !== origin?.floor_id || (node.node_id !== pose.nodeId && node.node_id !== pose.toNodeId)) return [];
+    const dx = place.x - pose.x;
+    const dz = place.z - pose.z;
+    const distance = Math.hypot(dx, dz);
+    if (distance > QR_REACH || distance < 0.05) return [];
+    if ((dx * Math.sin(pose.yaw) + dz * Math.cos(pose.yaw)) / distance < QR_VIEW) return [];
+    // 판의 앞면 쪽에 서 있어야 한다. 뒷면(벽 속)이나 판과 거의 나란한 옆에서는 읽히지 않는다.
+    if ((-dx * place.normalX - dz * place.normalZ) / distance < QR_SLANT) return [];
+    const front = { x: place.x + place.normalX * 0.05, z: place.z + place.normalZ * 0.05 };
+    return walls.some(wall => segmentHitsWall(wall, pose.x, pose.z, front.x, front.z)) ? [] : [{ sign, distance }];
+  });
+  return seen.sort((a, b) => a.distance - b.distance)[0]?.sign ?? null;
 }
 
 type Guidance =

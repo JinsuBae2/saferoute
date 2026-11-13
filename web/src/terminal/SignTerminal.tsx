@@ -8,6 +8,7 @@ import { SourceNotice } from "../SourceNotice";
 import type { FaceResult } from "@contracts";
 
 import { useBuildingData } from "../building/useBuildingData";
+import { faceName } from "../building/journey";
 import { ArrowGlyph, DISPLAY_LABEL, UnavailableGlyph } from "./ArrowDisplay";
 import type { FacePresentation, SignKind } from "./signPresentation";
 import { SIGN_KIND_LABEL, SIGN_KIND_NOTE, presentFace, signKindOf } from "./signPresentation";
@@ -44,7 +45,6 @@ const REASON_LABEL: Record<ReasonCode, string> = {
   VERSION_MISMATCH: "실행·건물 자료 버전이 맞지 않습니다",
 };
 
-const FACE_LABEL: Record<string, string> = { FRONT: "정면", REAR: "후면" };
 
 function FaceCard({ face, kind }: { face: FaceResult; kind: SignKind | null }) {
   const shown: FacePresentation = presentFace(kind, face);
@@ -60,7 +60,7 @@ function FaceCard({ face, kind }: { face: FaceResult; kind: SignKind | null }) {
   return (
     <section className={shown.available ? "face face--live" : "face face--muted"}>
       <h2 className="face__name">
-        {FACE_LABEL[face.face_id] ?? face.face_id} 표시면
+        {faceName(face.face_id)} 표시면
         <span className="face__id">{face.face_id}</span>
       </h2>
 

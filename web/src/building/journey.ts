@@ -35,6 +35,13 @@ export const FACE_DISPLAY_LABEL: Record<Display, string> = {
   EXIT: "출구",
 };
 
+/** 유도등 면 이름. 옆 통로에서 다가오는 사람을 보는 면(FROM-<지점>)은 어느 쪽 접근용인지 적는다. */
+export function faceName(faceId: string): string {
+  if (faceId === "FRONT") return "정면";
+  if (faceId === "REAR") return "후면";
+  return faceId.startsWith("FROM-") ? `측면(${faceId.slice(5)} 쪽 접근)` : faceId;
+}
+
 export const APPLICATION_LABEL: Record<ApplicationStatus, string> = {
   NOT_ISSUED: "미발행",
   PENDING: "확인 대기",
