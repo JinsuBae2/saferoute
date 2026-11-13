@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { Building } from "@contracts";
 import rawBuilding from "@space/wfi-v1.json";
 import rawGeometry from "@space/wfi-geometry-v1.json";
-import { doorFacing } from "./facade";
-import { doorOpening, parseGeometry, wallBox } from "./geometry";
+import { doorEnds, doorFacing } from "./facade";
+import { doorOpening, doorParts, parseGeometry, wallBox } from "./geometry";
 
 const building = rawBuilding as unknown as Building;
 const geometry = parseGeometry(rawGeometry);
@@ -13,7 +13,9 @@ describe("문틀 자리", () => {
   const doors = building.nodes.filter((node) => node.kind === "DOOR" && facing.has(node.node_id)).map((node) => {
     const toward = building.nodes.find((item) => item.node_id === facing.get(node.node_id))!;
     const walls = geometry.floors.find((floor) => floor.floor_id === node.floor_id)!.walls;
-    return { node, toward, walls, opening: doorOpening(node.position.x, node.position.z, toward.position.x, toward.position.z, walls) };
+    const ends = doorEnds(building, node.node_id);
+    const opening = doorOpening(node.position.x, node.position.z, toward.position.x, toward.position.z, walls);
+    return { node, toward, walls, opening, parts: doorParts(opening, node.position.x, node.position.z, toward.position.x, toward.position.z, ends) };
   });
 
   it("벽의 개구부를 찾은 문은 틈 가운데에 벽과 같은 줄로 서고, 문틀 폭 안에 벽이 없다", () => {
@@ -24,7 +26,6 @@ describe("문틀 자리", () => {
         : [opening.x - 0.05, opening.x + 0.05, opening.z - half, opening.z + half];
       const hit = walls.map(wallBox).some((box) => box.centerX - box.sizeX / 2 < x1 && box.centerX + box.sizeX / 2 > x0 && box.centerZ - box.sizeZ / 2 < z1 && box.centerZ + box.sizeZ / 2 > z0);
       expect(hit, node.node_id).toBe(false);
-      expect(Math.hypot(opening.x - node.position.x, opening.z - node.position.z), node.node_id).toBeLessThanOrEqual(1.3);
     }
   });
 
@@ -34,44 +35,75 @@ describe("문틀 자리", () => {
     expect(r302.opening).toMatchObject({ along: "Z", found: true });
   });
 
-  it("개구부를 찾지 못한 문은 정해진 목록뿐이다", () => {
-    expect(doors.filter((door) => !door.opening.found).map((door) => door.node.node_id)).toMatchInlineSnapshot(`
+  it("문을 지나는 사람(몸통 반지름 0.17 m)이 문틀 기둥과 열린 문짝을 뚫지 않는다", () => {
+    // 사람 모형의 몸통(assets.ts createFigure, 반지름 0.17 m)이 걷는 선을 따라갈 때 기둥·문짝까지의 거리를 2 cm 간격으로 잰다.
+    // 문 지점이 끝인 구간에서는 사람을 옆으로 비켜 세우지 않는다(BuildingScene).
+    const hits: string[] = [];
+    // 걷는 선 자체가 벽 모서리를 스치는 구간. 문틀이 아니라 건물 자료(지점 자리)의 문제라 문틀로는 고칠 수 없다. 숨기지 않고 따로 적는다.
+    const skims: string[] = [];
+    for (const { node, parts, walls } of doors) {
+      for (const edge of building.edges) {
+        if (edge.from_node_id !== node.node_id) continue;
+        const other = building.nodes.find((item) => item.node_id === edge.to_node_id)!;
+        if (other.floor_id !== node.floor_id) continue;
+        const length = Math.hypot(other.position.x - node.position.x, other.position.z - node.position.z);
+        const gap = (rects: readonly (readonly [number, number, number, number])[]) => {
+          let least = Infinity;
+          for (let gone = 0; gone <= length; gone += 0.02) {
+            const [px, pz] = [node.position.x + (other.position.x - node.position.x) * gone / length, node.position.z + (other.position.z - node.position.z) * gone / length];
+            least = Math.min(least, ...rects.map(([x0, z0, x1, z1]) => Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(z0 - pz, 0, pz - z1))));
+          }
+          return least;
+        };
+        if (gap(walls) < 0.05) skims.push(`${node.node_id} > ${other.node_id}`);
+        else if (gap([...parts.jambs, parts.leaf]) < 0.17) hits.push(`${node.node_id} > ${other.node_id} ${gap([...parts.jambs, parts.leaf]).toFixed(2)}`);
+      }
+    }
+    expect(hits).toEqual([]);
+    expect(skims).toEqual(["F3-D-R307-N > F3-J-N1"]);
+  });
+
+  it("문틀 기둥은 벽 줄 위에 있고 문짝은 그와 직각으로 방 안쪽에 열려 있다", () => {
+    for (const { node, toward, opening, parts: { jambs, leaf } } of doors) {
+      const [lx, lz] = [(leaf[0] + leaf[2]) / 2, (leaf[1] + leaf[3]) / 2];
+      const [line, towardC, leafC] = opening.along === "X" ? [opening.z, toward.position.z, lz] : [opening.x, toward.position.x, lx];
+      for (const jamb of jambs) expect(opening.along === "X" ? (jamb[1] + jamb[3]) / 2 : (jamb[0] + jamb[2]) / 2, node.node_id).toBeCloseTo(line);
+      // 문짝은 벽 줄을 기준으로 통로 지점의 반대쪽에 있다.
+      expect(Math.sign(leafC - line), node.node_id).toBe(-Math.sign(towardC - line) || 1);
+      expect(opening.along === "X" ? leaf[3] - leaf[1] > leaf[2] - leaf[0] : leaf[2] - leaf[0] > leaf[3] - leaf[1], node.node_id).toBe(true);
+    }
+  });
+
+  it("개구부를 찾지 못한 문은 없다", () => {
+    expect(doors.filter((door) => !door.opening.found).map((door) => door.node.node_id)).toEqual([]);
+    expect(doors.map((door) => `${door.node.node_id} ${door.opening.along} ${door.opening.width.toFixed(1)} @${door.opening.x.toFixed(2)},${door.opening.z.toFixed(2)}`)).toMatchInlineSnapshot(`
       [
-        "F1-D-CONF-S",
-        "F1-D-R101",
-        "F2-D-R202",
-        "F3-D-COMMUNITY",
-        "F3-D-R305",
-      ]
-    `);
-    expect(doors.map((door) => `${door.node.node_id} ${door.opening.along} ${door.opening.width.toFixed(1)}`)).toMatchInlineSnapshot(`
-      [
-        "F1-D-R102 X 1.3",
-        "F1-D-NURSING X 1.3",
-        "F1-D-CONF-N Z 1.3",
-        "F1-D-CONF-S Z 1.1",
-        "F1-D-R101 Z 1.1",
-        "F2-D-SERVER Z 1.1",
-        "F2-D-R201 X 1.1",
-        "F2-D-R202 X 1.1",
-        "F2-D-R203 Z 1.2",
-        "F2-D-ADMIN Z 1.1",
-        "F2-D-DIRECTOR Z 1.1",
-        "F2-D-INDUSTRY X 1.1",
-        "F3-D-R308 Z 1.6",
-        "F3-D-ROOM-NE X 1.3",
-        "F3-D-R300 Z 1.1",
-        "F3-D-R301 Z 1.1",
-        "F3-D-R302 Z 1.0",
-        "F3-D-R303 Z 1.0",
-        "F3-D-R304 X 1.2",
-        "F3-D-R307 X 1.3",
-        "F3-D-R306 Z 0.9",
-        "F3-D-COMMUNITY Z 1.1",
-        "F3-D-R305 Z 1.1",
-        "F2-D-INDUSTRY-E X 1.1",
-        "F3-D-R307-N X 1.1",
-        "F3-D-R304-E Z 1.1",
+        "F1-D-R102 X 1.3 @13.75,10.85",
+        "F1-D-NURSING X 1.3 @11.85,12.80",
+        "F1-D-CONF-N Z 1.3 @9.95,11.65",
+        "F1-D-CONF-S Z 2.7 @9.95,24.65",
+        "F1-D-R101 Z 2.9 @35.35,23.25",
+        "F2-D-SERVER Z 1.1 @8.95,6.55",
+        "F2-D-R201 X 1.1 @16.65,5.15",
+        "F2-D-R202 X 1.5 @37.05,5.65",
+        "F2-D-R203 Z 1.2 @37.85,7.70",
+        "F2-D-ADMIN Z 1.1 @37.85,16.45",
+        "F2-D-DIRECTOR Z 1.1 @37.85,22.15",
+        "F2-D-INDUSTRY X 1.1 @14.55,21.15",
+        "F3-D-R308 Z 1.6 @9.00,6.30",
+        "F3-D-ROOM-NE X 1.3 @34.55,5.35",
+        "F3-D-R300 Z 1.1 @37.90,1.65",
+        "F3-D-R301 Z 1.1 @37.90,8.65",
+        "F3-D-R302 Z 1.0 @37.90,15.60",
+        "F3-D-R303 Z 1.0 @37.90,23.90",
+        "F3-D-R304 X 1.2 @31.70,21.20",
+        "F3-D-R307 X 1.3 @8.15,21.40",
+        "F3-D-R306 Z 0.9 @7.40,22.25",
+        "F3-D-COMMUNITY Z 1.2 @8.85,22.40",
+        "F3-D-R305 Z 1.5 @13.95,22.43",
+        "F2-D-INDUSTRY-E Z 1.2 @32.40,22.10",
+        "F3-D-R307-N X 1.1 @8.35,7.35",
+        "F3-D-R304-E Z 1.1 @35.95,22.15",
       ]
     `);
   });
