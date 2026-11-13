@@ -7,7 +7,7 @@ import { useMemo } from "react";
 import type { Building, BuildingDisplay } from "@contracts";
 
 import type { Journey, JourneyTrack, SignOnPath } from "./journey";
-import { APPLICATION_LABEL, FACE_DISPLAY_LABEL, ROUTE_REASON_LABEL } from "./journey";
+import { APPLICATION_LABEL, FACE_DISPLAY_LABEL, faceName, ROUTE_REASON_LABEL } from "./journey";
 
 type Props = {
   readonly building: Building;
@@ -24,7 +24,6 @@ type Props = {
   readonly picker?: boolean;
 };
 
-const FACE_NAME: Record<string, string> = { FRONT: "정면", REAR: "후면" };
 const STATUS_TONE: Record<string, string> = {
   APPLIED: "route",
   PENDING: "warn",
@@ -188,7 +187,7 @@ export function JourneyPanel({ building, display, startId, onStart, journey, tra
                     <td>
                       {item.faces.length === 0
                         ? "—"
-                        : item.faces.map((face) => `${FACE_NAME[face.faceId] ?? face.faceId} ${faceText(face)}`).join(" · ")}
+                        : item.faces.map((face) => `${faceName(face.faceId)} ${faceText(face)}`).join(" · ")}
                     </td>
                     <td>
                       <span className={`badge badge--${item.status === null ? "muted" : STATUS_TONE[item.status]}`}>

@@ -27,7 +27,8 @@ import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
 import { countPeople, spawnPeople, stepPeople, walkTime } from "./people";
 import { loadPeople, savePeople } from "./peopleStore";
-import { nearestPerson } from "./phoneGuide";
+import { nearestPerson, qrAssetsMatch } from "./phoneGuide";
+import { facePlace, QR_HEIGHT, QR_SIZE, qrMounts, SIGN_HEIGHT, SIGN_TALL } from "./signMount";
 import type { FollowPose } from "./phoneGuide";
 import { storageScope } from "../api/scope";
 import { drawIcon, ICON_PIXELS, signIcon } from "./icons";
@@ -416,6 +417,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
     zoneRef.current = { pick: onPickZone, target: pickTarget };
   }, [onPickZone, pickTarget]);
   const lift = useMemo(() => floorLift(geometry, spread), [geometry, spread]);
+  const mounts = useMemo(() => qrMounts(building, geometry.floors, geometry.stairs), [building, geometry]);
   const firstPersonView = followIndex !== null || cctv !== null;
   const peopleRef = useRef<{ list: Person[]; group: THREE.Group; figures: Figure[]; markers: THREE.Sprite[]; yaw: number[]; slope: number[]; slide: number[]; key: string; lost: number } | null>(null);
 
@@ -1270,21 +1272,26 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       for (const sign of building.signs) {
         const node = nodeById.get(sign.node_id);
         if (node === undefined || node.floor_id !== floor.floor_id) continue;
-        // view_direction은 그 면을 보는 사람의 시선이다. 면은 그 반대쪽을 향한다.
-        const hung = buildHangingSign(sign.faces.map((face) => ({ faceId: face.face_id, normalX: -face.view_direction.x, normalZ: -face.view_direction.z })));
-        hung.group.position.set(node.position.x, base + wallHeight - 0.56, node.position.z);
+        // 면이 걸린 자리와 향하는 쪽은 signMount가 정한다. 목격 판정도 같은 값을 쓴다.
+        // 높이는 바닥 기준으로 고정이다. 개요와 1인칭에서 벽 높이를 다르게 그려도 표지판은 같은 자리에 있고, 매다는 봉만 그 화면의 천장까지 닿는다.
+        const hung = buildHangingSign(sign.faces.map((face) => {
+          const place = facePlace(sign, node, face);
+          return { faceId: face.face_id, normalX: place.normalX, normalZ: place.normalZ, out: Math.hypot(place.x - node.position.x, place.z - node.position.z) };
+        }), Math.max(wallHeight - SIGN_HEIGHT - SIGN_TALL / 2, 0.1));
+        hung.group.position.set(node.position.x, base + SIGN_HEIGHT, node.position.z);
         staticGroup.add(hung.group);
         handles.signFaces.set(sign.sign_id, hung.faces);
-        // QR은 유도등 옆의 위치 확인판이다. 인식 연출은 휴대폰 UI에서만 수행한다.
-        if (building.building_id === "WFI" && building.building_version === 6) {
+        // 위치 QR은 그 지점 가까운 벽면에 눈높이로 붙인다. 붙일 벽이 없는 지점에는 두지 않는다. 인식 연출(휴대폰)도 같은 자리로 판정한다.
+        const mount = qrAssetsMatch(building) ? mounts.get(sign.sign_id) : undefined;
+        if (mount !== undefined) {
           const texture = new THREE.TextureLoader().load(`/qr/${encodeURIComponent(sign.sign_id)}.png`);
           texture.colorSpace = THREE.SRGBColorSpace;
           texture.magFilter = THREE.NearestFilter;
-          const qr = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.65), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }));
+          // 앞면만 그린다. 벽 뒤쪽에서는 보이지 않는다.
+          const qr = new THREE.Mesh(new THREE.PlaneGeometry(QR_SIZE, QR_SIZE), new THREE.MeshBasicMaterial({ map: texture }));
           qr.userData.ownsMap = true;
-          const face = sign.faces[0];
-          qr.rotation.y = Math.atan2(-face.view_direction.x, -face.view_direction.z);
-          qr.position.set(node.position.x - face.view_direction.z * 0.85, base + 1.85, node.position.z + face.view_direction.x * 0.85);
+          qr.rotation.y = Math.atan2(mount.normalX, mount.normalZ);
+          qr.position.set(mount.x, base + QR_HEIGHT, mount.z);
           staticGroup.add(qr);
         }
       }
@@ -1483,7 +1490,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         }
       }
     }
-  }, [geometry, building, display, showNames, visibleFloors, lift, nodeById, firstPersonView]);
+  }, [geometry, building, display, showNames, visibleFloors, lift, nodeById, firstPersonView, mounts]);
 
   // 2-1) 화면 맞춤. 보이는 층이나 간격이 바뀌면 그 범위가 다 보이게 마지막 시점 모드로 맞추고,
   //      시점 버튼(view.nonce)을 누르면 같은 모드라도 다시 맞춘다.

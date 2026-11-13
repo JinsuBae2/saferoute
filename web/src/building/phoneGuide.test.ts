@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { Building, StateSnapshot } from "@contracts";
 import rawBuilding from "@space/wfi-v1.json";
 import { spawnPeople, stepPeople } from "./people";
-import { nearestPerson, nearbyQr, phoneGuidance } from "./phoneGuide";
+import rawGeometry from "@space/wfi-geometry-v1.json";
+import { parseGeometry } from "./geometry";
+import { nearestPerson, nearbyQr, phoneGuidance, qrAssetsMatch } from "./phoneGuide";
+import { qrMounts } from "./signMount";
 import type { FollowPose } from "./phoneGuide";
 
 const building = rawBuilding as unknown as Building;
@@ -69,10 +72,52 @@ describe("휴대폰 대피 안내", () => {
     expect(guide.kind).toBe("ROUTE");
     if (guide.kind === "ROUTE") expect(guide.floorId).toBe("F3");
   });
-  it("QR은 같은 층에서 실제 인물이 지나가는 가까운 지점만 인식한다", () => {
-    const sign = building.signs.find(s => at(s.node_id).floor_id === "F1")!;
-    expect(nearbyQr(building, pose(sign.node_id))?.sign_id).toBe(sign.sign_id);
-    expect(nearbyQr(building, { ...pose("F3-D-R301"), x: at(sign.node_id).position.x, z: at(sign.node_id).position.z })).toBeNull();
+});
+
+describe("QR 모의 인식", () => {
+  const geometry = parseGeometry(rawGeometry);
+  const mounts = qrMounts(building, geometry.floors, geometry.stairs);
+  const walls = geometry.floors.find(floor => floor.floor_id === "F3")!.walls;
+  const sign = building.signs.find(item => item.node_id === "F3-J-N5")!;
+  const mount = mounts.get(sign.sign_id)!;
+  /** 판 앞쪽으로 ahead만큼, 판을 따라 옆으로 side만큼 떨어진 자리에서 판을 마주 본다(turn만큼 고개를 돌림). */
+  const from = (ahead: number, side = 0, turn = 0): FollowPose => ({ ...pose("F3-J-N5"),
+    x: mount.x + mount.normalX * ahead - mount.normalZ * side, z: mount.z + mount.normalZ * ahead + mount.normalX * side,
+    yaw: Math.atan2(-mount.normalX, -mount.normalZ) + turn });
+
+  it("벽면에 붙은 QR을 앞에서 바라보면 잡고, 3D와 같은 자리로 판정한다", () => {
+    expect(qrAssetsMatch(building)).toBe(true);
+    expect(nearbyQr(building, from(1.2), mounts, walls)?.sign_id).toBe(sign.sign_id);
+    expect(nearbyQr(building, from(1.2, 0.5), mounts, walls)?.sign_id).toBe(sign.sign_id);
+  });
+
+  it("등 뒤, 먼 곳, 다른 구간, 다른 층의 QR은 잡지 않는다", () => {
+    expect(nearbyQr(building, from(1.2, 0, Math.PI), mounts, walls)).toBeNull();
+    expect(nearbyQr(building, { ...from(1.2), nodeId: "F3-D-R301", routeNodeId: "F3-D-R301" }, mounts, walls)).toBeNull();
+    expect(nearbyQr(building, { ...from(1.2), routeNodeId: "F2-S-A" }, mounts, walls)).toBeNull();
+    expect(nearbyQr(building, from(5.5), mounts, [])).toBeNull();
+  });
+
+  it("벽 너머(판의 뒷면 쪽)나 판과 거의 나란한 옆에서는 잡지 않는다", () => {
+    // 판 뒤쪽은 벽 속·벽 너머다. 고개를 판 쪽으로 돌려도 잡히지 않는다.
+    expect(nearbyQr(building, { ...from(-0.8), yaw: Math.atan2(mount.normalX, mount.normalZ) }, mounts, walls)).toBeNull();
+    expect(nearbyQr(building, { ...from(-0.8), yaw: Math.atan2(mount.normalX, mount.normalZ) }, mounts, [])).toBeNull();
+    expect(nearbyQr(building, from(0.1, 2.5, -Math.PI / 2), mounts, [])).toBeNull();
+  });
+
+  it("사이에 벽이 있으면 잡지 않는다", () => {
+    const here = from(2);
+    const between = [Math.min(here.x, mount.x) - 0.5, Math.min(here.z, mount.z) + 0.01, Math.max(here.x, mount.x) + 0.5, Math.max(here.z, mount.z) - 0.01] as const;
+    const wall = mount.normalX !== 0 ? [mount.x + mount.normalX * 0.8 - 0.05, here.z - 1, mount.x + mount.normalX * 0.8 + 0.05, here.z + 1] as const : [here.x - 1, mount.z + mount.normalZ * 0.8 - 0.05, here.x + 1, mount.z + mount.normalZ * 0.8 + 0.05] as const;
+    expect(between).toHaveLength(4);
+    expect(nearbyQr(building, here, mounts, [wall])).toBeNull();
+  });
+
+  it("붙일 벽이 없는 지점이나 자산과 버전이 다른 건물에서는 QR이 없다", () => {
+    const bare = building.signs.find(item => !mounts.has(item.sign_id))!;
+    expect(nearbyQr(building, { ...pose(bare.node_id), yaw: 0 }, mounts, [])).toBeNull();
+    expect(qrAssetsMatch({ building_id: "WFI", building_version: 5 })).toBe(false);
+    expect(nearbyQr({ ...building, building_version: 5 }, from(1.2), mounts, walls)).toBeNull();
   });
 });
 
