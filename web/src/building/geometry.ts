@@ -446,3 +446,102 @@ export function stairRun(points: readonly PlanPoint[], width: number, bottomY: n
     };
   });
 }
+
+/** 문틀을 세울 자리. along은 벽이 달리는 축, (x, z)는 개구부 가운데, width는 틈의 폭이다. */
+export type DoorOpening = { readonly x: number; readonly z: number; readonly along: "X" | "Z"; readonly width: number; readonly found: boolean };
+
+/** 벽 끝에서 이 거리 안을 지나야 그 벽 끝에 붙은 입구로 본다(m). */
+const DOOR_REACH = 1.3;
+/** 문틀이 틈 전체를 차지하는 폭의 범위(m). 넓은 쪽은 양쪽이 벽인 넓은 출입구다. */
+const DOOR_GAP = [0.7, 3.2] as const;
+/** 한쪽에만 벽이 있는 입구에서 걷는 선 바깥으로 비우는 폭과 문틀 폭의 한계(m). */
+const DOOR_SIDE = 0.6;
+const DOOR_WIDE = 1.8;
+
+/**
+ * 문 지점의 문틀 자리. 사람이 걷는 선(문 지점→이어진 통로 지점)이 벽 줄을 지나는 곳에서 벽의 실제 개구부를 찾는다.
+ * - 그 줄에서 양쪽 벽 사이의 틈이 문 크기면 문틀이 틈 전체를 차지한다. 그런 틈이 여럿이면 가장 좁은 것(문에 가까운 것)이다.
+ * - 한쪽에만 벽이 있으면(트인 입구) 문틀을 그 벽 끝에 붙이고 걷는 선 바깥으로 DOOR_SIDE만큼 비운다.
+ * 통로 지점이 비스듬히 있어도 문틀은 벽과 같은 줄이다. 걷는 선이 지나는 벽 줄이 없으면 found가 false이고 지점에 축을 맞춰 세운다.
+ */
+export function doorOpening(x: number, z: number, towardX: number, towardZ: number, walls: readonly WallRect[]): DoorOpening {
+  const boxes = walls.map(wallBox);
+  let best: (DoorOpening & { rank: number }) | null = null;
+  for (const along of ["X", "Z"] as const) {
+    // p는 벽이 달리는 축의 좌표, c는 벽을 가로지르는 축의 좌표다.
+    const [p, c, tp, tc] = along === "X" ? [x, z, towardX, towardZ] : [z, x, towardZ, towardX];
+    if (Math.abs(tc - c) < 0.2) continue;
+    const reach = 0.3 / Math.max(Math.hypot(towardX - x, towardZ - z), 0.01);
+    const spans = boxes.map((box) => (along === "X"
+      ? { p0: box.centerX - box.sizeX / 2, p1: box.centerX + box.sizeX / 2, c0: box.centerZ - box.sizeZ / 2, c1: box.centerZ + box.sizeZ / 2, runs: box.sizeX >= box.sizeZ }
+      : { p0: box.centerZ - box.sizeZ / 2, p1: box.centerZ + box.sizeZ / 2, c0: box.centerX - box.sizeX / 2, c1: box.centerX + box.sizeX / 2, runs: box.sizeZ >= box.sizeX }));
+    for (const wall of spans) {
+      const line = (wall.c0 + wall.c1) / 2;
+      const ratio = (line - c) / (tc - c);
+      // 걷는 선의 양 끝에서 0.3 m까지만 더 본다(문 지점이 벽 줄 바로 옆에 있는 경우).
+      if (!wall.runs || ratio < -reach || ratio > 1 + reach) continue;
+      const at = p + (tp - p) * ratio;
+      // 그 줄을 지나는 벽(직각으로 만나는 벽의 끝도 포함)이 차지한 구간. 걷는 선이 그 안을 지나면 입구가 아니다.
+      const taken = spans.filter((item) => item.c0 < line + 0.15 && item.c1 > line - 0.15);
+      if (taken.some((item) => at > item.p0 - 0.05 && at < item.p1 + 0.05)) continue;
+      const low = Math.max(-Infinity, ...taken.filter((item) => item.p1 <= at).map((item) => item.p1));
+      const high = Math.min(Infinity, ...taken.filter((item) => item.p0 >= at).map((item) => item.p0));
+      const place = (middle: number, width: number, rank: number) => {
+        if (best === null || rank < best.rank - 1e-6) best = { ...(along === "X" ? { x: middle, z: line } : { x: line, z: middle }), along, width, found: true, rank };
+      };
+      if (high - low >= DOOR_GAP[0] && high - low <= DOOR_GAP[1]) place((low + high) / 2, high - low, (high - low) / 10);
+      else if (high - low > DOOR_GAP[1]) {
+        const end = at - low <= high - at ? low : high;
+        const distance = Math.abs(at - end);
+        if (distance > DOOR_REACH) continue;
+        const side = Math.sign(at - end);
+        const width = Math.min(Math.max(distance + DOOR_SIDE, 1.1), DOOR_WIDE);
+        place(end + side * width / 2, width, 1 + distance);
+      }
+    }
+  }
+  if (best !== null) {
+    const found = best as DoorOpening;
+    return { x: found.x, z: found.z, along: found.along, width: found.width, found: true };
+  }
+  return { x, z, along: Math.abs(towardX - x) >= Math.abs(towardZ - z) ? "Z" : "X", width: 1.1, found: false };
+}
+
+/** 문틀 기둥 한 변(m), 문틀 두께(벽을 가로지르는 쪽, m), 문짝 두께(m). 그리기와 통과 검사가 같은 값을 쓴다. */
+export const DOOR_JAMB = 0.05;
+export const DOOR_DEPTH = 0.12;
+const DOOR_LEAF = 0.05;
+/** 문설주가 틈 안쪽으로 나온 폭(m). */
+const DOOR_LIP = 0.01;
+
+/**
+ * 문틀과 열린 문짝이 평면에서 차지하는 자리. 3D는 이 직사각형을 그대로 세우고, 통과 검사도 이것으로 한다.
+ * 문틀 방향은 개구부(벽 줄)가 정하고, 문짝은 그와 따로 경첩에서 방 안쪽(통로 지점 반대쪽)으로 직각까지 연다.
+ * 경첩은 두 문설주 가운데, 그 문 지점에서 나가는 걷는 선들(ends: 이어진 지점들)과 문짝이 더 멀리 떨어지는 쪽에 둔다. 문짝 폭은 1 m까지다.
+ */
+export function doorParts(opening: DoorOpening, x: number, z: number, towardX: number, towardZ: number, ends: readonly PlanPoint[] = [{ x: towardX, z: towardZ }]): { readonly jambs: readonly WallRect[]; readonly lintel: WallRect; readonly leaf: WallRect } {
+  const half = opening.width / 2;
+  const [p, c, tc] = opening.along === "X" ? [opening.x, opening.z, towardZ] : [opening.z, opening.x, towardX];
+  const rect = (p0: number, p1: number, c0: number, c1: number): WallRect => (opening.along === "X"
+    ? [Math.min(p0, p1), Math.min(c0, c1), Math.max(p0, p1), Math.max(c0, c1)] : [Math.min(c0, c1), Math.min(p0, p1), Math.max(c0, c1), Math.max(p0, p1)]);
+  const deep = DOOR_DEPTH / 2;
+  // 문설주는 벽 끝을 감싼다. 틈 안쪽으로는 DOOR_LIP만 나오고 나머지는 벽 쪽에 있다.
+  const jambs = [rect(p - half - DOOR_JAMB + DOOR_LIP, p - half + DOOR_LIP, c - deep, c + deep), rect(p + half - DOOR_LIP, p + half + DOOR_JAMB - DOOR_LIP, c - deep, c + deep)];
+  const room = tc >= c ? -1 : 1;
+  const leafAt = (hinge: number) => {
+    const inner = p + hinge * (half - DOOR_LIP);
+    // 열린 문짝은 문틀의 방 쪽 면에서 시작한다. 문틀 안(틈)에는 걸치지 않는다.
+    return rect(inner, inner - hinge * DOOR_LEAF, c + room * deep, c + room * (deep + Math.min(opening.width - DOOR_LIP * 2, 1)));
+  };
+  /** 걷는 선들에서 그 직사각형까지의 가장 가까운 거리. 5 cm 간격으로 잰다. */
+  const clearance = ([x0, z0, x1, z1]: WallRect) => Math.min(...ends.flatMap((end) => {
+    const length = Math.max(Math.hypot(end.x - x, end.z - z), 0.01);
+    return Array.from({ length: Math.ceil(length / 0.05) + 1 }, (_, step) => {
+      const ratio = Math.min(step * 0.05 / length, 1);
+      const [px, pz] = [x + (end.x - x) * ratio, z + (end.z - z) * ratio];
+      return Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(z0 - pz, 0, pz - z1));
+    });
+  }));
+  const [low, high] = [leafAt(-1), leafAt(1)];
+  return { jambs, lintel: rect(p - half - DOOR_JAMB + DOOR_LIP, p + half + DOOR_JAMB - DOOR_LIP, c - deep, c + deep), leaf: clearance(low) >= clearance(high) ? low : high };
+}

@@ -15,13 +15,13 @@ import type { Building, BuildingDisplay, HazardCell, Position, StateSnapshot } f
 import { localSmoke, simulationFireCells } from "./firePresentation";
 
 import { cctvSmoke, type CctvPose } from "./cctv";
-import type { BuildingGeometry, GeometryStair, StairStepAlong } from "./geometry";
+import type { BuildingGeometry, GeometryStair, StairStepAlong, WallRect } from "./geometry";
 import type { Figure, Fire, SignFaceMesh, SmokePuff } from "./assets";
 import { addEarbuds, buildHangingSign, createFigure, createFire, createSmokeSprite, disposeTree, placeSmoke, poseActing, poseFigure, signFaceTexture, softDotTexture } from "./assets";
-import { insidePolygon, interiorWalls, wallBox } from "./geometry";
+import { doorOpening, doorParts, insidePolygon, interiorWalls, wallBox } from "./geometry";
 import type { StairTravel } from "./stairs";
 import { alongStair, flightSteps, stairLanding, stairLink, stairTravel } from "./stairs";
-import { doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
+import { doorEnds, doorFacing, EXIT_RUN_LENGTH, facadeColumns, facadeParts } from "./facade";
 import { sceneLabels, visibleLabelIndexes } from "./display";
 import type { IconKind } from "./icons";
 import type { PeopleCount, Person } from "./people";
@@ -96,6 +96,8 @@ const SLIDE_DROP = 0.9;
 
 /** 카메라 한 대를 찾을 때 함께 보이는 범위(m). 너무 좁으면 어디인지 알 수 없다. */
 const FOCUS_REACH = 9;
+/** 문틀 안쪽 높이(m). */
+const DOOR_TALL = 2.1;
 
 /** 영남이 시연의 지금 상태. 화면 문구와 휴대폰 연출이 이것을 따른다. */
 export type YeongnamStatus = {
@@ -998,9 +1000,11 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
           }
           strolling = true;
         }
+        // 문을 지나는 구간에서는 비켜 세우지 않는다. 옆으로 비키면 문틀 기둥을 뚫는다.
+        const atDoor = live.nodeById.get(person.from)?.kind === "DOOR" || (person.to !== null && live.nodeById.get(person.to)?.kind === "DOOR");
         // 같은 길을 걷는 사람이 한 점에 겹치지 않게 조금씩 비켜 세운다. 계단과 미끄럼틀에서는 한 줄로 간다.
         // 계단참의 평평한 구간도 계단이다. 거기서 비켜 서면 계단실 벽에 몸이 묻힌다.
-        if (!exiting && !strolling && (person.to === null || stairPath(person.from, person.to) === null)) {
+        if (!exiting && !strolling && !atDoor && (person.to === null || stairPath(person.from, person.to) === null)) {
           point.x += ((index % 3) - 1) * 0.35;
           point.z += ((index % 2) - 0.5) * 0.5;
         }
@@ -1558,28 +1562,24 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
         staticGroup.add(caps);
       }
 
-      // 문. 방 입구 지점에 문틀과 열린 문짝을 세운다. 문이 향하는 쪽은 그 입구에서 이어진 통로 방향이다.
+      // 문. 문틀은 벽의 실제 개구부에 벽과 같은 줄로 세운다(doorOpening). 이어진 통로 지점은 어느 쪽이 방 안인지 가리는 데만 쓴다.
       for (const node of building.nodes) {
         if (node.kind !== "DOOR" || node.floor_id !== floor.floor_id) continue;
         const toward = nodeById.get(edgeByDoor.get(node.node_id) ?? "");
         if (toward === undefined) continue;
-        const door = new THREE.Group();
+        const opening = doorOpening(node.position.x, node.position.z, toward.position.x, toward.position.z, floor.walls);
+        // 문틀·문짝의 자리는 doorParts가 정한다. 통과 검사(doors.test.ts)가 같은 도형을 본다.
+        const parts = doorParts(opening, node.position.x, node.position.z, toward.position.x, toward.position.z, doorEnds(building, node.node_id));
         const frame = new THREE.MeshLambertMaterial({ color: COLOR.frame });
-        for (const [w, h, x, y] of [[0.1, 2.2, -0.55, 1.1], [0.1, 2.2, 0.55, 1.1], [1.2, 0.1, 0, 2.25]]) {
-          const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.2), frame);
-          piece.position.set(x, y, 0);
+        const stand = ([x0, z0, x1, z1]: WallRect, bottom: number, top: number, material: THREE.Material) => {
+          const piece = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, top - bottom, z1 - z0), material);
+          piece.position.set((x0 + x1) / 2, base + (bottom + top) / 2, (z0 + z1) / 2);
           piece.castShadow = true;
-          door.add(piece);
-        }
-        const leaf = new THREE.Mesh(new THREE.BoxGeometry(1, 2.1, 0.05), new THREE.MeshLambertMaterial({ color: COLOR.door }));
-        // 활짝 열어 방 안쪽으로 젖혀 둔다. 반쯤 열면 나오는 사람이 문짝을 뚫고 지나간다.
-        leaf.position.set(-0.52, 1.05, -0.5);
-        leaf.rotation.y = Math.PI / 2;
-        leaf.castShadow = true;
-        door.add(leaf);
-        door.position.set(node.position.x, base, node.position.z);
-        door.rotation.y = Math.atan2(toward.position.x - node.position.x, toward.position.z - node.position.z);
-        staticGroup.add(door);
+          staticGroup.add(piece);
+        };
+        for (const jamb of parts.jambs) stand(jamb, 0, DOOR_TALL, frame);
+        stand(parts.lintel, DOOR_TALL, DOOR_TALL + 0.06, frame);
+        stand(parts.leaf, 0, DOOR_TALL - 0.02, new THREE.MeshLambertMaterial({ color: COLOR.door }));
       }
 
       // 출구 미끄럼틀. 켜진 출구마다 밖으로 내려가는 미끄럼판과 옆 난간을 놓는다. 사람이 이 위로 빠져나간다.
