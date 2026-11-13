@@ -25,6 +25,7 @@ export function RoomAiPanel({ state }: { state: StateSnapshot }) {
   const [busy, setBusy] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [shown, setShown] = useState<{ analysis: string; frame: RoomAiResult["metadata"]; url: string } | null>(null);
+  const [unreadable, setUnreadable] = useState<string | null>(null);
   const lastFrame = useRef<string | undefined>(undefined);
   const revision = useRef(0);
   useEffect(() => {
@@ -38,8 +39,16 @@ export function RoomAiPanel({ state }: { state: StateSnapshot }) {
       if (!result || !analysis_id || current.run_id !== state.run_id) return;
       const image = new Image();
       image.src = `data:image/jpeg;base64,${result.jpeg_base64}`;
-      await image.decode();
+      try {
+        await image.decode();
+      } catch {
+        if (signal.aborted || version !== revision.current) return;
+        lastFrame.current = result.metadata.frame_id;
+        setUnreadable(analysis_id);
+        return;
+      }
       if (signal.aborted || version !== revision.current) return;
+      setUnreadable(null);
       setShown({ analysis: analysis_id, frame: result.metadata, url: image.src });
       lastFrame.current = result.metadata.frame_id;
     }, () => {}, () => setRetrying(true), 650);
@@ -54,6 +63,7 @@ export function RoomAiPanel({ state }: { state: StateSnapshot }) {
       revision.current++;
       lastFrame.current = undefined;
       setShown(null);
+      setUnreadable(null);
       setAi(next);
       setRetrying(false);
     } catch (failure) {
@@ -78,11 +88,13 @@ export function RoomAiPanel({ state }: { state: StateSnapshot }) {
       {ai !== null && (ai.state === "IDLE" || ai.state === "FAILED" || ai.state === "DONE") && (
         <button type="button" className="chip" disabled={busy} onClick={() => void request()}>{ai.state === "IDLE" ? "영상 분석 시작" : "영상 다시 분석"}</button>
       )}
+      {unreadable && unreadable === ai?.analysis_id &&
+        <p className="panel__note">최근 분석 이미지를 읽을 수 없습니다.</p>}
       {display ? <>
-        <p className="panel__note">{ai?.state === "DONE" ? "마지막 분석 결과" : "최근 분석 결과"}</p>
+        <p className="panel__note">{ai?.state === "DONE" ? (unreadable === ai.analysis_id ? "마지막으로 표시한 결과" : "마지막 분석 결과") : "최근 분석 결과"}</p>
         <CameraPreviewPanel frame={display.frame} url={display.url} />
       </> : ai?.state === "RUNNING" ? <p className="camera__blank">첫 분석 결과를 기다리는 중입니다.</p>
-        : ai?.state === "DONE" && !ai.result ? <p className="panel__note">표시할 분석 프레임이 없습니다.</p> : null}
+        : ai?.state === "DONE" && !ai.result && unreadable !== ai.analysis_id ? <p className="panel__note">표시할 분석 프레임이 없습니다.</p> : null}
     </section>
   );
 }
