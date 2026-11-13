@@ -7,7 +7,7 @@ import type { Person } from "./people";
 import rawGeometry from "@space/wfi-geometry-v1.json";
 import { parseGeometry } from "./geometry";
 import { signInstalls } from "./signMount";
-import { devWalk, shownFaces, witnessedSignChanges, YEONGNAM, yeongnamDelay, yeongnamEmote, yeongnamFire, yeongnamPhase, yeongnamSupported } from "./yeongnam";
+import { changeCaption, devWalk, shownFaces, walkedToStand, witnessedSignChanges, YEONGNAM, yeongnamDelay, yeongnamEmote, yeongnamFire, yeongnamPhase, yeongnamSupported } from "./yeongnam";
 
 const building = rawBuilding as Building;
 
@@ -33,11 +33,32 @@ describe("영남이 시연 설정", () => {
     expect(yeongnamEmote("SLEEP", false, false)).toContain("Zzz");
     expect(yeongnamEmote("NOTICE", false, false)).toBe("❗");
     expect(yeongnamEmote("PANIC", false, false)).toBe("😨");
-    // 출발 전에 서서 본 것은 안내 확인, 걷다가 본 것이 유도등 변경 목격이다.
-    expect(yeongnamEmote("LISTEN", true, false)).toContain("안내 확인");
+    // 당황한 동안에는 변경을 확인하는 중이 아니면 😨만 뜬다. 눈앞에서 바뀌면 언제든 유도등 변경 표시다.
+    expect(yeongnamEmote("LISTEN", true, false)).toContain("유도등 변경");
     expect(yeongnamEmote("EVACUATE", true, true)).toContain("유도등");
     expect(yeongnamEmote("EVACUATE", false, true)).toBe("📱");
     expect(yeongnamEmote("EVACUATE", false, false)).toBeNull();
+  });
+
+  it("서는 자리까지 걸은 거리는 첫 두 구간에서만 센다", () => {
+    const { startNodeId, watchNodeId, aheadNodeId } = YEONGNAM;
+    expect(walkedToStand({ from: startNodeId, to: null, progress: 0 }, 1.1, 4.6)).toBe(0);
+    expect(walkedToStand({ from: startNodeId, to: watchNodeId, progress: 0.5 }, 1.1, 4.6)).toBeCloseTo(0.55);
+    expect(walkedToStand({ from: watchNodeId, to: aheadNodeId, progress: 0.5 }, 1.1, 4.6)).toBeCloseTo(3.4);
+    // 되돌아가는 중이거나 다른 길이면 서는 자리와 무관하다.
+    expect(walkedToStand({ from: watchNodeId, to: aheadNodeId, progress: 0.5, returning: true }, 1.1, 4.6)).toBe(Infinity);
+    expect(walkedToStand({ from: aheadNodeId, to: null, progress: 0 }, 1.1, 4.6)).toBe(Infinity);
+    // 서는 자리는 갈림길 유도등을 올려다볼 수 있는 거리(1.7 m 이상)를 남긴다.
+    const [watch, ahead] = [watchNodeId, aheadNodeId].map((id) => building.nodes.find((node) => node.node_id === id)!.position);
+    expect(Math.hypot(ahead.x - watch.x, ahead.z - watch.z) - YEONGNAM.watchAhead).toBeGreaterThan(1.7);
+  });
+
+  it("변경 자막은 바뀐 화살표와 새로 막힌 지점의 원인을 그대로 적는다", () => {
+    expect(changeCaption("RIGHT", [{ fire: 0, smoke: 0.55 }])).toBe("연기 유입 · 우측 경로로 안내 변경");
+    // 새로 막힌 지점 가운데 하나라도 불꽃이 닿았으면 연기 유입이라고 쓰지 않는다.
+    expect(changeCaption("LEFT", [{ fire: 0, smoke: 0.6 }, { fire: 0.2, smoke: 0.3 }])).toBe("화염 확산 · 좌측 경로로 안내 변경");
+    expect(changeCaption("FORWARD", [])).toBe("경로 차단 · 직진 경로로 안내 변경");
+    expect(changeCaption(null, [])).toBe("경로 차단 · 안내 변경");
   });
 
   it("행동 지연은 검증용 주소 옵션이 있을 때만 적용된다", () => {

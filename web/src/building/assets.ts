@@ -212,7 +212,7 @@ export function addEarbuds(figure: Figure): THREE.Group {
  * 시연 인물의 단계별 자세. 서 있는 기본 자세 위에 덮어쓴다.
  * 돌려주는 값은 몸 전체를 앞으로 숙이는 각도(tilt)와 앉느라 낮아지는 높이(drop)다.
  */
-export function poseActing(figure: Figure, act: "SLEEP" | "NOTICE" | "PANIC" | "LISTEN" | "LOOK" | null, time: number): { tilt: number; drop: number } {
+export function poseActing(figure: Figure, act: "SLEEP" | "NOTICE" | "PANIC" | "LISTEN" | "LOOK" | null, time: number, ownView = false): { tilt: number; drop: number } {
   const [armL, armR, legL, legR] = figure.limbs;
   armL.rotation.z = armR.rotation.z = 0;
   if (act === null) return { tilt: 0, drop: 0 };
@@ -224,11 +224,13 @@ export function poseActing(figure: Figure, act: "SLEEP" | "NOTICE" | "PANIC" | "
   }
   legL.rotation.x = legR.rotation.x = 0;
   if (act === "PANIC") {
-    // 두 손을 번쩍 들고 떤다.
-    armL.rotation.x = -2.8 + Math.sin(time * 15) * 0.14;
-    armR.rotation.x = -2.8 + Math.cos(time * 15) * 0.14;
-    armL.rotation.z = -0.35;
-    armR.rotation.z = 0.35;
+    // 두 손을 번쩍 들고 떤다. 본인 시점에서는 머리 위로 든 손이 보이지 않으므로 눈앞으로 내민다.
+    const lift = ownView ? -2.1 : -2.8;
+    armL.rotation.x = lift + Math.sin(time * 15) * 0.14;
+    armR.rotation.x = lift + Math.cos(time * 15) * 0.14;
+    // 본인 시점에서는 두 손이 화면 양옆 안쪽에 들어오게 모은다.
+    armL.rotation.z = ownView ? 0.12 : -0.35;
+    armR.rotation.z = ownView ? -0.12 : 0.35;
     return { tilt: -0.08, drop: 0 };
   }
   // 한 손을 귀에 대거나(방송 듣기), 앞의 유도등을 가리킨다(변경 확인).

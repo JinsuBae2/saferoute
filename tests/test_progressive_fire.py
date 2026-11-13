@@ -232,17 +232,20 @@ def test_positioned_fire_is_refused_where_no_route_can_change(api, zone_id):
 def test_yeongnam_demo_selection_still_holds():
     """선택형 시연 「영남이」의 선정 조건을 서버 모형으로 고정한다(값은 web/src/building/yeongnam.ts, 검증은 tools/yeongnam_check.py).
 
-    두 번의 경로 변경이 불꽃 없이 연기만으로 생기고(불꽃만 반영하면 3초 이상 늦다), 영남이가 그 변경을 정면 유도등에서 보며,
-    기본 실행과 행동 10초 지연 모두 차단된 지점·통로를 밟지 않고 출구에 닿는지 본다.
+    문밖에 서서 보는 복도 안에 불꽃과 짙은 연기가 있고, 첫 경로 변경이 불꽃 없이 연기만으로 생기며(불꽃만 반영하면 3초 이상 늦다),
+    영남이가 눈앞 유도등의 직진→우회전 변경을 서서 보고, 기본 실행과 행동 10초 지연 모두 차단된 지점·통로를 밟지 않고 출구에 닿는지 본다.
     확산 속도나 건물 자료를 바꿔 이 시험이 깨지면 시연 값을 다시 골라야 한다. 실제 피난 가능 시간을 보장하는 시험이 아니다.
     """
     from tools.yeongnam_check import problems, report
 
     result = report([0, 10])
     assert problems(result) == []
-    first, second = result["changes"]
-    cfg, base = result["config"], result["runs"][0]
-    # 첫 변경은 복도에 서서 보는 동안, 두 번째는 걷기 시작한 뒤에 온다.
-    assert cfg["panicAt"] < first["at"] < cfg["departAt"] < second["at"]
-    assert [at for at, _ in base["witnessed"]] == [first["at"], second["at"]]
+    (first,) = result["changes"]
+    cfg, base, late = result["config"], result["runs"][0], result["runs"][10]
+    # 변경은 문밖에 서서 당황하는 동안에 온다. 출발 시각이 되어도 화면의 영남이는 서는 자리에서 그 유도등을 보고 있다.
+    assert cfg["panicAt"] + 2 <= first["at"] <= cfg["departAt"]
+    assert base["witnessed"][0] == (first["at"], ["SIGN-F3-J-N5/FRONT FORWARD→RIGHT (2.6 m)"])
+    # 휴대폰은 오른쪽으로 돈 뒤에 꺼낸다. 늦게 나와 이미 바뀐 유도등을 본 실행에는 문밖에서의 목격이 없다.
+    assert base["phone_at"] > first["at"] + cfg["lookSeconds"]
+    assert not [at for at, _ in late["witnessed"] if at < late["depart"] + 1]
     assert "F3-S-A" in base["trail"] and base["trail"][-1] == "F1-X-NW"
