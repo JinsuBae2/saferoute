@@ -596,7 +596,7 @@ export function BuildingScene({ cctv, onCamera, geometry, building, display, sho
       fireGroup,
       fires: [],
       fireObjects: new Map(),
-      fog: new THREE.FogExp2(0x2b2f36, 0.012),
+      fog: new THREE.FogExp2(0x1f1f21, 0.012),
       hemisphere,
       uplight,
       disposables: new Set(),
